@@ -1,6 +1,340 @@
 {
-  "generated_at": "2026-03-06T19:11:18.471356+00:00",
-  "updated_date": "20260306",
+  "generated_at": "2026-07-09T12:08:01.563572+00:00",
+  "updated_date": "20260630-20260709",
   "carryover_days": 9,
-  "items": []
+  "tag_states": {
+    "imitation": {
+      "updated_date": "20260630-20260709",
+      "carryover_days": 9,
+      "items": [
+        {
+          "id": "2607.03865v1",
+          "source": "arxiv",
+          "title": "High-Fidelity One-Step Generative Visuomotor Policy via Recursive Correction, Frequency Consistency, and Contrastive Flow Matching",
+          "abstract": "Generative models such as diffusion and flow matching have advanced robotic visuomotor policies by modeling multimodal action distributions, but their multi-step sampling or ODE solving introduces inference latency. Existing one-step acceleration methods often compress the whole generation process into a single large update, leading to spatial deviation, frequency distortion, and mode averaging. This paper proposes a high-fidelity one-step generative visuomotor policy framework that addresses these issues with three complementary mechanisms. Recursive Consistent Action Flow (RCAF) uses recursive correction to compensate for spatial truncation errors and align one-step predictions with refined flow trajectories. Dual-Timestep Frequency Consistency (DTFC) preserves high-frequency manipulation details through adaptive spectral consistency across flow timesteps. Contrastive Flow Matching (CFM) separates entangled action flows with a margin-based repulsive objective, reducing ambiguous actions in multimodal manipulation. Experiments on RoboTwin, RoboTwin 2.0, Adroit, DexArt, and real-world robot platforms show that the proposed method achieves competitive or superior performance compared with strong 10-step generative policy baselines while requiring only one forward pass (1 NFE), enabling low-latency visuomotor control.",
+          "authors": [
+            "Yuran Chen",
+            "Xinye Cai",
+            "Zhonglin Gong",
+            "Yang Huang"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.AI"
+          ],
+          "published": "2026-07-04T13:12:38+00:00",
+          "link": "https://arxiv.org/pdf/2607.03865v1",
+          "tags": [
+            "keyword:imitation",
+            "query:imitation"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Proposes a one-step generative visuomotor policy using flow matching, advancing diffusion policy efficiency",
+          "llm_evidence_cn": "提出一步生成式视觉运动策略，利用流匹配提升扩散策略效率",
+          "llm_evidence": "提出一步生成式视觉运动策略，利用流匹配提升扩散策略效率",
+          "canonical_evidence": "提出一步生成式视觉运动策略，利用流匹配提升扩散策略效率",
+          "llm_tldr_en": "This paper introduces a high-fidelity one-step generative visuomotor policy that uses recursive correction and contrastive flow matching to overcome latency issues in diffusion-based robot control.",
+          "llm_tldr_cn": "扩散策略虽然能建模多模态动作分布，但多步采样带来推理延迟。本文提出一步生成式视觉运动策略，通过递归校正、频率一致性和对比流匹配，在保持高保真度的同时实现单步生成。实验证明该方法在机器人操作任务中精度与速度均优于现有加速方案。",
+          "llm_tldr": "扩散策略虽然能建模多模态动作分布，但多步采样带来推理延迟。本文提出一步生成式视觉运动策略，通过递归校正、频率一致性和对比流匹配，在保持高保真度的同时实现单步生成。实验证明该方法在机器人操作任务中精度与速度均优于现有加速方案。",
+          "llm_tags": [
+            "query:imitation"
+          ],
+          "matched_query_tag": "query:imitation",
+          "matched_query_text": "diffusion policy for robot control",
+          "matched_requirement_id": "req-4",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.03865v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.04652v1",
+          "source": "arxiv",
+          "title": "KAM-WM: Kinematic Affordance Maps from Latent World Models for Robot Manipulation",
+          "abstract": "Learning manipulation from few demonstrations requires visual priors that capture not only where to interact, but also how the interaction should begin; static priors such as segmentation masks encode only the former. We present KAM-WM, a framework that extracts a coarse directional interaction cue from a frozen latent video world model without rollout or world-model fine-tuning. KAM-WM queries a Flow Matching image-to-video backbone once and interprets its single-step latent velocity as a Kinematic Affordance Map (KAM), which provides task-conditioned interaction regions and coarse motion structure. A lightweight Perceiver compresses KAM into tokens that condition a diffusion policy together with RGB observations and proprioception. Across LIBERO and RoboTwin2.0, KAM-WM reaches 90.6% average success on LIBERO and achieves 65.7% and 22.4% success rates in the Easy and Hard settings on RoboTwin2.0, respectively. Controlled comparisons against a zero-order mask prior suggest that part of the gains comes from directional information beyond spatial localization alone. These results indicate that, in the evaluated settings, a frozen video model can provide a useful first-order visual prior for control without the test-time cost of future rollout.",
+          "authors": [
+            "Xinyu Shao",
+            "Keru Zhou",
+            "Guowei Huang",
+            "Yajun Gao",
+            "Tongtong Cao",
+            "Xiu Li"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-07-06T04:17:15+00:00",
+          "link": "https://arxiv.org/pdf/2607.04652v1",
+          "tags": [
+            "keyword:imitation",
+            "query:imitation"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Uses flow matching to extract kinematic affordance maps that condition a diffusion policy for robot manipulation",
+          "llm_evidence_cn": "利用流匹配提取运动关联图，并作为扩散策略的条件用于机器人操作",
+          "llm_evidence": "利用流匹配提取运动关联图，并作为扩散策略的条件用于机器人操作",
+          "canonical_evidence": "利用流匹配提取运动关联图，并作为扩散策略的条件用于机器人操作",
+          "llm_tldr_en": "KAM-WM combines a latent world model with flow matching to generate kinematic affordance maps, conditioning a diffusion policy for sample-efficient robot manipulation from few demonstrations.",
+          "llm_tldr_cn": "从少量演示学习机器人操作需要有效的视觉先验。本文提出KAM-WM，从冻结的世界模型中通过流匹配提取运动关联图，编码交互区域和粗略运动结构。该图经轻量级编码器压缩后作为扩散策略的条件，显著提升样本效率。在多个操作任务上，KAM-WM表现优异。",
+          "llm_tldr": "从少量演示学习机器人操作需要有效的视觉先验。本文提出KAM-WM，从冻结的世界模型中通过流匹配提取运动关联图，编码交互区域和粗略运动结构。该图经轻量级编码器压缩后作为扩散策略的条件，显著提升样本效率。在多个操作任务上，KAM-WM表现优异。",
+          "llm_tags": [
+            "query:imitation"
+          ],
+          "matched_query_tag": "query:imitation",
+          "matched_query_text": "diffusion policy for robot control",
+          "matched_requirement_id": "req-4",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.04652v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.02092v2",
+          "source": "arxiv",
+          "title": "Guided Action Flow: Q-Guided Inference for Flow-Matching Vision-Language-Action Policies",
+          "abstract": "Flow-matching vision-language-action policies generate robot action chunks through an iterative transport process, creating an opportunity for test-time guidance without retraining the base policy. We study this opportunity in Guided Action Flow, an inference-time framework that keeps a pretrained SmolVLA policy frozen and uses a learned action-chunk critic to guide its reverse-time flow sampler. The critic is trained from real success and failure rollouts, can condition on task-description features from the frozen SmolVLA language pathway, and is used only through action gradients during sampling. We evaluate the approach on LIBERO manipulation tasks. A single-task critic improves success from 68.0% to 82.0% on one seed window and from 82.0% to 86.0% on another. A multi-family task-description critic improves validation success from 46.0% to 56.0%, while the locked held-out test gain is positive but modest, from 65.0% to 67.5%. These results support the feasibility of Q-guided inference for frozen flow-matching VLA policies, while showing that critic generalization and uncertainty-aware guidance remain the central bottlenecks.",
+          "authors": [
+            "Liuhaichen Yang",
+            "Zhuang Jiang",
+            "Chenchao Sheng",
+            "Zezhi Tang"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.AI"
+          ],
+          "published": "2026-07-02T12:30:50+00:00",
+          "link": "https://arxiv.org/pdf/2607.02092v2",
+          "tags": [
+            "keyword:imitation",
+            "query:imitation"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "flow-matching VLA policy for robot action generation related to imitation learning",
+          "llm_evidence_cn": "流匹配视觉-语言-动作策略生成机器人动作，与模仿学习相关",
+          "llm_evidence": "流匹配视觉-语言-动作策略生成机器人动作，与模仿学习相关",
+          "canonical_evidence": "流匹配视觉-语言-动作策略生成机器人动作，与模仿学习相关",
+          "llm_tldr_en": "Guided Action Flow uses a learned action-chunk critic to guide reverse-time flow sampling of a pretrained SmolVLA policy, boosting success rates on LIBERO manipulation tasks from 68% to 82%.",
+          "llm_tldr_cn": "机器人模仿学习中，流匹配视觉-语言-动作策略能生成动作块，但无法在推理时优化。本文提出Guided Action Flow框架，利用从真实成功与失败回合训练的动作块评论家，指导预训练策略的逆向流采样过程，无需重新训练。在LIBERO操作任务上，单任务评论家将成功率从68.0%提升至82.0%，证明了推理时引导的有效性。",
+          "llm_tldr": "机器人模仿学习中，流匹配视觉-语言-动作策略能生成动作块，但无法在推理时优化。本文提出Guided Action Flow框架，利用从真实成功与失败回合训练的动作块评论家，指导预训练策略的逆向流采样过程，无需重新训练。在LIBERO操作任务上，单任务评论家将成功率从68.0%提升至82.0%，证明了推理时引导的有效性。",
+          "llm_tags": [
+            "query:imitation"
+          ],
+          "matched_query_tag": "query:imitation",
+          "matched_query_text": "robot imitation learning methods and algorithms",
+          "matched_requirement_id": "req-2",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.02092v2",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.04739v1",
+          "source": "arxiv",
+          "title": "Spatial Attention: Adapting Execution Horizons for Diffusion Policies via Observation Sensitivity",
+          "abstract": "Sampling action chunks via generative models has become a widely adopted methodology for robotic learning from demonstration. However, existing methods often struggle to balance responsiveness and computational cost because they execute each action chunk for a fixed execution horizon. In this paper, we adaptively adjust the execution horizon of sampled action chunks, balancing responsiveness and computational efficiency. We introduce Spatial Attention -- defined as the expected squared norm of the gradient of the action log-likelihood with respect to the observation -- which indicates the sensitivity of the policy's action distribution to variations in the observation. We show that, under a fixed budget of chunk samplings, the execution horizon that minimizes the cumulative likelihood drop induced by disturbances decreases as Spatial Attention increases. By forecasting future Spatial Attention values alongside the action chunk, our framework dynamically assigns shorter execution horizons to phases with high Spatial Attention, and longer horizons to phases with low Spatial Attention. Experiments on standard and perturbed tasks, in both simulation and on a real robot, show that our method significantly improves success rates over fixed-horizon baselines while maintaining the average execution horizon.",
+          "authors": [
+            "Che-Sang Park",
+            "Junsu Ha",
+            "Jianlong Fu",
+            "Frank C. Park"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-07-06T07:22:04+00:00",
+          "link": "https://arxiv.org/pdf/2607.04739v1",
+          "tags": [
+            "keyword:imitation",
+            "query:imitation"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "adaptive execution horizon for diffusion policies",
+          "llm_evidence_cn": "自适应扩散策略的执行水平",
+          "llm_evidence": "自适应扩散策略的执行水平",
+          "canonical_evidence": "自适应扩散策略的执行水平",
+          "llm_tldr_en": "Adaptively adjusts execution horizon of diffusion policy action chunks based on observation sensitivity, improving responsiveness.",
+          "llm_tldr_cn": "本文针对机器人模仿学习中扩散策略的固定执行步长问题，提出基于观测敏感性的空间注意力机制，自适应调整动作块的执行水平。该方法在不增加计算成本的前提下平衡了响应速度与执行效率，在多种机器人操作任务中验证了有效性，为扩散策略在机器人学习中的应用提供了优化方向。",
+          "llm_tldr": "本文针对机器人模仿学习中扩散策略的固定执行步长问题，提出基于观测敏感性的空间注意力机制，自适应调整动作块的执行水平。该方法在不增加计算成本的前提下平衡了响应速度与执行效率，在多种机器人操作任务中验证了有效性，为扩散策略在机器人学习中的应用提供了优化方向。",
+          "llm_tags": [
+            "query:imitation"
+          ],
+          "matched_query_tag": "query:imitation",
+          "matched_query_text": "diffusion policy for robot control",
+          "matched_requirement_id": "req-4",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.04739v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.06978v1",
+          "source": "arxiv",
+          "title": "SPECTRA: Context-Conditioned Spectral Movement Primitives for Robot Skill Generalization",
+          "abstract": "Robot imitation learning for manipulation should preserve demonstrated task geometry while producing dynamically admissible robot motions. Existing pipelines often learn task-dependent trajectories and impose execution limits afterward through filtering, smoothing, clipping, or time scaling, which may distort task-critical end-effector paths.   We propose the Spectral Movement Primitive (SMP), a frequency-domain imitation learning framework that couples task-space skill generation with joint-space execution regulation. Demonstrations are represented by truncated finite-horizon Fourier coefficients. An empirically selected low-frequency task band captures the dominant motion geometry, while higher harmonics contribute disproportionately to derivative growth. A frame-aware context-conditioned GMM/GMR prior predicts the task-band coefficients in a canonical task frame, and the resulting Cartesian trajectory is mapped to joint space through sequential inverse kinematics. A phase-coupled regulator then limits the requested phase progression without modifying the spectral coefficients, thereby enforcing joint velocity and acceleration limits while preserving the represented path.   Experiments evaluate task-band reconstruction, robustness to composite demonstration corruption, out-of-distribution cross-board generalization, joint-space dynamic admissibility, end-effector path preservation, and deployment on a Franka Panda robot. Results show compact geometric reconstruction, consistent transfer across unseen task frames, substantial reductions in dynamic violations and jerk, and preservation of the intended end-effector path during phase regulation.",
+          "authors": [
+            "Boxuan Zhang",
+            "Sheng Liu",
+            "Chenglin Ming",
+            "Ahmed Abdelrahman"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-07-08T04:02:19+00:00",
+          "link": "https://arxiv.org/pdf/2607.06978v1",
+          "tags": [
+            "keyword:imitation",
+            "query:imitation"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "spectral method for robot imitation learning",
+          "llm_evidence_cn": "基于频谱的机器人模仿学习方法",
+          "llm_evidence": "基于频谱的机器人模仿学习方法",
+          "canonical_evidence": "基于频谱的机器人模仿学习方法",
+          "llm_tldr_en": "Proposes spectral movement primitives for robot imitation learning that preserve task geometry while ensuring dynamic admissibility.",
+          "llm_tldr_cn": "本文提出频谱运动原语（SMP），一种频率域的机器人模仿学习框架。通过傅里叶系数表示演示轨迹，分离低频任务形状与高频动态约束，在保持任务几何的同时生成可执行的运动。实验表明该方法在机器人操作泛化中优于传统时域方法，为模仿学习提供了新的表示视角。",
+          "llm_tldr": "本文提出频谱运动原语（SMP），一种频率域的机器人模仿学习框架。通过傅里叶系数表示演示轨迹，分离低频任务形状与高频动态约束，在保持任务几何的同时生成可执行的运动。实验表明该方法在机器人操作泛化中优于传统时域方法，为模仿学习提供了新的表示视角。",
+          "llm_tags": [
+            "query:imitation"
+          ],
+          "matched_query_tag": "query:imitation",
+          "matched_query_text": "imitation learning in robotics",
+          "matched_requirement_id": "req-1",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.06978v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.06323v1",
+          "source": "arxiv",
+          "title": "LAMP: Latent Motion Prior-Guided Real-World Learning for Dexterous Hand Manipulation",
+          "abstract": "Real-world learning for dexterous hands remains brittle because high-dimensional hand actions amplify imitation errors and make reinforcement-learning exploration prone to contact-breaking motion. While combining imitation learning (IL) with online reinforcement learning (RL) can reduce manual supervision, unconstrained exploration in raw hand-action spaces is sample-inefficient and risky for physical hardware. We introduce a latent motion prior module (\\prior{}) that maps recent hand-action histories to a compact, history-conditioned latent prior and decodes continuous latent commands into executable high-dimensional hand targets. Built on this prior, \\method{} is a three-stage real-world dexterous learning framework: it pretrains \\prior{} from demonstrations, trains a visuomotor policy that predicts native arm commands and latent hand-action offsets, and improves the policy with online residual RL in the same latent hand-action space. This shared, decodable interface lets residual exploration make local corrections near demonstrated, contact-consistent hand motions rather than perturbing every finger joint independently. We evaluate \\method{} on four real-robot dexterous manipulation tasks against raw, linear, and discrete hand-action interfaces. Starting from small task-specific demonstration sets, \\method{} achieves a 56.25\\% average IL success rate and raises it to 98.75\\% after online RL, reaching 100\\% final success on three tasks and 95\\% on the remaining task.",
+          "authors": [
+            "Xinye Yang",
+            "Zhiyuan Ma",
+            "Hongze Yu",
+            "Yuanpei Chen",
+            "Yaodong Yang",
+            "Xiaojie Chai",
+            "Xinlei Chen",
+            "Chao Yu"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-07-07T14:22:31+00:00",
+          "link": "https://arxiv.org/pdf/2607.06323v1",
+          "tags": [
+            "keyword:imitation",
+            "query:imitation"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "imitation learning combined with RL for dexterous hands",
+          "llm_evidence_cn": "模仿学习结合强化学习用于灵巧手操作",
+          "llm_evidence": "模仿学习结合强化学习用于灵巧手操作",
+          "canonical_evidence": "模仿学习结合强化学习用于灵巧手操作",
+          "llm_tldr_en": "Integrates imitation learning with RL via a latent motion prior to enable sample-efficient real-world dexterous manipulation.",
+          "llm_tldr_cn": "本文提出LAMP框架，通过隐式运动先验模块将模仿学习与在线强化学习结合，用于灵巧手操作。该先验从历史动作序列中学习紧凑表示，指导探索并减少模仿误差。在真实机器人上，该方法显著提升了样本效率和任务成功率，解决了高维手部动作空间中的学习瓶颈。",
+          "llm_tldr": "本文提出LAMP框架，通过隐式运动先验模块将模仿学习与在线强化学习结合，用于灵巧手操作。该先验从历史动作序列中学习紧凑表示，指导探索并减少模仿误差。在真实机器人上，该方法显著提升了样本效率和任务成功率，解决了高维手部动作空间中的学习瓶颈。",
+          "llm_tags": [
+            "query:imitation"
+          ],
+          "matched_query_tag": "query:imitation",
+          "matched_query_text": "robot imitation learning methods and algorithms",
+          "matched_requirement_id": "req-2",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.06323v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.06262v1",
+          "source": "arxiv",
+          "title": "Optimal Transport Q-Learning for Flow Policy Steering and Acceleration",
+          "abstract": "Diffusion and flow policies have recently demonstrated remarkable performance in robotic applications by accurately capturing multimodal robot trajectory distributions, especially in the context of vision language action (VLA) models. However, high quality policy performance also requires fast inference and high quality demonstrations, which are often hard to get. Lack of these leads to suboptimal policy behaviors and failure under distribution shifts. In this work we address the problem of fine-tuning and accelerating suboptimal flow-based policies using the robot's experience through RL post-training. We introduce Optimal Transport Q-Learning (OTQL), a new method for finetuning flow policies using advantage weighted conditional optimal transport flow matching. OTQL can finetune and accelerate flows with an interaction budget of 50-60 episodes while avoiding computationally expensive distillation in simulation and real-world robot tasks. Our results show that OTQL post-trains flow policies using the robot's own experience, increasing average success percentage of single-task policies from 36% to 86% and of a pre-trained VLA from 38% to 76% while reducing the number of inference steps per action generation by 70%.",
+          "authors": [
+            "Andreas Sochopoulos",
+            "Esmeralda S. Whitammer",
+            "Nikolaos Tsagkas",
+            "João Moura",
+            "Michael Gienger",
+            "Sethu Vijayakumar"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-07-07T13:29:35+00:00",
+          "link": "https://arxiv.org/pdf/2607.06262v1",
+          "tags": [
+            "keyword:imitation",
+            "query:imitation"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "flow policy finetuning with RL, directly applicable to diffusion policy for robot control",
+          "llm_evidence_cn": "使用强化学习微调流策略，直接适用于机器人控制的扩散策略",
+          "llm_evidence": "使用强化学习微调流策略，直接适用于机器人控制的扩散策略",
+          "canonical_evidence": "使用强化学习微调流策略，直接适用于机器人控制的扩散策略",
+          "llm_tldr_en": "OTQL uses optimal transport Q-learning to finetune flow policies from experience, accelerating inference and improving quality under distribution shift.",
+          "llm_tldr_cn": "扩散和流策略在机器人控制中表现出色，但需要高质量演示和快速推理。本文提出OTQL，通过优势加权条件最优传输流来微调次优流策略，利用机器人经验进行RL后训练。该方法不仅提升了策略性能，还加速了推理，是对扩散策略在机器人学习中的一种实用增强。",
+          "llm_tldr": "扩散和流策略在机器人控制中表现出色，但需要高质量演示和快速推理。本文提出OTQL，通过优势加权条件最优传输流来微调次优流策略，利用机器人经验进行RL后训练。该方法不仅提升了策略性能，还加速了推理，是对扩散策略在机器人学习中的一种实用增强。",
+          "llm_tags": [
+            "query:imitation"
+          ],
+          "matched_query_tag": "query:imitation",
+          "matched_query_text": "diffusion policy for robot control",
+          "matched_requirement_id": "req-4",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.06262v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.06370v1",
+          "source": "arxiv",
+          "title": "Training-Free Acceleration for Vision-Language-Action Models with Action Caching and Refinement",
+          "abstract": "Vision-Language-Action (VLA) models have emerged as a promising approach for generalizable robotic manipulations. In particular, flow matching-based VLA models have shown remarkable success due to their capability to generate precise and smooth action sequences and capture multimodal distributions. However, the iterative denoising process in the action head acts as a major computational bottleneck, posing a critical challenge for real-time deployment. To address this challenge, we propose ActionCache, a plug-and-play external cache that opportunistically reuses past intermediate actions to warm-start generations from the vicinity of target actions, thereby drastically reducing the inference latency. Specifically, ActionCache stores the intermediate actions with compact multimodal keys, which enables retrieval from similar past contexts across different episodes or even different tasks. Experimental results in simulation and real-world environments demonstrate that ActionCache maintains high task success rates in a low-latency regime, achieving inference acceleration of up to $11.75\\times$ and $34.43\\times$ for representative flow-based VLA models, $π_{0.5}$ and GR00T-N1.6, respectively.",
+          "authors": [
+            "Ryuji Oi",
+            "Hikari Otsuka",
+            "Kosuke Matsushima",
+            "Yuki Ichikawa",
+            "Masato Motomura",
+            "Tatsuya Kaneko",
+            "Daichi Fujiki"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.CV",
+            "cs.LG"
+          ],
+          "published": "2026-07-07T15:10:15+00:00",
+          "link": "https://arxiv.org/pdf/2607.06370v1",
+          "tags": [
+            "keyword:imitation",
+            "query:imitation"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "accelerates flow-matching VLA models, relevant to diffusion policy for robot control",
+          "llm_evidence_cn": "加速流匹配VLA模型，与机器人控制的扩散策略相关",
+          "llm_evidence": "加速流匹配VLA模型，与机器人控制的扩散策略相关",
+          "canonical_evidence": "加速流匹配VLA模型，与机器人控制的扩散策略相关",
+          "llm_tldr_en": "ActionCache is a plug-and-play cache that reuses past intermediate actions to accelerate flow-matching VLA models, enabling real-time robot control.",
+          "llm_tldr_cn": "流匹配VLA模型因迭代去噪过程计算瓶颈难以实时部署。本文提出ActionCache，一种即插即用外部缓存，通过重用过去中间动作来预热生成，大幅降低延迟。该方法在不牺牲性能的前提下显著加速了扩散/流策略的推理，使机器人控制更加实时高效。",
+          "llm_tldr": "流匹配VLA模型因迭代去噪过程计算瓶颈难以实时部署。本文提出ActionCache，一种即插即用外部缓存，通过重用过去中间动作来预热生成，大幅降低延迟。该方法在不牺牲性能的前提下显著加速了扩散/流策略的推理，使机器人控制更加实时高效。",
+          "llm_tags": [
+            "query:imitation"
+          ],
+          "matched_query_tag": "query:imitation",
+          "matched_query_text": "diffusion policy for robot control",
+          "matched_requirement_id": "req-4",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.06370v1",
+          "carry_days": 1
+        }
+      ]
+    }
+  }
 }

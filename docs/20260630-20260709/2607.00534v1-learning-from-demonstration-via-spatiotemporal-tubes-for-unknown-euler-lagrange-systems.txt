@@ -1,0 +1,442 @@
+Title: Learning from Demonstration via Spatiotemporal Tubes for Unknown Euler-Lagrange Systems
+
+URL Source: https://arxiv.org/pdf/2607.00534v1
+
+Published Time: Thu, 02 Jul 2026 00:37:48 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+# LEARNING FROM DEMONSTRATION VIA SPATIOTEMPORAL 
+
+# TUBES FOR UNKNOWN EULER –L AGRANGE SYSTEMS ∗
+
+Ratnangshu Das 
+
+Robert Bosch Centre for Cyber-Physical Systems IISc, Bengaluru, India 
+
+ratnangshud@iisc.ac.in 
+
+Puneeth Shankar 
+
+Robert Bosch Centre for Cyber-Physical Systems IISc, Bengaluru, India 
+
+puneethz1z3z2@gmail.com 
+
+Varuni Buereddy 
+
+Robert Bosch Centre for Cyber-Physical Systems IISc, Bengaluru, India 
+
+varunib@iisc.ac.in 
+
+Ravi Prakash 
+
+Robert Bosch Centre for Cyber-Physical Systems IISc, Bengaluru, India 
+
+ravipr@iisc.ac.in 
+
+Pushpak Jagtap 
+
+Robert Bosch Centre for Cyber-Physical Systems IISc, Bengaluru, India 
+
+pushpak@iisc.ac.in 
+
+July 2, 2026 
+
+# ABSTRACT 
+
+We present STT-LfD, a unified Learning from Demonstration (LfD) framework that integrates motion learning with control for unknown Euler–Lagrange systems. Unlike traditional decoupled approaches that track a fixed reference, the proposed method treats demonstrations as a data-driven safety specification. Using heteroscedastic Gaussian Processes, STT-LfD learns Spatiotemporal Tubes (STTs) as an intent envelope that capture time-varying precision requirements of a task. A closed-form feedback controller then enforces these learned constraints while respecting actuator limits, without requiring explicit system identification. The approach preserves the temporal structure of demonstrations, remains computationally efficient, and avoids explicit system identification. Hardware experiments on a mobile robot and a 7-DOF manipulator show that it outperforms baselines in robustness to disturbances and computational speed. Video Linkperturbed conditions. 
+
+# 1 Introduction 
+
+Robots operating in safety-critical and unstructured environments often need to perform complex skills that are easier to demonstrate than to manually program. Learning from Demonstration (LfD) offers a natural way to transfer human expertise directly into robotic policies [1, 2]. However, traditional LfD architectures typically suffer from a rigid decoupling: a high-level motion generation stage (e.g., DMP [3, 4] or KMP) produces a reference trajectory, which a separate low-level controller (e.g., LQR [5] or MPC [6]) then attempts to track. This separation is inherently fragile, as the motion generator ignores the hardware’s physical constraints, while the tracker treats all trajectory points with uniform importance. As a result, these approaches fail to capture what we call the intent envelope: a time-varying spatial tolerance implicitly expressed by the expert. For example, during precise manipulation (e.g., threading a needle), this envelope is narrow and restrictive, whereas in free-space motion, it can be much wider. 
+
+> ∗
+
+This work was supported in part by the SERB Start-Up Research Grant; in part by the ARTPARK. The work of Ratnangshu Das was supported by the Prime Minister’s Research Fellowship from the Ministry of Education, Government of India. 
+
+> arXiv:2607.00534v1 [cs.RO] 1 Jul 2026
+
+A PREPRINT - J ULY 2, 2026 
+
+Figure 1: STT-LfD framework: Expert demonstrations are aligned using DTW and spatiotemporal tubes are obtained using HGPs. A closed-form controller then enforces tube invariance for safe and robust task execution under input constraints. In this letter, we address this limitation by introducing STT-LfD, a unified framework that bridges the gap between probabilistic motion representation and robust control for unknown Euler-Lagrange systems. We use heteroscedastic Gaussian Processes (HGPs) [7] to learn Spatiotemporal Tubes (STTs) [8, 9] from demonstrations that capture both the nominal task behavior and its time-varying precision requirements. However, previous STT formulations primarily focused on satisfying formally specified temporal logic constraints through optimization- or learning-based tube synthesis. In contrast, the proposed framework constructs STTs directly from expert demonstrations, allowing the learned tubes to capture both nominal task behavior and demonstration variability. The learned tubes naturally distinguish between task-critical regions, where tracking must remain precise, and flexible regions where higher variance is allowed. Unlike conventional LfD methods that require explicit system identification and real-time optimization, as in LQR [5], MPC [6], and CBFs [10], the proposed STT-LfD framework provides a closed-form execution strategy that is mathematically coupled with the learned tube and does not require parametric model identification. This unified design allows the robot to satisfy the spatial and temporal requirements of the demonstrated task, while respecting actuator limits and remaining robust to disturbances, even when the system parameters are unknown. The main contributions of this letter are summarized as follows: 1. Unified Task Specification: We propose a Learning from Demonstration framework that learns Spatiotemporal Tubes (STTs) directly from expert demonstrations using heteroscedastic Gaussian Processes. The learned STTs capture the time-varying precision requirements of the task and define admissible task executions as time-varying regions rather than a single reference trajectory. 2. Closed-Form Control under Input Constraints: We develop a closed-form control strategy that guarantees invariance of the learned STTs while respecting actuator limits. The proposed framework does not require explicit system identification or online optimization, making it computationally efficient for real-time robotic systems. 3. Experimental Validation: We validate the proposed framework through hardware experiments on a mobile robot and a 7-DOF FR 3 manipulator [11]. The results show significant improvement in tracking error under disturbances (externally applied jerks and variations in mass matrix) and a three-order-of-magnitude reduction in computation time compared to existing pipelines. 
+
+# 2 Preliminaries and Problem Formulation 
+
+Notation. For a, b ∈ N and a ≤ b, [a; b] denotes a close interval in N. The element-wise absolute value of a vector 
+
+x ∈ Rn is denoted by |x| := col (|x1|, . . . , |xn|) and the Euclidean norm using ∥x∥. For x, y ∈ Rn, the vector 2A PREPRINT - J ULY 2, 2026 inequalities, x ⪯ y (and x ⪰ y) represents xi ≤ yi (and xi ≥ yi), ∀i ∈ [1; n]. x ↑ (↓) a indicates x approaches a from the left (right) side. All other notation follows standard mathematical conventions. 
+
+2.1 System Definition 
+
+Consider an Euler-Lagrange (EL) system S described as: 
+
+S : M (x)¨ x + V (x, ˙x) + G(x) = τ + w(t), (1) where x(t) = [ x1(t), . . . , x n(t)] ⊤ ∈ X ⊂ Rn is the state, τ (t) ∈ Rn is the control input, and w(t) ∈ W ⊂ Rn is an unknown external disturbance. M (x) ∈ Rn×n denotes the mass matrix, V (x, ˙x) ∈ Rn represents the Coriolis and centrifugal terms, and G(x) ∈ Rn is the gravity vector. For brevity, we omit arguments and parentheses when the functional dependence is clear; for example, M (x), V (x, ˙x), G (x) and w(t) are represented as M, V, G and w,respectively. 
+
+Assumption 1 The mass matrix M (x), the Coriolis and centrifugal terms V (x, ˙x), the gravity vector G(x) and the external disturbance w(t) are all unknown. 
+
+For the EL system S, given control input bounds τ ∈ Rn: |τ (t)| ⪯ τ , for all t ∈ R+0 , there are corresponding bounds on the norms of the system parameters [12]. Although disturbance w(t) and system parameters M (x), V (x, ˙x), and 
+
+G(x) are unknown, their boundedness can be utilized effectively for control synthesis. To facilitate analysis, we adopt the following assumptions concerning the parameters of the EL system: 
+
+Assumption 2 The external disturbance w(t) satisfies −w ⪯ w(t) ⪯ w, for all t ∈ R+0 , where w ∈ Rn is a known bound. 
+
+Assumption 3 Given the control bound τ , there exists a positive constant m ∈ R, such that mτ ⪯ M −1τ .
+
+Assumption 4 The Coriolis and centrifugal terms V and the gravity vector G satisfy V M ⪯ VM ⪯ V M , where 
+
+VM := −M −1(V + G) and V M , V M ∈ Rn.
+
+Assumption 5 The inverse of the mass matrix scales the disturbance as −∥ M −1∥w ⪯ M −1w ⪯ ∥ M −1∥w. This implies, there exists mi ∈ R+, such that −miw ⪯ M −1w ⪯ miw.
+
+The Assumptions 2-5 provide the bounds on various system parameters, which are utilized for establishing the feasibility conditions in Section 4.3. 
+
+2.2 Problem Statement 
+
+The goal is to develop a unified framework that converts expert demonstrations into a time-varying intent envelope, expressed as a spatiotemporal tube (STT), and synthesizes a control law that safely executes the task. 
+
+Problem 2.1 Given a set of expert demonstrations over a finite time horizon T , learn an STT Γ( t) ⊂ Rn and design a closed-form control input τ (t) such that the system trajectory remains inside Γ( t) for all t ∈ T , the control input satisfies the actuator bounds |τ (t)| ⪯ τ , and the task is executed robustly despite unknown dynamics and external disturbances w(t).Solution Sketch: To solve the problem, we propose a unified Learning from Demonstration framework that combines data-driven motion representation with feedback control. From multiple expert demonstrations, we first learn a compact, time-indexed representation of the task that captures both the nominal behavior and variability across demonstrations. This representation is expressed as a Spatiotemporal Tube (STT) , which defines an admissible, time-varying envelope within which any system trajectory is considered a valid execution of the demonstrated task. We then design a computationally efficient feedback controller that constrains the system trajectory within the learned tube while respecting actuator limits, thereby ensuring safe, robust, and consistent task reproduction without explicit system identification. A schematic overview of the proposed solution is shown in Fig. 2. 
+
+# 3 Learning Spatiotemporal Constraints 
+
+Here, we present the Spatiotemporal Tubes-based Learning from demonstration (STT-LfD) framework for learning skills from human demonstrations using Gaussian Process [13]. 3A PREPRINT - J ULY 2, 2026 
+
+Figure 2: Temporal alignment of demonstrations. (a) Raw demonstrations showing natural human timing variability, (b) DTW-aligned with the learned STT, where the time-varying width captures narrow precise and wider flexible segments. STTs have previously been developed in the context of temporal logic specifications [8, 9], where the tubes are designed through optimization or neural networks to satisfy formal task constraints. In contrast, this work uses the STT framework in an LfD setting, where the tubes are learned directly from demonstrations and capture both the nominal task behavior and the variability across demonstrations. To achieve this, we use heteroscedastic Gaussian Processes to synthesize time-varying STTs that represent admissible task executions. The learned tubes naturally encode regions requiring high precision as narrow tube segments and more flexible task phases as wider regions. We begin by formalizing the data collection procedure, with particular attention to the temporal alignment of demon-strated trajectories, before introducing STTs as a Gaussian process–based representation of the learned skill. 
+
+3.1 Data Collection and Temporal Alignment 
+
+In LfD, we assume access to multiple expert demonstrations of the same task obtained by recording a human operator guiding the robot through the motion. Each demonstration consists of time-series measurements of the robot state sampled at a fixed rate. The demonstrations are assumed to correspond to dynamically feasible executions of the task under the target platform’s actuator limits, so that the learned STTs represent realizable task specifications. Furthermore, although repeated executions typically follow the same general path, natural human variability leads to differences in execution speed, resulting in temporal misalignment across demonstrations. Since the proposed framework learns STTs as time-dependent task representations, ensuring temporal consistency among demonstrations is therefore important. To address this, we use Dynamic Time Warping (DTW) [14, 15] as a preprocessing step. DTW aligns demonstrations by nonlinearly warping their time axes, allowing trajectories that follow similar spatial paths but are executed at different speeds to be expressed on a common time grid, while preserving the overall task geometry. The resulting temporally aligned dataset is then used to learn the STTs described in the next subsection. An illustrative example of raw demonstrations and their DTW-aligned counterparts is shown in Fig. 2. 
+
+3.2 HGP-based Spatiotemporal Tube Construction 
+
+Given a set of temporally aligned demonstrations (Section 3.1), we construct the STTs that compactly represents both the nominal trajectory and the variability observed across demonstrations. For each state dimension j ∈ [1; n], we model the desired time-varying behavior of the state using heteroscedastic GP (HGP) [16] as 
+
+xj (t) ∼ GP (μj (t), σ 2 
+
+> j
+
+(t)) , (2) where μj (t) and σj (t) are the posterior mean and standard deviation inferred from the demonstrations. Unlike standard GPs, which assume a constant (homoscedastic) noise variance across time, HGPs [7] explicitly allow the uncertainty to vary with time. This is particularly important in the intent envelope that captures task-critical precision, where different phases of a task can show very different levels of variability. For example, precise contact-rich motions often require tight tracking, while free-spaces allow more freedom. By modeling time-dependent uncertainty, HGPs allow us to naturally capture this non-uniform variability and provide more informative, task-aware tube design. The one-dimensional STT for the j-th state is defined as: 
+
+Γj (t) := [ μj (t) − λσ j (t), μ j (t) + λσ j (t)] ⊤ , (3) where λ ∈ R+ is a user-defined scaling parameter for the tube width. By taking the cartesian product of these intervals across all state dimensions, we obtain the full n-dimensional STT Γ( t) := Qnj=1 Γj (t) ⊂ Rn. This forms an 4A PREPRINT - J ULY 2, 2026 axis-aligned hyperrectangle at each time t that defines the spatiotemporal envelope within which the system state is expected to remain to accurately imitate the demonstrated task. 
+
+Remark 3.1 (Tube coverage probability) Given the tube width parameter λj ∈ R+, the prob-ability that the demonstrations are contained within the STT can be lower bounded as 
+
+P ∩nj=1 μj (t)−λj σj (t) ≤ xj (t) ≤ μj (t)+ λj σj (t), ∀t ∈ T ≥ (1 − ε)n, where ε ∈ (0 , 1) determines the confi-dence level. λj := 
+
+q
+
+2∥xj ∥2 
+
+> kj
+
++300 γj log 3  N +1 
+
+> ε
+
+, with γj denoting the information gain and ∥xj ∥kj a kernel norm measuring function complexity. Computing these quantities exactly is generally NP-hard; therefore, in practice, we estimate tube coverage probabilities using Monte Carlo sampling. For simplicity, we also set λj = λ, ∀j ∈ [1; n].Increasing λ increases the probability of capturing all demonstrations but results in wider tubes, reducing tracking precision. Moreover, achieving higher confidence or narrower probability intervals typically requires more demonstrations and increased computation. A more detailed discussion can be found in [17, 18]. Importantly, this probabilistic statement applies only to the learning phase, where the tube is constructed from finite and noisy data. Once learned, the STT represents a fixed underapproximation of the set of geometrically similar demonstrated trajectories and is therefore treated as a deterministic, time-varying constraint set. The control law in Section 4 then enforces invariance of this set deterministically, resulting in formal task execution guarantees. 
+
+We now state the theorem that formally establishes that any trajectory remaining inside the tube can be considered a consistent execution of the demonstrated task. 
+
+Theorem 3.2 Let Γ( t) be the STT constructed from multiple demonstrations of a target task. If a system trajectory 
+
+x(t) ∈ Rn satisfies x(t) ∈ Γ( t) for all t ∈ T , then the task is completed consistently with the demonstrations, up to bounded deviations governed by the tube width parameter λ.
+
+Proof 3.3 Let x(t) ∈ Rn be the system trajectory and Γ( t) := Qnj=1 [μj (t) − λσ j (t), μ j (t) + λσ j (t)] the STT learned from N aligned demonstrations. For each dimension j ∈ [1; n] and all t ∈ T , the condition x(t) ∈ Γ( t) implies 
+
+|xj (t) − μj (t)| ≤ λσ j (t). Since μj (t) and σj (t) are estimated from the distribution of the demonstrations using GPR, the interval [μj (t) ± λσ j (t)] captures the range of variation observed across demonstrations, with confidence level determined by λ. Therefore, if x(t) ∈ Γ( t) for all t ∈ T , then x(t) remains within the demonstrated task envelope at all times, implying that it satisfies the task up to the allowable deviation λ.
+
+The property that any trajectory remaining within the STT is consistent with the demonstrated task, up to bounded deviations, makes STTs a powerful representation for imitation learning. This allows robust generalization while preserving formal task guarantees. Next, we present the control law that constrains the system state to remain within the learned STTs. 
+
+# 4 Controller Synthesis 
+
+In Learning from Demonstration, respecting actuator constraints is essential for safe hardware deployment and reliable task reproduction. However, previous STT-based control formulations did not explicitly account for input constraints and could lead to unbounded control actions. Motivated by this limitation, we develop a closed-form control strategy that guarantees forward invariance of the learned STTs while respecting prescribed input constraints. The controller is devised in a two-step approach, a velocity-level control (4a), and an acceleration-level control (4b). 
+
+˙x = v, (4a) 
+
+˙v = M (x)−1 (−V (x, v ) − G(x) + u + w) . (4b) The proposed two-step architecture is inspired by the funnel-control frameworks presented in [19] and [20], where related backstepping-like methodologies were developed for pure-feedback and Euler–Lagrange systems. However, unlike classical funnel-control approaches, the proposed framework develops a control strategy for enforcing forward invariance of learned STTs under actuator constraints. 
+
+4.1 Stage I: Velocity-level Control 
+
+Given the STT Γj (t), to enforce xj (t) ∈ Γj (t), for all j ∈ [1; n] and t ∈ T , define the reference velocity vector vr (x, t )
+
+vr (x, t ) = −diag (Ψ( εx)) v, (5) where εx(x, t ) := [ εx, 1(x1, t ), . . . , ε x,n (xn, t )] ⊤, with εx,j (xj , t ) =  xj (t) − μj (t)/(λσ j (t)) is the normalized error, the map Ψ : Rn → Rn is given in Appendix A, and v ∈ Rn.5A PREPRINT - J ULY 2, 2026 
+
+4.2 Stage II: Acceleration-level Control 
+
+To ensure smooth tracking of the reference velocity vr (t) from (5) in Stage I, we now bound the velocity error ev (t) := 
+
+v(t) − vr (t) within exponentially decaying funnel constraints ρv : R+0 → Rn, given by: ρv (t) = e−μv t(pv − qv ) + qv ,
+
+as 
+
+−ρv (t) ≺ ev (t) ≺ ρv (t). (6) Here pv ∈ Rn represents the initial width of the funnel, satisfying |ev (0) | ⪯ pv , qv ∈ Rn specifies the ultimate bound on the velocity error, with 0n×1 ≺ qv ≺ pv , and μv > 0n×n ∈ Rn×n is a diagonal matrix, controlling the decay rate of the funnel constraint. Next, we define the normalized velocity error εv (t) := diag (ρv )−1ev (t). The final control input 
+
+τ (t) at the acceleration level is then formulated as: 
+
+τ (t) = −diag (Ψ( εv (t))) τ , (7) where Ψ : Rn → Rn is the transformation function in Appendix A, and τ ∈ Rn is the maximum permissible torque. Now, we introduce the feasibility conditions under which we proceed to guarantee that the system state evoles within the tube xj (t) ∈ Γj (t) for all t ∈ T and j ∈ [1; n].
+
+4.3 Feasibility Condition 
+
+By constraining the state to remain within the tube bounds, the system achieves the demonstrated task. However, input constraints address practical concerns such as actuator safety. This results in a trade-off between performance and resource limitations. To effectively navigate this trade-off, we establish the following feasibility constraints. 
+
+4.3.1 Stage I 
+
+Given the tube Γ( t) := Qnj=1 [μj (t) − λσ j (t), μ j (t) + λσ j (t)] with bounds | ˙μ(t) ± λ ˙σ(t)| ⪯ Γ = [Γ 1, . . . , Γn]⊤, the maximum permissible velocity v should satisfy the following constraint: 
+
+v ⪰ Γ + pv . (8) This condition ensures that the system has sufficient actuation capacity to reproduce the maximum speed of the demonstrations Γ and reject the worst-case perturbation ( |ev | ≺ pv ). 
+
+4.3.2 Stage II 
+
+Given funnel constraints ρv (t) = e−μv t(pv − qv ) + qv , and system dynamics in (1) with Assumptions 2- 5, the maximum permissible torque τ should adhere to the following constraint: 
+
+τ ⪰ 1
+
+m
+
+ max( −VM , V M )+ mid+μv (pv − qv )+ ar
+
+ , (9) where given the definition of bounded transformation function in Appendix A, we select an upper bound ar ∈ Rn, such that | ˙vr | = |v diag (Ψ( εx)) | ⪯ ar . For example, if Ψi(s) := tanh(5 s) for all i ∈ [1; n], then we can choose ar = 5 v.The theorem formally summarizes the approximation-free feedback controller proposed in this paper. 
+
+Theorem 4.1 Consider the Euler-Lagrange system S in (1) with assumptions 2-5 and the STTs Γ( t) obtained from the demonstrations. If the initial state error ex(0) satisfies ex(0) ∈ Γ(0) , the initial velocity error follows |ev (0) | < p v ,and if feasibility conditions (8) and (9) hold, then the closed-form controller τ (t) in (7) guarantees (i) The system state x(t) evolves within the STTs: xj (t) ∈ Γj (t) ∀t ∈ R+0 , j ∈ [1; n] and (ii) The control input τ (t) is bounded within the prescribed limit: |τ (t)| ⪯ τ , ∀t ∈ R+0 .
+
+Proof 4.2 The proof is divided into two stages: 
+
+Stage I. In stage I, we prove that the reference velocity vector vr (t) in (5) enforces the state x(t) to remain in the STT 
+
+Γ( t) for all time t ∈ T .We will prove this via contradiction. Let t× be the first time instance when the state x(t), on the application of velocity input vr (t) (5) , exits the STT Γ( t), i.e., ∃j ∈ [1; n],xj (t×) ≤ μj (t×) − λσ j (t×) or xj (t×) ≥ μj (t×) + λσ j (t×).
+
+6A PREPRINT - J ULY 2, 2026 
+
+Figure 3: Mobile robot experiments under varying platforms and disturbances. (a)-(b) The synthesized STTs for x and y dimensions. (c) Resulting figure-eight trajectories for four experimental conditions: nominal TurtleBot execution, AgileX LIMO execution, mass variation, and external jerks. 
+
+Figure 4: Sensitivity study of the STT width parameter λ for the mobile robot figure-eight trajectory task. (left) RMS tracking error and (right) RMS control effort as a function of λ. The solid curves denote the mean over 10 trials with bounded random disturbances, while the shaded regions represent ±2 standard deviations. 
+
+Then, for all (t, j ) ∈ [0 , t ×) × [1; n],μj (t) − λσ j (t) < x j (t) < μ j (t) + λσ j (t). (10) 
+
+We will consider the following two cases for t ∈ [0 , t ×).
+
+Case I. There exists j ∈ [1; n] such that xj (t) approaches the upper tube constraint, i.e., xj (t) → μj (t) + λσ j (t) = ⇒
+
+δj (t) := xj (t) − μj (t) − λσ j (t) → 0. Following (10) , we have 
+
+xj (t) < μ j (t)+ λσ j (t) ⇒ δj (t) ↑ 0 ⇒ lim  
+
+> δj(t)↑0
+
+ddt δj (t) > 0 ⇒ lim   
+
+> δj(t)↑0
+
+˙xj (t) > lim   
+
+> δj(t)↑0
+
+˙μj (t)+ λ ˙σj (t) > −Γj .
+
+Now, the actual velocity in (4a) is given by ˙xj (t) = vr,j (t) + ev,j (t), where vr,j (t) is the reference velocity law in (5) ,and ev,j (t) < p v,j (we ensure this in Stage II). Therefore, as (xj (t) − μj (t) − λσ j (t)) → 0, vr,j (t) → − vj , and we obtain that there exists j ∈ [1; n], such that: 
+
+lim   
+
+> δj(t)↑0
+
+˙xj (t) = −vj + ev,j (t) > −Γj =⇒ − vj + pv > −Γj =⇒ vj < Γj + pv .
+
+which contradicts (8) .
+
+Case II. There exists j ∈ [1; n] such that xj (t) approaches the lower tube constraint, i.e., xj (t) → μj (t) − λσ j (t).Using the lower-bound feasibility condition leads to the same contradiction and the proof follows analogously. Therefore the lower tube boundary cannot be crossed. Therefore, the reference velocity vector vr in (5) constrains x(t) within the tubes for all time, i.e., μj (t) − λσ j (t) <xj (t) < μ j (t) + λσ j (t), ∀t ≥ 0.
+
+Stage II. In stage II, we prove that the control law τ (t) in (7) keeps the velocity tracking error ev (t) within the funnel 
+
+[−ρv (t), ρ v (t)] for all t ∈ R+0 (6) .We will prove this via contradiction. Let t× be the first time instance when the velocity error ev (t), on the application of input τ (t) (7) , violates (6) , i.e., ∃j ∈ [1; n],
+
+ev,j (t×) ≤ − ρv,j (t×) or ev,j (t×) ≥ ρv,j (t×).
+
+7A PREPRINT - J ULY 2, 2026 
+
+Then, for all (t, j ) ∈ [0 , t ×) × [1; n],
+
+−ρv,j (t) < e v,j (t) < ρ v,j (t). (11) 
+
+We will consider the following two cases for t ∈ [0 , t ×).
+
+Case I. For some j ∈ [1; n], ev,j (t) approaches the upper funnel constraint, i.e., ev,j (t) → ρv,j (t) =⇒ ev,j (t) −
+
+ρv,j (t) =: δv,j → 0. Following (11) , we have: 
+
+ev,j (t) < ρ v,j (t) = ⇒ δv,j ↑ 0 = ⇒ lim  
+
+> δv,j ↑0
+
+ddt δv,j > 0=⇒ lim  
+
+> δv,j ↑0
+
+˙ev,j (t) > lim  
+
+> δv,j ↑0
+
+˙ρv,j (t) > −μv,j (pv,j − qv,j )=⇒ lim  
+
+> δv,j ↑0
+
+˙vi(t) > −μv,j (pv,j − qv,j ) + ˙ vr (t).
+
+Therefore, there exists i ∈ [1; n], such that 
+
+lim  
+
+> δv,j ↑0
+
+˙vi(t) > −μv,j (pv,j − qv,j ) − ar,i . (12) 
+
+Since, lim δv,j ↑0 εv,j (t) = 1 , we obtain lim δv,j ↑0 τi(t) = −τ i. Using the dynamics (4b) and feasibility condition (9) 
+
+lim  
+
+> δv,j ↑0
+
+˙vi(t) ≤ V M,i −mτ i +midi ≤− μv,j (pv,j −qv,j )−ar,i 
+
+which contradicts (12) .
+
+Case II. For some i ∈ [1; n], ev,j (t) approaches the lower funnel constraint, i.e., ev,j (t) → − ρv,j (t). Using the lower-bound feasibility condition leads to the same contradiction and the proof follows analogously. Therefore the lower funnel boundary cannot be crossed. Therefore, the controller τ in (7) constrains the velocity error within the funnel, i.e., −ρv (t) ≺ ev (t) ≺ ρv (t), ∀t ≥ 0.
+
+Combining Stages I and II, the control input τ (t) in (7) , under feasibility conditions (8) and (9) , ensures that the system state x(t) evolves within the STTs Γ( t) in (3) .
+
+Remark 4.3 In Stage I of the proof, we do not assume perfect tracking of the virtual velocity. Instead, we consider the actual closed-loop dynamics ˙x(t) = vr (t) + ev (t), where ev (t) = v(t) − vr (t) is the velocity tracking error. The analysis in Stage I shows that the x(t) ∈ Γ( t) as long as |ev (t)| < ρ v (t) and the feasibility condition (8) holds. Stage II then completes the proof by showing that the control input τ (t) in (7) enforces the bound |ev (t)| < ρ v (t) for all time, which in turn guarantees that the state x(t) evolves within the tube Γ( t).
+
+Remark 4.4 Assumptions 2-5 and the associated feasibility conditions (8) -(9) are introduced only to establish theoreti-cal guarantees on forward invariance of the learned STTs and bounded control execution. By “unknown dynamics” or “model-free execution,” we specifically mean that the proposed framework does not require explicit identification of the system parameters, such as the inertia matrix, Coriolis terms, or gravitational dynamics, for either STT generation or controller implementation. The learned STTs are constructed directly from demonstrations, and the control law (7) can be implemented without explicit parametric system identification. 
+
+# 5 Experimental Validation 
+
+We demonstrate the proposed STT-LfD framework through hardware experiments on two platforms: an omnidirec-tional mobile robot and a 7-DOF Franka Research 3 manipulator. The experiments focus on two aspects: handling spatiotemporal ambiguity in complex tasks and maintaining robustness against unknown dynamics and disturbances. 
+
+5.1 Task Design: 
+
+The tasks were chosen to highlight spatiotemporal aspects that are difficult for conventional methods. 
+
+Mobile Base (Figure “8" Tracking): An omnidirectional mobile robot follows a self-intersecting figure “8" trajectory (Fig. 3). At the crossing point, purely spatial methods cannot distinguish between the two distinct phases of the motion.The STT resolves this ambiguity through temporal indexing, allowing the robot to maintain the correct task sequence. 
+
+7-DOF Manipulator (Alphabet “W" Drawing): The manipulator performs a kinesthetic demonstration of drawing the letter “W" (Fig. 5). The task includes both precise corner points and flexible connecting strokes. Unlike decoupled trackers, the HGP-based STT naturally extracts these varying precision requirements from human variability, providing a time-varying constraint set for the controller. 8A PREPRINT - J ULY 2, 2026 
+
+Figure 5: 7-DOF manipulator under nominal conditions, jerk disturbances, and mass variations: (a) Joint-space trajectories remain within the learned STT. (b) Corresponding control torques generated by STT-LfD stay within the prescribed bounds while adapting to disturbances. (c) End-effector execution of the demonstrated task, showing consistent tracking. 
+
+Figure 6: Comparison of End Effector Trajectory of 7-DOF Manipulator with other baselines, showing robustness to mass variation. Left: Nominal. Right: with added mass. 
+
+5.2 Implementation Details: 
+
+The framework was implemented in C++ using the Libfranka API for the manipulator and a ROS2 interface for the mobile robot. All experiments were conducted on a system with an Intel Core i7 CPU at 3.6 GHz and 16 GB RAM. We collected 15 expert demonstrations with variations in speed and execution style while maintaining the same overall path. The STT scaling parameter was set to λ = 1 .2, representing an intent envelope that captures approximately 77% 
+
+of the expert demonstration variance. This choice provides a balanced trade-off between accurate trajectory tracking and robustness to sensor noise. A smooth saturation function Ψ( s) = tanh(5 s) was used to limit control effort near the tube boundaries. For the mobile robot, the velocity and acceleration limits were set to 0.1 m/s and 0.1 m/s 2, while the manipulator joint velocity and torque limits were selected according to [11]. 
+
+5.3 Execution Behavior and Tube Invariance: 
+
+The STTs clearly capture the intent of the experts, reflecting how demonstrations vary across different parts of the task. In the figure “8” experiment, the demonstrations are highly consistent near the initial and final regions, which results in narrower tubes towards the start and end. As the robot moves through the larger regions of the track, the demonstrations show greater variability in speed and spatial execution, leading to wider tube sections that allow more flexibility. The temporal indexing provided by the STT ensures that the robot passes through the intersection with the correct motion direction, as illustrated by the task-space trajectory. Throughout the experiment, the executed trajectories remain inside the learned tubes and accurately trace the figure “8” trajectory while the control inputs remain bounded. To further 9A PREPRINT - J ULY 2, 2026 Table 1: Quantitative comparison of STT-LfD and baseline controllers on the Franka Research 3 manipulator. 
+
+Method Tracking Error (mm) Max Torque (N ·m) Comp. Time (ms) Nominal Mass Variation Nominal Mass Variation 
+
+STT-LfD (ours) 2.83 ± 0.09 4.24 ± 0.08 1.93 ± 0.001 2.74 ± 0.002 0.021 ± 0.007 
+
+KMP+LQR [5] 10 .08 ± 0.02 53 .85 ± 0.47 8.43 ± 2.36 9.25 ± 1.97 15 .941 ± 2.83 
+
+DMP+MPC [6] 10 .64 ± 0.05 55 .58 ± 1.01 7.81 ± 2.74 7.51 ± 3.13 22 .733 ± 1.31 
+
+NODE-CLF-CBF [21] 13 .44 ± 0.108 18 .78 ± 0.02 1.37 ± 0.019 2.52 ± 0.12 1.172 ± 0.35 
+
+S2NNDS [22] 17 .19 ± 0.011 27 .39 ± 0.09 1.853 ± 1.076 3.206 ± 1.54 1.486 ± 0.14 
+
+evaluate robustness to variations in system dynamics and external disturbances, we additionally reproduced the same learned STTs using an AgileX LIMO robot under same input constraints without modifying the controller structure or requiring explicit system identification. We also evaluated the framework under a 1 kg load variation and manually applied external jerky dynamic disturbances during execution. Across all tested conditions, the proposed controller successfully maintained the system trajectory within the learned STTs while completing the task, as shown in Fig. 3. A similar pattern is observed in the “W” drawing task. Since all demonstrations begin from nearly the same configuration, the STTs are initially narrow. The tubes widen along the straight strokes where human motion varies more and tighten again near sharp corners that require precise execution. To evaluate robustness under changing dynamics, we additionally performed experiments with a varying mass matrix and manually applied external jerks during execution. Despite these disturbances and dynamic variations, the proposed controller successfully modulated the torques to maintain the manipulator state within the learned STT, as illustrated in Fig. 5. The proposed framework also demonstrated strong computational scalability across systems with substantially different dimensionality. Once the demonstration data is collected, the STTs for each state dimension were computed in parallel, enabling efficient offline tube synthesis. In our experiments, the offline STT generation required approximately 5.655 sfor the mobile robot ( x ∈ R2) and 5.794 s for the Franka manipulator ( x ∈ R7). During online execution, the proposed closed-form controller required only 0.018 ms per control step for the mobile robot and 0.021 ms per control step for the manipulator. The comparable offline and online computation times across systems with substantially different dimensionality highlight the computational efficiency and scalability of the proposed framework. Across both platforms, these results demonstrate that the STT-LfD framework effectively translates the probabilistic specifications learned from demonstrations into robust and computationally efficient hardware execution without requiring explicit system identification or precise knowledge of the underlying model parameters. 
+
+5.4 Sensitivity Analysis of Tube Width Parameter: 
+
+The tube width parameter λ determines the width of the learned STTs, thereby controlling the trade-off between tracking precision and control effort. To analyze its effect, we varied λ from 0.2 to 2.4 for the mobile robot figure-eight trajectory task. For each value of λ, the experiment was repeated over 10 trials under bounded random disturbances, and the reported results correspond to the mean ± one standard deviation. The quantitative results are shown in Fig. 4. As λ increases, the RMS tracking error increases approximately linearly due to the wider admissible execution region, whereas the RMS control effort decreases approximately exponentially since the controller requires less aggressive corrective action near the tube boundaries. Based on this trade-off, λ = 1 .2
+
+was empirically selected as a balanced operating point between tracking precision and control effort. 
+
+5.5 Comparative Performance Analysis and Discussion 
+
+To benchmark STT-LfD against both existing approaches, we conducted 10 trials for each of these methods: KMP+LQR [5], DMP+MPC [6], NODE-CLF-CBF [21] and S2NNDS [22]. For a fair comparison, all methods used the same expert demonstrations and were evaluated under identical task specifications, control frequency, input limits, and mass variation, while each baseline was tuned following its original implementation. The results are summarized in Table 1. 
+
+5.5.1 Robustness to Model Perturbations 
+
+The most significant disparity between the methods is observed under dynamic uncertainty. When a 1 kg load was added to the manipulator, the tracking error of the model-based baselines (KMP+LQR and DMP+MPC) increased 10 A PREPRINT - J ULY 2, 2026 substantially, exceeding 50 mm. While NODE-CLF-CBF and S2NNDS showed better robustness, their tracking errors still increased to 18 .78 mm and 27 .39 mm, respectively. In contrast, STT-LfD maintained a tracking error of only 4.24 ± 0.08 mm under the same load variation. This robust performance is a result of the controller’s ability to compensate for unknown EL terms in real time. 
+
+5.5.2 Impact of Spatiotemporal Precision 
+
+During the precise drawing segments, the HGP-based synthesis generated a narrow STT due to low expert variability. STT-LfD successfully enforced these tighter constraints by increasing control effort proportionally to the normalized error. Conversely, the baselines do not explicitly encode demonstration variability as time-varying admissible execution regions. 
+
+5.5.3 Computational Efficiency for Real-Time Execution 
+
+The proposed controller required only 0.021 ms per control step, compared to 15 .94 ms, 22 .73 ms, 1.17 ms, and 
+
+1.49 ms for KMP+LQR, DMP+MPC, NODE-CLF-CBF, and S2NNDS, respectively. This improvement stems from the closed-form nature of the controller, which avoids online optimization and iterative neural-network evaluations during execution. 
+
+Overall Observation: By combining learning and control into a single framework, STT-LfD avoids the modeling mismatch inherent in decoupled designs. The learned STT acts as a time-varying safety specification, and the closed-form controller ensures that any trajectory executed by the robot is not only kinematically feasible but also remains within the expert’s original intent envelope. All experimentation videos are available at https://tinyurl.com/STT-LfD. 
+
+Remark 5.1 For quantitative comparison, all methods were evaluated in the same Gazebo simulation environment under identical task and disturbance conditions. In addition, STT-LfD was validated on real hardware to demonstrate practical deployment. Hardware experiments were not conducted for the baseline methods, as they do not provide formal forward-invariance guarantees and exhibited significant performance degradation under model perturbations. 
+
+# 6 Conclusion 
+
+This letter introduces STT-LfD, a unified framework that connects probabilistic learning with robust control. We transform demonstrations into STTs through HGP, and capture the expert’s intent. We then propose a input-constrained closed-form controller that does not require explicit system identification. Hardware results demonstrate that STT-LfD allows accurate, safe, and computationally efficient task reproduction, even for systems operating under dynamic perturbations and uncertain system parameters. While the current framework focuses on learning and reproducing demonstrated behaviors in static environments, in future work, we plan to extend the framework to dynamically changing environments through online adaptation of the learned STTs for real-time obstacle avoidance and multi-robot coordination. We also plan to develop systematic methods for selecting the tube width parameter λ. Another direction is to automatically adapt the temporal parameterization of the learned STTs, enabling demonstrations collected at arbitrary execution speeds to be transformed into dynamically feasible task specifications that satisfy the actuator constraints of the target platform. 
+
+# References 
+
+[1] H. Ravichandar, A. S. Polydoros, S. Chernova, and A. Billard, “Recent advances in robot learning from demon-stration,” Annual Review of Control, Robotics, and Autonomous Systems , vol. 3, pp. 297–330, 2020. [2] C. Celemin, R. Pérez-Dattari, E. Chisari, G. Franzese, L. de Souza Rosa, R. Prakash, Z. Ajanovi´ c, M. Ferraz, A. Valada, and J. Kober, “Interactive imitation learning in robotics: A survey,” Foundations and Trends® in Robotics , vol. 10, no. 1-2, pp. 1–197, 2022. [3] A. J. Ijspeert, J. Nakanishi, and S. Schaal, “Movement imitation with nonlinear dynamical systems in humanoid robots,” in IEEE International Conference on Robotics and Automation , vol. 2, pp. 1398–1403, 2002. [4] S. Schaal, A. Ijspeert, and A. Billard, “Dynamic movement primitives—a framework for motor control in humans and humanoid robotics,” in International Symposium on Adaptive Motion of Animals and Machines , 2006. [5] J. Silvério, Y. Huang, F. J. Abu-Dakka, L. Rozo, and D. G. Caldwell, “Uncertainty-aware imitation learning using kernelized movement primitives,” in IEEE/RSJ International Conference on Intelligent Robots and Systems ,pp. 90–97, 2019. 11 A PREPRINT - J ULY 2, 2026 [6] Y. Hu, G. Chen, X. Ning, J. Dong, S. Liu, and A. Knoll, “Mobile robot learning from human demonstrations with nonlinear model predictive control,” in IEEE/RSJ International Conference on Intelligent Robots and Systems ,pp. 5057–5062, 2019. [7] M. Schneider and W. Ertel, “Robot learning by demonstration with local Gaussian process regression,” in IEEE/RSJ International Conference on Intelligent Robots and Systems , pp. 255–260, 2010. [8] R. Das, A. Basu, and P. Jagtap, “Spatiotemporal tubes for temporal reach-avoid-stay tasks in unknown systems,” 
+
+IEEE Transactions on Automatic Control , 2025. [9] R. Das, S. Upadhyay, and P. Jagtap, “Real-time spatiotemporal tubes for dynamic unsafe sets,” IEEE Robotics and Automation Letters , vol. 11, no. 2, pp. 2146–2153, 2025. [10] A. Robey, H. Hu, L. Lindemann, H. Zhang, D. V. Dimarogonas, S. Tu, and N. Matni, “Learning control barrier functions from expert demonstrations,” in 59th IEEE Conference on Decision and Control , pp. 3717–3724, 2020. [11] F. Emika, “Control parameters documentation,” 2025. Accessed: 2025-01-25. [12] S. Nicosia and P. Tomei, “Robot control by using only joint position measurements,” IEEE Transactions on Automatic control , vol. 35, no. 9, pp. 1058–1061, 1990. [13] M. Seeger, “Gaussian processes for machine learning,” International Journal of Neural Systems , vol. 14, no. 02, pp. 69–106, 2004. [14] P. Senin, “Dynamic time warping algorithm review,” Information and Computer Science Department University of Hawaii at Manoa Honolulu, USA , vol. 855, no. 1-23, p. 40, 2008. [15] M. Arduengo, A. Colomé, J. Lobo-Prat, L. Sentis, and C. Torras, “Gaussian-process-based robot learning from demonstration,” Journal of Ambient Intelligence and Humanized Computing , pp. 1–14, 2023. [16] Q. V. Le, A. J. Smola, and S. Canu, “Heteroscedastic Gaussian process regression,” in International Conference on Machine Learning , pp. 489–496, 2005. [17] N. Srinivas, A. Krause, S. M. Kakade, and M. W. Seeger, “Information-theoretic regret bounds for Gaussian process optimization in the bandit setting,” IEEE Transactions on Information Theory , vol. 58, no. 5, pp. 3250–3265, 2012. [18] P. Jagtap, G. J. Pappas, and M. Zamani, “Control barrier functions for unknown nonlinear systems using Gaussian processes,” in 59th IEEE Conference on Decision and Control , pp. 3699–3704, 2020. [19] C. P. Bechlioulis and G. A. Rovithakis, “A low-complexity global approximation-free control scheme with prescribed performance for unknown pure feedback systems,” Automatica , vol. 50, no. 4, pp. 1217–1226, 2014. [20] F. Mehdifar, C. P. Bechlioulis, and D. V. Dimarogonas, “Funnel control under hard and soft output constraints,” in 
+
+61st Conference on Decision and Control , pp. 4473–4478, 2022. [21] F. Nawaz, T. Li, N. Matni, and N. Figueroa, “Learning complex motion plans using neural odes with safety and stability guarantees,” in IEEE International Conference on Robotics and Automation , pp. 17216–17222, 2024. [22] A. E. Binny, M. Anand, H. T. Kussaba, L. Chen, S. Agrawal, F. J. Abu-Dakka, and A. Swikir, “Safe and stable neural network dynamical systems for robot motion planning,” IEEE Robotics and Automation Letters , 2026. [23] S. Haddadin, “The Franka Emika robot: A standard platform in robotics research,” IEEE Robotics & Automation Magazine , 2024. [24] C. Gaz, M. Cognetti, A. Oliva, P. Robuffo Giordano, and A. De Luca, “Dynamic identification of the Franka Emika panda robot with retrieval of feasible parameters using penalty-based optimization,” IEEE Robotics and Automation Letters , vol. 4, no. 4, pp. 4147–4154, 2019. 
+
+# A Bounded Transformation Functions 
+
+The bounded transformation function Ψ : Rn → Rn is a smooth mapping that ensures the control inputs remain within specified limits while preserving desired behavior. We introduce and discuss the use cases of two categories of such functions: (i) saturation and (ii) zeroing. 
+
+A.1 Saturation Transformation Function 
+
+Saturation-type functions are defined as: Ψ( s) = [Ψ 1(s1), . . . , Ψn(sn)] ⊤, where for all i = [1; n]:
+
+Ψi(si) = 
+
+
+
+−1, si ∈ (−∞ , −1] ,
+
+0, si = 0 ,
+
+1, si ∈ [1 , ∞),
+
+12 A PREPRINT - J ULY 2, 2026 
+
+Figure 7: Demonstrated Data and Learned Spatiotoemporal Tubes for the 7-DOF Manipulator. 
+
+Figure 8: Torque Input to 7-DOF Manipulator. and Ψi(si) is non-decreasing for all si ∈ (−∞ , ∞).These functions saturate at ±1 when their input exceeds ±1. This saturation ensures robustness: even if the error grows beyond bounds due to disturbances, the system still receives control input that pushes it back toward the safe region. 
+
+A.2 Zeroing Transformation Function 
+
+Zeroing functions are also defined component-wise: Ψ( s) = [Ψ 1(s1), . . . , Ψn(sn)] ⊤, where for all i = [1; n]:
+
+Ψi(si) = 
+
+
+
+−1, si = −1,
+
+0, si = 0 ,
+
+1, si = 1 ,
+
+lim  
+
+> si→±∞
+
+Ψi(si) = 0 and Ψi(si) is non-decreasing on (−1, 1) .
+
+Unlike saturation functions, zeroing functions decay to zero outside [−1, 1] . This behavior is useful in safety-critical settings where large errors may indicate danger. Reducing the control input to zero in such cases can prevent unsafe or unstable responses. 
+
+# B Additional Manipulator Experiments 
+
+This case study involves a Franka Emika Research 3 robot, a lightweight 7-degree-of-freedom manipulator designed for safe human-robot collaboration [11]. For this study, the robot’s maximum joint velocity and torque limits were set to 
+
+v = 6 rad/s and τ = 8 N-m, respectively [23, 24] for all the joints. A kinesthetic demonstration was conducted starting from the robot’s default home configuration. During the demon-stration, the operator physically guided the arm through the desired trajectory while joint positions were continuously recorded. STTs for each of the seven joints were then learned parallely with λ = 1 .2. The resulting tubes are shown in Figure 7. The approximation-free, feedback control strategy in Equation (7) was subsequently deployed to replicate the demon-strated motion. To evaluate the system’s robustness, we conducted experiments under three conditions: (i) nominal operation without disturbances, (ii) altered dynamics by attaching either a half-filled or a fully filled water bottle to one of the links, and (iii) external disturbances introduced by applying sudden jerks during task execution. Figure 8 shows the resulting joint torques for each scenario. Hardware demonstration videos for these experiments are available at Link. 13 A PREPRINT - J ULY 2, 2026 
+
+Figure 9: End Effector Trajectory of 7-DOF Manipulator. 14

@@ -1,0 +1,436 @@
+Title: 2606.31836v1.pdf
+
+URL Source: https://arxiv.org/pdf/2606.31836v1
+
+Published Time: Wed, 01 Jul 2026 01:21:58 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+> IEEE ROBOTICS AND AUTOMATION LETTERS.
+
+# RoboTacDex: A Dexterous Visual-Tactile-Action Dataset 
+
+# for Humanoid Manipulation 
+
+Xinyi Wang!, Donghan Li', Zi’ Ang Chen!, Chong Yu!, Chen Xin?, Peng Ye**, Yingkai Sunt, Tao Chen! 
+
+Abstract—In the field of robot learning, large-scale and diverse demonstration trajectories provide the fundamental basis for en-hancing robotic manipulation ability. We introduce RoboTacDex, a large, multi-modal, and diverse dataset of dexterous manip-ulation behaviors performed with a humanoid robot. Built on the publicly accessible humanoid robot Unitree G1, RoboTacDex consists of 6k trajectories covering 19 tasks, 23 skills, and in-teractions with 22 objects. RoboTacDex provides comprehensive records including multi-view RGB and depth information, tactile feedback, and detailed semantic annotations. Furthermore, the dataset features a variety of relatively challenging tasks that can only be completed by dual arms and dexterous hands, aiming to mimic human-like operational logic and simulate real-world manipulation complexity. To ensure data collection quality, we develop an improved multi-camera synchronization system to enable millisecond data synchronization and recording of modalities. In our experiments, we evaluate three representa-tive imitation learning models on our dataset, analyzing their performance as well as their respective strengths and limitations across different task categories. Successful trial results and amoderate level of generalization capabilities across a suite of tasks indicate the effectiveness and diversity of the collected dataset. Our dataset will be open-sourced soon. Index Terms—Robotics benchmark, humanoid manipulation, tactile sensing, dexterous hand. I. INTRODUCTION 
+
+In recent years, imitation learning and related methodology leveraged by large-scale datasets have achieved rapid progress in the field of robotic manipulation. Data collection systems for fixed-base robots have become relatively mature and have 
+
+yielded numerous large-scale datasets [1]-[3]. These efforts 
+
+have effectively driven the progress of various manipulation policies [4]-[6]. However, high-quality manipulation datasets specifically for humanoid robots remain extremely scarce. Compared to fixed-base manipulators, data collection for hu-manoid robots faces challenges. On one hand, humanoids have extremely high degrees of freedom (DOP), requiring collection systems that can precisely record complex, high-dimensional 
+
+bimanual coordination tasks. On the other hand, there are 
+
+high expectations for humanoids to perform complex tasks in unstructured, open-world environments, which sets a higher bar for data diversity, system completeness, and the objectivity of evaluation frameworks. Currently, the surge in robotic manipulation research such as diffusion model and Vision-Language-Action (VLA) models has demonstrated immense potential for developing general-purpose robotic manipulation models. However, pure visual 
+
+> lFudan University; 7ByteDance Intelligent Creation; 2Shanghai AI Labo-ratory; “The Chinese University of Hong Kong.
+
+input from a single viewpoint is often insufficient for handling complex physical interactions and achieving real generaliza-tion. Multi-view observations and depth information provide a complete spatial geometric representation [7], while tac-tile information serves as a core feedback mechanism for achieving dexterous manipulation and perceiving the physical properties of objects [8], [9]. Consequently, constructing ahumanoid manipulation dataset that integrates multi-modal 
+
+information, including vision, depth, and tactile sensing, is 
+
+a critical cornerstone toward achieving universal embodied intelligence. To bridge this gap, this study presents RoboTacDex, a large-scale, multi-modal dataset specifically targeting dexterous upper-body humanoid manipulation. This dataset comprises over 6,000 demonstration trajectories, totaling approximately 25 hours. Distinct from earlier research confined to sim-ple tabletop tasks or single modalities, this dataset provides comprehensive records including tactile feedback, multi-view depth maps, and RGB images. The tasks are designed to sim-ulate authentic human-like operational logic, demonstrating a wide range of skills and task complexity. To ensure the multimodal temporal consistency of the collected trajectories, we design a hardware-software co-synchronization method. Furthermore, we re-engineer the Unitree official teleoperation script to enable the recording of depth and tactile sensing data. Furthermore, this work not only provides data resources but also establishes a verification benchmark. Through extensive experimental analysis, we verify the significant role of this dataset in enhancing robotic policy performance. We also evaluate the performance of representative imitation learning policies when handling high-dimensional humanoid action spaces, with experimental results proving the importance of high-quality, multi-modal data for breaking through current bottlenecks in humanoid manipulation tasks. The main contributions of this paper are summarized as follows: « We construct a multi-view, multimodal humanoid upper-body manipulation dataset containing over 6k trajectories and covering diverse human-like tasks. e« We develop an improved hardware integration scheme that resolves synchronization challenges across heteroge-neous sensors. e We conduct evaluations of representative manipulation learning methods on the RoboTacDex dataset, providing a standardized performance benchmark and_ technical reference for future humanoid manipulation research.   
+
+> 0000-0000/00$00.00 © 2026 IEEE IEEE ROBOTICS AND AUTOMATION LETTERS.
+> Unitree G1
+> Multi-Modality and Visual Method
+> (b) Fig. 1. RoboTacDex Overview. (a) The framework of teleoperation system. (b) RoboTacDex aggregates high-quality multi-modal sensory data and provides
+> two method to visualize. We can replay the record trajectory in real world robot and IsaacSim simulation environment to ensure correct collection.
+> Il. RELATED WORK
+
+A. Robot Policy Learning Traditional robot manipulation systems predominantly rely on model-based planning and control framework. This indi-cates that systems often struggle to generalize to unseen sce-narios. In contrast, imitation learning policies enable robots to acquire stable manipulation skills by imitating expert behavior        
+
+> {4], [10], [11]. Recent advances in diffusion-based models
+
+[12] have achieved remarkable success in image generation and beyond. Building on these developments, diffusion pol-        
+
+> icy [5] has been introduced to robotic manipulation tasks,
+
+transforming action generation into a process of progressively 
+
+> denoising. Many small-scale models [13]—[16] have been pro-
+
+posed and have achieved promising results on specific tasks. Their generalization capability heavily relies on sufficient and various data. Moreover, occlusions during data collection often compromise task success. Fusing multi-view visual in-  
+
+> formation provides richer spatial cues [7], [17] and mitigates occlusion issues. However, multi-view RGB observations still
+
+lack explicit geometric structure. Incorporating explicit depth data or 3D representations [6], [18]-[21] provides robots with a more comprehensive geometric structure feature. The incorporation of depth information reduces the need for thou-sands of demonstrations to implicitly model 3D geometry feature in 2D model. Previous research has also demonstrated  
+
+> that multi-view or 3D representation-based policies [22]-[25]
+
+significantly outperform models relying solely on single-view or 2D images in task success rates and generalization to scene distribution shifts. And tactile sensing is equally crucial in robotic manipulation, compensating for visual occlusions and providing finer perception or feedback from manipulated         
+
+> objects in complex tasks [9]. Several studies [8], [26]-[28]
+
+have attempted to integrate tactile sensing with imitation learning. More recently, VLA models [25], [29]-[31] building upon multimodal large language models (MLLMs), exploit their strong representation capacity and commonsense reasoning about the physical world. These models are pretrained on vast-scale web data and implicitly acquire rich semantic and spatial priors for manipulation. Many existing VLA models [32], [33] demonstrate strong versatility and generalization across diverse scenarios, objects, and even robot types. B. Robotic Manipulation Datasets Robot manipulation datasets play a crucial role in facili-tating the learning of data-driven robot policies. For years, robotics researchers have invested significant time and effort in constructing high-quality supervised datasets. Given the advantages of simulation environments in scalability, control-lability, and data acquisition costs, researchers have primarily focused on building operational scenarios within simulations to 
+
+> create datasets [4], [10], [34]-[36]. However, due to persistent,
+
+non-negligible differences between simulation and the real physical world in dynamics and contact modeling, reliance solely on simulated data often suffers from the sim-to-real gap. 
+
+> Datasets like RoboTurk [1], BC-Z [37], RT-1 [38], BridgeData [2], and RH20T [39] collect data in real environments through
+
+human teleoperation or scripted methods. Building on the success of the VLA paradigm in manipulation, the robotics community has proposed large and diverse datasets aimed at improving generalization in varied environmental conditions. Researchers have integrated cross-robot large-scale multi-task  
+
+> datasets [40], [41].
+
+Recently, humanoid robots have garnered significant atten-tion, spurring a surge in the development of humanoid-specific datasets. Due to the relative immaturity of teleoperation for humanoids compared to robotic arms, data collection suffers from suboptimal control precision and efficiency. The simul-taneous necessity of stabilizing the lower body further com-plicates the acquisition of humanoid manipulation datasets. The data collected by Nvidia Gr0Ot [33] contains 240k table manipulation trajectories, but it records only one RGB camera. RoboMIND [3] is a multi-entity dataset containing approx-imately 15k humanoid trajectories, but it relies on a single camera for RGB and depth recording, with no tactile data captured. To the best of current knowledge, Agibot World [42] is the largest humanoid manipulation dataset, employing multi-angle standard RGB and fisheye cameras for supplementary views. However, dexterous hand data constitutes only a small                                                                                
+
+> fraction, and no tactile information. Humanoid Everyday [43] IEEE ROBOTICS AND AUTOMATION LETTERS.
+> TABLE I COMPARISON OF ROBOTIC MANIPULATION DATASETS :.Humanoid Dexterous Human-Robot Tactile Multi-view Dataset # raj. # Skills Robot Hand Interaction Sensing Camera
+> RH20T [39] 13k 33 xxxv¥
+> BridgeData [2] 7.2k 4xxxxv
+> DROID [40] 76k 86 xxxxv
+> Open X-Embodiment [41] 1400k 217 xxxxvFourier ActionNet [44] 13k 16 vvxxxRoboMIND [3] 107k 38 vvxxxAgibot World [42] 1000k 87 vxt vxvHumanoid Everyday [43] 10.3k 221 vvv“* xRoboTacDex 6k 23 vvvvvT Mostly grippers and only a few dexterous hands. * Only three-fingered (Dex-3) hand with tactile perception.
+> records rich multimodal information including visual, tactile,
+
+and textual data, yet it also lacks multi-view coverage. In contrast, our dataset distinguishes itself by compiling compre-hensive multi-modal data, encompassing RGB, depth, tactile inputs and natural language annotations (see Table J). It records the whole manipulation process from 4 perspectives, offering a valuable resource for rich physical interactions tasks and multi-view alignment research in robot manipulation.  
+
+> III. DATA COLLECTION PLATFORM SETUPS
+
+A. Hardware Design In this section, we describe the setups of the entire data acquisition system. As shown in Fig. la, the operator wears a Meta Horizon VR to capture human upper-body movements and map them onto the robot, controlling the motion of each joint of the arms and fingers. We employ a Unitree G1 humanoid robot for data collection: dual arms with 14 DOF and dual Brainco dexterous hands with 12 DOF, The lower limbs and waist remain fixed to stabilize the robot in place, ensuring the head-mounted camera consistently captures desktop operations. Additionally, four RGB-D cameras capture multi-view observations: one provides a head-centric view, two are mounted on the wrists to focus on the dexterous hands, and one offers a third-person perspective overview of the operational scene. The dexterous hands are Brainco Revo2 Tactile version, capable of recording touch information such as normal forces and tangential forces on each finger. B. Data Collection Pipeline We record trajectories on high-frequency 30Hz. Each frame includes low-dimensional state data for the arm and finger joints, RGB and depth information from four cameras with 
+
+> 640x480 resolution, tactile information from both hands, and
+
+action data of the arm and finger joints, as shown in Fig. 1b. Additionally, the collected data can be replayed in both simu-lated and real environments to ensure correct data recording. 1) Camera Synchronization: Robotic manipulation tasks exhibit significant temporal sequentiality and high dynamic characteristics. If observations from different perspectives are temporally misaligned, the same physical state may be erro-neously modeled as inconsistent multimodal inputs. Therefore, timestamp alignment among multiple cameras is essential for ensuring geometric and semantic consistency across multi-view. In our data collection system, we employ a combination of hardware and software synchronization to minimize tem-poral mismatches among cameras capturing the same frame. The first-person and third-person perspective cameras are RealSense D435i, which support hardware synchronization. Meanwhile, software synchronization is applied between the head/third-person perspective cameras and the wrist-mounted cameras to eliminate temporal misalignment in the recorded video streams. 2) Tactile Information Transmission: The tactile sensing modality provides normal and tangential contact forces (in-cluding direction) at each fingertip, along with proprioceptive signals derived from self-capacitance proximity sensing— the latter serving as a measure of the distance between the finger and external objects. Tactile information and joint state data from the dexterous hand are published at a frequency of 100Hz in the DDS messages form. The local computer receives these messages and records them at 30Hz alongside other modalities.  
+
+> IV. DATASET ANALYSIS
+
+Based on the data collection platform described in Section         
+
+> Ill, we construct alarge, multi-modal, and diverse dataset
+
+named RoboTacDex. This dataset comprises 6k high-quality trajectories across 19 tasks, 23 skills, and 22 objects. In this section, we further analyze the dataset through a quantitative study of its diversity across task, object, and scene. And our evaluation across multiple dimensions shows that RoboTacDex constitutes a comprehensive dataset for manipulation policy learning and broader research. A. Diversity of Task and Skill Types Different datasets contain diverse manipulation tasks, and a single task may involve several steps, different objects, and skills. To categorize these tasks, we define five common manipulation types, and each trajectory can belong to multiple manipulation types. 1) Basic Manipulations: Object interactions such as grasp-ing, placing, or pushing without complex constraints. 2) Articulated Manipulations: Manipulations involving ob-jects with articulated joints. IEEE ROBOTICS AND AUTOMATION LETTERS. 
+
+Fig. 2. Representative dexterous manipulation skills in RoboTacDex. The dataset comprises 6k high-quality trajectories across 19 tasks, 23 skills, and 22 
+
+> objects, covering a wide spectrum of dexterous manipulation behaviors. And for many tasks, we collect data across 4 configurations: robot-to-table distances
+
+of 5cm and 15cm, combined with white and green grid background. 
+
+3) Dual-arm Collaborative Manipulations: Tasks requiring coordinated manipulation using two robotic arms. 4) Fine Manipulations: Precision-critical tasks requiring accurate contact control or fine-grained motion. 5) Humanoid Interactive Manipulations: Tasks related to the semantic understanding of the scene or requiring interaction with human. 
+
+Many existing datasets [2], [37] contain a large number of 
+
+basic tasks, such as picking and placing objects in different scenarios. With these datasets, models have already mastered skills like pick-and-place with high accuracy, and for such tasks, a single-arm robotic arm is sufficient. We hope that 
+
+RoboTacDex, as a dataset for dexterous hands on humanoid 
+
+dual-arm robots, can demonstrate unique advantages in han-dling relatively complex scenarios. Therefore, when designing RoboTacDex, we defined multiple relatively challenging tasks that can only be completed by dual arms and dexterous hands (see Fig. 2), rather than being dominated by basic manipulations. The RoboTacDex dataset comprises 19 tasks and 23 skills, evenly distributed across diverse operation types. As illustrated in Fig. 3, numerous skills are not confined to basic manipulation but are widely utilized across various complex manipulation categories like dual-arm collaborative and fine manipulations. Conversely, each manipulation type integrates a rich set of skills, ranging from fundamental actions to specialized ones like unscrew and shielded grasp, ensuring that the dataset comprehensively covers a broad spectrum of human-like dexterous and multi-arm tasks. And the detailed atomic skills are shown in Fig. 4a. B. Horizon, Object and Environmental Diversity Fig.4b illustrates the distribution of task durations across the dataset. The majority of trajectories are within the 10—40s, indicating that most tasks require multiple coordinated ac-tions rather than a single primitive or one-step execution. Meanwhile, a small portion of trajectories exhibit substantially longer durations. These tasks involve sustained manipulation and temporal causality, presenting a higher level of difficulty for data acquisition. Similar to task types, we categorize objects involved in manipulations into five classes: 1) Articulated Objects: Objects with internal degrees of freedom that necessitate manipulation along specific trajectories or joint orientations. 2) Constrained Objects: Objects that can be grasped but re-quire specific orientations or postures for manipulation. 3) Containers: Objects primarily used to support or hold other objects. 4) Functional Objects: Objects requiring functional inter-actions or coordination with other objects to complete tasks.               
+
+> eee # oS ge & fe ee AA gee te 8 rs
+> 100% g az z
+> Percentage ("%)
+> 52
+> (am Articulated Manipulations @@™ Basic Manipulations ©Dual-arm Collaborative Manipulations @Fine Manipulations Gm Humanoid Interact Manipulations
+> Fig. 3. Distribution of manipulation types and skills. Normalized proportion of skills utilized within each manipulation category in the RoboTacDex dataset, demonstrating extensive diversity and balanced distribution across various manipulation types.
+
+IEEE ROBOTICS AND AUTOMATION LETTERS.   
+
+> ‘Atomic Skills mm pick (21.0%) mm piace (11.0%) 10! mmm align (9.0%) had (8.0%) Mm press (7.8%) mmm insert (5.3%) mmm pull (4.6%) mm Min (4.5%) fam rotate (4.5%) mm 139 (3.7%) mm uriscrew (2.9%) mam release (2.5%) brace (2.8%) mm receive (2.3%) mm pinch (1.79%) mmm wedge (1.6%) mmm signal (1,155) mmm hang (1.1%) shicked grasp (1.1%) mm ft (1.1%)
+> wipe (1.1%)
+> mm daliver (0.8%) Percentage (%)
+> 48
+> Duration (51
+
+(a) (b)   
+
+> 6Te wf
+
+Fig. 4. Dataset Features. (a) The various types of skills and their proportions in RoboTacDex (b) The horizon distribution in RoboTacDex. 
+
+5) Graspable Objects: Objects where primary manipulation goals can be achieved through a single grasp, without requiring specific manipulation directions or gestures. As shown in Fig. 5, the dataset utilizes 22 distinct object types, ranging from kitchen food to office supplies, and encompassing both rigid and deformable objects with varied shapes, materials, and sizes. Notably, we ues the same object with different color, potentially providing valuable multiview video samples for data generation in robot manipulation. Additionally, to investigate the impact of scene factors on 
+
+task success rates, we control two environmental variables 
+
+during dataset design: robot-to-table distance and table back-ground. For most tasks, we collect data across 4 configura-tions: robot-to-table distances of 5cm and 15cm, combined with white and green grid backgrounds (see Fig. 2). 
+
+V. EXPERIMENTS 
+
+To validate the data quality of RoboTacDex and better understand the performance of existing imitation learning methods in dexterous manipulation tasks for humanoid robots, we evaluate three policies on RoboTacDex: Action Chunking 
+
+with Transformers (ACT) [13], Diffusion Policy (DP) [5], and 
+
+GROOT N1.5 [33]. We primarily conduct evaluations on the following four tasks, as shown in Fig. 6: r   
+
+> ‘Object Categories MEE Articulated Objects(8.4%) lm Constrained Objects(26.0%) lm Contsiners(18.3%) Functional Objects( 11.7%) ME Graspable Objecis(33.6%)
+
+Fig. 5. The various objects and their types in RoboTacDex. Fig. 6. Representative inference tasks to validate dataset. The yellow arrows show the robot’s hand trajectories. For each task, we conduct 10 trials for different policies. 
+
+« PickAndPlacePear: Pick up the pear from the table and place it in the basket. « TurnPage: Lift and turn the current page to reveal the adjacent page, ensuring the page is fully turned and lies flat on the opposite side. e InsertBook: Hold the document bag with one hand and the book with the other, then insert the book securely into the bag. « UnscrewBottle: Grasp the bottle firmly and rotate it counterclockwise to unscrew the cap from the bottle. Based on our experimental experience, for each task, models trained on approximately 200 trajectories across the three architectures exhibit generally reasonable trajectory. This re-quires significantly more data compared to robotic arms, primarily due to humanoid robots and dexterous hands with up to 26 DOF and their complex action space. For each task, we 
+
+train ACT, DP, and finetune VLA with the same dataset. We 
+
+train these models until convergence, and during validation, we adjust each model’s inference parameters to optimize performance. We use the baseline observation configuration, taking the head image and joint state as observations. The performance of these policies is summarized in Table IL, with each policy evaluated over 10 trials per task. 
+
+TABLE IL 
+
+> SUCCESS RATES OF IMITATION LEARNING METHODS ON THE ROBOTACDEX DATASET.
+
+Task ACT DP GROOT N1.5 PickAndPlacePear O/10 3/10 9/10 TurnPage 6/10 5/10 6/10 InsertBook 4/10 = 3/10 4/10 UnscrewBottle 3/10 = 2/10 6/10 
+
+Average 3/10 3/10 6/10 
+
+A. Performance of Imitation Learning Policies We find that VLA generally outperforms the other two mod-els, primarily due to its base model pretrained on large-scale manipulation datasets. This enables strong generalization to object positions and manipulation distances beyond the train-ing dataset, especially for tasks like PickAndPlacePear that are widely covered in existing datasets. In contrast, for 
+
+uncommon tasks like InsertBook and UnscrewBottle, 
+
+GROOT failed to learn critical semantic requirements and spatial constraints. During the inserting, it misaligned the book and document bag, leading to task failure. This further demonstrates that VLA requires substantial data to learn the critical manipulation keypoints for different tasks. IEEE ROBOTICS AND AUTOMATION LETTERS. 
+
+For the relatively smaller-scale models ACT and DP, the mechanism of their learning is mapping from observations to the action space. If the spatial positions of objects in the example data are scattered with large intervals, the success rate of interpolation points within the operational domain during inference is suboptimal. The target position of the output action resembles the most similar trajectory, but often deviates from the actual object’s location. Worth mentioning is that due to ACT’s network architec-ture and temporary ensemble module, tasks involving multi-modality in the dataset (e.g., picking objects with left/right hand) may result in both hands executing actions but without reaching the target position during inference. The stochasticity and multi-modality of human demonstrations significantly increase the difficulty of model to learn observation to action mapping [13]. In contrast, by learning the gradient of the action score function, DP can better express multimodal action distributions and handle the diversity of example trajectories. B. Analysis of Multiview and Tactile Perception To understand the impact of observation design on hu-manoid manipulation learning, we conduct ablation experi-ments by varying the visual viewpoints and sensory modal-ities while keeping the task, policy architecture, and training 
+
+parameters. 
+
+We compare the success rates of three models under dif-ferent observation configurations. In Fig. 7a, we visualize the performance on PickAndPlacePear and InsertBook. 
+
+We observe that across both tasks, no model demonstrates 
+
+significant performance improvement after adding wrist cam-eras or third-person perspective camera. For ACT and DP, the models lack mechanisms for multi-view image matching or additional supervision. Consequently, simply concatenating images from multiple viewpoints proves ineffective. This observation suggests that the benefits of multi-view observa-tions are not automatically realized by existing manipulation learning frameworks, but rather depend on the model’s ability to reason about geometric relationships across viewpoints 
+
+(21], [45]. For GROOT, single-view success rates on simple 
+
+tasks like PickAndP lacePear are already high. Additional views do not contribute to better performance. 
+
+> With Tactile
+
+# i                         
+
+> Early Grasp Failure| 2nL Number of Trials (n=10)
+> (a) (b) Fig. 7. Ablation Study on Multi-view Configurations and Tactile Sensing.
+> (a) We compares the success rates of different manipulation models on
+> PickAndPlacePear and InsertBook under various observation con-figurations. (b) The distribution of various trial outcome for the Unscrew Bottle task contrast performance “No Tactile” feedback (left side) against
+> “With Tactile” feedback (right side) over 10 trials.
+> Ot 8 Stuch/Adjusts Failure+ Success Rate (%) & ®&Qutcame Category
+> 8
+> DP GROOT acT DP. PickAndPlacePear InsertBaok
+
+We then ablate the tactile sensing by comparing DP’s performance with and without it. We incorporate tactile infor-mation into observations as part of the low-dimensional state and test performance on UnscrewBottle, which is tactile-rich. We categorized the task outcomes into the following failure modes: Stuck/Adjusts Failure, where the right hand becomes stuck or fails to properly adjust its grip on the cap; Idle Spinning Failure, where the right hand spins without successfully engaging the cap; Cap Dropped, indicating that the cap is dropped after being unscrewed; and Early Grasp Failure, where the left hand fails to securely grasp the bottle body at the initial stage. As shown in Figure 7b, although success rates don’t improve, the failure patterns shift from Idle Spinning Failure without tactile sensing to Stuck/Adjusts Failure when tactile feedback is incorporated. This indicates 
+
+that with the addition of tactile feedback, the hand can better 
+
+grasp the cap. This outcome underscores the unique value of tactile sensing: it reveals latent state variables that are visually ambiguous or entirely hidden, especially when the visual scene remains static but the physical contact state changes dramatically. This also demonstrates the significant value of multi-modal manipulation data. 
+
+VI. DISCUSSION, LIMITATIONS, AND FUTURE WORK We introduce a large-scale, multi-view, multi-modal hu-
+
+manoid upper-body manipulation dataset named RoboTacDex, encompassing diverse human-like manipulation tasks. Lever-aging this dataset, we conduct systematic policy training and perform a detailed analysis of these models’ strengths, weaknesses, and the types of tasks where they exhibit superior performance, as well as an ablation study on multi-view and multi-modality inputs. Additionally, we present a high-performance hardware integration and data collection system that resolves synchronization challenges across heterogeneous sensors. We believe RoboTacDex will serve as a valuable resource for advancing robust and generalizable humanoid manipulation systems. One limitation of this study is that tactile information is incorporated in a relatively straightforward manner, without dedicated architectural components for multimodal fusion. Future work will explore more advanced model designs to bet-ter exploit tactile and multi-view observations. Furthermore, while the dataset spans diverse manipulation tasks, increasing its scale and environmental diversity remains an important direction for continued development. 
+
+REFERENCES                                                                  
+
+> [1] A. Mandlekar, Y. Zhu, A. Garg, J. Booher, M. Spero, A. Tung, J. Gao, J. Emmons, A. Gupta, E. Orbay er al., “Roboturk: Acrowdsourcing
+> platform for robotic skill learning through imitation,” in Conference on
+> Robot Learning. PMLR, 2018, pp. 879-893. [2] F Ebert, Y. Yang, K. Schmeckpeper, B. Bucher, G. Georgakis, K. Dani-ilidis, C. Finn, and S. Levine, “Bridge data: Boosting generaliza-
+> tion of robotic skills with cross-domain datasets,’ arXiv preprint arXiv:2109.13396, 2021.
+> [3] K. Wu, C. Hou, J. Liu, Z. Che, X. Ju, Z. Yang, M. Li, Y. Zhao, Z. Xu, G. Yang et al, “Robomind: Benchmark on multi-embodiment
+> intelligence normative data for robot manipulation,” arXiv preprint arXiv:2412.13877, 2024. IEEE ROBOTICS AND AUTOMATION LETTERS.
+
+[4] 
+
+[5] 
+
+[6] 
+
+[7] 
+
+[8] [9] 
+
+[10] [11] 
+
+[12] [13] 
+
+[14] [15] 
+
+[16] 
+
+[17] [18] [19] [20] [21] [22] [23] [24] [25] 
+
+[26]                            
+
+> P. Florence, C. Lynch, A. Zeng, O. A. Ramirez, A. Wahid, L. Downs, A. Wong, J. Lee, I. Mordatch, and J. Tompson, “Implicit behavioral cloning,” in Conference on robot learning. PMLR, 2022, pp. 158-168. C. Chi, Z. Xu, S$. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake,
+
+and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” The International Journal of Robotics Research, vol. 44, no. 10-11, pp. 1684-1704, 2025.           
+
+> T. Gervet, Z. Mian, N. Gkanatsios, and K. Fragkiadaki, “Act3d: 3d
+
+feature field transformers for multi-task robotic manipulation,” arXiv preprint arXiv:2306.17817, 2023.            
+
+> G. Lu, Z. Yan, J. Luo, and W. Li, “Integrating historical learning
+
+and multi-view attention with hierarchical feature fusion for robotic          
+
+> manipulation,” Biomimetics, vol. 9, no. 11, p. 712, 2024. J. Li, T. Wu, J. Zhang, Z. Chen, H. Jin, M. Wu, Y. Shen, Y. Yang, and
+
+H. Dong, “Adaptive visuo-tactile fusion with predictive force attention for dexterous manipulation,” arXiv preprint arXiv:2505. 13982, 2025. 
+
+> H. Xue, J. Ren, W. Chen, G. Zhang, Y. Fang, G. Gu, H. Xu, and C. Lu,
+
+“Reactive diffusion policy: Slow-fast visual-tactile policy learning for contact-rich manipulation,” arXiv preprint arXiv:2503.0288], 2025.                      
+
+> A. Mandlekar, D. Xu, J. Wong, S. Nasiriany, C. Wang, R. Kulkarni, L. Fei-Fei, S. Savarese, Y. Zhu, and R. Martin-Martin, “What matters
+
+in learning from offline human demonstrations for robot manipulation,” arXiv preprint arXiv:2108.03298, 2021. 
+
+> X. Huang, A. Seino, F. Tokuda, A. Kobayashi, D. Chen, Y. Hirata, N. C.
+
+Tien, and K. Kosuge, “Sis: Seam-informed strategy for t-shirt unfolding,”  
+
+> IEEE Robotics and Automation Letters, 2025. J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,”
+
+Advances in neural information processing systems, vol. 33, pp. 6840-6851, 2020.            
+
+> T. Z. Zhao, V. Kumar, S. Levine, and C. Finn, “Learning fine-
+
+grained bimanual manipulation with low-cost hardware,” arXiv preprint arXiv:2304.13705, 2023. S. Stepputtis, J. Campbell, M. Phielipp, S. Lee, C. Baral, and H. Ben Amor, “Language-conditioned imitation learning for robot ma-nipulation tasks,” Advances in Neural Information Processing Systems, vol. 33, pp. 13 139-13 150, 2020.  
+
+> T. Pearce, T. Rashid, A. Kanervisto, D. Bignell, M. Sun, R. Georgescu,
+
+S. V. Macua, S. Z. Tan, I Momennejad, K. Hofmann ef al., “Imitating human behaviour with diffusion models,” arXiv preprint arXiv:2301.10677, 2023.           
+
+> M. Shridhar, L. Manuelli, and D. Fox, “Cliport: What and where
+
+pathways for robotic manipulation,” in Conference on robot learning. PMLR, 2022, pp. 894-906.              
+
+> Y. Zhong, X. Huang, R. Li, C. Zhang, Z. Chen, T. Guan, F. Zeng,
+
+K. N. Lui, Y. Ye, Y. Liang et al., “Dexgraspvla: A vision-language-action framework towards general dexterous grasping,” arXiv preprint arXiv:2502.20900, 2025.              
+
+> S. Qian, K. Mo, V. Blukis, D. F. Fouhey, D. Fox, and A. Goyal, “3d-
+
+mvp: 3d multiview pretraining for robotic manipulation,” arXiv preprint arXiv:2406.18158, 2024. 
+
+> Z. Li, P. Qu, Y. Jia, S. Zhou, H. Ge, J. Cao, J. Zhou, G. Zhou, and J. Ma,
+
+“Manivid-3d: Generalizable view-invariant reinforcement learning for robotic manipulation via disentangled 3d representations,” arXiv preprint arXiv:2509.11125, 2025.            
+
+> J. Jiang, G. Cao, T.-T. Do, and S. Luo, “A4t: Hierarchical affordance
+
+detection for transparent objects depth reconstruction and manipulation,”       
+
+> IEEE Robotics and Automation Letters, vol. 7, no. 4, pp. 9826-9833,
+
+2022.               
+
+> W. Cui, C. Zhao, Y. Chen, H. Li, Z. Zhang, D. Zhao, and H. Wang,
+
+“Cl3r: 3d reconstruction and contrastive learning for enhanced robotic manipulation representations,” arXiv preprint arXiv:2507.08262, 2025.              
+
+> Y. Ze, G. Zhang, K. Zhang, C. Hu, M. Wang, and H. Xu, “3d
+
+diffusion policy: Generalizable visuomotor policy learning via simple 3d representations,” arXiv preprint arXiv:2403.03954, 2024.          
+
+> T.-W. Ke, N. Gkanatsios, and K. Fragkiadaki, “3d diffuser ac-
+
+tor: Policy diffusion with 3d scene representations,” arXiv preprint arXiv:2402.10885, 2024.       
+
+> S. James, K. Wada, T. Laidlow, and A. J. Davison, “Coarse-to-fine q-
+
+attention: Efficient learning for visual robotic manipulation via discreti-sation,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2022, pp. 13739-13748.          
+
+> M. Shridhar, L. Manuelli, and D. Fox, “Perceiver-actor: Amulti-task
+
+transformer for robotic manipulation,” in Conference on Robot Learning. PMLR, 2023, pp. 785-799.             
+
+> B. Huang, Y. Wang, X. Yang, Y. Luo, and Y. Li, “3d-vitac: Learning
+
+fine-grained manipulation with visuo-tactile sensing,” arXiv preprint arXiv:2410.2409], 2024. 
+
+[27] 
+
+[28] [29] 
+
+[30] 
+
+[31] [32] [33] [34] 
+
+[35] 
+
+[36] 
+
+[37] [38] [39] [40] [41] 
+
+[42] [43] [44] [45] 
+
+T. Lin, Y. Zhang, Q. Li, H. Qi, B. Yi, S. Levine, and J. Malik, “Learning visuotactile skills with two multifingered hands,” in 2025       
+
+> IEEE International Conference on Robotics and Automation (ICRA).
+
+IEEE, 2025, pp. 5637-5643.     
+
+> L. Yang, B. Huang, Q. Li, Y.-Y. Tsai, W. W. Lee, C. Song, and J. Pan,
+
+“Tacgnn: Learning tactile-based in-hand manipulation with a blind robot using hierarchical graph neural network,” JEEE Robotics and Automation                   
+
+> Letters, vol. 8, no. 6, pp. 3605-3612, 2023. X. Li, M. Zhang, Y. Geng, H. Geng, Y. Long, Y. Shen, R. Zhang,
+
+J. Liu, and H. Dong, “Maniplim: Embodied multimodal large language model for object-centric robotic manipulation,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2024, pp. 18 061-18 070. 
+
+> M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair,
+
+R. Rafailov, E. Foster, G. Lam, P. Sanketi et al., “Openvla: An open-source vision-language-action model?” arXiv preprint arXiv:2406.09246, 2024.               
+
+> J. Liu, M. Liu, Z. Wang, P. An, X. Li, K. Zhou, S. Yang, R. Zhang,
+
+Y. Guo, and S. Zhang, “Robomamba: Efficient vision-language-action model for robotic reasoning and manipulation,” Advances in Neural      
+
+> Information Processing Systems, vol. 37, pp. 40085—40 110, 2024. K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman, B. Ichter et al., “70: A vision-language-action
+
+flow model for general robot control. corr, abs/2410.24164, 2024. doi: 10.48550,” arXiv preprint ARXIV.2410.24164, 2024. 
+
+> J. Bjorck, F. Castafieda, N. Cherniadev, X. Da, R. Ding, L. Fan, Y. Fang,
+
+D. Fox, F. Hu, S$. Huang ef al., “GrOO0t nl: An open foundation model for generalist humanoid robots,” arXiv preprint arXiv:2503. 14734, 2025.            
+
+> N. M. Shafiullah, ZCui, A. A. Altanzaya, and L. Pinto, “Behavior
+
+transformers: Cloning k modes with one stone,’ Advances in neural information processing systems, vol. 35, pp. 22 955-22 968, 2022. 
+
+> A. Gupta, V. Kumar, C. Lynch, S. Levine, and K. Hausman, “Relay pol-
+
+icy learning: Solving long-horizon tasks via imitation and reinforcement learning,” arXiv preprint arXiv:1910.11956, 2019.           
+
+> O. Mees, L. Hermann, E. Rosete-Beas, and W. Burgard, “Calvin: A
+
+benchmark for language-conditioned policy learning for long-horizon  
+
+> robot manipulation tasks,” JEEE Robotics and Automation Letters, vol. 7,
+
+no. 3, pp. 7327-7334, 2022.               
+
+> E. Jang, A. Irpan, M. Khansari, D. Kappler, F. Ebert, C. Lynch, S. Levine, and C. Finn, “Be-z: Zero-shot task generalization with robotic imitation learning,” in Conference on Robot Learning. PMLR, 2022,
+
+pp. 991-1002.                      
+
+> A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn, K. Gopalakrishnan, K. Hausman, A. Herzog, J. Hsu ef al., “Rt-1:
+
+Robotics transformer for real-world control at scale,’ arXiv preprint arXiv:2212.06817, 2022.          
+
+> H.-S. Fang, H. Fang, Z. Tang, J. Liu, C. Wang, J. Wang, H. Zhu, and
+
+C. Lu, “Rh20t: A comprehensive robotic dataset for learning diverse skills in one-shot,” arXiv preprint arXiv:2307.00595, 2023.         
+
+> A. Khazatsky, K. Pertsch, S. Nair, A. Balakrishna, S. Dasari, S. Karam-cheti, S. Nasiriany, M. K. Srirama, L. Y. Chen, K. Ellis er al., “Droid:
+
+A large-scale in-the-wild robot manipulation dataset,” arXiv preprint arXiv:2403,.12945, 2024.     
+
+> A. O'Neill, A. Rehman, A. Maddukuri, A. Gupta, A. Padalkar, A. Lee, A. Pooley, A. Gupta, A. Mandlekar, A. Jain et ai., “Open x-embodiment:
+
+Robotic learning datasets and rt-x models: Open x-embodiment collab-oration 0, in 2024 IEEE International Conference on Robotics and Automation (ICRA). TEEE, 2024, pp. 6892-6903. 
+
+> Q. Bu, J. Cai, L. Chen, X. Cui, Y. Ding, S. Feng, S. Gao, X. He, X. Hu,
+
+X. Huang et al., “Agibot world colosseo: A large-scale manipulation platform for scalable and intelligent embodied systems,” arXiv preprint arXiv:2503.06669, 2025. 
+
+> Z. Zhao, H. Jing, X. Liu, J. Mao, A. Jha, H. Yang, R. Xue, S. Zakharor,
+
+V. Guizilini, and Y. Wang, “Humanoid everyday: A comprehensive robotic dataset for open-world humanoid manipulation,” arXiv preprint arXiv:2510.08807, 2025.          
+
+> Y. M. Fourier ActionNet Team, “‘Actionnet: Adataset for dexterous
+
+bimanual manipulation,” 2025.            
+
+> S.-W. Lee, X. Kang, B. Y. Yang, and Y.-L. Kuo, “Class: Contrastive
+
+learning via action sequence supervision for robot manipulation,” in Conference on Robot Learning. PMLR, 2025, pp. 4743-4766.

@@ -1,0 +1,216 @@
+Title: Unleashing More Actions via Action Compositional Training for VLA Models
+
+URL Source: https://arxiv.org/pdf/2607.00351v1
+
+Published Time: Thu, 02 Jul 2026 00:23:50 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# Unleashing More Actions via Action Compositional Training for VLA Models 
+
+Kai Peng ∗
+
+School of Artificial Intelligence Shenzhen Technology University 
+
+Shenzhen, China 2410263047@stumail.sztu.edu.cn 
+
+Jie Lu ∗
+
+School of Artificial Intelligence Shenzhen Technology University 
+
+Shenzhen, China 2510263005@stumail.sztu.edu.cn 
+
+Xiaojiang Peng †
+
+School of Artificial Intelligence Shenzhen Technology University 
+
+Shenzhen, China pengxiaojiang@sztu.edu.cn 
+
+Abstract —Vision-Language-Action (VLA) models excel at robotic manipulation, driven by the scale and diversity of demon-stration data. However, standard training paradigms often cause VLA models to severely overfit to specific behavioral patterns, rendering them unable to generalize to out-of-distribution scenar-ios even when those scenarios merely require novel combinations of identical sub-skills. While expanding datasets can mitigate this overfitting, acquiring high-quality robot data remains notoriously labor-intensive and cost-prohibitive. To resolve this impasse without expensive human teleoperation and to truly unleash more actions—i.e., enable VLA models to compose known sub-skills into a much broader set of executable behaviors beyond the original demonstrations—we propose ACT-VLA (Action Compo-sitional Training for VLA Models), an offline data augmentation framework that leverages the model’s latent task representations to synthesize novel, physically valid demonstrations directly from existing tasks for policy training. By eliminating additional manual data collection, our method automatically expands the training distribution and mitigates overfitting. We evaluate our approach on challenging manipulation tasks in simulation. Exper-iments demonstrate that while baseline VLA models generalize poorly due to original distribution overfitting, policies trained with our synthesized data achieve substantially higher success rates, validating that leveraging existing tasks for automated demonstration synthesis provides an effective, scalable, and data-efficient route to broadening VLA generalization. 
+
+Index Terms —Vision-Language-Action models, robotic manip-ulation, compositional generalization 
+
+I. I NTRODUCTION 
+
+Robotic manipulation has undergone a fundamental trans-formation with the rise of large-scale imitation learning [1], [2]. By training on extensive collections of human demonstra-tions, modern robot learning systems have achieved remark-able dexterity across a broad range of manipulation tasks. Among these approaches, Vision-Language-Action (VLA) models [3]–[8] have emerged as a particularly promising paradigm, integrating visual perception, language understand-ing, and action generation into a unified framework capable of following natural-language instructions and executing complex robotic behaviors. Despite their impressive performance, the generalization ca-pability of VLA models remains fundamentally constrained by the diversity and coverage of training data. Existing imitation 
+
+> ∗
+
+These authors contributed equally to this work. 
+
+> †
+
+Corresponding author: Xiaojiang Peng (pengxiaojiang@sztu.edu.cn) 
+
+learning pipelines learn manipulation behaviors directly from demonstrations, causing policies to rely heavily on previously observed task distributions. As shown by recent evaluations of VLA robustness and compositional generalization [9]–[11], models often struggle when confronted with novel combina-tions of familiar skills. Although individual sub-skills may have been successfully learned, the model frequently fails to execute them in unseen sequences because the corresponding demonstrations were absent during training. Since the number of possible task compositions grows combinatorially with the number of available skills, exhaustive demonstration coverage becomes practically impossible. This challenge is exacerbated by the high cost of robotic data collection [2]. Unlike vision and language domains, where large-scale datasets can be gathered from readily available internet resources, robotic demonstrations require physical interaction with real systems. Each new task must be collected through teleoperation, involving human supervision, environ-ment preparation, hardware maintenance, and repeated trial execution. As task diversity increases, the cost of acquiring demonstrations grows proportionally, while the space of po-tential task compositions expands exponentially. Consequently, scaling generalization solely through manual data collection is neither economically nor practically sustainable. These observations suggest that improving robotic general-ization may require not only larger models, but also more scal-able approaches to data generation. Recent work has revealed that VLA models encode latent compositional structures that can be exploited to synthesize valid trajectories for previously unseen task combinations [12]. By interpolating internal task representations, such methods are capable of generating novel behaviors without requiring additional demonstrations. This capability presents a promising opportunity: rather than using compositional synthesis solely as an inference-time control mechanism, can it be leveraged as a source of new training data? Motivated by this question, we propose ACT-VLA (Action Compositional Training for VLA Models) , an offline data augmentation framework that transforms compositional tra-jectory synthesis into an automatic demonstration generation pipeline. Instead of collecting additional demonstrations from human operators, our method reuses existing task trajectories          
+
+> arXiv:2607.00351v1 [cs.RO] 1 Jul 2026 Fig. 1. Illustration of compositional generalization via object–target re-pairing. Left (In-Distribution): training tasks contain fixed object–target couplings— cube →rectangular tray and mug →circular plate .Right (Out-of-Distribution): by decomposing and recombining the original task struc-tures, we construct novel test configurations never seen during training—
+> mug →rectangular tray and cube →circular plate . These re-paired combina-tions require the model to generalize beyond its memorized associations.
+
+and synthesizes novel compositional demonstrations that are absent from the original dataset. These generated demon-strations are subsequently incorporated into standard VLA training, enabling the model to learn compositional transitions directly from data. Fig. 1 illustrates the core motivation of this work with a concrete example. During standard training, VLA models are exposed to tasks with fixed object–target pairings, e.g., always placing the cube on the rectangular tray and the mug 
+
+on the circular plate . Consequently, the model memorizes these rigid visual–language–action associations and fails when confronted with re-paired combinations such as placing the 
+
+mug on the rectangular tray or the cube on the circular plate . Our method addresses this failure by automatically synthesizing training demonstrations for such novel object– target pairings directly from existing data, without collecting any new human demonstrations. In this way, our method expands the effective coverage of the training distribution while requiring no additional teleoperation effort. We evaluate our method on the LIBERO simulation bench-mark [13]. Experimental results show that the synthesized demonstrations significantly improve performance on unseen task combinations compared with baseline VLA training. On out-of-distribution compositional suites, our method achieves absolute gains of +52 .7 and +49 .0 percentage points on Spatial-OOD and Goal-OOD, respectively, while maintaining competitive performance on standard benchmarks. The main contributions of this work are threefold: (i) to the best of our knowledge, we are the first to address the problem of compositional demonstrations for Vision-Language-Action (VLA) models; (ii) we propose ACT-VLA, a plug-and-play data augmentation method that leverages text latent interpo-lation for compositional demonstration synthesis; and (iii) we achieve state-of-the-art results on the LIBERO-Spatial-OOD and LIBERO-Goal-OOD datasets II. RELATED WORK 
+
+A. Vision-Language-Action Models 
+
+Vision-Language-Action (VLA) models integrate visual per-ception, language understanding, and low-level control into a unified policy architecture. RT-2 [3] demonstrated that knowl-edge acquired from large-scale vision-language pretraining can be transferred to robotic manipulation. Building upon this direction, OpenVLA [4] provided an open-source framework for large-scale VLA training, while π0 [6] introduced aflow-matching formulation for continuous action generation. Octo [5] and GR00T N1 [7] further expanded policy scalabil-ity through training on increasingly diverse robotic datasets. Beyond scaling model capacity and data volume, recent work has explored orthogonal directions to strengthen VLA capa-bilities. InstructVLA [14] introduces vision-language-action instruction tuning that jointly optimizes embodied reasoning and action generation, preserving the flexible reasoning of pretrained VLMs while achieving strong manipulation perfor-mance. ReconVLA [15] proposes a reconstructive objective where a diffusion transformer learns to reconstruct manip-ulated object regions from VLA visual features, implicitly guiding attention toward task-relevant targets for precise con-trol. Spatial Forcing [16] aligns intermediate VLA visual embeddings with geometric representations from pretrained 3D foundation models, implicitly injecting spatial awareness without requiring explicit depth sensors. 3D-VLA [17] further integrates a 3D-based LLM with embodied diffusion models to construct a generative world model that links 3D perception, reasoning, and action. These developments have established VLA models as a dominant paradigm for general-purpose robotic manipulation and form the policy foundation consid-ered in this work. 
+
+B. Compositional Generalization 
+
+Compositional generalization, the ability to recombine known behavioral primitives into novel sequences, is a long-standing challenge in robot learning. Decomposition-based approaches address this by explicitly partitioning demon-strations into reusable skill primitives. DeCo [18] segments manipulation demonstrations into modular atomic tasks based on gripper-object interaction cycles, constructs a reusable skill library, and at inference leverages a vision-language model to parse novel instructions, retrieve relevant skills, and schedule their execution via a spatially-aware chaining module that generates collision-free transitions between consecutive skills. LiLo-VLA [19] decouples long-horizon execution into a Reaching Module for global transport via motion planning and an object-centric Interaction Module for fine-grained manipulation, enabling zero-shot generalization to novel skill sequences while mitigating cascading failures through closed-loop recovery. Both methods achieve compositional behavior without requiring demonstrations of complete task sequences, but rely on external planners or auxiliary perception compo-nents at inference time. Beyond decomposition-based methods, planning-centric ap-proaches address compositional and long-horizon manipu-lation from complementary perspectives. Generative Skill Chaining (GSC) [20] learns skill-centric diffusion models and composes their learned distributions to produce long-horizon plans at inference time without requiring explicit task decomposition. Long-VLA [21] proposes a phase-aware input masking strategy that adaptively segments subtasks into mov-ing and interaction phases, enabling end-to-end VLA models to handle long-horizon tasks within a unified architecture. Plan-Seq-Learn [22] bridges LLM-based high-level planning with RL-based low-level control, solving multi-stage robotic tasks from raw visual input without a predefined skill library. In parallel, search-based planning methods [23] jointly search over parameterized skills using learned skill effect models, while Inner Monologue [24] leverages closed-loop language feedback from LLMs to improve high-level instruction com-pletion. Although effective, these methods typically depend on predefined skill libraries, external planners, or auxiliary reasoning components, whereas our approach internalizes compositional transitions entirely within the VLA’s weights through offline data augmentation. Representation-based approaches instead exploit composi-tional structures latent within pretrained policies. Li [12] demonstrated that transformer-based VLAs implicitly encode sub-skill semantics within the hidden states of text tokens, and proposed Text Latent Interpolation (TLI) to synthesize smooth behavioral transitions between base skills by steering these internal representations at inference time, without architectural modification or additional training. This result establishes that compositional behaviors can emerge directly from latent representations, an insight that our method builds upon by relocating TLI from the inference stage to an offline data synthesis pipeline. 
+
+C. Data-Centric Robot Learning 
+
+Recent robot learning research has explored a variety of data-centric strategies, including dataset construction, supervi-sion relabeling, and training distribution expansion, to improve policy performance and generalization. Large-scale efforts such as RT-1 [1] and Open X-Embodiment [2] highlight the role of diverse demonstration datasets in training general-purpose manipulation policies. Beyond dataset scaling, sev-eral studies have investigated methods for enriching exist-ing robot data without additional teleoperation. Interleave-VLA [25] automatically converts text-only demonstrations into image-text interleaved supervision, providing richer mul-timodal grounding from existing trajectories. PixelVLA [26] augments demonstrations with automatically generated pixel-level annotations, introducing additional spatial supervision for policy learning. Both approaches improve the utility of existing datasets by generating new forms of supervision without collecting additional demonstrations. GraspVLA [27] further demonstrates the effectiveness of billion-scale synthetic action data generated in simulation with photorealistic rendering for pretraining grasping foundation models. These methods collec-tively demonstrate that enriching robot training data—through richer supervision [25], [26], visual augmentation [28], or large-scale synthetic data [27]—is an effective paradigm for improving policy capability. Building on this data-centric phi-losophy, our method leverages existing demonstrations to syn-thesize novel compositional task trajectories by recombining behavioral segments across different tasks, thereby expanding the set of trainable task combinations without additional data collection. III. M ETHOD 
+
+A. Overview 
+
+Our method transforms compositional trajectory synthesis from an inference-time mechanism into an offline data gener-ation pipeline. The core idea is to exploit the compositional structures already encoded in a pretrained VLA to produce training demonstrations for task combinations absent from the original dataset, without requiring any additional human teleoperation. Our method consists of three stages: we first apply representation-guided trajectory synthesis to generate demonstrations of compositional tasks. The successful rollouts are recorded and processed into a structured training format. Finally, we train VLA models on the augmented dataset. The overall pipeline is illustrated in Fig. 2. 
+
+B. Compositional Demonstration Synthesis 1) Synthesis via Latent Interpolation: To generate demon-strations for novel compositional tasks without human tele-operation, we leverage the text latent interpolation (TLI) 
+
+mechanism introduced by [12]. Transformer-based VLAs en-code task semantics within the hidden states of text tokens. By averaging these states across demonstrated episodes, one can extract a task-specific text latent T that encapsulates the required behavioral context. To synthesize a continuous transition between two base tasks, we interpolate their respective text latents, T 1 and T 2, to steer the model’s internal representations. Specifically, at each timestep i, the text hidden states are modified as follows: 
+
+hT (i) ← hT (i)+(1 −α)T 1 +αT 2 −(1 − α)T 2 + αT 1 (1) where the transition speed α = i/λ is linearly scaled and clipped to [0 , 1] . At the start of the episode ( α ≈ 0), Task 2’s context is suppressed and subtracted from the residual stream, which reinforces Task 1’s behavior. As the episode progresses (α → 1), Task 2’s context is gradually injected into the residual stream while Task 1’s context fades out, yielding a physically continuous compositional trajectory. 
+
+2) From Inference-Time Intervention to Training-Time Data Synthesis: While the interpolation mechanism is adopted from prior work [12], the core contribution of our method lies not in the interpolation operation itself, but in repurposing 
+
+it as a systematic data generation engine and addressing the non-trivial challenges that arise when synthesized trajectories are used for policy training. We highlight three key design dimensions that distinguish our approach from a simple “move TLI to training”: Quality Filtering     
+
+> Task B: pick up cube →place on tray
+> Task A: pick up mug →place on plate
+
+Stage 2: Data Recording & Processing    
+
+> Text
+> Latent
+> (1) Multi -view RGB frames
+> (2) Robot proprioceptive state 𝒔 𝒊
+> (4) Compositional language
+> 222 instruction 𝒍
+> VLA model
+> 𝝅 0
+> VLM
+> Diffusion
+> Policy
+> Synthesized
+> Dataset
+
+𝑎 𝑖 = ∆𝑥 , ∆𝑦 , ∆𝑧 , ∆𝑟𝑜𝑙𝑙 ,
+
+∆𝑝𝑖𝑡𝑐ℎ , ∆𝑦𝑎𝑤 , 𝑔 
+
+s𝑖 = q1 , q2, . . . , q8  
+
+> (3) Executed action 𝒂 𝒊
+
+Stage 1: Representation -Guided 
+
+Trajectory Synthesis 
+
+Stage 3: Augmented Policy 
+
+Training 
+
+Task  BTask A 
+
+> pick up mug and place it
+> on the rectangular tray
+
+Inference with TLI Fig. 2. The overall pipeline of our proposed method. Our approach consists of three stages: (1) representation-guided trajectory synthesis, (2) data recording and processing, and (3) training on the augmented dataset. Synthesized demonstrations are filtered by the physical simulator before being incorporated into training.  
+
+> •
+
+Instruction Design. Inference-time TLI requires no ex-plicit task instruction, as the latent steering signal alone guides behavior. In contrast, training-time synthesis de-mands a language instruction ℓ that faithfully describes the compositional task across all timesteps. We derive ℓ
+
+directly from the base task instructions by splitting and recombining their textual components to reflect the new task structure (see Section III-C).  
+
+> •
+
+Quality Control. When TLI is applied at inference, failed rollouts are discarded and the episode is simply retried. For training data, however, including even asmall fraction of failed trajectories can propagate incor-rect state-action associations and degrade the policy. We therefore introduce a dual filtering strategy combining task completion verification with a step-budget constraint to ensure only high-quality, physically valid trajectories enter the training set (see Section III-B3).  
+
+> •
+
+Training Dynamics. Simply adding synthesized data to the training set does not guarantee improved generalization—it introduces a distribution shift that must be carefully managed. We maintain parity between orig-inal and synthesized data volumes at the suite level to prevent the synthetic distribution from overwhelming the original task distribution and causing catastrophic forgetting (see Section III-B4). These design decisions collectively transform TLI from a per-episode inference hack into a principled data augmentation framework. The empirical results in Section IV confirm that this training-time approach not only matches but substantially exceeds the OOD performance of inference-time TLI, while eliminating all deployment-time computational overhead. 
+
+3) Trajectory Quality Filtering: Not all synthesized rollouts are suitable for training. Since TLI operates by steering latent representations rather than guaranteeing physically correct behavior, some rollouts may fail to complete one or both sub-tasks. We treat the physical simulator as a rigorous filter, retaining only those rollouts in which the policy successfully completes the full compositional task according to the strict task completion criteria defined in LIBERO. Rollouts that fail at any stage are discarded. This filtering step is essential: naively including failed rollouts would introduce incorrect state-action associations into the training set, potentially de-grading the policy’s base skill retention. 
+
+4) Synthesis Scale: Following the structure of the original LIBERO task suites, we synthesize demonstrations for each compositional task such that the resulting dataset matches the scale of the corresponding original suite. Specifically, each suite contains 10 tasks, and for each task we collect approximately 30–40 successful trajectories, yielding a total of roughly 300–400 synthesized demonstrations per OOD suite. To ensure trajectory quality, we further restrict the maximum episode length during evaluation-based recording: only rollouts that complete the compositional task within a predefined step budget are retained. This step-based filtering complements the task completion check and helps exclude trajectories with unnecessarily long or redundant segments, which could dilute the training signal. The final synthesized dataset Dsyn is then different with the original demonstrations, as described in Section III-D. 
+
+C. Data Recording and Processing 
+
+We implement a data recording module to convert successful synthesized rollouts into a structured training format. At each timestep i, the module records the RGB observations oi from all available camera views, the robot proprioceptive state 
+
+si (comprising joint positions and end-effector pose), the executed action ai, and the natural language instruction ℓ for the compositional task. A key design decision concerns the formulation of ℓ. Since the compositional trajectory is synthesized by combining sub-skill segments from two base tasks, we derive the corre-sponding instruction by splitting and recombining the textual components of the original task instructions to reflect the new task structure (e.g., re-pairing the object from Task A with the target from Task B). This ensures that the language supervision remains semantically consistent with the synthesized trajectory throughout all timesteps. The recorded data is strictly format-ted to match the demonstration structure of the original dataset, requiring no modifications to the training pipeline. 
+
+D. Augmented Policy Training 
+
+We train the VLA model on Dsyn using standard behavioral cloning with the same loss function and hyperparameters as the baseline VLA model, with no modifications to the architecture. This design ensures that compositional capability is acquired entirely through data exposure rather than architectural in-tervention. Since compositional transitions are internalized into model weights during training, no inference-time latent manipulation or external planners are required at deployment. IV. E XPERIMENTS 
+
+A. Experimental Setup 1) Benchmark: We evaluate our method on the LIBERO benchmark [13], a comprehensive simulation suite designed to assess knowledge transfer and generalization in robot manipu-lation. LIBERO consists of four task suites: LIBERO-Spatial, LIBERO-Object, LIBERO-Goal, and LIBERO-10, each com-prising 10 tasks that test different aspects of manipulation knowledge. To evaluate compositional generalization, we ad-ditionally construct two out-of-distribution evaluation suites, LIBERO-Spatial-OOD and LIBERO-Goal-OOD, containing novel task compositions that are absent from the original train-ing demonstrations but decomposable into sub-skills present in the training set, as illustrated in Fig. 3. Compositional tasks Original tasks                
+
+> wine →rack bowl →stove
+> bowl →plate wine →cabinet
+> wine →stove
+> wine →plate
+> Fig. 3. Illustration of compositional task construction. Each compositional task (right) is formed by combining the object from one original task with the target location from another, following the task construction protocol of [12]. These re-paired combinations are absent from the training set, serving as out-of-distribution evaluation scenarios.
+
+2) Baselines: We compare our method against two cate-gories of baselines. For state-of-the-art comparison, we in-clude UniVLA [29], OpenVLA-OFT [30], GR00T-N1 [7], and 
+
+π0.5 [8], all trained on the original LIBERO demonstrations under the same protocol. We additionally include π0 with text latent interpolation applied at inference time [12] as a direct comparison against the inference-time alternative to our training-time synthesis approach. 
+
+3) Evaluation Protocol: Each task is evaluated over 3random seeds, each with 50 episodes (150 episodes total per task). We report the mean success rate (%) over all tasks within each suite. All models are trained for 30k steps under identical settings. 
+
+B. Main Results 
+
+Our method delivers substantial improvements on the com-positional out-of-distribution suites (as shown in Table I). Compared to π0.5 trained on original data only, performance on LIBERO-Spatial-OOD increases from 35.5% to 88.2% and on LIBERO-Goal-OOD from 46.6% to 95.6%, corresponding to absolute gains of 52.7 and 49.0 percentage points, respec-tively. These results validate that generating compositional demonstrations from existing datasets is an effective route to broadening VLA generalization to novel task compositions. The AVG column reports the unweighted mean of all six suite-level success rates, treating each suite equally regardless of its internal task count. We choose unweighted averaging to prevent suites with more tasks from dominating the aggregate metric, thereby ensuring that improvements on OOD suites (which contain fewer tasks than the standard suites) are not numerically diluted. Compared to π0 with TLI applied at inference time, our approach achieves higher OOD success rates (88.2% vs. 81.0% on Spatial-OOD, 95.6% vs. 85.0% on Goal-OOD) while requiring no deployment-time intervention, demonstrat-ing that training-time synthesis is a more effective strat-egy than inference-time latent steering. Averaging across all six evaluation suites, our method achieves an AVG score TABLE I PERFORMANCE COMPARISON ON LIBERO BENCHMARK , INCLUDING BOTH IN -DISTRIBUTION AND OUT -OF -DISTRIBUTION SUITES . R ESULTS ARE SUCCESS RATES (%) AVERAGED ACROSS TASKS . † DENOTES INFERENCE -TIME LATENT MANIPULATION WITHOUT POLICY RETRAINING . BOLD  
+
+> INDICATES BEST
+
+OOD PERFORMANCE . ∆ IS COMPUTED RELATIVE TO π0.5 TRAINED ON ORIGINAL DATA . AVG IS THE UNWEIGHTED MEAN OF ALL SIX SUITE -LEVEL SCORES .
+
+Model Spatial Goal Object Long Spatial OOD Goal OOD AVG 
+
+UniVLA [29] 96.5 95.6 96.8 92.0 11.0 32.0 70.7 OpenVLA-OFT [30] 97.6 97.9 98.4 94.5 0.0 1.0 64.9 GR00T-N1 [7] 94.1 98.3 99.1 93.2 17.9 24.1 71.1 
+
+π0.5 [8] 98.8 98.5 99.3 92.9 35.5 46.6 78.6 
+
+π† 
+
+> 0
+
+[12] 96.8 98.8 95.8 85.2 81.0 85.0 90.4 
+
+Ours (π0.5) 98.8 98.5 99.3 92.9 88.2 (+52 .7) 95.6 (+49 .0) 95.6 (+17 .0)
+
+of 95.6%, outperforming all baselines including UniVLA (70.7%), OpenVLA-OFT (64.9%), GR00T-N1 (71.1%), π0.5
+
+without synthesis (78.6%), and π0 with inference-time TLI (90.4%). 
+
+C. Ablation Study 
+
+To isolate the contribution of synthesized data and ex-amine the difference between training-time and inference-time compositional synthesis, Table II presents controlled comparisons conducted on the π0 backbone, which allows a fair same-architecture evaluation independent of backbone capacity differences. Without any compositional demonstrations, π0 trained on original data achieves only 2.0% and 16.0% on Spatial-OOD and Goal-OOD respectively, confirming that standard imita-tion learning fails to generalize to unseen task compositions even when all constituent sub-skills have been individually mastered. Incorporating our synthesized data substantially improves these scores to 85.9% and 90.5%, demonstrating that synthesized compositional demonstrations provide an effective training signal independent of the specific VLA backbone. 
+
+TABLE II ABLATION STUDY ON π0 BACKBONE . † DENOTES INFERENCE -TIME METHOD REPRODUCED FROM TABLE I FOR DIRECT COMPARISON . ∆ IS COMPUTED RELATIVE TO π0 TRAINED ON ORIGINAL DATA ONLY .                       
+
+> Model Data In-Dist. OOD
+> Spatial Goal Spatial Goal
+> π0Original only 96.8 98.8 2.0 16.0
+> π†
+> 0TLI at inference 96.8 98.8 81.0 85.0
+> π0Orig. + Synth. 95.6 96.1 85.9 (∆ + 83 .9)90.5 (∆ + 74 .5)
+
+A direct comparison between π0 with TLI at inference time (81.0%, 85.0%) and π0 trained with our synthesized data (85.9%, 90.5%) holds the backbone constant, isolating the ef-fect of when compositional synthesis is applied. Training-time synthesis achieves higher OOD performance while eliminating the per-step computational overhead of inference-time latent manipulation, confirming that internalizing compositional tran-sitions into model weights through offline data augmentation is both more effective and more practical for deployment. V. C ONCLUSION 
+
+We presented Action Compositional Training, an offline data augmentation framework that repurposes text latent in-terpolation as an automated demonstration synthesis engine. By addressing the challenges of instruction design, quality control, and training dynamics, our method enables VLA models to internalize compositional skill transitions directly into their weights without inference-time intervention. Exper-iments on LIBERO demonstrate substantial OOD improve-ments while maintaining competitive in-distribution perfor-mance. Our method requires no additional teleoperation, ar-chitectural changes, or external planners, offering a practical route toward broadening VLA compositional generalization. VI. L IMITATIONS AND FUTURE WORK 
+
+While Action Compositional Training provides a data-efficient pipeline for VLA generalization, several limitations remain. First, our validation focuses on sequential two-skill compositions within tabletop constraints. Although text la-tent interpolation is theoretically extensible to longer chains, recursively organizing and filtering multi-skill rollouts intro-duces exponential optimization challenges. Second, synthe-sis quality depends on the semantic disentanglement of the pretrained VLA backbone. Deploying our method on weaker base models might bottleneck performance, suggesting that integrating representation learning could be beneficial. Finally, all experiments were conducted in simulation. Although our dual-filtering strategy ensures physical validity to mitigate distribution shifts, the sim-to-real gap on physical hardware warrants further evaluation in future work. REFERENCES [1] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn, K. Gopalakrishnan, K. Hausman, A. Herzog, J. Hsu et al. , “Rt-1: Robotics transformer for real-world control at scale,” arXiv preprint arXiv:2212.06817 , 2022. [2] A. O’Neill, A. Rehman, A. Maddukuri, A. Gupta, A. Padalkar, A. Lee, A. Pooley, A. Gupta, A. Mandlekar, A. Jain et al. , “Open x-embodiment: Robotic learning datasets and rt-x models: Open x-embodiment collab-oration 0,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2024, pp. 6892–6903. [3] B. Zitkovich, T. Yu, S. Xu, P. Xu, T. Xiao, F. Xia, J. Wu, P. Wohlhart, S. Welker, A. Wahid et al. , “Rt-2: Vision-language-action models transfer web knowledge to robotic control,” in Conference on Robot Learning (CoRL) . PMLR, 2023, pp. 2165–2183. [4] M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. Foster, G. Lam, P. Sanketi et al. , “Openvla: An open-source vision-language-action model,” in Conference on Robot Learning (CoRL) . PMLR, 2025, pp. 2679–2713. [5] Octo Model Team, D. Ghosh, H. Walke, K. Pertsch, K. Black, O. Mees, S. Dasari, J. Hejna, C. Xu, J. Luo, T. Kreiman, Y. Tan, L. Y. Chen, P. Sanketi, Q. Vuong, T. Xiao, D. Sadigh, C. Finn, and S. Levine, “Octo: An open-source generalist robot policy,” in Proceedings of Robotics: Science and Systems , Delft, Netherlands, 2024. [6] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman, B. Ichter et al. , “ π0: A vision-language-action flow model for general robot control,” arXiv preprint arXiv:2410.24164 ,2024. [7] J. Bjorck, F. Casta˜ neda, N. Cherniadev, X. Da, R. Ding, L. Fan, Y. Fang, D. Fox, F. Hu, S. Huang et al. , “Gr00t n1: An open foundation model for generalist humanoid robots,” arXiv preprint arXiv:2503.14734 , 2025. [8] K. Black, N. R. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. R. Equi, C. Finn, N. Fusai, M. Y. Galliker et al. , “π0.5: AVision-Language-Action Model with Open-World Generalization,” in 
+
+Conference on Robot Learning (CoRL) , 2025. [9] Z. Wang, Z. Zhou, J. Song, Y. Huang, Z. Shu, and L. Ma, “Towards testing and evaluating vision-language-action models for robotic manip-ulation: An empirical study,” arXiv preprint arXiv:2409.12894 , vol. 1, 2024. [10] X. Zhou, Y. Xu, G. Tie, Y. Chen, G. Zhang, D. Chu, P. Zhou, and L. Sun, “Libero-pro: Towards robust and fair evaluation of vision-language-action models beyond memorization,” arXiv preprint arXiv:2510.03827 ,2025. [11] S. Fei, S. Wang, J. Shi, Z. Dai, J. Cai, P. Qian, L. Ji, X. He, S. Zhang, Z. Fei et al. , “Libero-plus: In-depth robustness analysis of vision-language-action models,” arXiv preprint arXiv:2510.13626 , 2025. [12] Q. Li, “Vlas are confined yet capable of generalizing to novel instruc-tions,” in Proceedings of the International Joint Conference on Artificial Intelligence (IJCAI) , 2026. [13] B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone, “Libero: Benchmarking knowledge transfer for lifelong robot learning,” Advances in Neural Information Processing Systems , vol. 36, pp. 44 776–44 791, 2023. [14] S. Yang, H. Li, Y. Chen, B. Wang, Y. Tian, T. Wang, H. Wang, F. Zhao, Y. Liao, and J. Pang, “InstructVLA: Vision-language-action instruction tuning from understanding to manipulation,” in International Conference on Learning Representations (ICLR) , 2026. [15] W. Song, Z. Zhou, H. Zhao, J. Chen, P. Ding, H. Yan, Y. Huang, F. Tang, D. Wang, and H. Li, “Reconvla: Reconstructive vision-language-action model as effective robot perceiver,” in AAAI Conference on Artificial Intelligence , 2025. [16] F. Li, W. Song, H. Zhao, J. Wang, P. Ding, D. Wang, L. Zeng, and H. Li, “Spatial forcing: Implicit spatial representation alignment for vision-language-action model,” arXiv preprint arXiv:2510.12276 , 2025. [17] H. Zhen, X. Qiu, P. Chen, J. Yang, X. Yan, Y. Du, Y. Hong, and C. Gan, “3d-vla: A 3d vision-language-action generative world model,” arXiv preprint arXiv:2403.09631 , 2024. [18] Z. Chen, J. Yin, Y. Chen, J. Huo, P. Tian, J. Shi, Y. Hou, Y. Li, and Y. Gao, “Deco: Task decomposition and skill composition for zero-shot generalization in long-horizon 3d manipulation,” IEEE Robotics and Automation Letters , pp. 5049–5056, 2026. [19] Y. Yang, S. Cheng, Y. Fang, H. Bharadhwaj, M. Ding, G. Bertasius, and D. Szafir, “Lilo-vla: Compositional long-horizon manipulation via linked object-centric policies,” arXiv preprint arXiv:2602.21531 , 2026. [20] U. A. Mishra, S. Xue, Y. Chen, and D. Xu, “Generative skill chaining: Long-horizon skill planning with diffusion models,” in Conference on Robot Learning , 2023. [21] Y. Fan, P. Ding, S. Bai, X. Tong, Y. Zhu, H. Lu, F. Dai, W. Zhao, Y. Liu, S. Huang et al. , “Long-vla: Unleashing long-horizon capability of vision language action model for robot manipulation,” arXiv preprint arXiv:2508.19958 , 2025. [22] M. Dalal, T. Chiruvolu, D. Chaplot, and R. Salakhutdinov, “Plan-seq-learn: Language model guided rl for solving long horizon robotics tasks,” 
+
+arXiv preprint arXiv:2405.01534 , 2024. [23] J. Liang, M. Sharma, A. LaGrassa, S. Vats, S. Saxena, and O. Kroemer, “Search-based task planning with learned skill effect models for lifelong robotic manipulation,” in 2022 International Conference on Robotics and Automation (ICRA) , 2022, pp. 6351–6357. [24] W. Huang, F. Xia, T. Xiao, H. Chan, J. Liang, P. Florence, A. Zeng, J. Tompson, I. Mordatch, Y. Chebotar et al. , “Inner monologue: Embod-ied reasoning through planning with language models,” arXiv preprint arXiv:2207.05608 , 2022. [25] C. Fan, X. Jia, Y. Sun, Y. Wang, J. Wei, Z. Gong, X. Zhao, M. Tomizuka, X. Yang, J. Yan et al. , “Interleave-vla: Enhancing robot manipulation with image-text interleaved instructions,” in International Conference on Learning Representations , 2026. [26] W. Liang, G. Sun, Y. He, J. Dong, S. Dai, I. Laptev, S. Khan, and Y. Cong, “Pixelvla: Advancing pixel-level understanding in vision-language-action model,” in International Conference on Learning Rep-resentations , 2026. [27] S. Deng, M. Yan, S. Wei, H. Ma, Y. Yang, J. Chen, Z. Zhang, T. Yang, X. Zhang, W. Zhang et al. , “Graspvla: a grasping foundation model pre-trained on billion-scale synthetic action data,” arXiv preprint arXiv:2505.03233 , 2025. [28] T. Yu, T. Xiao, A. Stone, J. Tompson, A. Brohan, S. Wang, J. Singh, C. Tan, J. Peralta, B. Ichter et al. , “Scaling robot learning with semantically imagined experience,” arXiv preprint arXiv:2302.11550 ,2023. [29] Q. Bu, Y. Yang, J. Cai, S. Gao, G. Ren, M. Yao, P. Luo, and H. Li, “Univla: Learning to act anywhere with task-centric latent actions,” 
+
+arXiv preprint arXiv:2505.06111 , 2025. [30] M. J. Kim, C. Finn, and P. Liang, “Fine-tuning vision-language-action models: Optimizing speed and success,” arXiv preprint arXiv:2502.19645 , 2025.

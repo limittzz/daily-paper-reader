@@ -1,0 +1,534 @@
+Title: SIEVE: Structure-Aware Data Selection for Imitation Learning with VLA Models
+
+URL Source: https://arxiv.org/pdf/2607.06442v1
+
+Published Time: Wed, 08 Jul 2026 01:16:08 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# SIEVE: Structure-Aware Data Selection for Imitation Learning with VLA Models 
+
+Changti Wu 1,2* , Bin Yu 3,2* , Zhaolong Shen 4,2* , Shijie Lian 5,2 , Xiaopeng Lin 6,8 ,Cong Huang 7, Zhirui Zhang 8, Lei Zhang 1† , Kai Chen 7,2,8† 
+
+> 1
+
+East China Normal University 2Zhongguancun Academy 3Harbin Institute of Technology 4Beihang University 
+
+> 5
+
+Huazhong University of Science and Technology 6The Hong Kong University of Science and Technology (Guangzhou) 
+
+> 7
+
+Zhongguancun Institute of Artificial Intelligence 8DeepCybo 
+
+Abstract 
+
+Vision-Language-Action (VLA) models are typically trained by imitation learning on large-scale robot demonstration datasets, but more data does not necessarily yield better poli-cies due to redundancy, noise, and uneven coverage. Exist-ing data selection methods often assess demonstrations at ei-ther the trajectory or state-action level, missing the reusable structures that compose long-horizon behaviors. In this pa-per, we propose SIEVE, a structure-aware data selection method for VLA imitation learning. SIEVE views demon-strations as compositions of reusable primitives and transition interfaces. It first discovers visuo-motor primitives from seg-mented trajectories, then allocates selection budgets to com-position patterns by maximizing reuse-aware structural ex-posure under diminishing returns. Finally, it selects medoid trajectories within each composition-pattern bucket to retain central, stable, and imitation-friendly demonstrations. Exper-iments across multiple datasets, benchmarks, and VLA mod-els show that SIEVE consistently outperforms competitive data selection baselines. Notably, SIEVE can surpass full-data training while using only 50% of demonstrations and 50% of training steps, suggesting that reusable structure, cap-tured through primitives and transitions, is an important sig-nal for efficient VLA imitation learning. 
+
+Code — https://github.com/ChangtiWu/SIEVE 
+
+Introduction 
+
+Vision-Language-Action (VLA) models have emerged as a scalable paradigm for robotic control, typically acquir-ing manipulation skills through imitation learning (IL) over large-scale demonstrations (Zitkovich et al. 2023; O’Neill et al. 2024; Kim et al. 2024; Black et al. 2024; Intelligence et al. 2025). However, the rapid growth of robot demon-stration datasets does not automatically translate into better policies. In practice, such datasets often contain substantial trajectory redundancy, noisy human demonstrations, subop-timal behaviors, and uneven task coverage (Sathyanarayan, Vantilborgh, and Abraham 2025; Belkhale, Cui, and Sadigh 2023; Lin et al. 2025a; Xing et al. 2025). Training on unfil-tered data can repeatedly expose the model to near-duplicate behaviors while also propagating inconsistent or low-quality 
+
+> *
+
+These authors contributed equally 
+
+> †
+
+Corresponding author Training Demonstrations  Policy Execution 
+
+> Reusable
+> Structure
+> (Shared subprograms)
+> Model
+> reuse learned
+> subprograms
+
+Figure 1: Motivation of SIEVE. Training demonstrations contain recurring primitive-transition patterns that can be viewed as reusable behavioral subprograms. Inspired by the MDL principle, SIEVE aims to select demonstrations that expose such reusable structures, enabling the policy to inter-nalize shared subprograms. supervision. These issues make data selection an increas-ingly important problem for VLA imitation learning: given a large demonstration pool, we aim to retain a compact subset that is more beneficial for policy learning. Existing data selection methods for imitation learning typically curate demonstrations by estimating sample utility at different granularities. One line relies on trajectory-level signals, such as trajectory-representation similarity for re-dundancy removal, demonstration reliability, or downstream task feedback (Dass et al. 2025; Chen et al. 2025; Zhang et al. 2025; Xu et al. 2026). While these signals provide a global view of demonstration utility, they may collapse a long-horizon trajectory into a single score and obscure which internal stages or behavior compositions are useful; moreover, feedback-based methods often require costly ad-ditional model training. Another line estimates utility from state-action-level signals, such as state-action mutual infor-mation, task progress, or joint state-action similarity (Zhang et al. 2025; Hejna et al. 2025). These fine-grained signals can capture local predictability or redundancy, but they are of-ten either too myopic to characterize coherent long-horizon task semantics or primarily designed for local pruning. This creates a granularity mismatch: effective IL data selection requires evidence that is coarser than individual state-action pairs, yet more structured than holistic trajectory scores. Inspired by the Minimum Description Length (MDL) principle (Barron, Rissanen, and Yu 1998; Rissanen 2004; Gr¨ unwald 2007), we view useful demonstrations as those that expose reusable behavioral regularities. In its two-part arXiv:2607.06442v1 [cs.RO] 7 Jul 2026 form, MDL seeks a description that minimizes the cost of encoding both the model and the data: 
+
+L(x) = min  
+
+> H∈H
+
+[L(H) − log P (x | H)] , (1) where L(H) is the number of bits required to encode the model H, and − log P (x | H) is the number of bits re-quired to encode the data x. This formulation operational-izes Occam’s razor: a model is penalized unless it yields a shorter description of the data. When repeating patterns exist, they can be stored in the model rather than redun-dantly encoded in each data instance. This view implies that a learner tends to compress data by absorbing repeating pat-terns into its parameters, so as to encode more data under limited parameters and computation budgets. Useful data, therefore, is not merely abundant or locally predictable, but rich in extractable structure (i.e., non-random regularities that a bounded learner can internalize and reuse as shared behavioral subprograms) (Finzi et al. 2026). For robotic imi-tation learning, such structure is naturally expressed as prim-itive composition: a trajectory consists of atomic behavior primitives and transition interfaces. Thus, we estimate tra-jectory utility by the primitives it exposes, how they are composed, and which transitions support long-horizon exe-cution, yielding a mid-level scoring granularity that captures reusable behavior patterns shared across demonstrations. In addition, since IL is typically optimized by behav-ior cloning (BC), selected demonstrations should also pro-vide stable and predictable action supervision. Atypical or noisy realizations of the same behavior pattern may intro-duce inconsistent actions under similar observations, mak-ing the conditional action prediction target harder to fit (Ross and Bagnell 2010; Hussein et al. 2017; Belkhale, Cui, and Sadigh 2023). Therefore, effective data selection should not only decide which behavioral structures to preserve , but also 
+
+which concrete demonstrations to imitate . This motivates an IL-friendly selection principle: after identifying useful be-havior patterns, one should prefer stable central trajectory realizations that provide more consistent supervision for BC. Based on these insights, we propose SIEVE, a structure-aware data selection framework for VLA imitation learn-ing. SIEVE first discovers reusable atomic behavior prim-itives by segmenting trajectories at physically grounded interaction boundaries and clustering segment representa-tions. Each trajectory is then represented as a primitive se-quence, which defines a composition pattern and its adja-cent transitions. SIEVE allocates the selection budget over composition-pattern buckets to maximize reusable primitive and transition exposure under diminishing returns, and then selects medoid trajectories within each bucket to obtain cen-tral, stable, and imitation-friendly realizations. This yields a compact subset that exposes reusable behavioral structure while providing predictable supervision for BC. Our contri-butions are as follows: • We propose a primitive-compositional view of trajectory utility, realized by Primitive Discovery and Structural Exposure Allocation, which allocate selection budgets according to reuse-aware primitive and transition expo-sure under diminishing returns. • We introduce Learning-Friendly Trajectory Selec-tion, which selects medoid trajectories within each composition-pattern bucket to favor central, stable, and predictable realizations for behavior cloning. • We present SIEVE, a structure-aware data selection method for VLA imitation learning, and demonstrate its effectiveness across datasets, benchmarks, and mod-els. SIEVE can outperform full-data training using only 50% of demonstrations and 50% of training steps, while consistently improving over competitive baselines under multiple experimental settings. 
+
+Related Work 
+
+Vision-Language-Action Models. 
+
+Recent advances in vision-language models (VLMs) (Shao et al. 2025; Bai et al. 2025; Lin et al. 2025b) have accelerated the development of Vision-Language-Action (VLA) models, establishing a scalable paradigm for language-conditioned robotic control (Zitkovich et al. 2023; O’Neill et al. 2024; Kim et al. 2024). Modern VLAs map visual observations and language instructions to robot actions through genera-tive policy architectures, such as autoregressive action to-kenization, diffusion, or flow-matching models (Zitkovich et al. 2023; Chi et al. 2025; Black et al. 2024; Intelli-gence et al. 2025; Bjorck et al. 2025; Kim, Finn, and Liang 2025; Lian et al. 2026; Intelligence et al. 2026). These models are typically trained on large-scale demonstrations via imitation learning (IL), most commonly formulated as behavior cloning (Hussein et al. 2017). However, robotic datasets often contain noisy, redundant, and unevenly dis-tributed demonstrations, so scaling training data indiscrimi-nately can waste computation and yield diminishing returns (Xing et al. 2025; Sathyanarayan, Vantilborgh, and Abra-ham 2025; Belkhale, Cui, and Sadigh 2023; Lin et al. 2025a; O’Neill et al. 2024). This motivates selecting compact yet informative subsets for efficient VLA imitation learning. 
+
+Data Selection for Imitation Learning. 
+
+Some related studies mainly focus on macroscopic dataset-level evaluation, mixing optimization across data sources and VLM data selection (Xiao et al. 2025; Belkhale, Cui, and Sadigh 2023; Hejna et al. 2024; Wu et al. 2026; Zhou, Chang, and Wu 2026). Beyond dataset-level curation, exist-ing IL data selection methods typically estimate sample util-ity either at the trajectory or state-action level. Trajectory-level methods use global signals such as representation sim-ilarity, reliability, downstream task feedback, or validation-loss-based influence estimation (Zhang et al. 2025; Chen et al. 2025; Dass et al. 2025; Xu et al. 2026), but they of-ten collapse long-horizon demonstrations into a single score and, for feedback-based criteria, require costly additional model training. State-action-level methods instead rely on local signals such as mutual information, task progress, or joint state-action similarity (Hejna et al. 2025; Zhang et al. 2025; Yu et al. 2026). However, these criteria are often either too myopic to capture coherent task semantics or primarily designed for local pruning. Primitive Discovery   
+
+> Trajectory Segmentation End effector state flips
+> as boundaries
+> Segment Representation
+> VE
+> Segment V-JEPA2
+
+… …   
+
+> Start Mid End
+> Concat & PCA
+> Primitive Discovery via Clustering
+> Segment
+> Representation
+> Trajectory -Level
+> Discriminability
+> Cross -Trajectory
+> Reuse
+> Mini -Batch
+> K-Means
+> Mini -Batch K -Means
+> Select the
+> best K
+
+Structural Exposure Allocation  
+
+> Composition Pattern
+> Primitives
+> Primitive Exposure Transition Exposure
+> Composition Pattern Space
+> Selection Budget Allocation +1
+> Selection Budget  Greedy
+
+Learning -Friendly Trajectory Selection 
+
+> Medoid
+> Trajectory
+> Cosine
+> Distance
+> Trajectory Representation
+> Segment Representation
+> Concat
+> Structural Exposure Objective
+
+Pattern Bucket 
+
+( )Figure 2: Overview of SIEVE. 1) Primitive Discovery: trajectories are segmented into primitives through representation learning and clustering. 2) Structural Exposure Allocation: a structural exposure objective estimates primitive composition coverage and allocates the selection budget across composition patterns. 3) Learning-Friendly Trajectory Selection: representative trajectories are selected within each composition-pattern bucket to construct a compact, diverse, and learning-friendly training subset. 
+
+SIEVE 
+
+We propose SIEVE, a structure-aware data selection method for imitation learning with VLA models. The key idea is to exploit the structural exposure of demonstrations for data selection. To this end, SIEVE first discovers visuo-motor primitives from trajectory segments and represents each tra-jectory as a composition of these primitives. It then allo-cates the selection budget based on structural exposure and selects representative, learning-friendly trajectories within each composition pattern. The resulting subset retains infor-mative behavioral structures while improving the efficiency of imitation learning. 
+
+Primitive Discovery 
+
+A demonstration trajectory is typically a composition of sev-eral reusable visuo-motor segments. This underlying struc-tural prior motivates us to uncover a vocabulary of primitives from trajectories. We define a primitive as a reusable visuo-motor behavior unit discovered from trajectories, which serves as a proxy for a reusable behavioral subprogram. 
+
+Trajectory segmentation. Let D = {T 1, . . . , TN } de-note the original dataset, where each sample Ti is a demon-stration trajectory. For each trajectory Ti ∈ D, we seg-ment it using end effector (gripper/dexterous-hand) state flips (i.e., grasp/release flips) as physically grounded interac-tion boundaries to obtain Li segments Ti = {S1 
+
+> i
+
+, . . . , S Li 
+
+> i
+
+}.To suppress spurious boundaries caused by transient actua-tion jitter, a state transition is accepted only if it persists for five consecutive frames. 
+
+Segment representation. We then extract the represen-tation for each segment using a pretrained video encoder (VE ). Specifically, for each segment Sji (j ∈ { 1, . . . , L i}), we uniformly sample 8 frames and encode them with V-JEPA2 (Assran et al. 2025). As the start, middle, and end frames provide a compact summary of the segment’s state evolution, we concatenate their representations to form a single feature that captures both semantic content and coarse temporal structure. To suppress noise, improve clustering stability, and reduce computational cost, we further reduce the representation to 256 dimensions with PCA: 
+
+zji ← PCA(Concat(VE( Sji )start ;VE( Sji )mid ; VE( Sji )end )) . (2) 
+
+Primitive discovery via clustering. We discover primi-tives by clustering the segment representations using Mini-Batch K-Means (Sculley 2010). Rather than manually spec-ifying the number of clusters, we select K automatically on a randomly sampled subset of trajectories. We seek a primitive vocabulary that is both reusable across trajectories and discriminative at the trajectory level: useful primitives should recur across demonstrations, while not collapsing structurally different trajectories into nearly identical primi-tive composition patterns. For each candidate K, we first cluster the segment repre-sentations from the randomly sampled subset and summa-rize each trajectory Ti by the set of clusters it covers: 
+
+Ci = {c1 
+
+> i
+
+, . . . , c |C i| 
+
+> i
+
+} ⊆ { 1, . . . , K }, (3) where each cui ∈ { 1, . . . , K } is a cluster index covered by at least one segment in Ti. Based on these trajectory-level cluster sets, we evaluate each candidate vocabulary using a reuse-aware criterion comprising two components. The first, 
+
+trajectory-level discriminability J , measures how distinct different trajectories remain after being represented by clus-ter coverage. We compute J as the median of the average pairwise Jaccard similarities over the cluster sets Ci across all sampled trajectories: 
+
+J = median ni=1 
+
+1
+
+n − 1
+
+> n
+
+X 
+
+> j̸=i
+
+Jaccard( Ci, Cj ). (4) A lower J indicates better preservation of structural distinc-tions between trajectories. The second component, cross-trajectory reuse R, quanti-fies how broadly each discovered cluster recurs across tra-jectories. R is defined as the median occurrence count of each cluster across all trajectories: 
+
+R = median Kk=1 
+
+> n
+
+X
+
+> i=1
+
+1[ k ∈ C i ]. (5) A higher R implies that the discovered primitives capture widely applicable behavior units. We choose the number of clusters by maximizing 
+
+K∗ = arg max 
+
+> K
+
+  1 − J  log R . (6) This criterion favors primitive vocabularies that are broadly reused across trajectories while still preserving trajectory-level discriminability. After selecting K∗, we rerun Mini-Batch K-Means on all segment representations, and each re-sulting cluster is treated as a discovered primitive. 
+
+Structural Exposure Allocation 
+
+After primitive discovery, each trajectory Ti is represented by an ordered primitive sequence, referred to as a composi-tion pattern :
+
+Pi = [ c1 
+
+> i
+
+, . . . , c |Pi| 
+
+> i
+
+], (7) where each cmi ∈ C i is a discovered primitive. We further define a transition as the local compositional interface between two adjacent primitives in a composition pattern. For trajectories with |Pi| ≥ 2, the transitions are 
+
+eji = ( cji → cj+1  
+
+> i
+
+), j = 1 , . . . , |Pi| − 1. (8) For trajectories consisting of a single primitive, we introduce a terminal null state ∅ and define the terminal transition: 
+
+ei = ( c1 
+
+> i
+
+→ ∅), (9) so that every trajectory contains at least one transition. Let P = {P (1) , . . . , P (|P| )} denote the set of unique composition patterns in the dataset, where P (ℓ) denotes the 
+
+ℓ-th unique composition pattern, corresponding to a pattern bucket containing trajectories with the same composition pattern. This composition-pattern space provides the struc-tural reference for measuring how broadly reusable struc-tures are shared across demonstrations. In SIEVE, we cap-ture such reusable structures through primitive composition, where trajectories expose both atomic behavior primitives and the transition interfaces connecting them. To effectively learn reusable structures, the model should be repeatedly ex-posed not only to primitives themselves but also to how they are composed through transitions. In our setting, these tran-sition interfaces often coincide with critical state changes (e.g., gripper grasp/release) in the task, and therefore pro-vide informative cues for local behavior progression. More-over, primitives and transitions that are reused across more composition patterns support a broader range of executable behaviors and should be preferentially preserved. To retain diverse and important structural information, we allocate the selection budget over the composition-pattern space. Let 
+
+B = [ b1, . . . , b |P| ] (10) denote the allocation vector, where bℓ is the number of tra-jectories retained for composition pattern P (ℓ). We optimize the budget allocation B by maximizing the following struc-tural exposure objective: 
+
+F (B) = X
+
+> c∈C
+
+wc log  1 + nc(B) + X
+
+> e∈E
+
+we log  1 + ne(B),
+
+(11) where C and E denote the sets of all discovered primitives and transitions, respectively. Here, nc(B) and ne(B) denote the numbers of occurrences of primitive c and transition 
+
+e among the selected trajectories under allocation B. The primitive and transition weights are defined by their reuse frequency over the composition-pattern space: 
+
+wc = qc
+
+|P| , qc = |{ P ∈ P : c ∈ P }| ,we = qe
+
+|P| , qe = |{ P ∈ P : e ∈ P }| .
+
+(12) Here, qc and qe denote the numbers of composition patterns containing primitive c and transition e, respectively. Conse-quently, primitives and transitions that participate in more composition patterns receive larger weights. The logarith-mic utility introduces diminishing returns, encouraging the budget to expose the model to a broader set of reusable struc-tures rather than repeatedly reinforcing the same ones. We optimize F (B) greedily. Starting from B(0) = 0, each iteration allocates one additional sample to the composition pattern with the largest marginal gain: 
+
+∆( P (ℓ) | B ) = F (B + bℓ) − F (B), (13) where bℓ is the one-hot allocation vector that increases the budget of pattern P (ℓ) by one. We select 
+
+ℓ⋆ = arg max 
+
+> ℓ∈{ 1,..., |P|}
+
+∆( P (ℓ) | B ), (14) and update 
+
+B ← B + bℓ⋆ . (15) After the budget is exhausted, B specifies how many trajec-tories should be retained from each pattern bucket. The ac-tual trajectories are then selected within each pattern bucket in the next stage. Learning-Friendly Trajectory Selection 
+
+Given the pattern-level budget allocation, this stage selects representative and learning-friendly trajectories within each pattern bucket. Behavior cloning trains the policy by mini-mizing 
+
+LBC (θ) = E(s,a )∼D [− log πθ (a|s)] , (16) where (s, a ) is a state-action pair sampled from the demon-stration dataset D, and πθ (a|s) is the probability assigned by the policy πθ to action a under state s. Demonstrations with more consistent state-action mappings provide clearer supervision and are easier for imitation learning to optimize. Since directly estimating conditional action entropy is im-practical, we use representation-space centrality as a practi-cal proxy: trajectories near the center of a composition pat-tern are less likely to be outliers or ambiguous demonstra-tions, and thus tend to provide more stable supervision. For each trajectory Ti with composition pattern P (ℓ), we construct a trajectory representation xi by concatenating the segment representations along its primitive sequence: 
+
+xi = Concat( z1 
+
+> i
+
+; . . . ; z|Pi| 
+
+> i
+
+). (17) Within each composition pattern, we compare trajectories using cosine similarity and identify the medoid trajectory 
+
+Tmed , which has the largest aggregate similarity Si =P  
+
+> j̸=i
+
+cos( xi, x j ) to other trajectories in the same pattern. We then rank trajectories by their distance to the medoid, defined as di = 1 − cos( xi, x med ), and retain the B[ℓ] trajec-tories with the smallest distances, where B[ℓ] is the budget assigned to composition pattern P (ℓ) by Structural Exposure Allocation. This selects trajectories closest to the pattern bucket center, yielding representative and learning-friendly demonstrations. 
+
+Experiments 
+
+Experiment Setup 
+
+Datasets and Evaluation. Here we evaluate SIEVE on three representative robot imitation learning datasets to as-sess both its data selection effectiveness and its applicabil-ity across different embodiments and environments. Unless otherwise specified, Bridge-V2 with SimplerEnv-WidowX serves as the default training and evaluation setting. • Bridge-V2 : We train models on the Bridge-V2 dataset (Walke et al. 2023), a real-world subset of Open X-Embodiment, containing approximately 53K demon-stration trajectories collected with a WidowX robot equipped with a parallel gripper. Policies are evaluated in SimplerEnv-WidowX (Li et al. 2024), which includes four manipulation tasks: Stack Cube , Put Carrot , Put Spoon , and Put Eggplant . Evaluation is conducted un-der multiple unseen kitchen backgrounds and random-ized object configurations, providing a challenging out-of-distribution (OOD) benchmark. • Fractal : We further evaluate SIEVE on the Fractal subset of Open X-Embodiment (O’Neill et al. 2024), which con-tains approximately 87K real-world manipulation trajec-tories collected with a Google Robot manipulator. Poli-cies are evaluated in SimplerEnv-GoogleRobot (Li et al. 2024) on three manipulation tasks: Grasp Coke Can ,
+
+Move Near , and Close/Open Drawer .• GR00T-X-Sim : We additionally evaluate SIEVE on the downsampled Humanoid Robot Tabletop Manipulation subset of GR00T-X-Embodiment-Sim (Bjorck et al. 2025), which contains 24K simulated demonstration tra-jectories collected with a humanoid robot equipped with dexterous hands. Policies are evaluated in RoboCasa-GR1 (Nasiriany et al. 2024), a benchmark comprising 24 tabletop manipulation tasks across diverse scene layouts and object configurations. 
+
+Models. We evaluate SIEVE on two representative VLA models, Qwen3-VL-4B-GR00T and Qwen3-VL-4B-OFT. Unless otherwise specified, all main experiments and abla-tion studies are conducted using Qwen3-VL-4B-GR00T. • Qwen3-VL-4B-GR00T (Bjorck et al. 2025): This model combines the Qwen3-VL-4B vision-language backbone (Bai et al. 2025) with a GR00T-style flow-matching pol-icy head that predicts continuous robot actions through conditional flow matching. • Qwen3-VL-4B-OFT (Kim, Finn, and Liang 2025): This model uses the Qwen3-VL-4B backbone and adopts the OpenVLA-OFT action decoding recipe, which performs parallel continuous action prediction with an MLP-based prediction head trained using an L1 regression objective. 
+
+Baselines. We compare SIEVE with the following base-lines. All experiments use the same training hyperparame-ters for a fair comparison (see Appendix for details): • Full-Training : trains on the complete dataset without data selection and serves as the full-data reference. • Random : uniformly samples demonstrations from the original training set. • DemInf (Hejna et al. 2025): selects demonstrations ac-cording to state-action mutual information estimates. • SCIZOR (Zhang et al. 2025): filters low-quality data by identifying redundant trajectories and suboptimal state-action pairs. 
+
+Main Results 
+
+Table 1 summarizes the main results on Bridge-V2 using Qwen3-VL-4B-GR00T. We evaluate two selection budgets, 50% and 70%, corresponding to 26.5K and 37.1K demon-strations, respectively. For each budget, we consider two training schedules. The first scales the number of training steps proportionally to the selected data size (25K and 35K steps for the 50% and 70% budgets, respectively), reduc-ing both training data and computation. The second trains each selected subset for the same 50K training steps as Full-Training. Comparing these two settings allows us to disen-tangle improvements brought by data selection from those potentially arising from increased optimization per sample under a fixed training budget. As shown in Table 1, SIEVE consistently achieves the highest average success rate across all selection budgets and training schedules. Notably, using only 50% of the demon-strations and 25K training steps, SIEVE attains an average Method Training Steps Stack Green Cube On Yellow Cube Put Carrot On Plate Put Spoon On Table Cloth Put Eggplant In Basket Avg.                                                                                   
+
+> Full-Training 50K 22.9 53.1 68.8 62.5 51.8
+> Selection Budget: 26.5K (50%)
+> Random 25K (50%) 20.8 41.7 64.6 31.3 39.6 DemInf 11.5 37.5 58.3 65.6 43.2 SCIZOR 13.5 36.5 68.8 90.6 52.2 SIEVE (Ours) 25.0 54.2 70.8 75.0 56.3 Random 50K (100%) 25.0 36.5 66.7 33.3 40.4 DemInf 12.5 40.6 69.8 63.5 46.6 SCIZOR 16.7 39.6 72.9 92.7 55.5 SIEVE (Ours) 29.2 57.3 75.0 76.0 59.4
+> Selection Budget: 37.1K (70%)
+> Random 35K (70%) 16.7 50.0 74.0 37.5 44.6 DemInf 18.8 51.0 78.1 72.9 55.2 SCIZOR 20.8 41.7 72.9 91.7 56.8 SIEVE (Ours) 22.9 57.3 81.3 87.5 62.3 Random 50K (100%) 12.5 51.0 77.1 46.9 46.9 DemInf 17.7 57.3 79.2 74.0 57.1 SCIZOR 19.8 45.8 76.0 90.6 58.1 SIEVE (Ours) 21.9 58.3 86.5 83.3 62.5
+
+Table 1: Performance comparison with baselines on SimplerEnv-WidowX using Qwen3-VL-4B-GR00T. We compare SIEVE with baselines under 50% and 70% selection budgets, at different training steps. “Avg.” denotes the average success rate. success rate of 56.3%, outperforming Full-Training (51.8%), which uses the complete dataset and twice the training steps. This result indicates that SIEVE is able to identify a compact subset that is more effective for imitation learning while sub-stantially reducing both training data and computation. Compared with existing data selection baselines, SIEVE consistently delivers the best performance. Under the 50% selection budget, SIEVE achieves average success rates of 56.3% and 59.4% under the proportional and 50K training schedules, outperforming SCIZOR (52.2% and 55.5%, re-spectively). Under the 70% budget, SIEVE further achieves average success rates of 62.3% and 62.5% with 35K and 50K training steps, respectively, again outperforming all competing methods. SIEVE also exhibits consistently stronger per-task performance. It outperforms Random on every task under all evaluation settings, suggesting that the performance gains arise from selecting structurally informa-tive demonstrations rather than simply reducing the training set size. Compared with SCIZOR, SIEVE produces more balanced performance across tasks. While SCIZOR per-forms particularly well on Put Eggplant In Basket , its per-formance drops noticeably on Stack Green Cube On Yellow Cube and Put Carrot On Plate . In contrast, SIEVE maintains competitive performance across all four tasks, resulting in the best overall average success rate. Since SimplerEnv evaluates policies under substantial vi-sual and environmental variations relative to Bridge-V2, these results further demonstrate that the subsets selected by SIEVE generalize well under distribution shift. 
+
+Extended Results 
+
+Performance Across Different Datasets. We further eval-uate SIEVE across different training datasets and evalua-tion benchmarks. For Bridge-V2, Full-Training is trained for 50K steps, whereas for Fractal and GR00T-X-Sim, Full-Training is trained for 100K steps. For all data se-lection methods, we retain 50% of the training data and                   
+
+> Method Bridge-V2 Fractal GR00T-X-Sim
+> Full-Training 51.8 75.0 52.7 Random 39.6 55.6 53.5 DemInf 43.2 67.4 53.8 SCIZOR 52.2 71.9 54.2 SIEVE (Ours) 56.3 76.4 54.8
+
+Table 2: Performance across different datasets using Qwen3-VL-4B-GR00T. Full-Training uses the complete dataset, while all selection methods use 50% of the data and 50% of the training steps. We report average success rates (%). train for 50% of the corresponding Full-Training steps (25K for Bridge-V2 and 50K for Fractal and GR00T-X-Sim). As shown in Table 2 (see the Appendix for detailed re-sults), SIEVE achieves the highest average success rate across all three settings. On Bridge-V2 and Fractal, SIEVE achieves average success rates of 56.3% and 76.4%, out-performing Full-Training (51.8% and 75.0%, respectively), while using only half of the training data and half of the training steps. On GR00T-X-Sim, Random selection al-ready slightly outperforms Full-Training. One possible ex-planation is that both GR00T-X-Sim and RoboCasa-GR1 are simulated tabletop manipulation environments, mak-ing RoboCasa-GR1 relatively in-domain for GR00T-X-Sim. In this setting, training on a smaller subset may provide more effective optimization per demonstration. Neverthe-less, SIEVE still achieves the highest average success rate among all methods. These results demonstrate that SIEVE generalizes effectively across different datasets, robot em-bodiments, and evaluation benchmarks. 
+
+Performance Across Different Models. We further eval-uate whether SIEVE-selected data remains effective across different VLA models. Since this experiment aims to eval-uate model generalization rather than compare all data se-lection methods, we compare SIEVE with Full-Training and Method Stack Green Cube On Yellow Cube Put Carrot On Plate Put Spoon On Table Cloth Put Eggplant In Basket Avg. 
+
+Qwen3-VL-4B-GR00T 
+
+Full-Training 22.9 53.1 68.8 62.5 51.8 Random 20.8 41.7 64.6 31.3 39.6 SIEVE (Ours) 25.0 54.2 70.8 75.0 56.3 
+
+Qwen3-VL-4B-OFT 
+
+Full-Training 21.9 25.0 45.8 62.5 38.8 Random 9.4 33.3 16.6 45.8 26.3 SIEVE (Ours) 21.9 58.3 50.0 95.8 56.5 
+
+Table 3: Performance across different models on SimplerEnv-WidowX. Full-Training uses the complete dataset with 50K training steps, while all selection methods use 50% of the data and 50% of the training steps. Random under the same 50% selection budget. As shown in Table 3, SIEVE consistently achieves the highest average success rate on both Qwen3-VL-4B-GR00T and Qwen3-VL-4B-OFT. On Qwen3-VL-4B-GR00T, SIEVE achieves an average success rate of 56.3%, outperforming both Random (39.6%) and Full-Training (51.8%). On Qwen3-VL-4B-OFT, SIEVE further achieves an average success rate of 56.5%, outperforming Random (26.3%) and Full-Training (38.8%). The gains are particularly evident on tasks such as Put Carrot On Plate and Put Eggplant In Bas-ket , where SIEVE-selected data consistently achieves sub-stantially higher success rates than both reference methods. These results indicate that the effectiveness of SIEVE is not tied to a particular VLA model. 
+
+Method Stack Green Cube On Yellow Cube Put Carrot On Plate Put Spoon On Table Cloth Put Eggplant In Basket Avg. 
+
+Ablation of Structural Exposure Allocation 
+
+w/o Trans. 22.9 47.9 67.7 64.6 50.8 w/o Prim. 25.0 51.0 68.8 61.5 51.6 
+
+Ablation of Learning-Friendly Trajectory Selection 
+
+Most-Dissim 18.8 45.8 64.6 31.3 40.1 Random 29.2 36.5 77.1 71.9 53.7 SIEVE (Ours) 25.0 54.2 70.8 75.0 56.3 Table 4: Ablation study on SimplerEnv-WidowX using Qwen3-VL-4B-GR00T under the 50% selection budget and 50% of the training steps. “w/o Trans.” and “w/o Prim.” re-move the transition and primitive exposure terms, respec-tively. “Most-Dissim” selects the most dissimilar samples to maximize within-bucket trajectory diversity, while “Ran-dom” uses random within-bucket selection. 
+
+Ablation Study and Further Analysis 
+
+Ablation of Structural Exposure Allocation. We ablate the two structural exposure terms in SIEVE. Removing the tran-sition or primitive exposure term decreases the average suc-cess rate from 56.3% to 50.8% and 51.6%, respectively, in-dicating that both primitives and transitions contribute to ef-fective data selection. The larger performance drop without transition exposure further suggests that transition interfaces provide important supervision for modeling how reusable behavior units are connected during task execution. 
+
+Ablation of Learning-Friendly Trajectory Selection. 
+
+We ablate the within-bucket sample selection strategy. Re-placing the proposed selection with Most-Dissim, which se-lects trajectories with the lowest aggregate cosine similarity to other samples to maximize trajectory diversity, reduces the average success rate from 56.3% to 40.1%, indicating that atypical trajectories within the same composition pat-tern are less suitable for imitation learning. Random within-bucket selection performs better than most-dissimilar selec-tion but still trails SIEVE, improving the average success rate only from 53.7% to 56.3%. These results validate our design choice of selecting representative and stable demon-strations within each composition-pattern bucket. [10]                                                                                           
+
+> [6]
+> [12]
+> [2]
+> [5]
+> [1]
+> [4]
+> [3]
+> [8]
+> [9]
+> [13]
+> [8,8,8]
+> [7]
+> [3,3,3]
+> [11]
+> [8,8]
+> [4,4,4]
+> [3,3]
+> [8,8,4]
+> [7,7,7]
+> [1,1,1]
+> [2,5,3]
+> [8,4,8]
+> [4,4]
+> [12,12,12]
+> [4,8,8]
+> [3,2,3]
+> [4,8,4]
+> [12,12,3]
+> [2,5]
+> [12,12,4]
+> [8,7,8]
+> [2,12,3]
+> [3,6,3]
+> [2,5,5]
+> [12,12,5]
+> [12,12,8]
+> [3,8,3]
+> [3,3,5]
+> [8,6,8]
+> [3,3,4]
+> [7,8,8]
+> [3,8,8]
+> [4,8]
+> [10,2,12]
+> [3,2,5]
+> [3,5,5]
+> [8,5,8]
+> [10,8,8]
+> [2,2,5] 0
+> 200
+> 400
+> 600
+> 800
+> 1000
+> 1200
+> #Samples
+> 1189
+> 948
+> 795 775
+> 660 654
+> 589
+> 535 518
+> 440 424
+> 374 340
+> 192 186 171 150 143 136 133 129 122 119 115 106 103 103 101 99 99 97 97 94 94 93 92 91 88 87 86 86 86 85 84 84 84 83 83 81 80
+> Top-50 Composition Patterns of Bridge-V2
+> [4,8,4]
+> [3,8,3]
+> [9,8,8]
+> [8,9,8]
+> [3,3,2]
+> [3,3,8]
+> [8,8,3]
+> [8,3,8]
+> [7,8,7]
+> [8,3,3]
+> [9,3,3]
+> [12,5,8]
+> [3,3,6]
+> [7,8,8]
+> [3,8,8]
+> [1,5,9]
+> [1,9,1]
+> [9,1,1]
+> [7,5,7]
+> [4,8,3]
+> [3,3,9]
+> [8,6,8]
+> [4,3,4]
+> [5,5,3]
+> [6,3,3]
+> [3,1,12]
+> [9,5,9]
+> [7,6,7]
+> [6,5,4]
+> [2,5,8]
+> [12,12,7]
+> [7,9,7]
+> [1,5,4]
+> [1,12,9]
+> [1,5,12]
+> [9,9,3]
+> [9,9,1]
+> [11,11,11]
+> [12,5,4]
+> [6,5,8]
+> [7,7,4]
+> [12,10,12]
+> [13,9,3]
+> [8,12,8]
+> [13,4,3]
+> [8,8,7]
+> [1,5,6]
+> [2,8,3]
+> [3,3,11]
+> [4,8,5] 0
+> 200
+> 400
+> #Samples
+> 101 88 72 72 63 63 63 61 61 59 58 56 56 53 52 50 50 49 48 46 46 46 45 43 42 42 42 42 42 42 40 40 40 40 39 39 39 39 38 38 38 37 37 37 37 37 36 36 35 35
+> Top-50 Composition Patterns of Selected Samples (Selection Budget=50%)
+
+Figure 3: Distribution of top-50 composition patterns be-fore and after SIEVE selection (Selection budget=50%) on Bridge-V2. Each x-axis label denotes a composition pattern, represented as an ordered list of primitive IDs. 
+
+Composition Pattern Redistribution. Figure 3 illus-trates how SIEVE reshapes the composition-pattern distri-bution on Bridge-V2. The original dataset is dominated by a small number of high-frequency patterns, many of which consist of a single primitive, indicating limited composi-tional diversity. After selection, the distribution becomes substantially more balanced, and the most frequent selected patterns are predominantly multi-primitive sequences, cov-ering a wider range of primitives and transitions. This re-distribution suggests that SIEVE shifts the selected sub-set away from frequency-dominated patterns toward struc-turally richer composition patterns, thereby exposing more reusable primitives and transitions for imitation learning. 
+
+Conclusion 
+
+We introduced SIEVE, a structure-aware data selection method for VLA imitation learning. SIEVE selects demon-strations by exposing reusable primitive compositions and transition interfaces, while favoring central and stable re-alizations within each composition pattern for behavior cloning. Across multiple datasets, benchmarks, and VLA models, SIEVE consistently improves over competitive baselines and can outperform full-data training using fewer demonstrations and training steps. These results highlight the importance of selecting data according to reusable struc-ture, offering a practical route toward more efficient VLA imitation learning. References 
+
+Assran, M.; Bardes, A.; Fan, D.; Garrido, Q.; Howes, R.; Muckley, M.; Rizvi, A.; Roberts, C.; Sinha, K.; Zholus, A.; et al. 2025. V-jepa2: Self-supervised video models en-able understanding, prediction and planning. arXiv preprint arXiv:2506.09985 .Bai, S.; Cai, Y.; Chen, R.; Chen, K.; Chen, X.; Cheng, Z.; Deng, L.; Ding, W.; Gao, C.; Ge, C.; et al. 2025. Qwen3-vl technical report. arXiv preprint arXiv:2511.21631 .Barron, A.; Rissanen, J.; and Yu, B. 1998. The minimum description length principle in coding and modeling. IEEE transactions on information theory , 44(6): 2743–2760. Belkhale, S.; Cui, Y.; and Sadigh, D. 2023. Data quality in imitation learning. Advances in neural information process-ing systems , 36: 80375–80395. Bjorck, J.; Casta˜ neda, F.; Cherniadev, N.; Da, X.; Ding, R.; Fan, L.; Fang, Y.; Fox, D.; Hu, F.; Huang, S.; et al. 2025. Gr00t n1: An open foundation model for generalist humanoid robots. arXiv preprint arXiv:2503.14734 .Black, K.; Brown, N.; Driess, D.; Esmail, A.; Equi, M.; Finn, C.; Fusai, N.; Groom, L.; Hausman, K.; Ichter, B.; et al. 2024. π0: A Vision-Language-Action Flow Model for Gen-eral Robot Control. arXiv preprint arXiv:2410.24164 .Chen, A. S.; Lessing, A. M.; Liu, Y.; and Finn, C. 2025. Curating demonstrations using online experience. arXiv preprint arXiv:2503.03707 .Chi, C.; Xu, Z.; Feng, S.; Cousineau, E.; Du, Y.; Burchfiel, B.; Tedrake, R.; and Song, S. 2025. Diffusion policy: Visuo-motor policy learning via action diffusion. The International Journal of Robotics Research , 44(10-11): 1684–1704. Dass, S.; Khaddaj, A.; Engstrom, L.; Madry, A.; Ilyas, A.; and Mart´ ın-Mart´ ın, R. 2025. Datamil: Selecting data for robot imitation learning with datamodels. arXiv preprint arXiv:2505.09603 .Finzi, M.; Qiu, S.; Jiang, Y.; Izmailov, P.; Kolter, J. Z.; and Wilson, A. G. 2026. From Entropy to Epiplexity: Rethink-ing Information for Computationally Bounded Intelligence. 
+
+arXiv preprint arXiv:2601.03220 .Gr¨ unwald, P. D. 2007. The minimum description length prin-ciple . MIT press. Hejna, J.; Bhateja, C.; Jiang, Y.; Pertsch, K.; and Sadigh, D. 2024. Re-mix: Optimizing data mixtures for large scale imitation learning. arXiv preprint arXiv:2408.14037 .Hejna, J.; Mirchandani, S.; Balakrishna, A.; Xie, A.; Wahid, A.; Tompson, J.; Sanketi, P.; Shah, D.; Devin, C.; and Sadigh, D. 2025. Robot data curation with mutual infor-mation estimators. arXiv preprint arXiv:2502.08623 .Hussein, A.; Gaber, M. M.; Elyan, E.; and Jayne, C. 2017. Imitation learning: A survey of learning methods. ACM Computing Surveys (CSUR) , 50(2): 1–35. Intelligence, P.; Ai, B.; Amin, A.; Aniceto, R.; Balakr-ishna, A.; Balke, G.; Black, K.; Bokinsky, G.; Cao, S.; Charbonnier, T.; et al. 2026. π0.7: a Steerable General-ist Robotic Foundation Model with Emergent Capabilities. 
+
+arXiv preprint arXiv:2604.15483 .Intelligence, P.; Black, K.; Brown, N.; Darpinian, J.; Dha-balia, K.; Driess, D.; Esmail, A.; Equi, M.; Finn, C.; Fusai, N.; et al. 2025. π0.5: a Vision-Language-Action Model with Open-World Generalization. arXiv preprint arXiv:2504.16054 .Kim, M. J.; Finn, C.; and Liang, P. 2025. Fine-tuning vision-language-action models: Optimizing speed and suc-cess. arXiv preprint arXiv:2502.19645 .Kim, M. J.; Pertsch, K.; Karamcheti, S.; Xiao, T.; Balakr-ishna, A.; Nair, S.; Rafailov, R.; Foster, E.; Lam, G.; Sanketi, P.; et al. 2024. Openvla: An open-source vision-language-action model. arXiv preprint arXiv:2406.09246 .Li, X.; Hsu, K.; Gu, J.; Pertsch, K.; Mees, O.; Walke, H. R.; Fu, C.; Lunawat, I.; Sieh, I.; Kirmani, S.; et al. 2024. Eval-uating real-world robot manipulation policies in simulation. 
+
+arXiv preprint arXiv:2405.05941 .Lian, S.; Yu, B.; Lin, X.; Shen, Z.; Yang, L. T.; Jin, Y.; Liu, H.; Wu, C.; Yuan, H.; Huang, C.; et al. 2026. IntentVLA: Short-Horizon Intent Modeling for Aliased Robot Manipu-lation. arXiv preprint arXiv:2605.14712 .Lin, F.; Hu, Y.; Sheng, P.; Wen, C.; You, J.; and Gao, Y. 2025a. Data scaling laws in imitation learning for robotic manipulation. In International Conference on Learning Representations , volume 2025, 54877–54910. Lin, X.; Lian, S.; Yu, B.; Yang, R.; Shen, Z.; Wu, C.; Miao, Y.; Jin, Y.; Shi, Y.; He, J.; et al. 2025b. Physbrain: Human egocentric data as a bridge from vision language models to physical intelligence. arXiv preprint arXiv:2512.16793 .Nasiriany, S.; Maddukuri, A.; Zhang, L.; Parikh, A.; Lo, A.; Joshi, A.; Mandlekar, A.; and Zhu, Y. 2024. Robo-casa: Large-scale simulation of everyday tasks for generalist robots. arXiv preprint arXiv:2406.02523 .O’Neill, A.; Rehman, A.; Maddukuri, A.; Gupta, A.; Padalkar, A.; Lee, A.; Pooley, A.; Gupta, A.; Mandlekar, A.; Jain, A.; et al. 2024. Open x-embodiment: Robotic learning datasets and rt-x models: Open x-embodiment collaboration 0. In 2024 IEEE International Conference on Robotics and Automation (ICRA) , 6892–6903. IEEE. Rissanen, J. 2004. Minimum description length principle. 
+
+Encyclopedia of statistical sciences , 7. Ross, S.; and Bagnell, D. 2010. Efficient reductions for imitation learning. In Proceedings of the thirteenth inter-national conference on artificial intelligence and statistics ,661–668. JMLR Workshop and Conference Proceedings. Sathyanarayan, H.; Vantilborgh, V.; and Abraham, I. 2025. Quality Over Quantity: Curating Contact-Based Robot Datasets Improves Learning. arXiv preprint arXiv:2510.18137 .Sculley, D. 2010. Web-scale k-means clustering. In Pro-ceedings of the 19th international conference on World wide web , 1177–1178. Shao, R.; Li, W.; Zhang, L.; Zhang, R.; Liu, Z.; Chen, R.; and Nie, L. 2025. Large vlm-based vision-language-action models for robotic manipulation: A survey. arXiv preprint arXiv:2508.13073 .Walke, H. R.; Black, K.; Zhao, T. Z.; Vuong, Q.; Zheng, C.; Hansen-Estruch, P.; He, A. W.; Myers, V.; Kim, M. J.; Du, M.; et al. 2023. Bridgedata v2: A dataset for robot learn-ing at scale. In Conference on Robot Learning , 1723–1736. PMLR. Wu, C.; Mao, J.; Miao, Y.; Lian, S.; Yu, B.; Lin, X.; Huang, C.; Zhang, L.; and Chen, K. 2026. ScalSelect: Scalable Training-Free Multimodal Data Selection for Efficient Vi-sual Instruction Tuning. arXiv preprint arXiv:2602.11636 .Xiao, J.; Yan, B.; Zhang, J.; Wang, J.; Li, C.; Cheng, Z.; and Zhai, G. 2025. Data Assessment for Embodied Intelligence. 
+
+arXiv preprint arXiv:2511.09119 .Xing, Y.; Luo, X.; Xie, J.; Gao, L.; Shen, H.; and Song, J. 2025. Shortcut learning in generalist robot policies: The role of dataset diversity and fragmentation. arXiv preprint arXiv:2508.06426 .Xu, T.; Wang, J.; Zhang, R.; Guan, J.; Zeng, X.; Song, W.; Zhou, X.; Chen, Z.; Chen, G.; and Li, Y.-L. 2026. ATHENA: Accelerated Multi-Task Heterogeneous Influence Functions for Robot Data Curation. arXiv preprint arXiv:2606.16208 .Yu, B.; Lian, S.; Lin, X.; Shen, Z.; Wei, Y.; Wu, C.; Yuan, H.; Liu, H.; Wang, B.; Huang, C.; et al. 2026. FrameSkip: Learning from Fewer but More Informative Frames in VLA Training. arXiv preprint arXiv:2605.13757 .Zhang, Y.; Xie, Y.; Liu, H.; Shah, R.; Wan, M.; Fan, L.; and Zhu, Y. 2025. Scizor: A self-supervised approach to data curation for large-scale imitation learning. arXiv preprint arXiv:2505.22626 .Zhou, Y.; Chang, Y.; and Wu, Y. 2026. Synthetic Data for Multimodal Large Language Models: A Lifecycle-Oriented Survey. Zitkovich, B.; Yu, T.; Xu, S.; Xu, P.; Xiao, T.; Xia, F.; Wu, J.; Wohlhart, P.; Welker, S.; Wahid, A.; et al. 2023. Rt-2: Vision-language-action models transfer web knowledge to robotic control. In Conference on Robot Learning , 2165– 2183. PMLR. 
+
+Appendix 
+
+Training Hyperparameters 
+
+All experiments are conducted using the same training hy-perparameters summarized in Table 5, ensuring a fair com-parison across different methods. All models are trained on 8 NVIDIA H100 (80GB) GPUs. 
+
+Implementation Details of Primitive Discovery via Clustering. 
+
+To determine the number of primitive clusters, we adopt a practical search strategy. Specifically, for each dataset, we randomly sample 10% of the demonstrations and uniformly evaluate 20 candidate values of K within a reasonable search range. For each candidate, we perform primitive clustering and compute the clustering score (1 − J ) log R defined in the Primitive discovery via clustering section. The value of 
+
+K that maximizes this score is selected for all subsequent                
+
+> Hyperparameter Value
+> Optimizer AdamW Learning rate (VLM) 1e-5 Learning rate (Action Head) 1e-4 LR scheduler Cosine decay Warmup ratio 10% AdamW (β1, β 2)(0 .9,0.95)
+> Weight decay 1e-8 Gradient clipping 1.0 Per-device batch size 16 Gradient accumulation 1Mixed precision BF16 Distributed training DeepSpeed ZeRO-2
+
+Table 5: Training hyperparameters. 2 6 9 13 16 20 23 27 31 34 38 41 45 49 52 56 59 63 66 70 
+
+> K
+> 2
+> 3
+> 4
+> 5
+> 6
+> (1  )log
+
+(a) Bridge-V2 2 7 13 18 23 28 34 39 44 49 55 60 65 70 76 81 86 91 97 102 
+
+> K
+> 2
+> 3
+> 4
+> 5
+> 6
+> (1  )log
+
+(b) Fractal 2 7 12 17 23 28 33 38 43 48 54 59 64 69 74 79 85 90 95 100 
+
+> K
+> 1
+> 2
+> 3
+> 4
+> 5
+> (1  )log
+
+(c) GR00T-X-Sim 
+
+Figure 4: Selection of the number of primitive clusters K
+
+on different datasets. Following the practical protocol used in our experiments, we randomly sample 10% of each train-ing dataset and uniformly evaluate 20 candidate K values within a reasonable search range. The optimal K is selected by maximizing the clustering score (1 − J ) log R, and is indicated by the red dashed line. experiments. Figure 4 shows the search results on Bridge-V2, Fractal, and GR00T-X-Sim. The clustering score ex-hibits a clear peak on all three datasets, suggesting that the proposed criterion provides a stable and practical heuristic for determining the number of primitive clusters. 
+
+Details on Performance Across Different Datasets 
+
+Tables 6 and 7 present the detailed results corresponding to Table 2 in the main paper. Consistent with the main re-sults, SIEVE achieves the highest average success rate on both Fractal and GR00T-X-Sim while maintaining competi-tive performance across individual evaluation categories. Method Grasp Single Opened Coke Can Move Near Google Baked Tex Close/Open Drawer Custom Avg. 
+
+Full-Training 95.8 87.5 41.7 75.0 Random 100.0 66.7 0.0 55.6 DemInf 100.0 85.4 16.7 67.4 SCIZOR 99.0 87.5 29.2 71.9 SIEVE (Ours) 100.0 91.7 37.5 76.4 
+
+Table 6: Detailed results on Fractal. This table expands the Fractal results reported in Table 2, showing the success rate for each evaluation task. Full-Training uses the complete dataset with 100K training steps, while all data selection methods use 50% of the training data and 50% of the train-ing steps.                                 
+
+> Method PnP * To * Close PnP Novel From Cuttingboard To * PnP Novel From Placemat To * PnP Novel From Plate To * PnP Novel From Tray To * Avg.
+> Full-Training 52.8 54.8 46.5 55.5 54.0 52.7 Random 50.5 56.8 49.8 60.3 50.1 53.5 DemInf 53.3 55.1 48.6 58.1 53.9 53.8 SCIZOR 54.0 56.1 48.1 60.5 52.3 54.2 SIEVE (Ours) 55.3 56.7 47.9 61.3 52.8 54.8
+
+Table 7: Detailed results on GR00T-X-Sim. This table ex-pands the GR00T-X-Sim results reported in Table 2, show-ing the average success rate for each RoboCasa-GR1 task category. Full-Training uses the complete dataset with 100K training steps, while all data selection methods use 50% of the training data and 50% of the training steps.

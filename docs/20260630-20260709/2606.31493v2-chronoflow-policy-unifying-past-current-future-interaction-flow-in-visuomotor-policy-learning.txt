@@ -1,0 +1,812 @@
+Title: ChronoFlow-Policy: Unifying Past-Current-Future Interaction Flow in Visuomotor Policy Learning
+
+URL Source: https://arxiv.org/pdf/2606.31493v2
+
+Published Time: Tue, 07 Jul 2026 01:29:58 GMT
+
+Number of Pages: 24
+
+Markdown Content:
+# ChronoFlow-Policy 
+
+# Unifying Past-Current-Future Interaction Flow in Visuomotor Policy Learning 
+
+Bokai Lin 1,2∗ , Yifu Xu 1∗ , Xinyu Zhan 1 , Hongjie Fang 1 , Jialin Tian 1 ,Fu-Cheng Zhang 2 , Yong-Lu Li 1,2 , Cewu Lu 1,2,3 , and Lixin Yang 1B
+
+1 Shanghai Jiao Tong University, China 
+
+2 Shanghai Innovation Institute, China 
+
+3 Noematrix, China 
+
+19821172068@sjtu.edu.cn, siriusyang@sjtu.edu.cn Task2: Pour ball 
+
+1⃣ 
+
+2⃣ 
+
+1⃣ 2⃣ 
+
+Task1: Fold Towel 
+
+ChronoFlow 
+
+Gripper Flow ( Past Future )
+
+Object Flow ( Past ) Object Flow ( Future )
+
+Gripper Flow ( Past Future )
+
+Object Flow ( Past ) Object Flow ( Future )
+
+Experimental Results 
+
+Q3: “What will the object become?” ( Future )
+
+Q1: “What has the hand already 
+
+done to the object ?” ( Past )
+
+Q2: “Where should the hand act at this moment, 
+
+and what is the object’s present (Current )   
+
+> The towel will fold
+> inward…
+> (Q3) I’ll pick
+> this corner
+> …(Q2)
+> Then I will pick this
+> corner and fold along
+> this side…
+> (Q2)
+> Ahhh … I remember
+> that red bottle has
+> been
+> moved
+> (Q1)
+
+Human  
+
+> I have to pick blue
+> bottle and pour it
+> into …
+> (Q2)
+
+✅ 
+
+> Hand Flow ( Past Future )
+> Object Flow ( Past )
+> Object Flow ( Future )
+
+History Future          
+
+> Thanks to history red bottle
+> flow . Red bottle have been
+> poured. I’ll pick the blue bottle.
+> Thanks to future towel flow . I’ll
+> imagine what towel will deform.
+> I’ll pick this corner to fold.
+> Thanks to history and
+> future flow. I’ll then pour
+> the blue bottle into bowl.
+> Thanks to future towel
+> flow .I’ll pick another
+> corner to fold again.
+
+History 
+
+Future 
+
+Future   
+
+> Idon’t know
+> what exactly
+> the pose of
+> this towel 😭
+
+Why not Future Pose but Key -Points ? 
+
+> Up
+> Down
+> 50%
+> 50%
+> What should do?
+> I cannot imagine
+> how the towel will
+> deform.
+
+ChronoFlow Polic y
+
+Fig. 1: Motivation and Overview of ChronoFlow. Human intuition solves ma-nipulation tasks by reasoning over past–current–future interaction: recalling how the hand and object have moved, perceiving their current relation, and anticipating how the object should move next. Inspired by this temporal reasoning, ChronoFlow pro-vides an intermediate representation for robot that encodes unified object-gripper key-point flows across time. ChronoFlow-Policy leverages ChronoFlow as a co-training objective to learn actions, improving performance on both simulation and real-world manipulation. 
+
+Abstract. Visual signals play a crucial role in policy learning by en-abling models to capture object motion and interaction dynamics. Just as humans reason about actions using both past experience and anticipated outcomes, effective policies should integrate past interactions with future predictions. However, existing visuomotor policies typically model either 
+
+∗Equal contribution. BCorresponding author.        
+
+> arXiv:2606.31493v2 [cs.RO] 4 Jul 2026 2B. Lin et al. historical context or future dynamics in isolation, lacking a unified tem-poral representation of interaction dynamics. In this work, we introduce
+> ChronoFlow , a temporally unified representation that captures past, current, and future interaction dynamics through sparse 3D keypoints of both objects and the gripper. Based on this representation, we propose
+> ChronoFlow-Policy , a diffusion-based visuomotor policy that jointly learns ChronoFlow and action sequences through a co-training objec-tive. Experiments on 14 simulated tasks and 5 real-world manipula-tion tasks demonstrate that ChronoFlow-Policy consistently outperforms strong diffusion-policy baselines and improves robustness in long-horizon and non-Markovian manipulation scenarios. Our project page is avail-able at https://the-kamisato-sii.github.io/ChronoFlow-Policy-project-page/ .
+> Keywords: Visuomotor Policy ·Spatial-Temporal Representation
+
+1 Introduction 
+
+Recent advances in world action models have begun to couple action generation with predictive visual modeling. or example, UWM [42] and DreamZero [35] use structured visual prediction as auxiliary supervision, indicating that action generation can be improved by temporally aligned visual targets. A complementary question is what form of visual supervision is better suited for embodied manipulation. Compared with image-space prediction alone, depth-aware 3D representations lift visual supervision into physical space. For example, object poses and scene point flows can describe how task-relevant entities move and interact over time. In visuomotor policy learning, existing efforts along this direction mainly follow two routes. One route predicts future state evolu-tion , using object poses [9, 25] or scene-level point cloud dynamics [11, 16] to provide foresight for action generation. The other route incorporates histori-cal context , motivated by the non-Markovian nature of many manipulation tasks [2, 3, 28], and uses past observations for long-horizon reasoning [3, 21, 41] . Despite their complementary roles, future prediction and history modeling are typically studied separately. In this work, we propose ChronoFlow , a temporally unified flow repre-sentation that spans past , current and future . ChronoFlow represents both objects and the gripper (interaction-centric) as sparse 3D keypoints evolving over time, capturing their coupled motion in a shared spatial frame. ChronoFlow offers two practical advantages: 
+
+1. it is supported by recent advances in 3D point tracking [32,39] ( e.g . D4RT [40]), which make it feasible to extract reliable historical traces from RGBD videos; 
+
+2. it focuses on task-relevant object-gripper keypoints, providing a compact representation that filters redundant scene motion while preserving interac-tion structure. Based on ChronoFlow, we propose ChronoFlow-Policy , which couples ac-tion generation with ChronoFlow prediction in a unified diffusion framework. ChronoFlow-Policy 3
+
+By requiring the diffusion backbone to recover interaction-flow trajectories, the auxiliary objective encourages the shared latent representation to encode tem-porally grounded manipulation dynamics rather than action labels alone. The policy then decodes actions from this shared representation using a lightweight transformer-based decoder. We evaluate ChronoFlow-Policy on 14 simulated tasks from MetaWorld [37] and RoboTwin 2.0 [4], together with 5 real-world manipulation tasks. Our method is compared against representative visuomotor policies, including strong 3D im-itation policies like DP3 [38] and RISE [29]. We further compare with history-aware approaches such as HistRISE [3], as well as policies that incorporate future dynamics modeling, such as MBA [25] and 3D-FDP [16]. ChronoFlow-Policy achieves consistent performance improvements across both simulation and real-world tasks. In particular, in the real-world tasks, Swap-Easy 
+
+and Swap-Hard require the policy to remember earlier object state when select-ing later actions; historical ChronoFlow traces provide this memory and improve stage-dependent decision making. Fold Towel further shows that ChronoFlow can model deformable-object dynamics through interaction flows. On the long-horizon task Prepare Breakfast , ChronoFlow-Policy maintains strong perfor-mance across sequential stages, indicating that interaction-flow prediction helps preserve task progress during multi-step execution. Our contribution are threefolds: 
+
+– We propose ChronoFlow, a compact interaction-centric 3D keypoint repre-sentation that unifies past-current-future dynamics. 
+
+– We propose ChronoFlow-Policy, a diffusion-based visuomotor policy that couples ChronoFlow prediction with action generation through a co-training objective, enabling actions to be decoded from a shared latent representation. 
+
+– We design a suite of long-horizon, non-Markovian, and non-rigid real-world manipulation tasks to assess temporal interaction modeling under stage-dependent decisions, deformable-object dynamics, and multi-step execution. ChronoFlow-Policy shows consistent gains across these settings, demonstrat-ing the practical value of unified past-current-future interaction modeling. 
+
+2 Related work 
+
+Visuomotor Policy with Future Integration. Recent work in visuomotor policy learning increasingly incorporates future representations — which esti-mate how the scene may evolve — as auxiliary supervisions to improve action prediction. Some approaches predict future observations directly in the visual domain, where policies are conditioned on predicted frames or latent video repre-sentations. Such methods employ video diffusion models [10,17] or jointly model latent video features with actions in a unified sequence [15, 35]. While effective at capturing long-horizon temporal patterns, these representations remain en-tangled with appearance information and often lack explicit spatial structure, which can introduce redundant signals unrelated to physical interaction. 4 B. Lin et al. 
+
+Another line of work models future dynamics using more structured and abstract representations. Some methods predict object pose trajectories [25] or condition policies on sequences of object poses [9], enabling reasoning over ob-ject motion in SE(3). However, pose-based representations are less suitable for deformable objects and complex multi-object interactions. Other works repre-sent future dynamics using object-level motion fields, such as object flow [1, 5, 11, 24, 31, 33]. Some approaches also model gripper flow to capture end-effector motion [8]. However, these methods typically model object and gripper mo-tion separately, without explicitly capturing their interaction dynamics. More recently, several methods adopt scene flow to estimate dense point trajectories of the entire scene [11,16,30], using optical flow [12,23] or point tracking [32,39]. While expressive, such dense representations may include redundant motion sig-nals unrelated to task-relevant interactions. In contrast, we introduce an interaction-centric keypoint flow representation that jointly models past and future trajectories of both objects and grippers. By focusing on interaction-relevant keypoints, our formulation avoids redundant information while explicitly capturing gripper-object dynamics, enabling tempo-rally consistent reasoning for complex manipulation. 
+
+Visuomotor Policy with History Integration. Prior work explores different ways to encode historical observations for visuomotor policies. Video-based rep-resentations capture long temporal horizons but incur high computational cost and redundancy [10, 14], while keyframe-based or compressed representations improve efficiency at the risk of missing subtle temporal transitions [7, 26, 36]. Hybrid designs combine multiple abstraction levels, yet often preserve visually salient but task-irrelevant information [13,22,27,34]. More recently, several meth-ods like TraceVLA [41] and HistRISE [3] inject historical information through object-centric representations, for example by tracking object points over time and using them as historical context for policy learning. Most existing history representations focus on encoding past observations as contextual inputs for policy learning. However, these representations typically do not explicitly model object-gripper interactions, which play a central role in many manipulation tasks. On the contrary, our method explicitly extracts interaction-centric keypoints that capture object-gripper contact and motion patterns. Moreover, beyond en-coding history, we also predict future interaction trajectories and use them as a co-training objective. This design provides structured supervision on how past interactions evolve into future states, encouraging the model to learn unified past-current-future interaction dynamics for manipulation. 
+
+3 Methodology 
+
+3.1 Problem Setup 
+
+We study visuomotor policy learning for robot manipulation from demonstra-tions. At each timestep t, the robot receives an observation ot = ( pt, qt). Here ChronoFlow-Policy 5
+
+pt ∈ RN ×6 denotes a scene-level point cloud captured from a single RGB-D camera, where each point is represented by its 3D coordinates and color 
+
+(x, y, z, r, g, b ). The number of points N may vary across timesteps. When avail-able, qt ∈ Rdq denotes the robot proprioceptive state, such as joint positions or end-effector pose. Given the current observation, the policy predicts a sequence of future low-level actions over a fixed horizon H, ot 7 → at:t+H . where each 
+
+aτ ∈ Rda corresponds to continuous control commands, such as end-effector pose increments. Learning such a policy from demonstrations is challenging in complex manip-ulation scenarios. Observations from a single timestep provide only partial infor-mation about the interaction state, while many manipulation tasks exhibit strong temporal dependencies due to contact dynamics and staged object interactions. As a result, policies trained solely on instantaneous observations often struggle to capture the underlying spatiotemporal structure of object–robot interactions. In this work, we address this challenge by introducing an interaction-centric repre-sentation that explicitly models the temporal evolution of task-relevant motions. 
+
+3.2 ChronoFlow: Past-Current-Future Interaction Flow 
+
+To explicitly model interaction dynamics in manipulation tasks, we introduce 
+
+ChronoFlow , a unified representation of past-current-future interaction based on sparse 3D keypoint trajectories. At each timestep t, ChronoFlow represents the interaction state using a set of keypoints defined on both the robot gripper and task-relevant objects. Specif-ically, we denote the gripper keypoints as P gt ∈ RNg ×3 and the object keypoints as P ot ∈ RNo×3, where Ng and No are the numbers of gripper and object key-points, respectively. Their union Pt = P gt ∪ P ot provides a sparse abstraction of the physical interaction state at time t.
+
+Gripper Keypoints Flow. For the robot gripper, we predefine Ng canonical keypoints on the gripper geometry. These keypoints are rigidly attached to the tool center point (TCP). Given the TCP pose at each timestep, we compute the 3D positions of all gripper keypoints via rigid transformation, producing a temporally consistent gripper trajectory in the world coordinate frame. 
+
+Object Keypoints Flow. For manipulated objects, we first segment task-relevant objects from the initial observation using 3D segmentation SAM-2 [19]. For each segmented object, we apply Farthest Point Sampling (FPS) to obtain a dense set of candidate keypoints. Aggregating across objects yields a pool of object keypoints that sparsely represent the scene geometry. These keypoints are tracked over time using TAPIP3D [39], producing temporally consistent object-centric trajectories. The resulting ChronoFlow trajectories provide a compact representation of interaction dynamics. Since the gripper flow is structurally aligned with robot actions, perturbing ChronoFlow implicitly injects noise into both the future ob-ject motion and action. This interaction-centric formulation naturally leads to 6 B. Lin et al. Current 3D Obs .  
+
+> 3D Encoder ChronoFlow Tokens
+> Future Noised  Past
+> Obs. Tokens Cross Attention Sparse 3D Learnable Query ChronoFlow Tokens
+> Future  Past
+> ChronoFlow Encoder ChronoFlow Decoder Noise Step Action Decoder
+> ChronoFlow Diffusion Transformer
+> Transformer Transformer
+> Future Action Chunk
+> 23145
+> ChronoFlow (Past) Gripper Flow Object Flow
+> ChronoFlow Gripper Flow Object Flow
+> (Future)
+
+ChronoFlow 
+
+ChronoFlow-Policy Past Current Future 
+
+> Gripper Flow Object Flow Object Flow Gripper Flow
+
+Fig. 2: Overview of ChronoFlow-Policy . Top: Illustration of ChronoFlow: unified past-current-future object-gripper keypoint flows. Bottom: The network architecture. 
+
+joint flow matching. In the next section, we describe how these trajectories are incorporated into a joint flow-matching visuomotor policy. 
+
+3.3 ChronoFlow-Policy 
+
+Based on the ChronoFlow representation, we propose ChronoFlow-Policy , a diffusion-based visuomotor policy that explicitly models interaction dynamics and leverages them for action generation. 
+
+Overview. Instead of directly predicting actions from current visual observa-tions, ChronoFlow-Policy first models the future evolution of interaction-centric keypoints and then generates robot actions conditioned on the predicted inter-action trajectory. Formally, we factorize the policy as 
+
+π(at:t+H | ot, P:t) = πϕ(at:t+H | Pt:t+H ) πθ (Pt:t+H | ot, P:t) (1) where Pt:t+H denotes the ChronoFlow trajectory describing the future motion, and P:t = {Pτ }τ <t denotes the historical ChronoFlow trajectories constructed from past observations. The first term πθ in Eq.1 models the evolution of in-teraction dynamics, while the second term πϕ maps the predicted interaction trajectory to robot actions. 
+
+Diffusion-based Interaction Modeling. To model the distribution πθ (Pt:t+H |
+
+ot, P:t), we employ a conditional diffusion process over ChronoFlow trajectories. Starting from Gaussian noise, the model iteratively refines a noisy trajectory through a sequence of denoising steps: 
+
+P k−1
+
+t:t+H = αkP kt:t+H − γkϵθ (P kt:t+H , ot, P:t, k ) + σkN (0 , I ), (2) where ϵθ denotes the denoising network, k ∈ (0 , 1) denotes the diffusion timestep, and {αk, γ k, σ k} define the diffusion noise schedule. ChronoFlow-Policy 7
+
+1 Observation Encoder. Observation encoder maps the current 3D point cloud observation to a condition feature ct = Eobs (ot). We use a PointNet-style point-cloud encoder in simulation and a sparse 3D encoder in real-world experiments. When proprioception is available, an MLP embeds it and fuses it with the point-cloud feature. 
+
+2 ChronoFlow Encoder. ChronoFlow encoder converts historical ChronoFlow and the noisy future ChronoFlow into ChronoFlow tokens . Given the future ChronoFlow trajectory Pt:t+H ∈ R(Ng +No)×H×3, we perturb it with noise at flow-matching step k, obtaining P kt:t+H . The multi-head cross-attention module (MCA in Eq. (3)) uses learnable interaction queries Q ∈ R(Ng +No)×D to jointly encode the historical ChronoFlow P:t and the noisy future ChronoFlow P kt:t+H
+
+into ChronoFlow tokens Zkt ∈ R(Ng +No)×D :
+
+Zkt = MCA  Q, P:t; P kt:t+H
+
+ · WK , P:t; P kt:t+H
+
+ · WV
+
+ , (3) where WK and WV are the key and value projection matrices, respectively. Each compact ChronoFlow token corresponds to one gripper or object keypoint. Zkt
+
+serves as the compact latent representation used by the flow-matching model 
+
+ϵθ
+
+ P kt:t+H , ot, P:t, k  in Eq. 2. 
+
+3 Joint Diffusion Denoising. The backbone of ChronoFlow-Policy is a diffusion module, implemented either as a Unet or a Diffusion Transformer (DiT). Given the observation tokens, the noise timestep, and the ChronoFlow tokens 
+
+Zkt , the model performs conditional denoising in the ChronoFlow token space. This process progressively refines Zkt into clean interaction tokens Z0 
+
+> t
+
+, which serve as the shared latent representation for subsequent ChronoFlow prediction and action decoding. 
+
+4 ChronoFlow Decoder. After denoising step, the ChronoFlow decoder con-verts the denoised tokens Z0 
+
+> t
+
+into future ChronoFlow using a lightweight Trans-former decoder: 
+
+ˆPt:t+H = DCF (Z0 
+
+> t
+
+) ∈ R(Ng +No)×(H·3) . (4) The output is reshaped into ˆPt:t+H ∈ R(Ng +No)×H×3, representing future 3D trajectories of gripper and object keypoints. 
+
+5 Action Decoder. Action decoder predicts robot actions from the decoded ChronoFlow trajectory and the diffusion hidden state. We concatenate ˆPt:t+H
+
+with the clean ChronoFlow tokens Z0 
+
+> t
+
+and feed them into a lightweight trans-former decoder Aϕ(·) for action prediction: ˆat:t+H = Aϕ([ Z0 
+
+> t
+
+; ˆPt:t+H ]) .
+
+Training Objectives. The training objective follows the factorization in Eq. 1: we first supervise the diffusion backbone to recover ChronoFlow trajectories, and then align the learned interaction representation with action prediction. 8 B. Lin et al. 
+
+To explicitly enforce interaction-centric dynamics learning, the denoising net-work ϵθ is trained using the standard diffusion objective: 
+
+LCF = Ek
+
+∥ϵ − ϵθ (P kt:t+H , ot, P:t, k )∥2 . (5) This ChronoFlow supervision encourages the backbone to model past-current-future consistent object-gripper interaction trajectories. For action learning, directly using fully denoised trajectories would require completing the entire diffusion process for every optimization step. Considering that partially denoised hidden states already encode rich information [10, 17], we condition the action decoder on partially denoised ChronoFlow tokens Zk−1
+
+> t
+
+during training. Additionally, to provide an explicit interaction cue, we recon-struct an approximate ChronoFlow trajectory ˜Pt:t+H from an intermediate noisy diffusion state: 
+
+˜Pt:t+H = 1
+
+√¯αk
+
+
+
+P kt:t+H − √1 − ¯αk ϵθ (P kt:t+H , ot, P:t, k )
+
+
+
+. (6) The action decoder takes the partially denoised tokens Zk−1 
+
+> t
+
+and the approxi-mate trajectory ˜Pt:t+H as input, and is trained with an MSE loss against ground-truth actions: 
+
+Laction = Ek
+
+h
+
+∥A ϕ([ Zk−1 
+
+> t
+
+; ˜Pt:t+H ]) − at:t+H ∥2i
+
+. (7) The final objective combines action supervision with ChronoFlow supervision: 
+
+L = Laction + λCF LCF . (8) In this formulation, the ChronoFlow loss shapes the diffusion backbone into a unified spatiotemporal interaction model, while the action loss aligns the learned representation with task-level control objectives. 
+
+Inference. During inference, historical ChronoFlow trajectories P:t are ob-tained asynchronously using a 3D tracker [39]. Starting from Gaussian noise 
+
+P Kt:t+H , the ChronoFlow encoder and diffusion backbone iteratively produce clean interaction tokens Z0 
+
+> t
+
+. The ChronoFlow and action decoders then gen-erate the future trajectory ˆPt:t+H and actions ˆat:t+H .
+
+4 Experiments 
+
+Experiment Overview. We evaluate ChronoFlow-Policy in both simulation and real-world manipulation. Simulation benchmarks provide controlled compar-isons against action-only, scene-flow, and object-pose supervision, highlighting the effect of interaction-centric future modeling. Real-world experiments further test the full past-current-future formulation in long-horizon, deformable, and non-Markovian tasks. ChronoFlow-Policy 9
+
+Table 1: Comparison of methods by supervision, history, and future modeling.                                  
+
+> Method Supervision History Future Gain (Sim. / Real) DP3 / RISE Action-only ××– / – HistDP3 / HistRISE Action-only ✓×+2.2 / +25.8 3D-FDP Dense scene flow ×✓+4.0 / +6.9 MBA Object pose traj. ×✓+15.0 / +20.0 †
+> CFP w/o past ChronoFlow ×✓+32.5 / +11.8
+> CFP ChronoFlow ✓✓+32.5 / +35.3
+> †MBA real-world gain is computed only on Prepare Breakfast .
+
+Tab. 1 summarizes the compared policy paradigms by supervision signal, history usage, future modeling, and overall gains. Action-only policies such as DP3 [38] and RISE [29] rely solely on action supervision; history-aware vari-ants: HistRISE [3] add past observations without future prediction; 3D-FDP [16] and MBA [25] introduce future supervision through dense scene flow or object pose trajectories. In contrast, ChronoFlow-Policy ( CFP ) uses interaction-centric object–gripper ChronoFlow as the future prediction target, and the full model further incorporates historical ChronoFlow tokens. The Gain column reports absolute improvement over the corresponding base policy: DP3 in simulation and RISE in real-world experiments. 
+
+4.1 Simulation Experiments 
+
+Benchmarks. 
+
+– MetaWorld [37]. MetaWorld is a MuJoCo-based manipulation benchmark with a single gripper interacting with rigid and articulated objects, providing a controlled setting that is well suited for modeling gripper-object interac-tions and extracting interaction-centric keypoints. 
+
+– RoboTwin [4]. RoboTwin 2.0 is a dual-arm simulation framework for biman-ual manipulation, offering diverse objects, tasks, and domain randomization, and enabling the study of coordinated interactions between two arms and objects in complex scenes. 
+
+Baselines. For simulation evaluations on MetaWorld and RoboTwin 2.0, we compare ChronoFlow-Policy with representative 3D visuomotor policies: 3D Dif-fusion Policy ( DP3 ) [38], 3D Flow Diffusion Policy ( 3D-FDP ) [16], and Motion Before Action ( MBA ) [25]. Since the simulation benchmarks are largely Marko-vian, CFP w/o past isolates the effect of future ChronoFlow supervision under the same Unet backbone. This comparison highlights the benefit of ChronoFlow over dense scene flow or object pose supervision. We implement CFP with both Unet1D [20] and DiT [18] diffusion backbones, denoted as CFP (Unet) and 
+
+CFP (DiT) in the following tables. 10 B. Lin et al. 
+
+Table 2: Success rates (%) on MetaWorld . Each column corresponds to one task. Results are reported as mean ± standard deviation over evaluation rollouts. Task abbre-viations denote shelf (Shelf Place ), bin (Bin Picking ), box (Box Close ), peg (Peg In-sert Side ), hand (Hand Insert ), soccer (Soccer ), and sweep (Sweep Into ). Bold /blue shading indicates the best result and underline/light-blue shading indicates the second-best result.                                                                                                                       
+
+> Method shelf bin box peg hand soccer sweep Avg.
+> DP3 [38] 17 ±10 34 ±30 42 ±369 ±714 ±418 ±315 ±530
+> 3D-FDP [16] 16 ±335 ±956 ±770 ±817 ±219 ±425 ±734
+> MBA [25] 73 ±154 ±23 56 ±275 ±510 ±127 ±334 ±25 47
+> CFP (Unet) 63 ±594 ±171 ±189 ±367 ±159 ±360 ±572 CFP (DiT) 82 ±770 ±13 75 ±569 ±560 ±25 57 ±575 ±570
+
+Table 3: Success rates (%) on RoboTwin 2.0 . Each column corresponds to one task. Task abbreviations denote beat (Beat Block Hammer ), mic (Handover Microphone ), 
+
+bell (Click Bell ), card (Move Playingcard Away ), cup (Place Empty Cup ), clock 
+
+(Click Alarmclock ), bottles (Place Dual Bottles ). Bold /blue shading indicates the best result and underline/light-blue shading indicates the second-best result.                                                 
+
+> Method beat mic bell card cup clock bottles Avg.
+> DP3 [38] 39 64 66 32 27 54 18 43 3D-FDP [16] 58 65 80 41 27 44 16 47 MBA [25] 61 71 84 37 39 71 27 56
+> CFP (Unet) 77 88 81 39 59 68 51 66 CFP (DiT) 61 82 93 41 42 79 28 63
+
+Protocols. During training, we adopt a unified temporal setting across all exper-iments: the action prediction horizon is fixed to 8 steps, the observation horizon is 1 step, and during inference only the first 4 predicted action steps are executed in a receding-horizon manner. Adhering to the protocol established in [16], each MetaWorld experiment is conducted across three trials with seed values 0, 1, and 2. The policy is evaluated over 20 episodes every 200 training epochs, and the mean of the top 5 success rates is reported. The final performance is computed as the mean and standard deviation across the three seeds. For RoboTwin 2.0, we evaluate the policy over 100 episodes every 500 training epochs and report the mean of the top 3 success rates. The large evaluation sample size yields stable results without requiring multiple random seeds. 
+
+Results. On MetaWorld, our CFP achieves clear improvements over prior meth-ods across all tasks. As shown in Tab. 2, CFP (Unet) attains an average success rate of 72%, slightly outperforming CFP (DiT) (70%), substantially outper-forming DP3 (30%), 3D-FDP (34%), and MBA (47%). The performance gain is particularly pronounced in interaction-intensive tasks such as Hand-Insert and 
+
+Sweep Into . For example, on Hand-Insert , CFP (Unet) achieves 67% compared ChronoFlow-Policy 11 
+
+to 14% (DP3) and 17% (3D-FDP), while on Sweep Into it reaches 60% ver-sus 15% (DP3). We attribute these gains to the interaction-centric modeling of ChronoFlow. Methods such as 3D-FDP operate on full scene point clouds, which may obscure subtle gripper-object contact patterns within global geometry. In contrast, MBA relies solely on object pose supervision and lacks explicit gripper modeling, limiting its ability to reason about fine-grained contact transitions, especially in tasks requiring precise insertion or constrained manipulation like 
+
+Sweep Into . ChronoFlow’s joint modeling of gripper and object keypoints pro-vides a more expressive and localized representation of interaction dynamics. On RoboTwin 2.0 Tab. 3, our CFP also demonstrates consistent improve-ments in dual-arm manipulation. CFP (Unet) achieves an average success rate of 66%, surpassing DP3 (43%), 3D-FDP (47%), and MBA (56%), slightly over-comes CFP (DiT) (63%). Despite using only a single observation frame, CFP performs strongly in tasks requiring accurate spatial localization, such as Beat Block Hammer and Click Alarmclock , where interaction-based modeling enables more precise alignment and timing. Furthermore, in long-horizon dual-arm tasks such as Handover Microphone , CFP effectively captures the object transition process between two grippers. The explicit modeling of gripper-object interac-tion flow allows the policy to better represent intermediate transfer states, which are difficult to encode using object-only or scene-level representations. 
+
+4.2 Real-World Experiments 
+
+In real-world experiments, we aim to answer the following research questions: 
+
+• Q1: Does history ChronoFlow improve non-Markovian performance? 
+
+• Q2: Does ChronoFlow policy gain benefits from future modeling? 
+
+• Q3: Can ChronoFlow Policy handle deformable object manipulation? 
+
+• Q4: Which design components of ChronoFlow are critical for real-world robustness (ablation)?      
+
+> Table 4: Inference frequency.
+> Method Avg. Freq.
+> CFP w/o history track 12.18 Hz CFP w/ TAPIP3D (Sync.) 0.93 Hz CFP w/ TAPIP3D (Async.) 5.82 Hz
+
+Platform. For real-world experiments, we use a Flexiv Rizon robotic arm equipped with a Robotiq 2F-85 grip-per. Perception is provided by a sin-gle fixed top-down RGB-D camera (In-tel RealSense D415), which captures the workspace point cloud for 3D perception. All real-world experiments are conducted with a 3D policy only, and no addi-tional cameras or 2D visual inputs are used. For deployment efficiency, we run TAPIP3D [39] asynchronously with the policy. Tab. 4 shows that synchronous tracking reduces the average inference frequency to 0.93 Hz, whereas the asyn-chronous pipeline reaches 5.82 Hz. This design allows CFP to use historical ChronoFlow while avoiding 3D tracking as the runtime bottleneck. 12 B. Lin et al. A. Pick Bottle1 B. Pour Bottle1 C. Move D. Pick Bottle2 E. Pour Bottle2 
+
+> Stage I
+
+Pour Ball: Pouring Two Bottles’ Balls into Target Bowl         
+
+> Stage II
+> A. Pick Bread B. Place Bread C. Pick Egg D. Place Egg
+> Stage I Stage II
+
+Swap -Hard: Exchange the two toys, placing each in the other's initial coaster         
+
+> A. Pick Corner1 B. Fold Corner1 C. Pick Corner2 D. Fold Corner2
+> Stage I Stage II
+
+Fold Towel: Two -Step Towel Folding                          
+
+> Stage I Stage II
+> A. Pick Toy1 B. Place Toy1 C. Move D. Pick Toy2 E. Place Toy2
+> Stage III
+> A. Pick Toy1 B. Place Toy1 C. Pick Toy2 D. Place Toy2 E. Re -Pick Toy1 E. Re -Place Toy2
+> Stage I Stage II Stage III
+
+Swap -Easy : Swap the toy on the coaster with another toy 
+
+Prepare breakfast: Pick & Place bread and egg in the plate 
+
+✅
+
+❌
+
+ChronoFlow 
+
+Interaction 
+
+Wrong 
+
+Interaction                   
+
+> 1⃣ 2⃣
+> 1⃣
+> 2⃣
+> 1⃣
+> 2⃣
+> 1⃣ 2⃣
+> 3⃣
+> 1⃣
+> 2⃣
+> ❌✅❌
+> ✅✅✅
+> ❌
+> ❌
+> ❌✅
+> ✅
+> ❌✅
+> ❌
+> ❌✅
+> ✅
+> ❌
+> ❌✅
+> ✅
+> ❌✅
+> ❌
+> ❌
+> ✅
+> ❌
+> ✅
+> ✅
+> ❌❌✅✅❌✅❌
+> ❌✅❌
+> ✅✅❌
+> ❌
+> ✅
+> ❌
+> ✅
+> ❌
+> ✅
+
+2 ChronoFlow (Current)  
+
+> 1⃣
+> 2⃣
+> History Current
+
+1 ChronoFlow (Past) 3 ChronoFlow (Future)      
+
+> 1⃣ 2⃣
+> 3⃣
+> 1⃣
+> 2⃣ History Choice
+> I saw earlier
+> that toy A at
+> this place.
+> So, I need to
+> move toy B to
+> same place .
+> I combine past
+> events with current
+> observation to
+> identify the correct
+> stage. I’m going to
+> pour the blue bottle
+> this time.
+> I can imagine how
+> the towel will
+> deform. My
+> action must align
+> with that future
+> geometry .
+> Intel
+> RealSense
+> D41 5
+> Flexiv Rizon
+> Robotic Arm
+> Robotiq 2F -
+> 85 gripper
+> History Choic e
+
+Fig. 3: Real-world manipulation tasks used for evaluation. We consider five real-world tasks, including Prepare Breakfast , Pour Ball , Fold Towel , Swap-Easy , and 
+
+Swap-Hard . Each task is decomposed into multiple stages. 
+
+Tasks & Metrics. We select five real-world manipulation tasks for evaluation: 
+
+Prepare Breakfast (long-horizon manipulation), Fold Towel (soft-body manipu-lation), and three non-Markovian tasks including Swap Easy , Swap Hard , and 
+
+Pour Ball . To enable fine-grained analysis of long-horizon behavior, each task is decomposed into a sequence of semantically meaningful stages. Fig. 3 illus-trates the task setups together with their corresponding stage definitions. These staged tasks evaluate the model’s ability to remember past interactions, rec-ognize the current manipulation stage, and plan future actions. Specifically, 
+
+Prepare Breakfast consists of two stages: moving the bread and pouring the egg. 
+
+Pour Ball contains two stages corresponding to successfully pouring balls into Bottle1 and Bottle2. Fold Towel contains two stages representing the first and second folding actions. Swap-Easy contains three stages: placing Toy1, picking up Toy2, and placing Toy2. Swap-Hard also contains three stages: placing Toy1 at the intermediate position, swapping Toy2, and finally picking up the interme-diate Toy1 to place it at Toy2’s original position. We evaluate all real-world tasks using the one-attempt success rate, defined as whether the task is completed successfully within a single execution without resets. In addition, we record the completion rate of each stage to provide a more detailed analysis of task progress. 
+
+Baselines. We compare ChronoFlow-Policy with representative 3D point-cloud-based baselines: RISE [29], History-Aware RISE ( HistRISE ) [3], 3D Flow Diffusion Policy ( 3D-FDP ) [16], and Motion Before Action ( MBA ) [25]. To study the role of historical information (Q1) , we additionally include an ablation ChronoFlow-Policy 13                                                                                          
+
+> Table 5: Real-world success rates (%) across five manipulation tasks: Breakfast (Pre-pare Breakfast ), Towel (Fold Towel ), Pour (Pour Ball ), Swap-Easy , and Swap-Hard . Each task is decomposed into sequential stages (I-III); detailed stage defini-tions are provided in Fig. 3. Bold /blue shading indicates the best performance and underline/light-blue shading indicates the second-best performance for each stage.
+> Task Breakfast Towel Pour Swap-Easy Swap-Hard Stage III III III III III III III RISE [29] 73 53 80 40 80 47 87 27 13 89 17 11 3D FDP [16] 73 67 87 53 73 47 93 40 33 83 33 17 HistRISE [3] 87 67 87 47 80 67 93 80 80 94 89 56
+> CFP w/o past 93 67 87 87 93 60 93 33 20 94 22 11
+> CFP (ours) 93 80 87 87 87 80 93 93 93 94 94 61
+
+variant, ChronoFlow-Policy without history ( CFP w/o past ), which removes historical keypoints from ChronoFlow while keeping all other components un-changed. Since MBA relies on object pose trajectories, which are less suitable for history-dependent tasks and deformable-object manipulation, we report MBA on 
+
+Prepare Breakfast , where object-level future motion can be defined more reliably. For real-world experiments, ChronoFlow-Policy is implemented with a Unet1D diffusion [17] backbone. For clarity, we denote this variant as CFP in the follow-ing tables. All methods operate on the same 3D point-cloud observations and are trained and evaluated under identical settings whenever applicable. Gains in Tab. 1 are computed relative to RISE, which serves as the action-only base policy with a strong 3D encoder. CFP w/o past isolates the benefit of future ChronoFlow supervision, while full CFP further evaluates whether historical object–gripper flows improve non-Markovian decisions. 
+
+Protocols. For each real-world task, we collect 50 expert demonstrations using the haptic device teleoperation [6] for training. All policies are trained on a work-station equipped with an NVIDIA RTX 3090. During evaluation, the workspace configuration is kept identical across all methods, and test initializations are uniformly sampled to ensure consistent coverage. Each policy is evaluated over 15 trials per task; for the more challenging Swap-Hard task, we increase the evaluation to 18 trials. 
+
+Results. Fig. 3 summarizes the real-world manipulation results, while Fig. 4a visualizes the interaction-centric keypoint flows predicted by ChronoFlow Policy during execution. We analyze the performance from three aspects: resolving non-Markovian dependencies (Q1), improving long-horizon task execution (Q2), and handling deformable object manipulation (Q3). 
+
+Modeling historical interaction improves non-Markovian manipula-tion (Q1). Tasks such as Swap-Easy and Swap-Hard require decisions that de-14 B. Lin et al. 
+
+pend on earlier interaction states rather than solely on the current observation. Methods without explicit history modeling often perform well at the beginning but fail to maintain task progress in later stages. For example, in Swap-Easy ,RISE achieves 87% success in Stage I but drops sharply to 27% and 13% in Stages II and III. A similar pattern appears for 3D-FDP (93% → 40% → 33%) and CFP w/o past (93% → 33% → 20%). The same phenomenon is observed in Swap-Hard . In contrast, CFP maintains strong performance across all stages (93%, 93%, 93% in Swap-Easy and 94%, 94%, 61% in Swap-Hard ), showing that historical ChronoFlow effectively resolves non-Markovian dependencies.       
+
+> Table 6:
+> Comparison with MBA.
+> Method Breakfast Stage I Stage II
+> MBA 87% 73% CFP 93 %80 %
+
+Future interaction modeling improves long-horizon tasks (Q2). On traditional long-horizon tasks such as Prepare Breakfast , CFP achieves consistently strong results across both stages. As shown in Tab. 5 and Tab. 6, our method CFP reaches 93% success in Stage I and improves to 80% in Stage II, outperforming RISE (73%, 53%), 3D-FDP (73%, 67%) and MBA (87%, 73%). These results show that joint past-current-future interaction modeling improves temporal reason-ing, multi-step planning, and task progression. 
+
+ChronoFlow Policy effectively handles deformable object manipula-tion (Q3). The Fold Towel task highlights the need to model deformable ob-ject dynamics. After the first fold, the towel exhibits highly variable geometry, making Stage II difficult for methods with limited object representations. RISE drops from 80% to 40%, often failing to localize or grasp the folded towel. MBA relies on object pose trajectories, but pose estimation for deformable objects is inherently ambiguous and can introduce substantial noise. In contrast, CFP models interaction-centric keypoint flows, which better preserve towel geometry under deformation. As a result, CFP achieves 87% success in both stages and substantially outperforms prior baselines in Stage II. 
+
+Ablations. Ablation studies confirm the importance of ChronoFlow design components (Q4). To assess the key design components of CFP, we conduct five ablation experiments on Fold Towel , as shown in Fig. 4b. First, we separately ablate ChronoFlow supervision and flow inputs. Without ChronoFlow supervision ( w/o ChronoFlow ), Stage II performance drops from 87% to 67%. Removing object flows ( w/o ObjPoints ) causes a larger Stage II drop (87% → 47%) than removing gripper flows ( w/o GriPoints , 87% → 80%), indicating that object flows are the primary signal for deformable-object tracking while gripper flows provide complementary cues. Second, disabling keypoint sampling ( w/o Sampling ) degrades both stages (Stage I: 87% → 40%; Stage II: 87% → 27%), showing that random keypoint sampling improves spatial coverage and reduces overfitting to fixed tracks. To improve robustness to viewpoint changes and sensing noise in real-world deployment, our full model applies the same spatial transformation jitter to both ChronoFlow-Policy 15 Gripper Flow ( Past Future )Object Flow ( Past )      
+
+> Object Flow ( Past )Object Flow ( Future )
+> Prepare BreakFast Fold Towel Pour Ball Swap -Easy Swap -Hard
+
+(a) Ablation Study on Fold Towel                
+
+> SuccessRate(%)StageIStageII
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> 87% 87%
+> 80%
+> 67%
+> 80%
+> 47%
+> 87%
+> 80%
+> 40%
+> 27%
+> 33%
+> 6%
+> CFP (Full) w/o CF w/o Obj
+> Points
+> w/o Gri
+> Points
+> w/o CF-
+> Sampling
+> w/o
+> CF-Aug
+
+(b) 
+
+Fig. 4: Left: Predicted ChronoFlow in real-world tasks: gripper flows (top), object flows (bottom), and historical object flows (yellow/orange). Right: Ablation on Fold Towel . CFP (Full) denotes the full model. w/o CF removes ChronoFlow trajec-tory supervision. w/o ObjPoints and w/o GriPoints remove object and gripper trajectories from ChronoFlow, respectively. w/o CF-Sampling disables stochastic subsampling of object keypoints during training. w/o CF-Aug removes ChronoFlow data augmentation used during training. 
+
+ChronoFlow trajectories and point clouds. Third, We disable this augmentation in w/o CF-Aug , causing Stage II success to drop from 87% to 6%, suggesting that spatial jittering is critical for stable real-world manipulation. 
+
+5 Discussion and Limitations 
+
+ChronoFlow represents temporally consistent object–gripper interactions with sparse 3D trajectories and jointly optimizes flow prediction and action genera-tion, following the world-action modeling principle of learning future dynamics together with control. Although trajectories extracted by segmentation and 3D tracking contain noise, drift, and missing keypoints, we train with the same imperfect pipeline used at inference, together with random keypoint sampling, dropout, and history truncation. This encourages the policy to capture stable motion trends rather than rely on individual tracks. However, severe occlusion or persistent tracking failures may still degrade performance, motivating more robust and uncertainty-aware interaction tracking. 
+
+Acknowledgments 
+
+This work was supported by the Fundamental and Interdisciplinary Disciplines Breakthrough Plan of the Ministry of Education of China; National Natural Science Foundation of China (No. 62506232); Science and Technology Major Project of Jiangsu Province (No. BG2024041); Shanghai Committee of Science and Technology (Yangfan: No. 24YF2722000; No. 24511103200). Lixin Yang is the corresponding author and is affiliated with the School of Artificial Intelligence, Shanghai Jiao Tong University, Shanghai, China, 200230. 16 B. Lin et al. 
+
+References 
+
+1. Bharadhwaj, H., Mottaghi, R., Gupta, A., Tulsiani, S.: Track2act: Predicting point tracks from internet videos enables generalizable robot manipulation. In: European Conference on Computer Vision. pp. 306–324. Springer (2024) 2. Chen, B., Monso, D.M., Du, Y., Simchowitz, M., Tedrake, R., Sitzmann, V.: Diffu-sion forcing: Next-token prediction meets full-sequence diffusion. In: NeurIPS. pp. 24081–24125 (2024) 3. Chen, J., Fang, H., Wang, C., Wang, S., Lu, C.: History-aware visuomotor policy learning via point tracking. arXiv preprint arXiv:2509.17141 (2025) 4. Chen, T., Chen, Z., Chen, B., Cai, Z., Liu, Y., Li, Z., Liang, Q., Lin, X., Ge, Y., Gu, Z., et al.: Robotwin 2.0: A scalable data generator and benchmark with strong domain randomization for robust bimanual robotic manipulation. arXiv preprint arXiv:2506.18088 (2025) 5. Eisner, B., Zhang, H., Held, D.: Flowbot3d: Learning 3d articulation flow to ma-nipulate articulated objects. In: Robotics: Science and Systems (2022) 6. Fang, H.S., Fang, H., Tang, Z., Liu, J., Wang, C., Wang, J., Zhu, H., Lu, C.: RH20T: A comprehensive robotic dataset for learning diverse skills in one-shot. In: IEEE International Conference on Robotics and Automation. pp. 653–660. IEEE (2024) 7. Fang, H., Grotz, M., Pumacay, W., Wang, Y.R., Fox, D., Krishna, R., Duan, J.: Sam2act: Integrating visual foundation model with a memory architecture for robotic manipulation. In: International Conference on Machine Learning (2025) 8. Gkanatsios, N., Xu, J., Bronars, M., Mousavian, A., Ke, T.W., Fragkiadaki, K.: 3d flowmatch actor: Unified 3d policy for single-and dual-arm manipulation. arXiv preprint arXiv:2508.11002 (2025) 9. Hsu, C.C., Wen, B., Xu, J., Narang, Y., Wang, X., Zhu, Y., Biswas, J., Birchfield, S.: Spot: Se(3) pose trajectory diffusion for object-centric manipulation. In: IEEE International Conference on Robotics and Automation. pp. 4853–4860 (2025) 10. Hu, Y., Guo, Y., Wang, P., Chen, X., Wang, Y.J., Zhang, J., Sreenath, K., Lu, C., Chen, J.: Video prediction policy: A generalist robot policy with predictive visual representations. In: International Conference on Machine Learning. pp. 24328– 24346 (2025) 11. Huang, W., Chao, Y.W., Mousavian, A., Liu, M.Y., Fox, D., Mo, K., Fei-Fei, L.: Pointworld: Scaling 3d world models for in-the-wild robotic manipulation. arXiv preprint arXiv:2601.03782 (2026) 12. Huang, Z., Shi, X., Zhang, C., Wang, Q., Cheung, K.C., Qin, H., Dai, J., Li, H.: Flowformer: A transformer architecture for optical flow. In: European conference on computer vision. pp. 668–685. Springer (2022) 13. Jin, Y., Sun, Z., Xu, K., Chen, L., Jiang, H., Huang, Q., Song, C., Liu, Y., Zhang, D., Song, Y., et al.: Video-lavit: unified video-language pre-training with decoupled visual-motional tokenization. In: International Conference on Machine Learning. pp. 22185–22209 (2024) 14. Li, H., Yang, S., Chen, Y., Chen, X., Yang, X., Tian, Y., Wang, H., Wang, T., Lin, D., Zhao, F., et al.: Cronusvla: Towards efficient and robust manipulation via multi-frame vision-language-action modeling. arXiv preprint arXiv:2506.19816 (2025) 15. Li, L., Zhang, Q., Luo, Y., Yang, S., Wang, R., Han, F., Yu, M., Gao, Z., Xue, N., Zhu, X., Shen, Y., Xu, Y.: Causal world modeling for robot control. arXiv preprint arXiv:2601.21998 (2026) ChronoFlow-Policy 17 16. Noh, S., Nam, D., Kim, K., Lee, G., Yu, Y., Kang, R., Lee, K.: 3d flow diffusion policy: Visuomotor policy learning via generating flow in 3d space. arXiv preprint arXiv:2509.18676 (2025) 17. Pai, J., Achenbach, L., Montesinos, V., Forrai, B., Mees, O., Nava, E.: mimic-video: Video-action models for generalizable robot control beyond vlas. arXiv preprint arXiv:2512.15692 (2025) 18. Peebles, W., Xie, S.: Scalable diffusion models with transformers. In: Proceedings of the IEEE/CVF international conference on computer vision. pp. 4195–4205 (2023) 19. Ravi, N., Gabeur, V., Hu, Y.T., Hu, R., Ryali, C., Ma, T., Khedr, H., Rädle, R., Rolland, C., Gustafson, L., et al.: Sam 2: Segment anything in images and videos. In: International Conference on Learning Representations (2025) 20. Ronneberger, O., Fischer, P., Brox, T.: U-net: Convolutional networks for biomedi-cal image segmentation. In: International Conference on Medical Image Computing and Computer-Assisted Intervention. pp. 234–241. Springer (2015) 21. Shi, H., Xie, B., Liu, Y., Sun, L., Liu, F., Wang, T., Zhou, E., Fan, H., Zhang, X., Huang, G.: Memoryvla: Perceptual-cognitive memory in vision-language-action models for robotic manipulation. arXiv preprint arXiv:2508.19236 (2025) 22. Shi, H., Xie, B., Liu, Y., Sun, L., Liu, F., Wang, T., Zhou, E., Fan, H., Zhang, X., Huang, G.: Memoryvla: Perceptual-cognitive memory in vision-language-action models for robotic manipulation. arXiv preprint arXiv:2508.19236 (2025) 23. Shi, X., Huang, Z., Li, D., Zhang, M., Cheung, K.C., See, S., Qin, H., Dai, J., Li, H.: Flowformer++: Masked cost volume autoencoding for pretraining optical flow estimation. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 1599–1610 (2023) 24. Su, Y., Liu, N., Chen, D., Zhao, Z., Wu, K., Li, M., Xu, Z., Che, Z., Tang, J.: Freqpolicy: Efficient flow-based visuomotor policy via frequency consistency. arXiv preprint arXiv:2506.08822 (2025) 25. Su, Y., Zhan, X., Fang, H., Li, Y., Lu, C., Yang, L.: Motion before action: Diffusing object motion as manipulation condition. IEEE Robotics and Automation Letters 
+
+10 (7), 7428–7435 (2025) 26. Tang, X., Qiu, J., Xie, L., Tian, Y., Jiao, J., Ye, Q.: Adaptive keyframe sampling for long video understanding. In: Proceedings of the Computer Vision and Pattern Recognition Conference. pp. 29118–29128 (2025) 27. Torne, M., Pertsch, K., Walke, H., Vedder, K., Nair, S., Ichter, B., Ren, A.Z., Wang, H., Tang, J., Stachowicz, K., Dhabalia, K., Equi, M., Vuong, Q., Springenberg, J.T., Levine, S., Finn, C., Driess, D.: Mem: Multi-scale embodied memory for vision language action models (2026) 28. Torne, M., Tang, A., Liu, Y., Finn, C.: Learning long-context diffusion policies via past-token prediction. In: CoRL (2025) 29. Wang, C., Fang, H., Fang, H.S., Lu, C.: Rise: 3d perception makes real-world robot imitation simple and effective. In: IEEE/RSJ International Conference on Intelligent Robots and Systems. pp. 2870–2877 (2024) 30. Wang, X., Wang, C., Xu, Y., Ye, M., Zhang, F., Tian, J., Zhan, X., Zhu, L., Lu, C., Yang, L.: LaMP: Learning vision-language-action policy with 3d scene flow as latent motion prior. In: European Conference on Computer Vision (ECCV) (2026) 31. Wen, C., Lin, X., So, J.I.R., Chen, K., Dou, Q., Gao, Y., Abbeel, P.: Any-point trajectory modeling for policy learning. In: Robotics: Science and Systems (2024) 32. Xiao, Y., Wang, J., Xue, N., Karaev, N., Makarov, Y., Kang, B., Zhu, X., Bao, H., Shen, Y., Zhou, X.: Spatialtrackerv2: Advancing 3d point tracking with explicit camera motion. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 6726–6737 (2025) 18 B. Lin et al. 33. Xu, M., Xu, Z., Xu, Y., Chi, C., Wetzstein, G., Veloso, M., Song, S.: Flow as the cross-domain manipulation interface. In: Conference on Robot Learning. vol. 270, pp. 2475–2499. PMLR (2024) 34. Xu, M., Gao, M., Li, S., Lu, J., Gan, Z., Lai, Z., Cao, M., Kang, K., Yang, Y., Dehghan, A.: Slowfast-llava-1.5: A family of token-efficient video large language models for long-form video understanding. In: Conference on Language Modeling (2025) 35. Ye, S., Ge, Y., Zheng, K., Gao, S., Yu, S., Kurian, G., Indupuru, S., Tan, Y.L., Zhu, C., Xiang, J., et al.: World action models are zero-shot policies. arXiv preprint arXiv:2602.15922 (2026) 36. Yu, S., Jin, C., Wang, H., Chen, Z., Jin, S., Zuo, Z., Xu, X., Sun, Z., Zhang, B., Wu, J., et al.: Frame-voyager: Learning to query frames for video large language models. In: International Conference on Learning Representations (2025) 37. Yu, T., Quillen, D., He, Z., Julian, R., Hausman, K., Finn, C., Levine, S.: Meta-world: A benchmark and evaluation for multi-task and meta reinforcement learning. In: Conference on Robot Learning. Proceedings of Machine Learning Research, vol. 100, pp. 1094–1100. PMLR (2019) 38. Ze, Y., Zhang, G., Zhang, K., Hu, C., Wang, M., Xu, H.: 3d diffusion policy: Gen-eralizable visuomotor policy learning via simple 3d representations. In: Robotics: Science and Systems (2024) 39. Zhang, B., Ke, L., Harley, A.W., Fragkiadaki, K.: Tapip3d: Tracking any point in persistent 3d geometry. arXiv preprint arXiv:2504.14717 (2025) 40. Zhang, C., Le Moing, G., Koppula, S., Rocco, I., Momeni, L., Xie, J., Sun, S., Sukthankar, R., Barral, J.K., Hadsell, R., Ghahramani, Z., Zisserman, A., Zhang, J., Sajjadi, M.S.M.: Efficiently reconstructing dynamic scenes one d4rt at a time. In: CVPR (2026) 41. Zheng, R., Liang, Y., Huang, S., Gao, J., Daumé III, H., Kolobov, A., Huang, F., Yang, J.: Tracevla: Visual trace prompting enhances spatial-temporal awareness for generalist robotic policies. In: International Conference on Learning Represen-tations (2025) 42. Zhu, C., Yu, R., Feng, S., Burchfiel, B., Shah, P., Gupta, A.: Unified world models: Coupling video and action diffusion for pretraining on large robotic datasets. In: Proceedings of Robotics: Science and Systems (RSS) (2025) 
+
+Appendix A ChronoFlow Implementation Details 
+
+This section details the construction of ChronoFlow , including how gripper and object keypoints are defined, how their temporal flows are obtained, and how historical and future ChronoFlow trajectories are organized. 
+
+ChronoFlow keypoints. ChronoFlow represents the gripper-object interaction state at each timestep t using sparse 3D keypoints defined on both the robot gripper and task-relevant objects. We denote the gripper keypoints as P gt ∈
+
+RNg ×3 and the object keypoints as P ot ∈ RNo×3, where Ng and No are the numbers of gripper and object keypoints, respectively. Their union Pt = P gt ∪P ot
+
+forms a compact abstraction of the physical interaction state. ChronoFlow-Policy 19 
+
+Gripper keypoints flow. We predefine Ng canonical keypoints on the gripper geometry, rigidly attached to the tool center point (TCP). Given the TCP pose at each timestep, we compute the 3D positions of all gripper keypoints via rigid transformation, producing temporally consistent gripper trajectories in the world coordinate frame. 
+
+Object keypoints flow. For manipulated objects, we segment task-relevant objects from the initial observation, e.g., using 3D SAM-2 [19], and apply Far-thest Point Sampling (FPS) to obtain candidate keypoints on each object. We then track these points over time using a 3D point tracker, e.g., TAPIP3D [39], to obtain temporally consistent object-centric trajectories. In practice, instead of using all tracked candidates, we randomly sample No object keypoints per sequence for training, which reduces overfitting to specific spatial locations and improves generalization across interaction configurations. 
+
+Historical ChronoFlow trajectory. Given a history horizon hp, we construct the historical ChronoFlow trajectory as Pt−hp:t−1 = {Pt−hp , . . . , Pt−1}, where 
+
+P gt−hp:t−1 ∈ Rhp×Ng ×3 and P ot−hp:t−1 ∈ Rhp×No×3. It contains both gripper and object keypoint flows over the past window. For conciseness, we use P:t =
+
+{Pτ }τ <t to denote the historical ChronoFlow trajectories constructed from past observations. 
+
+Future ChronoFlow trajectory. Following the notation in the main paper, the policy predicts a horizon-length ChronoFlow trajectory Pt:t+H , which de-scribes the future evolution of gripper-object interactions starting from timestep 
+
+t. Its gripper and object components are denoted as P gt:t+H ∈ RH×Ng ×3 and 
+
+P ot:t+H ∈ RH×No×3, respectively. Equivalently, the full trajectory is represented as Pt:t+H ∈ R(Ng +No)×H×3.
+
+B ChronoFlow Policy Implementation Details 
+
+This section provides implementation details of ChronoFlow Policy , includ-ing the current observation encoder, and the conditioning mechanisms used in different diffusion backbones, i.e., Unet1D [20] and DiT [18]. 
+
+B.1 Current Observation Encoder 
+
+Observation. ChronoFlow Policy conditions on the current observation ot =(pt, qt) at decision time t. Here pt ∈ RN ×6 denotes the scene-level point cloud, where each point contains 3D coordinates and RGB values. When available, 
+
+qt ∈ Rdq denotes the proprioceptive state, such as joint positions or end-effector pose. The observation encoder maps ot to a global feature vector ct = Eobs (ot) ∈
+
+RDobs , which conditions the diffusion backbone. 20 B. Lin et al. 
+
+Point cloud branch. We use different point-cloud encoders in simulation and real-world settings. In simulation, we adopt a PointNet-style point-cloud encoder composed of shared per-point MLP layers with widths [64, 128, 256, 512] ,followed by symmetric max pooling over points and a final linear projection to produce the compact point-cloud embedding zpc  
+
+> t
+
+∈ RDpc . In real-robot exper-iments, the raw point cloud is noisier and contains substantially more points than in simulation. Therefore, we use a sparse 3D encoder to efficiently extract robust point features from dense point clouds. 
+
+State branch. When proprioception is available, we encode qt ∈ Rdq using a lightweight MLP with ReLU activations. In all simulation experiments, we set state_mlp_size=(64, 64) , yielding a two-layer MLP dq → 64 → 64 and producing a state embedding zqt ∈ R64 . In real-robot experiments, proprioceptive state is omitted and the observation feature is extracted from the point cloud only. 
+
+Observation feature fusion. When both point-cloud and proprioceptive fea-tures are available, we concatenate zpc  
+
+> t
+
+and zqt along the channel dimension and apply a final linear layer. The resulting feature ct ∈ RDobs is used as the observation condition for ChronoFlow diffusion. We set Dobs = 128 in our im-plementation. 
+
+B.2 Conditioning and Diffusion Backbone 
+
+We implement ChronoFlow Policy with diffusion backbones, including Unet1D [20] and DiT [18]. Since our simulation benchmarks are approximately Markovian while real-world manipulation exhibits stronger non-Markovian dependencies, we use different conditioning signals in these two settings. 
+
+ChronoFlow diffusion target. At each timestep t, ChronoFlow represents the interaction state as Pt = P gt ∪ P ot ∈ RN ×3, where N = Ng + No. For a prediction horizon H, the diffusion model predicts the ChronoFlow trajectory 
+
+Pt:t+H ∈ RN ×H×3. We apply the standard forward diffusion process to Pt:t+H
+
+and denote the noisy trajectory at diffusion step k as P kt:t+H . The denoising network predicts the diffusion target, e.g., noise ϵ under the DDPM objective, conditioned on the current observation and historical ChronoFlow. 
+
+Simulation setting. In simulation, tasks are approximately Markovian and the current interaction state is sufficient for decision making. Therefore, we inject the current ChronoFlow state Pt as an explicit trajectory condition. Specifically, we repeat Pt along the prediction horizon to obtain ePt:t+H = Repeat (Pt) and concatenate it with the noisy ChronoFlow trajectory: 
+
+Skt:t+H =
+
+h ePt:t+H ; P kt:t+H
+
+i
+
+∈ RH×N ×6. (9) The diffusion backbone takes Skt:t+H , the diffusion timestep k, and the obser-vation feature ct = Eobs (ot) as input, and predicts the denoising target for the noisy ChronoFlow trajectory. ChronoFlow-Policy 21 
+
+Real-world setting. In real-world long-horizon manipulation, we run the 3D point tracker asynchronously with the policy for efficiency. As a result, the pol-icy may not have access to the up-to-date current ChronoFlow state Pt at inference time. Therefore, in real-robot experiments, we do not use Pt as an explicit repeated trajectory condition. Instead, the model denoises the future ChronoFlow trajectory from Gaussian noise while conditioning on both the his-torical ChronoFlow P:t and the current point-cloud observation feature. Concretely, at each diffusion step k, the ChronoFlow encoder jointly encodes 
+
+P:t and P kt:t+H into tokens Zkt . The observation encoder extracts the current point-cloud feature ct = Eobs (pt). The diffusion backbone then uses Zkt , ct, and the diffusion timestep k as conditioning signals to perform iterative denoising. 
+
+Action decoding. After iterative denoising, the model obtains clean ChronoFlow tokens Z0 
+
+> t
+
+and decodes them into the predicted future interaction trajectory 
+
+ˆPt:t+H = DCF (Z0 
+
+> t
+
+). The action decoder predicts future robot actions from the clean tokens and the decoded ChronoFlow trajectory: 
+
+ˆat:t+H = Aϕ
+
+h 
+
+Z0 
+
+> t
+
+; ˆPt:t+H
+
+i 
+
+. (10) During training, action prediction is supervised with an MSE objective, while the diffusion backbone is trained with ChronoFlow denoising supervision. 
+
+C Baseline Implementation Details 
+
+This section summarizes implementation details of the baselines and highlights their differences from ChronoFlow Policy . To ensure a fair comparison, all baselines use the same point-cloud observation encoder, normalization, diffusion scheduler, and shared module hyperparameters whenever applicable. We only vary the core modeling choices, including history usage, interaction representa-tion, prediction targets, and training objectives. 
+
+C.1 RISE 
+
+RISE [29] is an action-only diffusion policy. Key differences to ChronoFlow Policy: it does not predict interaction trajectories, does not perform keypoint/flow diffusion, and does not incorporate an explicit ChronoFlow encoder. Given a sin-gle point-cloud observation at time t, RISE first encodes the point cloud to obtain point features, aggregates them with a Transformer readout, and conditions an action diffusion head on the resulting global feature. 
+
+Shared observation encoder. RISE uses the same point-cloud observation encoder as ChronoFlow Policy to extract point features from the current point cloud. 22 B. Lin et al. 
+
+Transformer aggregation. Point features are processed by a Transformer with hidden_dim = 512 , nheads = 8 , n_encoder_layers = 4 , n_decoder_layers =1, dim_feedforward = 2048 , and dropout 0.1. A learnable readout token is ap-pended, and the readout feature rt ∈ R512 is used as the global condition. 
+
+Action diffusion head. The action head is a conditional Unet1D diffusion model, implemented as DiffusionUNetPolicy . It predicts num_action = 20 
+
+action steps with per-step dimension action_dim = 10 . RISE is trained and evaluated with action diffusion only .
+
+C.2 HistRISE 
+
+HistRISE [3] is an action-only diffusion policy that augments RISE with point-track history features. Key differences to ChronoFlow Policy: HistRISE does not predict future interaction trajectories, has no ChronoFlow supervision, and does not perform diffusion over interaction-centric keypoint representations. It only trains an action diffusion head. 
+
+Shared observation encoder. HistRISE uses the same point-cloud observa-tion encoder as ChronoFlow Policy and only differs in the additional history track features. 
+
+History point tracks and track encoder. HistRISE takes normalized point tracks as history input, where num_targets = 1 and points_per_target =5 by default. For fair comparison, we use the same track encoder design as ChronoFlow Policy for extracting history features: temporal patch embedding with patch_size = 4 and embed_dim = 256 , followed by cross-attention pool-ing with a learnable query. The cross-attention module uses query_dim = 512 ,
+
+num_queries = 1 , n_layers = 4 , n_heads = 8 , ff_dim = 1024 , dropout 0.1,and time embedding. 
+
+Token fusion. The encoded track features are projected to the Transformer hidden dimension and appended to the point feature sequence before Trans-former readout. The readout feature conditions the same action diffusion head as RISE. HistRISE is trained and evaluated with action diffusion only .
+
+C.3 Motion Before Action (MBA) 
+
+MBA [25] uses a two-stage diffusion pipeline in which an object-motion summary is first sampled and then used to condition action diffusion. Key differences to ChronoFlow Policy: MBA does not model interaction-centric gripper-object keypoints. Instead, it predicts object pose trajectories and does not use an ex-plicit ChronoFlow history encoder. 
+
+Shared observation encoder. MBA uses the same observation encoder as ChronoFlow Policy to extract the current observation feature from the point cloud. ChronoFlow-Policy 23 
+
+Two-stage diffusion. MBA first samples a future object-motion trajectory, stored as obj_pos with dimension do = 6 , using a conditional Unet1D diffusion model. It then generates actions using a second conditional Unet1D diffusion model conditioned on the predicted object motion. 
+
+Condition construction. For action generation, MBA embeds the predicted object-motion trajectory with an MLP of width [32,32] and concatenates it with the current observation feature, followed by a final projection to a 128-dimensional global condition. 
+
+Diffusion backbone. Both diffusion stages use ConditionalUnet1D with down_dims =(256 , 512 , 1024) , diffusion embedding dimension 256 , kernel size 5, group norm groups 8, and FiLM conditioning by default. 
+
+C.4 3D Flow Diffusion Policy (3D-FDP) 
+
+3D-FDP [16] is a two-stage diffusion policy that first predicts a future scene-level 
+
+point-cloud trajectory and then generates actions conditioned on the predicted future scene. Key differences to ChronoFlow Policy: 3D-FDP predicts fu-ture dynamics at the entire-scene point-cloud level rather than using interaction-centric gripper-object keypoints, and it does not incorporate ChronoFlow history. 
+
+Shared observation encoder. 3D-FDP uses the same observation encoder as ChronoFlow Policy to extract the current observation feature. 
+
+Stage I: future point-cloud diffusion. 3D-FDP predicts a future point-cloud sequence over horizon H with Npc scene points by diffusing flattened XYZ coordinates: 
+
+Xfut  
+
+> t:t+H
+
+∈ RH×(Npc ·3) . (11) This stage conditions only on the current observation feature and does not use any history encoder. 
+
+Stage II: action diffusion conditioned on predicted scene feature. After sampling the future point cloud, 3D-FDP encodes it into a compact feature using a PointNet-style encoder with output dimension pred_pc_feature_dim = 64 
+
+and averages per-timestep features over the horizon. The action diffusion model conditions on the concatenation of the observation feature and the predicted future-scene feature, with dimensions 128 + 64 by default. 
+
+Diffusion backbone. Both point-cloud diffusion and action diffusion use Unet1D 
+
+with down_dims = (256 , 512 , 1024) , diffusion embedding dimension 256 , kernel size 5, group norm groups 8, and FiLM conditioning by default. The point-cloud diffusion loss is weighted by λpc = 1 .24 B. Lin et al. 
+
+D Training Curves 
+
+To further analyze the learning behavior of different policies, we report train-ing curves on representative tasks from MetaWorld and RoboTwin. All methods follow the same evaluation protocol as in the main paper. These curves comple-ment the final success-rate comparisons by showing how quickly each method improves during training and how stable the learned policy is across evaluation checkpoints. 0 10 20 30 40                      
+
+> Training Steps (k)
+> 0
+> 25
+> 50
+> 75
+> 100
+> Success Rate (%)  Bin Picking
+> 010 20 30 40
+> Training Steps (k)
+> Box Close
+> 010 20 30 40 50
+> Training Steps (k)
+> Soccer
+> ChronoFlow Unet Policy
+> DP3
+> MetaWorld Benchmark 01000 2000 3000
+> Epoch
+> 0
+> 25
+> 50
+> 75
+> 100
+> Success Rate (%)  Handover Mic
+> 01000 2000 3000
+> Epoch
+> Click Bell
+> 01000 2000 3000
+> Epoch
+> Click AlarmClock
+> 01000 2000 3000
+> Epoch
+> Pick Dual Bottles
+> ChronoFlow Unet Policy
+> DP3
+> RoboTwin Benchmark
+
+Fig. 5: Learning curves on simulation benchmarks. CFP (Unet) generally con-verges faster and achieves higher or comparable final success rates than DP3 across representative tasks, demonstrating the effectiveness of ChronoFlow supervision. 
+
+As shown in Fig. 5, CFP achieves faster convergence than DP3 on both single-arm and dual-arm manipulation tasks. On MetaWorld, CFP rapidly improves on interaction-intensive tasks such as Bin Picking and maintains a clear advan-tage throughout training. On RoboTwin, CFP reaches high success rates earlier on long-horizon or coordination-heavy tasks such as Handover Mic and Pick Dual Bottles . These results indicate that ChronoFlow provides a stronger train-ing signal than action-only supervision, helping the policy learn object–gripper interaction dynamics more efficiently.
