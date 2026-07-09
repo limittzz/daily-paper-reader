@@ -25,3 +25,54 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: imitation
+      description: 搜索机器人模仿学习、JEPA、diffusion policy相关论文
+      enabled: true
+      paper_sources:
+        - arxiv
+      keywords:
+        - keyword: imitation learning
+          keyword_cn: 模仿学习
+          query: imitation learning in robotics
+        - keyword: robot imitation learning
+          keyword_cn: 机器人模仿学习
+          query: robot imitation learning methods and algorithms
+        - keyword: joint embedding predictive architecture
+          keyword_cn: 联合嵌入预测架构
+          query: JEPA joint embedding predictive architecture
+        - keyword: diffusion policy
+          keyword_cn: 扩散策略
+          query: diffusion policy for robot control
+      intent_queries:
+        - query: recent advances in imitation learning for robotic manipulation
+          query_cn: 机器人操作中模仿学习的最新进展
+          enabled: true
+          source: manual
+          note: ''
+        - query: What are recent advances in robot imitation learning using JEPA?
+          query_cn: 使用JEPA的机器人模仿学习最新进展是什么？
+          enabled: true
+          source: manual
+          note: ''
+        - query: How is diffusion policy applied to robot learning from demonstration?
+          query_cn: 扩散策略如何应用于机器人示教学习？
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-07-09T11:56:04.290Z'
+source_backends:
+  arxiv:
+    papers_table: arxiv_papers
+    use_vector_rpc: true
+    vector_rpc: match_arxiv_papers
+    vector_rpc_exact: match_arxiv_papers_exact
+    use_bm25_rpc: true
+    bm25_rpc: match_arxiv_papers_bm25
+    sync_table: arxiv_sync_status
+    sync_success_value: success
+    schema: public
+    kind: supabase
+    enabled: true
+    url: https://lyucdwgefyfbmaiopjbk.supabase.co
+    anon_key: sb_publishable_lX-oi64Uxyd7SIVv3_w2Uw_MTOojeKq
