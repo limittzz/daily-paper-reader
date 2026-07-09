@@ -1,0 +1,399 @@
+Title: Spatial Attention: Adapting Execution Horizons for Diffusion Policies via Observation Sensitivity
+
+URL Source: https://arxiv.org/pdf/2607.04739v1
+
+Published Time: Tue, 07 Jul 2026 02:45:53 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+> IEEE ROBOTICS AND AUTOMATION LETTERS, VOL. 11, NO. 6, JUNE 2026 1
+
+# Spatial Attention: Adapting Execution Horizons for Diffusion Policies via Observation Sensitivity 
+
+Che-Sang Park, Junsu Ha, Jianlong Fu, and Frank C. Park 
+
+Abstract —Sampling action chunks via generative models has become a widely adopted methodology for robotic learning from demonstration. However, existing methods often struggle to bal-ance responsiveness and computational cost because they execute each action chunk for a fixed execution horizon. In this paper, we adaptively adjust the execution horizon of sampled action chunks, balancing responsiveness and computational efficiency. We introduce Spatial Attention—defined as the expected squared norm of the gradient of the action log-likelihood with respect to the observation—which indicates the sensitivity of the policy’s action distribution to variations in the observation. We show that, under a fixed budget of chunk samplings, the execution horizon that minimizes the cumulative likelihood drop induced by disturbances decreases as Spatial Attention increases. By forecasting future Spatial Attention values alongside the action chunk, our framework dynamically assigns shorter execution horizons to phases with high Spatial Attention, and longer horizons to phases with low Spatial Attention. Experiments on standard and perturbed tasks, in both simulation and on a real robot, show that our method significantly improves success rates over fixed-horizon baselines while maintaining the average execution horizon. 
+
+Index Terms —Machine Learning for Robot Control, Learning from Demonstration, Probabilistic Inference 
+
+I. I NTRODUCTION 
+
+Consider a robotic system with state space X , observa-tion space O, and action space A, governed by xk+1 =
+
+f (xk, a k) + nk and ok = h(xk) + wk, where xk ∈ X ,
+
+ok ∈ O , and ak ∈ A denote the state, observation, and action at timestep k, and nk and wk are process and observation noise. The dynamics f and the observation function h vary with the embodiment and sensing modality. Since both f
+
+and h are unknown, learning from demonstration trains a policy π(a|o) that infers actions directly from observations, using a demonstration dataset D = {(oi, a i)}i=1 ,2··· . Recent robotic policies built on diffusion models [1], [2], [3] model 
+
+π as a conditional generative model over action sequences. Given an observation ok, the policy samples a sequence of actions [ak, a k+1 , . . . , a k+TH −1] ∼ π(·| ok), referred to as an 
+
+action chunk [4]. The policy then executes only the first Ta
+
+(Ta ≤ TH ) actions of the chunk before sampling a new one, in a receding-horizon fashion similar to model predictive control; this Ta, referred to as the execution horizon , is fixed to a user-specified value prior to deployment. Executing an action chunk, however, leaves the policy vulnerable to external disturbances and errors, since a new  
+
+> Under Review. Che-Sang Park, Junsu Ha, and Frank C. Park are with the Robotics Laboratory, Seoul National University, Seoul, South Korea (e-mail: {cspark, hajunsu }@robotics.snu.ac.kr; fcp@snu.ac.kr). Jianlong Fu is with Microsoft Research Asia, Beijing, China (e-mail: jianf@microsoft.com).
+
+observation is incorporated only after all Ta actions have been executed [5], [6]. Reducing the execution horizon allows more frequent observations and thus improves responsiveness, but each additional chunk sampling invokes the slow generative process, increasing computational cost and overall task com-pletion time [2], [3], [7], [8], [9]. A fixed execution horizon therefore forces a single compromise between responsiveness and efficiency for the entire task, even though different phases of a task demand different levels of responsiveness. This motivates adapting the execution horizon during de-ployment, rather than fixing it in advance. Recently, several works in the domain of planning with diffusion models have employed the concept of adaptive replanning [10], [11], [12]. However, directly applying these methods to a generative policy inherently requires the generation of future observations to determine the optimal moment to replan. This computational bottleneck makes such approaches impractical for tasks with high-dimensional observations [1]. In this work, we propose Spatial Attention , a criteria for adaptively determining the execution horizon of a sampled action chunk. Motivated by minimum-attention control [13], [14], which measures a control law’s attention through its sen-sitivity to changes in state and time, we adopt the spatial (state) component and recast it as the sensitivity of the policy’s action distribution to its observation. By formulating an optimization problem that minimizes the cumulative likelihood drop of sampled actions under a fixed average sampling frequency, we show that the optimal execution horizon decreases as Spatial Attention—the expected squared norm of the gradient of the action log-likelihood with respect to the observation— increases. At inference time, a sequence-to-sequence estimator forecasts future Spatial Attention from the current observation and the sampled action chunk, and the policy sets the execution horizon to the point at which the accumulated prediction reaches a predefined threshold—assigning shorter horizons in high-attention regions and longer ones in low-attention regions. Because Spatial Attention is estimated from auxiliary score networks trained on the demonstration data, indepen-dently of the policy’s architecture, our framework applies to any policy that generates action chunks. We extensively evaluate our approach on robotic manipula-tion tasks across both simulation and real-world environments. In simulation, we utilize the standard Robomimic bench-mark [15] to verify general performance, and further introduce manual perturbations during execution to rigorously evaluate the policy’s responsiveness to external disturbances. We also conduct real-world experiments where dynamic disturbances are applied to the target object to assess the real-time ca-pability of our approach. Experimental results demonstrate        
+
+> arXiv:2607.04739v1 [cs.RO] 6 Jul 2026 IEEE ROBOTICS AND AUTOMATION LETTERS, VOL. 11, NO. 6, JUNE 2026 2
+> Fig. 1. (a) Spatial Attention (SA) quantifies the sensitivity of the policy’s probability density function to variations in the observation. While a distribution with low SA remains relatively stable under observation perturbations, a high-SA distribution shifts significantly to even minor perturbations. (b) In this work, we utilize SA to adaptively adjust the execution horizon, Ta. Extending Taduring low-SA phases improves computational efficiency, while shortening Tain high-SA regions ensures robustness and responsiveness to errors or environmental changes.
+
+that dynamically adjusting the execution horizon based on Spatial Attention improves success rates across all tasks while maintaining the average sampling frequency, confirming that our approach enhances responsiveness without additional com-putational overhead. II. R ELATED WORKS 
+
+A. Action Chunking in Generative Policies 
+
+Recent policies built upon generative models commonly sample a sequence of actions from a single observation, referred to as an action chunk, rather than predicting a single-step action [4]. Compared to single-step action prediction, ac-tion chunking offers several practical advantages. It mitigates compounding errors in long-horizon tasks by reducing the number of autoregressive prediction steps [4], [16]. Moreover, it maintains temporal consistency by capturing non-Markovian behaviors such as pauses and oscillating motions [1], [5], [6]. Beyond these benefits, it also enables computationally expensive Vision-Language-Action (VLA) models to control physical robots by reducing the frequency of queries to the VLM backbone [8], [17], [18]. Despite these benefits, execut-ing action chunks lacks the ability to balance computational ef-ficiency against responsiveness to external disturbances, since the execution horizon is fixed. 
+
+B. Adaptive Execution Horizons in Generative Planners and Policies 
+
+Adaptively adjusting the execution horizon has been ex-plored in both planning and policies that use generative models. In the field of planning with generative models [19], [20], several works have investigated when to trigger replan-ning [10], [11], [12]. RDM [10] uses the likelihood of the planned trajectory as the replanning criterion. After initial planning with Diffuser [19], RDM monitors the trajectory likelihood at each timestep and triggers replanning when it falls below a predefined threshold. Other works, such as Jutras-Dub´ e et al. [11] and Punyamoorty et al. [12], instead use predictive uncertainty as the replanning criterion. These methods first generate a sequence of future states using Decision Diffuser [20], and then infer an action at each timestep from two consecutive states using an ensemble of inverse dynamics models. A predictive uncertainty estimate, computed from the ensemble’s action predictions, then serves as the signal that determines whether to replan. Despite the benefits of replanning, these methods require generating future states, which is impractical for real-time control with high-dimensional visual observations. Adaptive execution-horizon adjustment has also been stud-ied in the context of generative policies, which avoid this lim-itation [21]. Unlike planners, generative policies directly pro-duce actions without generating future observations, making them better suited to real-time control with high-dimensional visual inputs. Mixture of Horizons (MoH) [21] produces action predictions at multiple horizons together with a fused predic-tion. At inference, MoH measures the disagreement between the fused prediction and each horizon-wise prediction at every step within the chunk, and executes the longest prefix whose disagreement remains below a threshold derived from the early steps. Despite this effort, the proposed metric is heuristic and lacks mathematical proof of optimality. Furthermore, this work does not consider scenarios with external disturbances. In this work, we establish a mathematically grounded metric for adaptive execution horizon derived from an optimization problem. We further evaluate our method under disturbance scenarios to demonstrate its robustness. 
+
+C. Score-Based Generative Models 
+
+We briefly review score-based generative models, as they form the mathematical basis for our derivation of Spatial Attention. Score-based generative models generate samples from noise through a denoising process known as Annealed Stochastic Langevin Dynamics [22], [23]. This discrete sam-pling process can be interpreted as solving a reverse-time Stochastic Differential Equation (SDE) [24]. While the for-ward SDE defines a fixed process that gradually adds noise to the data, the generative process requires reversing these dynamics. Unlike the forward SDE, where the dynamics are given, the reverse process depends on the score of the target distribution, which must be estimated. Consequently, the IEEE ROBOTICS AND AUTOMATION LETTERS, VOL. 11, NO. 6, JUNE 2026 3
+
+primary objective of these models is to learn a score function 
+
+sθ (x, t ) that approximates the gradient of the log-density of perturbed data at a given noise scale. 
+
+sθ (x, t ) = ∇x log pt(x). (1) Depending on the specific formulation of the forward dy-namics and the training objective, this framework gives rise to several model classes, such as Denoising Score Matching (DSM) [25], Noise Conditional Score Networks (NCSN) [22], [23], and Denoising Diffusion Probabilistic Models (DDPM) [26], [27]. We leverage this score estimation framework, specifically NCSN [22], to derive Spatial Attention in Section IV. III. S PATIAL ATTENTION : M AXIMIZING POLICY 
+
+ROBUSTNESS WITH FIXED SAMPLING BUDGET 
+
+In this section, we begin by formulating how external disturbances degrade the policy’s action log-likelihood when executing a long action chunk, and we introduce the strategy used to mitigate this degradation. We then formulate the problem of minimizing the cumulative likelihood drop subject to a constraint on the total number of resampling events over a task horizon. Solving this problem reveals that policy robustness is maximized when the resampling frequency scales with the gradient of the log-likelihood of the policy with respect to its observation — a quantity we refer to as Spatial Attention .
+
+A. Likelihood Drop Under Action Chunk Execution 
+
+Given an observation o ∈ Rdim (o), generative policies sample an action chunk of length TH . An action chunk can be seen as a continuous function A : [0 , T H ] → A , where A
+
+is the action space. Under this convention, the policy samples 
+
+A ∼ π(A | o), (2) where π is the true distribution that the policy approximates. Ideally, if no external disturbance is given during rollout and the policy is well-trained, one could set the execution horizon Ta (Ta ≤ TH ) equal to the full chunk length TH
+
+from the initial observation to complete the task with minimal resampling, maximizing computational efficiency. However, this strategy is extremely vulnerable to external disturbances or errors since the policy receives no updated observation during chunk execution. Specifically, if the observation is perturbed by a disturbance δo , the expected log-likelihood drop of action 
+
+a ∈ A is: 
+
+Ea∼π(·| o) [log π(a | o) − log π(a | o + δo )] . (3) In general, as action chunk execution continues without incorporating new observations, disturbances accumulate, in-creasing the likelihood drop and degrading policy perfor-mance. We model the accumulated disturbance δo at elapsed time τ since the last observation as zero-mean Gaussian noise whose variance grows as a power of τ :
+
+δo ∼ N  0, ϵ 2 τ 2γ I , (4) where ϵ > 0 is a noise scale and γ > 0 is a hyperparameter controlling how rapidly the disturbance grows with the open-loop execution time. To balance robustness and computational efficiency, we introduce a time-dependent resampling rate function ρ(t).Whenever a new chunk is sampled at time tk, its execution horizon Ta is chosen such that the integral of ρ(t) over the chunk satisfies: Z tk +Ta
+
+> tk
+
+ρ(t) dt = 1 . (5) Letting Tmax denote the task horizon, the total number of resampling events over the rollout is N = R Tmax  
+
+> 0
+
+ρ(t) dt . The optimal ρ(t) that minimizes the expected likelihood drop sub-ject to a fixed sampling budget N is derived in Section III-B, and its closed-form solution is given in Section III-C. 
+
+B. Minimizing Likelihood Drop under a Fixed Budget 
+
+Let 
+
+D(o, τ ) ≜ Eδo, a [log π(a|o) − log π(a|o + δo )] , (6) denote the expected log-likelihood drop after the policy has executed open-loop for an elapsed time τ , where the variance of the disturbance δo follows Equation 4. We seek the resampling rate ρ(t) that minimizes the cumu-lative expected drop under a fixed N sampling budget. Under rate ρ(·), the policy resamples about ρ(t) times per unit time and runs open-loop for roughly 1/ρ (t) before each resampling. Accumulating D over every open-loop interval gives the ideal objective: 
+
+arg min 
+
+> ρ(·)
+
+Z Tmax 
+
+> 0
+
+ρ(t)
+
+Z 1/ρ (t)0
+
+D(o(t), τ ) dτ dt 
+
+s.t. 
+
+Z Tmax 
+
+> 0
+
+ρ(t) dt = N. 
+
+(7) Evaluating Equation 7 directly is impractical: π does not provide an explicit probability density, so D has no closed form and cannot be optimized during rollout. We therefore reduce it to the tractable problem 
+
+arg min 
+
+> ρ(·)
+
+Z Tmax 
+
+> 0
+
+Att( o(t)) 
+
+ 1
+
+ρ(t)
+
+2γ
+
+dt 
+
+s.t. 
+
+Z Tmax 
+
+> 0
+
+ρ(t) dt = N, 
+
+(8) where Att( o) ≜ Ea∼π(·| o)
+
+∥∇ o log π(a|o)∥2 measures the policy’s sensitivity to observation perturbations. The rest of this subsection derives Equation 8 from Equation 7 by ap-proximating D in closed form. A second-order Taylor expansion of log π(a|o + δo ) around 
+
+o gives 
+
+log π(a|o) − log π(a|o + δo )
+
+≈ − ∇ o log π(a|o)⊤δo − 12 δo ⊤∇2 
+
+> o
+
+log π(a|o) δo. (9) Taking expectation over δo removes the linear term, yielding 
+
+D(o, τ ) ≈ − ϵ2τ 2γ
+
+2 Ea
+
+tr ∇2 
+
+> o
+
+log π(a|o) . (10) IEEE ROBOTICS AND AUTOMATION LETTERS, VOL. 11, NO. 6, JUNE 2026 4
+
+Applying the Fisher-information identity 
+
+Ea
+
+∥∇ o log π(a|o)∥2 = −Ea
+
+tr ∇2 
+
+> o
+
+log π(a|o) ,
+
+the per-step drop at elapsed time τ becomes 
+
+D(o, τ ) ≈ 12 Att( o) ϵ2 τ 2γ . (11) Now consider a sub-interval [k∆T, (k + 1)∆ T ] on which 
+
+ρ(·) takes minimum and maximum values ρmin , ρ max , and on which Att( o(·)) takes extrema Att min , Att max . Within this sub-interval, the policy resamples between ρmin ∆T and 
+
+ρmax ∆T times, and each chunk has duration between 1/ρ max 
+
+and 1/ρ min . Integrating Equation 11 over a single chunk and summing over chunks, the cumulative expected drop Err on the sub-interval is bounded as   
+
+> ϵ2∆T
+> 2(2 γ+1)
+
+Att min ρ−2γ 
+
+> max
+
+≤ Err ≤ ϵ2 ∆T 
+
+> 2(2 γ+1)
+
+Att max ρ−2γ 
+
+> min
+
+. (12) Assuming Att( o(·)) and ρ(·) are continuous, taking ∆T → 0
+
+yields 
+
+dErr dt → ϵ2
+
+2(2 γ + 1) Att( o(t)) ρ(t)−2γ . (13) Integrating over [0 , T max ] and absorbing the ρ-independent constant ϵ2/[2(2 γ + 1)] recovers the tractable objective in Equation 8. 
+
+C. Spatial Attention 
+
+The solution of the constrained optimization in Equation 8 can be derived via a standard Lagrangian argument. Pointwise stationarity (justified by convexity of the integrand in ρ) gives 
+
+ρ(t)2γ+1 ∝ Att( o(t)) , equivalently 
+
+ρ(t) ∝ Att( o(t)) 1/(2 γ+1) , (14) where the proportionality constant is fixed by the budget constraint in Equation 8. We refer to the quantity 
+
+Att( o) ≜ Ea∼π(·| o)
+
+h
+
+∇o log π(a|o) 2 i
+
+(15) as Spatial Attention . It quantifies the squared sensitivity of the policy’s action distribution to perturbations in the obser-vation: when Spatial Attention is large, even small observation changes induce a large shift in the action distribution, and the optimal strategy is to resample more frequently (i.e., shorten the execution horizon Ta); when Spatial Attention is small, longer chunks suffice. The execution horizon Ta for each chunk is determined by Equation 5 applied to the optimal ρ(t)
+
+from Equation 14. IV. S PATIAL ATTENTION AS A MODULE FOR ADAPTIVE 
+
+EXECUTION HORIZON 
+
+In this section, we introduce practical challenges when deriving Spatial Attention and methods to resolve these issues. Along with it, we propose our adaptive execution horizon selection pipeline using Spatial Attention. Section IV-A shows how to obtain Spatial Attention when the policy does not provide an explicit probability density function. Then Sec-tion IV-B extends this method to the case where the obser-vation is a vision input. Finally, we present our full inference-time pipeline driven by Spatial Attention in Section IV-C. 
+
+A. Deriving Spatial Attention with Bayes’ Rule 
+
+In this section, we present the key challenge in deriving 
+
+Spatial Attention from Equation 14 and our approach to overcoming it. The main bottleneck in computing Spatial Attention is evaluating 
+
+∇o log π(a|o). (16) This is because π(a|o) is a generative model’s distribution that does not provide an explicit probability density func-tion. Moreover, even when the distribution is a score-based generative model, we cannot directly reuse its score estimate 
+
+sθ (a, t ) ≈ ∇ a log π(a|o), since Equation 16 is a gradient with respect to the observation o, not the action a.We overcome this limitation by following the Bayes’ rule decomposition used in classifier guidance [28]. Specifically, we reformulate Equation 16 as: 
+
+∇o log π(a|o) = ∇o log π(o|a) − ∇ o log π(o), (17) which follows from log π(a|o) = log π(o|a) + log π(a) −
+
+log π(o) and ∇o log π(a) = 0 . The two terms on the right-hand side are the score of the action-conditional observation distribution π(o|a) and the score of the marginal observation distribution π(o), respectively. We therefore train two separate score-based generative models, one for each distribution, and use their score estimates to evaluate Equation 16. In this work, we adopt NCSN [22] as our score-based generative model. 
+
+B. Spatial Attention from Vision Input 
+
+In the case of using image observation, several challenges arise when deriving Spatial Attention. Due to the high dimen-sionality of image observations, training a separate score-based generative model for deriving Spatial Attention requires high computation cost [29]. Moreover, taking the gradient directly with respect to the image observation measures the change of the policy distribution with respect to pixel-level perturbations, which is not ideal since many pixels are irrelevant to the task. We instead evaluate Spatial Attention in the latent space of a VAE [30], which we treat as a practical proxy for observation-space sensitivity: 
+
+Att( z) ≜ Ea∼π(a|z)
+
+h
+
+∥∇ z log π(a|z)∥2i
+
+, z = fψ (o). (18) Since the encoder is trained to capture task-relevant structure of the observation, the latent-space gradient norm reflects the policy’s sensitivity to meaningful observation changes while excluding pixel-level noise. The encoder fψ is trained as part of the VAE on the training data. 
+
+C. Adaptive Execution Horizon via Forecasted Spatial Atten-tion 
+
+We now describe how our framework adaptively selects the execution horizon Ta of the sampled action chunk At of length TH . To obtain future Spatial Attention values without generating future observations, we employ a sequence-to-sequence model Att ϕ that forecasts the Spatial Attention IEEE ROBOTICS AND AUTOMATION LETTERS, VOL. 11, NO. 6, JUNE 2026 5   
+
+> Fig. 2. Spatial Attention values during Tool Hang task. The top plot illustrates the evolution of Spatial Attention throughout the task, where green crosses mark the moments of observation and action chunk sampling. The frames below depict the physical states of the robot corresponding to these connected crosses. Notably, Spatial Attention increases during important manipulation phases, such as grasping ((a), (c)) and inserting ((b), (d)) the target objects. Our adaptive execution horizon pipeline utilizes this metric to dynamically shorten the execution horizon, Ta, in these critical regions. Consequently, the robot becomes more responsive to potential errors and disturbances during these moments, all while preserving computational cost by maintaining a consistent average execution horizon.
+
+sequence from the current observation and the sampled action chunk: 
+
+[Att t, Att t+1 , . . . , Att t+TH −1] = Att ϕ(At, o t), (19) where Att t denotes the Spatial Attention at time t, equal to Att( ot) and Att( zt) for state and vision observations, respectively. From Equation 14 and Equation 5, Ta is determined by integrating the optimal resampling rate over the chunk. Dis-cretizing this integral over the forecasted Spatial Attention sequence yields: 
+
+Ta = min 
+
+> k
+
+n
+
+k
+
+> k
+
+X
+
+> i=0
+
+Att 1/(2 γ+1)  
+
+> t+i
+
+> C att 
+
+o
+
+. (20) 
+
+Catt is a hyperparameter fixed prior to rollout. If the Spatial Attention values are too small for Equation 20 to have a solution, the full action chunk is executed (i.e., Ta = TH ). The forecasting model Att ϕ is trained offline on a dataset constructed from the policy’s training trajectories, where each trajectory is labeled with the Spatial Attention values com-puted using the score networks from Section IV-A. We use a transformer architecture [31] for Att ϕ.V. E XPERIMENT 
+
+In this section, we evaluate applying Spatial Attention to ex-ecution horizon decisions on a standard simulation benchmark, Robomimic [15], to demonstrate its general performance. We then evaluate on a modified simulation environment in which external disturbances are applied during rollouts to show its responsiveness to disturbances. Lastly, we deploy Spatial Attention on a real-world robot task to demonstrate its real-time effectiveness on a physical robot. The experimental results show that using Spatial Attention as a criterion for the execution horizon consistently improves the success rate under the same average execution horizon. 
+
+A. Baselines 
+
+We evaluate our method, denoted +SA, by applying Spatial Attention on top of each of the following three baseline policies and comparing each against its fixed-length baseline. These baselines execute each sampled action chunk for a fixed execution horizon Ta, set as a hyperparameter and held constant throughout the rollout. 
+
+1) Diffusion Policy (DDPM / DDIM) [1]: As one of the first methods to adapt diffusion models to learning from demonstra-tion, DP samples an action chunk via a diffusion process from a given observation. The type of diffusion process determines the number of diffusion steps required to sample a single action chunk. In this experiment, we use both DDPM [26] and DDIM [32] as baselines, for which the total diffusion steps needed for sampling are 100 and 16, respectively. The UNet architecture takes two observation frames as input and estimates the score required for sampling. 
+
+2) Consistency Policy (CP) [2]: To reduce the computation cost of DDPM & DDIM even more, Consistency Policy [2] brings Consistency Trajectory Models (CTM) [33] into Diffu-sion Policy framework. Taking advantage of CTM, the sampler only needs 3 diffusion steps to sample high-quality data and 1 step to sample marginal-quality data. In this experiment, we sample action chunk with both 3-step CP and 1-step CP for evaluation. As noted in [2], the architecture, infrastructure, and input/output formats are identical to those of Diffusion Policy. 
+
+B. Evaluation Methodology 
+
+Policies are trained with 4 different training seeds. For each seed, we save the best 5 checkpoints, selected based on evaluations performed every 50 epochs. This results in a total of 20 checkpoints, over which we compute the average and standard deviation of the performance. We evaluate both the baseline and our proposed algorithms using the average success rate across 100 evaluation episodes IEEE ROBOTICS AND AUTOMATION LETTERS, VOL. 11, NO. 6, JUNE 2026 6
+
+TABLE I 
+
+SIMULATION EVALUATION RESULTS . WE REPORT THE SUCCESS RATES OF OUR METHOD (DENOTED +SA) AND ITS CORRESPONDING BASELINES EVALUATED ON THE ROBOMIMIC [15] BENCHMARK . S UCCESS RATES ARE MEASURED BY EVALUATING A SINGLE CHECKPOINT UNDER 100 DIFFERENT INITIAL CONDITIONS . T HE AVERAGE AND STANDARD DEVIATION OF THESE SUCCESS RATES ARE DERIVED BY EVALUATING THE 5 BEST CHECKPOINTS DURING TRAINING ACROSS 4 DIFFERENT SEEDS , TOTALING 20 CHECKPOINTS .Method Steps Robomimic Simple ( Tavg = 16 ) Robomimic Complex ( Tavg = 32 )Lift Can Square Tool Hang State Vision State Vision State Vision State Vision DDPM 100 0.98 ±0.010 0.99 ±0.004 0.96 ±0.009 0.98 ±0.012 0.89 ±0.022 0.75 ±0.041 0.47 ±0.040 0.61 ±0.052 
+
+DDPM+SA (ours) 0.99 ±0.008 0.99 ±0.004 0.98 ±0.009 0.98 ±0.011 0.94 ±0.022 0.80 ±0.043 0.57 ±0.072 0.75 ±0.047 
+
+DDIM 16 0.99 ±0.009 0.99 ±0.004 0.95 ±0.011 0.98 ±0.011 0.87 ±0.030 0.80 ±0.021 0.47 ±0.061 0.63 ±0.026 
+
+DDIM+SA (ours) 0.99 ±0.006 0.99 ±0.004 0.96 ±0.014 0.99 ±0.010 0.93 ±0.026 0.87 ±0.025 0.57 ±0.052 0.78 ±0.045 
+
+3 step-CP 3 0.99 ±0.007 0.99 ±0.007 0.93 ±0.052 0.96 ±0.016 0.86 ±0.035 0.83 ±0.039 0.42 ±0.059 0.49 ±0.051 
+
+3 step-CP+SA (ours) 0.99 ±0.004 0.99 ±0.005 0.94 ±0.056 0.96 ±0.020 0.93 ±0.023 0.89 ±0.032 0.53 ±0.077 0.62 ±0.057 
+
+1 step-CP 1 0.99 ±0.007 0.99 ±0.006 0.87 ±0.073 0.96 ±0.022 0.87 ±0.025 0.85 ±0.037 0.27 ±0.071 0.36 ±0.072 
+
+1 step-CP+SA (ours) 0.99 ±0.010 0.99 ±0.004 0.88 ±0.070 0.97 ±0.013 0.93 ±0.034 0.92 ±0.020 0.46 ±0.079 0.48 ±0.066 
+
+Fig. 3. Robomimic Benchmark. We evaluate our method against the baseline policies on single-robot manipulation tasks from the Robomimic [15] benchmark. We categorize the Lift and Can tasks as “Simple” due to their lower precision requirements, while the Square and Tool Hang tasks are classified as “Complex” as they require precise manipulation. 
+
+for each task. For the adaptive execution horizon with Spatial Attention, we select an appropriate Catt such that the resulting mean execution horizon, Ta, for each episode falls within the range [Tavg − 0.5, T avg + 0 .5] , where Tavg represents the fixed 
+
+Ta value used for DDPM/DDIM and CP. This setting ensures a fair comparison, as execution horizon significantly impacts policy performance and its computational efficiency. 
+
+C. Standard Simulation Experiment 
+
+This section presents the evaluation results of the adaptive execution horizon with Spatial Attention in simulation, and compares its performance against the baseline policies. 
+
+Tasks. We evaluate our method and baselines on Robomimic [15] benchmark, which has been used to eval-uate Diffusion Policy [1], Consistency Policy [2], and ParaDiGMS [34]. We evaluate our method and baselines on the Lift, Can, Square, and Tool Hang, all single-arm manipulation tasks. Actions are defined as the 7-dimensional absolute end-effector position and orientation with respect to the robot base frame. Demonstrations are collected via teleoperation by a proficient human operator, referred to as proficient human (PH) data in Robomimic [15]. Each task contains 200 successful demonstration episodes. We classify Lift and Can as simple tasks, for which we set Tavg to 16, and Square and 
+
+Fig. 4. Lift/Can Task with Disturbance. To evaluate the robustness of our algorithm against external disturbance, we modify the Lift (Left) and Can task (Right) task. These tasks are modified to move the target object away from the gripper once the gripper comes within a certain distance of it. 
+
+Tool Hang as complex tasks, for which we set Tavg to 32. Figures of simulation tasks are provided in Figure 3. 
+
+Results. Results of the policies under both state and image observation settings are presented in Table I. The table reports 
+
+Tavg for each task. Table I shows that using Spatial Attention to adaptively determine the execution horizon, denoted “+SA”, consistently improves policy performance across all tasks. It is important to note that all methods share identical policy architectures and parameters. On the precision-critical tasks, policies equipped with Spa-tial Attention outperform the baselines on both state and vision observations by 5%–7% on Square and 10%–19% on Tool Hang. Figure 2 illustrates how Spatial Attention enables the policy to adaptively adjust Ta in a way that results in a more responsive behavior while maintaining the same average execution horizon. Spatial Attention takes high values in the phases that demand precision, such as grasping and inserting the target objects. Shortening Ta in these phases lets the policy respond quickly to errors that arise during execution, improving the success rate without increasing the average computational cost. 
+
+D. Responsiveness to External Disturbance 
+
+This section introduces a modified simulation environment in which external disturbances are applied to the target object. IEEE ROBOTICS AND AUTOMATION LETTERS, VOL. 11, NO. 6, JUNE 2026 7  
+
+> Fig. 5. Real-World Experiment. (a) Hardware setup. The robot must grasp the red cube (white arrow) while a camera slider moves the cube laterally (red arrow). (b) The slider is placed at 5 different orientations to vary the direction of the cube’s motion relative to the robot.
+
+In this environment, we evaluate the success rate of our method and the baseline algorithms to analyze their responsiveness to external disturbances. 
+
+Task (External Disturbance). We customize the Lift and Can tasks from the Robomimic environment to build a sim-ulation capable of applying disturbances. In this experiment, disturbance is given by moving the target object. As shown in Figure 4, we move the target object in a direction orthogonal to the gripper once the gripper comes within a certain distance of the object. 
+
+Results. Table II reports the success rate of the baseline and our method under this experiment. Since each algorithm uses the same Ta and number of sampling steps as its counterpart in the previous section, we omit these values from the table. According to Table II, applying Spatial Attention also outperforms all baselines in the disturbed environment. 
+
+E. Real-World Experiment 
+
+In this section, we deploy a diffusion policy equipped with Spatial Attention on a real-world task and show that our framework can run in real time with improved robustness to disturbances. 
+
+Task. The robot has to lift the red block moving on a camera slider with constant velocity shown in Figure 5-(a). We evaluate the policies by varying the camera slider direction across 5 orientations as shown in Figure 5-(b). For each orientation, a policy is evaluated 10 times, for a total of 50 rollouts. In this experiment, DDIM is used as the backbone diffusion policy, since our objective is to demonstrate the advantage our algorithm provides for real-world deployment. We use a 7-DoF Franka Research 3 as our manipulator and two Intel RealSense D435i cameras for vision observation, one mounted on the end-effector and one on the desk for the agent view. For inference, we use a remote desktop powered by a 24GB RTX 4090 GPU. TCP protocol sends observation data to remote desktop and sends sampled action chunk results to our robot platform. We deploy a policy trained on the state-based observations of the Lift task. To extract state observation from real-world vision observation, we utilize Foundation Pose [35]. For comparison, vanilla DDIM is executed with a fixed execution                                          
+
+> TABLE II
+> EVALUATION RESULTS WITH EXTERNAL DISTURBANCE .WE REPORT THE SUCCESS RATES OF OUR METHOD AND ITS CORRESPONDING BASELINES ,EVALUATED ON THE ROBOMIMIC LIFT /C AN TASKS WITH DISTURBANCE .
+> Method Lift Can State Vision State Vision DDPM 0.58 ±0.040 0.65 ±0.032 0.76 ±0.040 0.74 ±0.022 DDPM+SA (ours) 0.67 ±0.034 0.75 ±0.051 0.84 ±0.049 0.78 ±0.029
+> DDIM 0.53 ±0.055 0.59 ±0.052 0.77 ±0.032 0.76 ±0.025 DDIM+SA (ours) 0.60 ±0.057 0.73 ±0.063 0.86 ±0.022 0.79 ±0.031
+> 3 step-CP 0.60 ±0.071 0.66 ±0.053 0.68 ±0.050 0.70 ±0.038 3 step-CP+SA (ours) 0.63 ±0.060 0.80 ±0.044 0.73 ±0.050 0.72 ±0.047
+> 1 step-CP 0.64 ±0.092 0.56 ±0.103 0.63 ±0.074 0.68 ±0.041
+> 1 step-CP+SA (ours) 0.67 ±0.085 0.72 ±0.102 0.68 ±0.078 0.68 ±0.048
+
+horizon Ta = 8 , while DDIM+SA is tuned to a comparable average execution horizon ¯Ta ∈ [7 .5, 8.5] .
+
+Results. Table III reports the success rates of vanilla DDIM and DDIM with Spatial Attention (DDIM+SA). DDIM+SA substantially outperforms the baseline (0.92 vs. 0.42), consis-tent with the results in Sections V-C and V-D, even though DDIM+SA runs at a slightly longer average Ta (8.3 vs. 8). More specifically, DDIM fails to grasp the cube in most trials. As the gripper approaches the cube, its action chunk is too long to react to the cube’s movement, resulting in a failed grasp. DDIM+SA instead shortens the execution horizon once the gripper is near the cube, allowing it to adjust its motion to the cube’s updated position.        
+
+> TABLE III REAL ROBOT EXPERIMENT
+> DDIM DDIM+SA (ours) Success Rate 0.42 0.92 Average Ta88.3
+
+VI. C ONCLUSION 
+
+In this work, we introduce a framework that adaptively adjusts the execution horizon of action chunks for diffusion policies. As the criterion for this adaptation, we define Spatial Attention , a metric that quantifies the sensitivity of the policy’s action distribution to variations in the observation input. We show that adjusting the execution horizon to decrease as Spatial Attention increases minimizes the cumulative likeli-hood drop induced by disturbances under a fixed number of model inferences. Experiments on the standard Robomimic benchmark and on perturbed scenarios show that adaptively adjusting the execution horizon with Spatial Attention outper-forms fixed-length baselines, confirming that our framework achieves both computational efficiency and responsiveness. Although we develop and evaluate our framework on diffusion policies in this work, it applies to any policy that generates action chunks. A limitation, however, is that the framework requires a dis-crete action chunk. Therefore it does not extend to streaming-based policies [5], [36], [37], which generate actions continu-ously and expose no discrete chunk whose execution horizon IEEE ROBOTICS AND AUTOMATION LETTERS, VOL. 11, NO. 6, JUNE 2026 8
+
+can be adjusted; relaxing this restriction is an important direction for future work. A further direction is to scale our framework to the large datasets used to train VLA models, a regime we have not yet explored. The latent representation already learned by the VLM backbone could offer a natural space in which to evaluate Spatial Attention, making this a potentially practical avenue for the extension. REFERENCES [1] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via ac-tion diffusion,” The International Journal of Robotics Research , p. 02783649241273668, 2023. [2] A. Prasad, K. Lin, J. Wu, L. Zhou, and J. Bohg, “Consistency policy: Accelerated visuomotor policies via consistency distillation,” arXiv preprint arXiv:2405.07503 , 2024. [3] Z. Wang, Z. Li, A. Mandlekar, Z. Xu, J. Fan, Y. Narang, L. Fan, Y. Zhu, Y. Balaji, M. Zhou et al. , “One-step diffusion policy: Fast visuomotor policies via diffusion distillation,” arXiv preprint arXiv:2410.21257 ,2024. [4] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn, “Learning fine-grained bimanual manipulation with low-cost hardware,” arXiv preprint arXiv:2304.13705 , 2023. [5] Z. Chen, X. Yuan, T. Mu, and H. Su, “Responsive noise-relaying diffusion policy: Responsive and efficient visuomotor control,” arXiv preprint arXiv:2502.12724 , 2025. [6] H. Xue, J. Ren, W. Chen, G. Zhang, Y. Fang, G. Gu, H. Xu, and C. Lu, “Reactive diffusion policy: Slow-fast visual-tactile policy learning for contact-rich manipulation,” in Proceedings of Robotics: Science and Systems (RSS) , 2025. [7] J. Xie, Z. Wang, J. Tan, H. Lin, and X. Ma, “Subconscious robotic imitation learning,” arXiv preprint arXiv:2412.20368 , 2024. [8] M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. Foster, G. Lam, P. Sanketi et al. , “Openvla: An open-source vision-language-action model,” arXiv preprint arXiv:2406.09246 ,2024. [9] K. Black, M. Y. Galliker, and S. Levine, “Real-time execution of action chunking flow policies,” arXiv preprint arXiv:2506.07339 , 2025. [10] S. Zhou, Y. Du, S. Zhang, M. Xu, Y. Shen, W. Xiao, D.-Y. Yeung, and C. Gan, “Adaptive online replanning with diffusion models,” Advances in Neural Information Processing Systems , vol. 36, pp. 44 000–44 016, 2023. [11] P. Jutras-Dub´ e, R. Zhang, and A. Bera, “Adaptive planning with generative models under uncertainty,” in 2024 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . IEEE, 2024, pp. 7664–7670. [12] V. Punyamoorty, P. Jutras-Dub´ e, R. Zhang, V. Aggarwal, D. Conover, and A. Bera, “Dynamic obstacle avoidance through uncertainty-based adaptive planning with diffusion,” arXiv preprint arXiv:2409.16950 ,2024. [13] W. Brockett, “Minimum attention control,” in Proceedings of the 36th IEEE Conference on Decision and Control , vol. 3. IEEE, 1997, pp. 2628–2632. [14] C. Jang, J.-e. Lee, S. Lee, and F. C. Park, “A minimum attention control law for ball catching,” Bioinspiration & Biomimetics , vol. 10, no. 5, p. 055008, 2015. [15] A. Mandlekar, D. Xu, J. Wong, S. Nasiriany, C. Wang, R. Kulkarni, L. Fei-Fei, S. Savarese, Y. Zhu, and R. Mart´ ın-Mart´ ın, “What matters in learning from offline human demonstrations for robot manipulation,” in Conference on Robot Learning (CoRL) , 2021. [16] T. T. Zhang, D. Pfrommer, C. Pan, N. Matni, and M. Simchowitz, “Action chunking and exploratory data collection yield exponential im-provements in behavior cloning for continuous control,” arXiv preprint arXiv:2507.09061 , 2025. [17] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman, B. Ichter et al. , “ π0: A vision-language-action flow model for general robot control,” arXiv preprint arXiv:2410.24164 ,2024. [18] NVIDIA, J. Bjorck, N. C. Fernando Casta˜ neda, X. Da, R. Ding, L. J. Fan, Y. Fang, D. Fox, F. Hu, S. Huang, J. Jang, Z. Jiang, J. Kautz, K. Kundalia, L. Lao, Z. Li, Z. Lin, K. Lin, G. Liu, E. Llontop, L. Magne, A. Mandlekar, A. Narayan, S. Nasiriany, S. Reed, Y. L. Tan, G. Wang, Z. Wang, J. Wang, Q. Wang, J. Xiang, Y. Xie, Y. Xu, Z. Xu, S. Ye, Z. Yu, A. Zhang, H. Zhang, Y. Zhao, R. Zheng, and Y. Zhu, “GR00T N1: An open foundation model for generalist humanoid robots,” in ArXiv Preprint , March 2025. [19] M. Janner, Y. Du, J. B. Tenenbaum, and S. Levine, “Planning with diffu-sion for flexible behavior synthesis,” arXiv preprint arXiv:2205.09991 ,2022. [20] A. Ajay, Y. Du, A. Gupta, J. Tenenbaum, T. Jaakkola, and P. Agrawal, “Is conditional generative modeling all you need for decision-making?” 
+
+arXiv preprint arXiv:2211.15657 , 2022. [21] D. Jing, G. Wang, J. Liu, W. Tang, Z. Sun, Y. Yao, Z. Wei, Y. Liu, Z. Lu, and M. Ding, “Mixture of horizons in action chunking,” arXiv preprint arXiv:2511.19433 , 2025. [22] Y. Song and S. Ermon, “Generative modeling by estimating gradients of the data distribution,” Advances in neural information processing systems , vol. 32, 2019. [23] ——, “Improved techniques for training score-based generative models,” 
+
+Advances in neural information processing systems , vol. 33, pp. 12 438– 12 448, 2020. [24] Y. Song, J. Sohl-Dickstein, D. P. Kingma, A. Kumar, S. Ermon, and B. Poole, “Score-based generative modeling through stochastic differ-ential equations,” arXiv preprint arXiv:2011.13456 , 2020. [25] P. Vincent, “A connection between score matching and denoising au-toencoders,” Neural computation , vol. 23, no. 7, pp. 1661–1674, 2011. [26] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,” 
+
+Advances in neural information processing systems , vol. 33, pp. 6840– 6851, 2020. [27] J. Sohl-Dickstein, E. Weiss, N. Maheswaranathan, and S. Ganguli, “Deep unsupervised learning using nonequilibrium thermodynamics,” in 
+
+International conference on machine learning . pmlr, 2015, pp. 2256– 2265. [28] P. Dhariwal and A. Nichol, “Diffusion models beat gans on image synthesis,” Advances in neural information processing systems , vol. 34, pp. 8780–8794, 2021. [29] R. Rombach, A. Blattmann, D. Lorenz, P. Esser, and B. Ommer, “High-resolution image synthesis with latent diffusion models,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,2022, pp. 10 684–10 695. [30] D. P. Kingma and M. Welling, “Auto-encoding variational bayes,” arXiv preprint arXiv:1312.6114 , 2013. [31] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” Advances in neural information processing systems , vol. 30, 2017. [32] J. Song, C. Meng, and S. Ermon, “Denoising diffusion implicit models,” 
+
+arXiv preprint arXiv:2010.02502 , 2020. [33] D. Kim, C.-H. Lai, W.-H. Liao, N. Murata, Y. Takida, T. Uesaka, Y. He, Y. Mitsufuji, and S. Ermon, “Consistency trajectory models: Learning probability flow ode trajectory of diffusion,” arXiv preprint arXiv:2310.02279 , 2023. [34] A. Shih, S. Belkhale, S. Ermon, D. Sadigh, and N. Anari, “Parallel sam-pling of diffusion models,” Advances in Neural Information Processing Systems , vol. 36, pp. 4263–4276, 2023. [35] B. Wen, W. Yang, J. Kautz, and S. Birchfield, “Foundationpose: Unified 6d pose estimation and tracking of novel objects,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,2024, pp. 17 868–17 879. [36] S. H. Høeg, Y. Du, and O. Egeland, “Fast policy synthesis with variable noise diffusion models,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 4821–4828. [37] S. Jiang, X. Fang, N. Roy, T. Lozano-P´ erez, L. P. Kaelbling, and S. Ancha, “Streaming flow policy: Simplifying diffusion/flow-matching policies by treating action trajectories as flow trajectories,” in Conference on Robot Learning . PMLR, 2025, pp. 238–257.

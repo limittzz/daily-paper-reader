@@ -1,0 +1,673 @@
+Title: FAR: Failure-Aware Retry for Test-Time Recovery and Continual Policy Improvement
+
+URL Source: https://arxiv.org/pdf/2607.01111v1
+
+Published Time: Thu, 02 Jul 2026 01:17:22 GMT
+
+Number of Pages: 22
+
+Markdown Content:
+# FAR: Failure-Aware Retry for Test-Time Recovery and Continual Policy Improvement 
+
+Haoran Hao Shahram Najam Syed Jeffrey Ichnowski Jeff Schneider 
+
+Carnegie Mellon University 
+
+Abstract: Robot policies inevitably encounter failures when deployed in real environments. Naive retries often repeat the same mistakes, while many existing recovery methods rely on human intervention. In this paper, we propose Failure-A ware Retry (FAR), a framework that enables robots to learn from previous failures at test time, adapt their behavior accordingly, and eventually complete the task autonomously. FAR combines Failure-Contrastive Preference Adaptation, which constructs preference learning data from failures to steer the policy away from previously unsuccessful behaviors, with lightweight action perturbations during retries to encourage local exploration. We further incorporate successful recovery trajectories into a training loop for continual policy improvement. Experiments in both simulation and real-world manipulation tasks show that FAR substantially improves success rates and robustness, with average gains of 17.6% over the standard diffusion policy in simulation and 11.7% in the real world. In addition, FAR significantly improves data efficiency under both reset and timestep budgets during continual policy improvement by exploiting informative failure cases. 
+
+Keywords: Robot Manipulation, Failure Recovery, Test-time Adaptation 
+
+# 1 Introduction 
+
+Robot policies trained on offline expert demonstrations have achieved strong performance on a wide range of manipulation tasks [ 1, 2, 3 , 4 ]. However, when deployed in real environments, these policies inevitably encounter failures, such as missing the target during grasping or dropping an object during execution. Recovering from such failures is challenging because these states are rarely covered by offline demonstrations and are often out-of-distribution for the pretrained policy. As a result, simply re-executing the same policy often repeats the same mistake. Existing methods often rely on human intervention to correct robot behavior and collect additional data for future training [ 5, 6 , 7 ], including DAgger and related human-in-the-loop methods [ 8 , 9, 10 , 11 ]. While effective, these approaches require substantial human effort. This raises the question of whether a robot can learn from failures, adapt its behavior at test time, and recover autonomously. In this work, we propose a framework for learning from failure and adapting robot behavior at test time to improve retry-based recovery [ 12 , 13 ]. Effective retries face two key challenges: the policy tends to repeat the same mistake after failure, and its action distribution comes from offline demonstrations, limiting exploration in out-of-distribution recovery states. Our approach addresses these challenges with Failure-Contrastive Preference Adaptation (FCPA), which constructs preference learning signals from failure experience to steer the policy away from previously unsuccessful behaviors, and action perturbations during retries to encourage local exploration. Together, they improve retry success and generate diverse recovery trajectories for continual policy improvement. These recovery trajectories are valuable because they reveal the limitations and failure boundaries of the current policy, providing supervision that is absent from offline training. We therefore use them to further improve the policy. Starting from a policy pretrained on offline demonstrations, the robot interacts with the environment and makes multiple attempts on each task using FAR. The resulting        
+
+> arXiv:2607.01111v1 [cs.RO] 1 Jul 2026 Failure Success
+> 1st Attempt 2nd Attempt Replay Buffer
+> Failure -Aware Retry
+> (FAR)
+> Failure Contrastive Preference Adaptation
+> Policy
+> Policy Improvement
+> Test Time Training
+
+Figure 1: Overall Framework of FAR. After a failure, FAR identifies failure-inducing actions using value estimation, then updates the policy with both failure examples and alternative positive examples. The collected trajectories are added to the replay buffer for continual policy improvement. trajectories are incorporated into online finetuning, allowing the policy to learn from challenging failure cases, improve recovery performance, and achieve greater data efficiency. We evaluate FAR on three simulation benchmarks spanning nine robot manipulation tasks, as well as three real-world tasks on an xArm platform. Our contributions are as follows: (1) We introduce Failure-A ware Retry (FAR), a retry-based test-time recovery framework that combines failure-aware adaptation with lightweight exploration for more effective failure recovery. (2) We show that FAR generates informative recovery trajectories that provide useful supervision for continual policy improvement. (3) We demonstrate that FAR improves task success rates in both simulation and the real world, while reducing the need for costly environment resets during online learning. 
+
+# 2 Related Work 
+
+Robot Failure Recovery. Robots need to handle a range of failures in order to operate robustly after deployment, since failures are inevitable in real-world environments [ 14 , 15 ]. These failures often arise from the limited fidelity of the learned policy or insufficient training data. For example, the robot may knock over a can and then fail to pick it up. Several works [ 16 , 17 , 18 ] use pretrained vision-language models (VLMs) to detect failures. Other methods use natural language reasoning to analyze failures [ 17 ] and provide corrections [ 15 , 19 , 20 , 21 , 22 ]. There are also studies [ 23 , 24 , 25 ]that use reinforcement learning to train policies to recover from unsafe or out-of-distribution states. More recently, inspired by DAgger, several works [ 5 , 6 , 7 , 26 , 10 , 11 , 8 , 9 ] have incorporated human feedback to correct the robot and teach it how to recover from failures. Our setting is closely related to prior retry-based recovery methods [ 12 , 13 ], where the robot is allowed multiple attempts after a failure. In particular, Bellman-Guided Retrials [ 13 ] detects discrepancies between expected and observed task progress and skews action sampling during retry. Unlike these non-parametric retry strategies, we study test-time learning from failure experience, enabling the policy to improve subsequent retries using immediate interaction feedback without human intervention. 
+
+Test-Time Adaptation. Test-time adaptation (TTA) aims to adapt a pretrained model to unlabeled test data using information available during inference [ 27 , 28 ]. It has been widely studied in machine learning and language modeling, especially for domain adaptation [ 29 , 30 , 31 , 32 , 33 , 34 , 35 ]. Recent work has also explored TTA in robotics [ 36 , 37 , 38 , 39 ]. For instance, Liu et al. [39] adapt locomotion models online to different robot embodiments and dynamics. Bai et al. [40] use a progress estimator to provide dense feedback for adapting pretrained VLA models. Wagenmaker et al. [37] study in-context adaptation for more controllable exploration. In this work, we focus on adapting a policy from previous failed attempts without resetting the task, enabling failure-aware retry and recovery. 2Offline-to-Online RL. Offline-to-online RL improves policies pretrained on offline data through additional environment interaction [ 41 , 42 , 43 , 44 , 45 , 46 , 47 ]. Prior work shows that continuing training with both offline and newly collected data is effective across different policy classes, including diffusion and flow-based policies [ 48 , 49 , 50 , 51 ], and has recently been extended to improving pretrained VLA models through online interaction [ 52 , 53 , 24 , 54 ]. However, online improvement is often data- and labor-intensive, requiring many interactions and frequent environment resets. Standard data collection typically resets the environment once the policy fails within a fixed horizon, which exposes the model to diverse initial states but underutilizes hard failure cases that reveal the boundary of the current policy. Our work instead focuses on learning from these failure states, enabling the policy to improve from challenging situations while reducing costly resets and human effort. 
+
+# 3 Problem Statement 
+
+Markov Decision Process. We consider a Markov decision process (MDP) M = ( S, A, T , p 0, r, γ ),
+
+where S and A are the state and action spaces, T is the transition function, p0 is the initial-state distribution, r is the reward function, and γ is the discount factor. A policy πθ (a | s) maps states to actions, with the goal of maximizing expected discounted return. 
+
+Generative Policies. We instantiate the policy in our framework using Diffusion Policy [ 1 ]. As a generative policy, it models a conditional distribution over action sequences, πθ (a1: H | s), enabling multi-modal behaviors. During training, Gaussian noise is added to expert action sequences, and the model learns to predict the injected noise conditioned on the state s. At inference time, the policy starts from Gaussian noise and iteratively denoises it to generate an action sequence. 
+
+Setting. We study failure recovery for a robot policy pretrained on offline expert demonstrations. At deployment, after a failure, we preserve the scene state, return the robot to a predefined start pose, and allow multiple retries instead of resetting the environment. The objective is to adapt at test time from recent failures and improve the probability of success in subsequent retries. Reward signals are used for critic training. During test-time adaptation, however, FAR does not require access to any task-specific dense reward function. Instead, it relies only on task-level outcome feedback, such as whether an attempt succeeds or fails, together with recent interaction history. 
+
+# 4 Method 
+
+Effective retry requires the policy to both learn from previous failures and explore alternative actions in out-of-distribution states. To improve retry performance at test time, FAR consists of two components: (1) Failure-Contrastive Preference Adaptation (FCPA), which updates the policy using failure feedback to improve subsequent attempts, and lightweight action perturbation, which allows structural exploration to expand the policy support for harder recovery cases. Section 4.1 presents these two components, and Section 4.2 shows how the resulting recovery trajectories can be incorporated for continual policy improvement. The overall framework is shown in Figure 1. 
+
+4.1 Failure-Aware Retry Conservative Value Estimation. FAR uses value estimates to identify failure-inducing actions and construct data for adaptation. A key challenge is that failure states encountered at deployment are often out-of-distribution with respect to the offline demonstrations, where a standard critic is prone to overestimate. To obtain more reliable value estimates, we adopt the value-learning objective of IQL [48] and train a Q-function Qϕ together with a value function Vψ :
+
+LV = E(s, a)∼D [Lτ 
+
+> 2
+
+(Qϕ(s, a) − Vψ (s))] , (1) 
+
+LQ = E(s, a,s ′)∼D 
+
+h
+
+(r(s, ˜a) + γV ψ (s′) − Qϕ(s, a)) 2i
+
+, (2) where Lτ 
+
+> 2
+
+(u) = |τ − 1(u < 0) |u2 denotes the expectile regression loss, and a = a1: H is an action chunk predicted by the policy. This design inherits the conservatism of IQL by learning values 3primarily from actions supported by the offline data, leading to more reliable estimates in failure-prone states. In our implementation, the environment executes only a single control action obtained by temporally aggregating the chunk, denoted by ˜a = g(a). The immediate reward and transition are determined by ˜a. Accordingly, we treat Qϕ(s, a) as a chunk-conditioned critic that scores candidate action chunks, while its TD target is defined using the executed action ˜a.
+
+Failure Attribution. Given a failed trajectory τ = {(st, a t)}Tt=0 , we retrospectively extract action chunks likely responsible for the failure as negative examples. For each chunk at = at:t+H−1,we measure its effect by the value change across the chunk: ∆Vt = Vψ (st+H ) − Vψ (st). Under a negative reward before task completion, values typically increase as the agent approaches success. A pronounced decrease in value indicates unstable or failure-inducing behavior [ 55 , 56 ]. Rather than using a fixed threshold, we rank all chunks in the failed trajectory by ∆Vt and select those with the largest value drops, i.e., the lowest ρ-percentile, as negative samples: 
+
+τ − = (st, a− 
+
+> t
+
+) | ∆Vt ≤ Percentile ρ({∆Vj }) . (3) 
+
+Algorithm 1 Failure-Aware Retry (FAR)  
+
+> 1:
+
+Initialize: pretrained policy πθ , critic (Vψ , Q ϕ),maximum retries N 
+
+> 2:
+
+for i = 1 to N do  
+
+> 3:
+
+Execute the policy and collect a trajectory τi 
+
+> 4:
+
+if SUCCESS (τi) then  
+
+> 5:
+
+break  
+
+> 6:
+
+end if  
+
+> 7:
+
+Identify candidate failure-inducing action chunks using Eq. (3)  
+
+> 8:
+
+Construct contrastive pairs using Eq. (4) and Eq. (5)  
+
+> 9:
+
+Update the policy for k steps using Eq. (6)  
+
+> 10:
+
+Return the robot to its initial configuration  
+
+> 11:
+
+Retry the task with the updated policy and action perturbation in Eq. (7)  
+
+> 12:
+
+end for Contrastive Sample Construction. Learning directly from only negative samples can be unstable and may distort the policy’s learned representation. Inspired by contrastive and preference-based learning [ 57 , 58 ], we instead construct pairwise supervision using both neg-ative and positive samples, which provides a more informative update direction. For a state st from a failed trajectory and an iden-tified negative chunk a− 
+
+> t
+
+, we sample a set of candidates from the current policy: C(st) = n
+
+a(1)  
+
+> t
+
+, a(2)  
+
+> t
+
+, . . . , a(M )
+
+> t
+
+o
+
+, a(i) 
+
+> t
+
+∼ πθ (· | st).
+
+To avoid selecting actions that are either too similar to a− 
+
+> t
+
+or too far away from the policy distribution, we first filter candidates accord-ing to their distance to a− 
+
+> t
+
+:
+
+Csafe (st) = 
+
+n
+
+a(i) 
+
+> t
+
+∈ C (st) dmin ≤ d
+
+
+
+a(i) 
+
+> t
+
+, a−
+
+> t
+
+
+
+≤ dmax 
+
+o
+
+, (4) where d(·, ·) denotes the L2 distance between the action chunks, and dmin , d max define a moderate deviation range. We then rank the remaining candidates using the critic Q(st, a(i) 
+
+> t
+
+) and select the top-k highest-valued ones as positive samples: 
+
+A+ 
+
+> t
+
+= TopK a∈C safe (st) Qϕ(st, a). (5) Together with a− 
+
+> t
+
+, this forms a set of contrastive preference pairs {(a+ 
+
+> t
+
+, a− 
+
+> t
+
+) | a+ 
+
+> t
+
+∈ A + 
+
+> t
+
+}, indicating that each positive chunk should be preferred over the negative one. 
+
+Failure-Contrastive Preference Adaptation. Using the constructed contrastive pairs, we adapt the policy with a preference optimization objective [ 57 ]. For diffusion policies, the action likelihood is not explicitly tractable. Following prior work on preference optimization for diffusion models [ 58 ], we use the negative denoising loss as a surrogate preference score. Specifically, for an action chunk a
+
+conditioned on state s, we define ℓdiff (a, s ; θ) = Ek, ϵ
+
+h
+
+∥ϵ − ϵθ (ak, s, k )∥2i
+
+, where ak is obtained by adding Gaussian noise to a at diffusion step k. We then optimize the pairwise preference objective 
+
+Lpref = − log σ  β ℓdiff (a− 
+
+> t
+
+, s t; θ) − ℓdiff (a+ 
+
+> t
+
+, s t; θ) , (6) which encourages the model to assign lower denoising error to the preferred chunk than to the failed chunk. In this way, safer and higher-value recovery actions become more likely under the adapted policy, while previously failed behaviors are suppressed. In practice, test-time adaptation only requires 5–10 gradient steps and can be completed within seconds. 4Perturbation for Retry Exploration. Although FCPA enables learning from previous failures, it remains limited by the support of the offline policy. To improve exploration at out-of-distribution states, we inject lightweight perturbations into the executed action during retry. In simulation, simple Gaussian perturbations are often sufficient. For real-world deployment, we further smooth the perturbation over time to reduce high-frequency jitter. Specifically, with probability ϵexplore , we sample a target perturbation δ⋆ ∼ N (0, Σ) and keep it fixed for the next h steps; otherwise, we set 
+
+δ⋆ = 0. The applied perturbation is updated by exponential smoothing: δt = αδt−1 + (1 − α)δ⋆,
+
+where α ∈ [0 , 1) is a smoothing coefficient. Let at ∼ πθ (· | st) denote the predicted action chunk and ˆat = g(at) the temporally aggregated action. The executed action is 
+
+˜at = ˆ at + δt. (7) This perturbation provides simple local exploration during retry, while the temporal smoothing helps maintain stable execution on real robots. The overall FAR is summarized in Algorithm 1. 
+
+4.2 Continual Policy Improvement 
+
+Failures reveal the boundary of the current policy. When a retry succeeds, the resulting recovery trajectory provides useful supervision for improving robustness. We therefore integrate FAR into a policy improvement loop, where the robot continually interacts with the environment, performs failure-aware retry, and uses both direct-success and successful-recovery trajectories for policy improvement. We maintain three replay buffers: Dexp , Dsucc , and Dfail , which store offline expert demonstrations, successful online trajectories (including recovered ones), and failure trajectories, respectively. 
+
+Critic Learning. Since online rollouts can be suboptimal and may contain stagnation or partial failures, naively cloning all collected data can degrade the policy. We therefore leverage the critic to estimate the quality of state-action pairs and reweight the policy update accordingly. Specifically, we adopt an IQL-style actor-critic framework. Given the aggregated replay buffer D = Dexp ∪ D succ ∪Dfail , we first optimize Vψ and Qϕ with Eq. (1) and Eq. (2). 
+
+Advantage-weighted Policy Update. After critic training, we compute the advantage of each sample as A(s, a) = Qϕ(s, a) − Vψ (s), and assign it the weight w(s, a) = exp 
+
+ A(s, a)
+
+> η
+
+
+
+, where η is a temperature parameter. To avoid learning poor behaviors, the actor is updated only on Dexp ∪ D succ .As the policy is parameterized as a diffusion policy, we use an advantage-weighted denoising objective. Let a0 denote the ground-truth action chunk, ak the noisy sample at diffusion step k, and ϵθ (ak, s, k )
+
+the predicted noise. The actor objective is 
+
+Lπ = E(s, a0)∼D exp ∪D succ , k, ϵ 
+
+h
+
+w(s, a0) ∥ϵ − ϵθ (ak, s, k )∥2i
+
+. (8) This training loop gradually expands the policy support while prioritizing high-value behaviors. In particular, successful recovery trajectories provide supervision on hard states where the initial policy fails, improving both policy robustness and value estimation over time. 
+
+# 5 Experiments 
+
+5.1 Experimental setups Settings. For each task, we assume access to an offline demonstration dataset. Using this dataset, we train a diffusion policy with behavior cloning and the corresponding critic models. The policy takes visual observations and robot proprioception as input. Through experiments, we aim to answer the following research questions: (1) Can FAR improve evaluation performance over the pretrained policy? (2) Can the policy learn from collected recovery experience and continually improve over time? (3) Can FAR reduce environment reset costs and improve the data efficiency of online learning? All experiments are conducted on a single NVIDIA A5000 GPU. 
+
+Tasks. We evaluate the proposed method in the ManiSkill [ 59 ], RoboSuite [ 60 ], and RoboMimic [ 61 ]environments. Our simulated evaluation covers 9 vision-based manipulation tasks with different 5Table 1: Results on ManiSkill and RoboSuite Benchmarks. Each task is evaluated over 50 trials, and we report the mean success rate and standard deviation across 3 random seeds. FAR consistently outperforms all baselines, achieving an average improvement of 16.4% over the base policy. Benchmark ManiSkill RoboSuite Task Liftpeg Pokecube Pullcube Door Bread Stack Average 
+
+|D exp | 20 20 20 3 15 15 –DP 53.3 ± 10.3 36.0 ± 3.5 58.7 ± 4.2 46.7 ± 17.5 44.7 ± 8.1 42.7 ± 8.3 47.0 ± 6.6 DP-NR 57.3 ± 8.3 37.3 ± 4.6 64.0 ± 5.3 80.7 ± 20.5 54.0 ± 11.1 61.3 ± 16.0 59.1 ± 8.0 DP-BGR 53.3 ± 8.1 36.0 ± 7.2 62.7 ± 4.2 80.7 ± 14.5 50.7 ± 12.2 63.3 ± 21.0 57.8 ± 7.7 
+
+DP-FAR 58.7 ± 6.1 39.3 ± 8.1 70.7 ± 5.0 86.7 ± 7.0 56.7 ± 1.2 68.7 ± 13.3 63.4 ± 4.5 
+
+Table 2: Results on the RoboMimic benchmark. Across different amounts of training demonstra-tions, FAR improves the success rate in most settings. Task Lift Can Square Average 
+
+|D exp | 5 10 10 20 50 100 –DP 50.0 ± 14.4 70.7 ± 2.3 42.7 ± 6.1 82.7 ± 3.1 19.3 ± 4.2 48.0 ± 5.3 52.2 ± 4.8 DP-NR 66.7 ± 11.5 87.3 ± 10.3 54.7 ± 7.0 86.0 ± 2.0 34.7 ± 9.9 60.0 ± 4.0 64.9 ± 1.0 DP-BGR 66.7 ± 11.0 84.7 ± 7.6 54.0 ± 5.3 90.7 ± 1.2 34.0 ± 8.7 60.7 ± 3.1 65.1 ± 1.3 
+
+DP-FAR 84.7 ± 2.3 92.0 ± 2.0 58.0 ± 5.3 89.3 ± 6.1 38.0 ± 11.1 63.3 ± 2.3 70.9 ± 3.0 
+
+levels of difficulty and task horizons. For each task, we run 50 evaluation episodes. Unless otherwise specified, the maximum number of attempts per episode is set to 5. We report the average success rate and standard deviation over 3 random seeds. We also evaluate our method on 3 real-world manipulation tasks using a 7-DoF xArm. For each task, we run 20 evaluation episodes, with the maximum number of attempts per episode set to 3. The task setup is shown in Figure 3. 
+
+Baselines. (1) DP (Base policy) : Diffusion Policy [ 1] with standard policy rollout during evaluation. (2) DP-NR (Naive Retry) : The same diffusion policy is given multiple attempts to complete the task, without model updates or environment resets. (3) DP-BGR (Bellman-Guided Retrials) : Du et al. [13] proposed a non-parametric method based on rejection sampling to avoid repeated failures during retries. We implement a compatible version in our setting for comparison. (4) DP-FAR (Ours) :Diffusion Policy with the proposed Failure-A ware Retry. In the policy improvement experiments, we add simple Gaussian action noise to all baselines during data collection to encourage exploration. 
+
+5.2 Test-time Failure Recovery Simulated Evaluation. As shown in Table 1 and Table 2, allowing retries consistently improves evaluation success rates, which highlights the importance of non-reset retries for improving policy robustness. However, DP-NR often repeats similar behaviors across attempts, which limits its effectiveness. For the non-parametric method DP-BGR, a key challenge is that previous failed attempts may alter the environment, leading to distribution shifts in the observed state and reducing the usefulness of failure feedback from earlier attempts. In contrast, the proposed FAR performs a local test-time update based on previous failures. Requiring only a few seconds for 5–10 optimization steps, FAR improves performance across most tasks and under different amounts of training demonstrations. 
+
+Real-World Evaluation. Similar trends are observed in real-world tasks. On shorter-horizon tasks such as Drawer, the policy performs well, and all methods achieve high success rates. On more challenging tasks such as Pot and Tea, however, recovery becomes substantially harder, as the policy must identify which actions led to failure and then explore alternative behaviors. By combining test-time adaptation from previous failures with perturbation-based exploration beyond the training distribution, FAR achieves higher recovery success rates in these challenging scenarios. 6Drawer Pot Tea Average 0.40.50.60.70.80.91.0Success Rate DP DP-NR DP-BGR DP-FAR Figure 2: Comparison Across Real-World Tasks. We conduct experiments on three real-world manipulation tasks that evaluate pushing, pick-and-place, and pouring skills. Robo Suite  
+
+> Stack
+> Robo Mimic Mani Skill Real
+> Door
+> Bread
+> Pullcube
+> Liftpeg
+> Pokecube
+> Lift
+> Can
+> Square
+> Drawer
+> Pot
+> Tea
+
+Figure 3: Task Setup. We evaluate FAR in three simulated environments covering nine manipula-tion tasks, as well as three real-world tasks on a 7-DoF xArm platform. DP DP-NR DP-BGR DP-FAR 0 250 500 Episodes 
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0Success Rate
+
+(a) Lift |D exp | = 5 0 250 500 Episodes  
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+(b) Door |D exp | = 3 0 250 500 Episodes  
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+(c) Can |D exp | = 10 
+
+Figure 4: Results on Continual Policy Improvement. FAR improves performance through online interactions, while increasing data efficiency and reducing the number of costly environment resets. 
+
+5.3 Continual Policy Improvement 
+
+As shown in Figure 4, the policy steadily improves with additional environment interactions and newly collected experience. Data efficiency remains a key challenge in online learning. From the perspective of environment resets, allowing more attempts within each episode generally yields more training data, resulting in more stable learning signals and more robust policy improvement. Among all methods, FAR achieves the best performance and data efficiency by enabling more informative retries and exploration after failure. This helps the robot learn from hard negative examples and expand its capability boundary, providing more valuable data for online learning. FAR also demonstrates superior data efficiency in terms of environment timesteps, as shown in the Appendix (Section B). 
+
+5.4 Ablation Studies Design of the Retry Algorithm. We study the contribution of each component in FAR, and present results in Table 3. Compared with naive retry, both FCPA and perturbation improve performance. FCPA helps the policy avoid repeating previous failures and make more effective retries, which is especially beneficial on longer-horizon tasks such as Door. Perturbation encourages the policy to try novel actions, allowing it to reach new states and escape local optima. By combining both components, FAR achieves the best overall performance. Similar trends are observed during online learning, as shown in Figure 5a. 
+
+Failure Attribution. Accurate credit assignment is crucial for long-horizon decision-making tasks. Without the proposed value-based negative transition detection, adapting on the entire trajectory degrades performance, since not all transitions contribute to failure. Compared with a fixed threshold, we empirically find that using a percentile of value differences yields better overall performance by providing more stable training samples and gradients for test-time adaptation. 7Table 3: Results of Ablation Studies. We conduct ablation studies to examine the design choices of FAR. Specifically, we compare different components of the retry algorithm, failure attribution methods, and adaptation objectives for FCPA. The gray row indicates our default setting.                                                                                  
+
+> Task Pullcube Liftpeg Bread Door Lift Average
+> |D exp |20 20 15 3510 –
+> Retry Algorithm
+> DP-NR 64.0 ± 5.3 57.3 ± 8.3 54.0 ± 11.1 80.7 ± 20.5 66.7 ± 11.5 87.3 ± 10.3 68.3 ± 6.2 DP w/ FCPA 68.0 ± 3.5 57.3 ± 8.3 56.7 ± 7.0 87.3 ± 13.3 80.7 ± 1.2 86.7 ± 7.6 72.8 ± 4.3 DP w/ Perturbation 68.7 ± 5.0 56.7 ± 11.0 55.3 ± 4.2 86.7 ± 3.1 78.0 ± 5.3 86.7 ± 3.1 72.0 ± 2.3 DP-FAR 70.7 ± 5.0 58.7 ± 6.1 56.7 ± 1.2 86.7 ± 7.0 84.7 ± 2.3 92.0 ± 2.0 74.9 ± 2.2
+> Failure Attribution (FCPA Ablation) Value-Percentile 68.0 ± 3.5 57.3 ± 8.3 56.7 ± 7.0 87.3 ± 13.3 80.7 ± 1.2 86.7 ± 7.6 72.8 ± 4.3
+> Value-Threshold 67.3 ± 7.0 58.0 ± 11.1 49.3 ± 7.6 88.7 ± 12.7 74.0 ± 9.2 86.7 ± 10.1 70.7 ± 4.7 Whole Trajectory 65.3 ± 6.1 52.7 ± 7.6 54.7 ± 9.9 85.3 ± 15.1 76.7 ± 9.9 83.3 ± 6.4 69.7 ± 5.6
+> Adaptation Objective (FCPA Ablation) Pairwise Preference 68.0 ± 3.5 57.3 ± 8.3 56.7 ± 7.0 87.3 ± 13.3 80.7 ± 1.2 86.7 ± 7.6 72.8 ± 4.3
+> w/o Positive 66.0 ± 2.0 51.3 ± 10.3 46.0 ± 3.5 50.7 ± 13.3 68.7 ± 11.4 78.7 ± 3.1 60.2 ± 2.8 w/o Negative 65.3 ± 5.0 55.3 ± 8.3 53.3 ± 5.0 88.0 ± 12.2 76.0 ± 7.2 85.3 ± 8.3 70.6 ± 2.9 AWR 64.7 ± 1.2 56.7 ± 9.5 51.3 ± 5.8 84.0 ± 14.0 64.7 ± 14.0 83.3 ± 5.0 67.4 ± 3.9
+
+Adaptation Objective. We evaluate the roles of positive and negative samples in FCPA. With-out positive samples, the policy only learns to avoid previous actions, which can quickly distort the original score structure of the policy. Without negative samples, adaptation degenerates into self-imitation and cannot effectively exploit failure feedback, resulting in weaker retry perfor-mance. We also compare FCPA with a standard RL objective, advantage-weighted regression (AWR). AWR performs worse in our setting because it mainly exploits positive updates from failure trajectories, which does not provide sufficient signal to explicitly avoid failed behavior. 0 250 500 Episodes          
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0Success Rate
+> DP w/ FCPA DP w/ Perturbation DP-FAR
+> (a) Door |D exp |= 3 13579Number of Attempts
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> DP-NR DP-BGR DP-FAR (b) Square |D exp |= 100
+
+Figure 5: (a) FAR benefits from both failure adaptation and structured exploration. (b) FAR improves the suc-cess rate across different numbers of attempts. 
+
+Number of Attempts. We also report suc-cess rates for different maximum numbers of attempts per evaluation episode. As shown in Figure 5b, the success rate in-creases rapidly with more attempts at first and then gradually saturates, ultimately lim-ited by the model’s initial capability. 
+
+Additional Ablations. We present addi-tional results in the Appendix (Section B). 
+
+# 6 Conclusion 
+
+We propose FAR, a method that enables a policy to learn from failures and improve at test time. We further show that the collected recovery experience can be incorporated into continual policy improvement, helping the policy address hard failure cases and improve over time. We evaluate FAR in three simulation environments across nine manipulation tasks, as well as on three real-world tasks. The results show that FAR improves the performance of pretrained policies and enables recovery without environment resets. Our results on continual policy improvement further show that FAR increases learning efficiency and reduces the need for human intervention, demonstrating its potential for robust and data-efficient self-improvement during deployment. 
+
+Limitations and Future Work. First, our experiments focus on diffusion policies trained from scratch in single-task settings. An important future direction is to evaluate the proposed method on pretrained policies, such as VLA models, which may offer richer prior knowledge and broader generalization. Second, our current framework does not include a principled failure detection mechanism, and instead relies on environment feedback and time limits. In future work, we plan to incorporate pretrained models, such as VLMs, for task tracking and failure detection. This could further improve performance on complex long-horizon tasks by enabling stage-level retry and recovery. 8References 
+
+[1] C. Chi, S. Feng, Y. Du, Z. Xu, E. Cousineau, B. Burchfiel, and S. Song. Diffusion policy: Visuomotor policy learning via action diffusion. In Proceedings of Robotics: Science and Systems (RSS) , 2023. [2] M. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. Foster, G. Lam, P. Sanketi, Q. Vuong, T. Kollar, B. Burchfiel, R. Tedrake, D. Sadigh, S. Levine, P. Liang, and C. Finn. Openvla: An open-source vision-language-action model. arXiv preprint arXiv:2406.09246 , 2024. [3] K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. R. Equi, C. Finn, N. Fusai, M. Y. Galliker, D. Ghosh, L. Groom, K. Hausman, brian ichter, S. Jakubczak, T. Jones, L. Ke, D. LeBlanc, S. Levine, A. Li-Bell, M. Mothukuri, S. Nair, K. Pertsch, A. Z. Ren, L. X. Shi, L. Smith, J. T. Springenberg, K. Stachowicz, J. Tanner, Q. Vuong, H. Walke, A. Walling, H. Wang, L. Yu, and U. Zhilinsky. $ \pi {0.5 }$: a vision-language-action model with open-world generalization. In 9th Annual Conference on Robot Learning , 2025. URL 
+
+https://openreview.net/forum?id=vlhoswksBO .[4] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn. Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware. In Proceedings of Robotics: Science and Systems , Daegu, Republic of Korea, July 2023. doi:10.15607/RSS.2023.XIX.016. [5] P. Intelligence, A. Amin, R. Aniceto, A. Balakrishna, K. Black, K. Conley, G. Connors, J. Darpinian, K. Dhabalia, J. DiCarlo, D. Driess, M. Equi, A. Esmail, Y. Fang, C. Finn, C. Glossop, T. Godden, I. Goryachev, L. Groom, H. Hancock, K. Hausman, G. Hussein, B. Ichter, S. Jakubczak, R. Jen, T. Jones, B. Katz, L. Ke, C. Kuchi, M. Lamb, D. LeBlanc, S. Levine, A. Li-Bell, Y. Lu, V. Mano, M. Mothukuri, S. Nair, K. Pertsch, A. Z. Ren, C. Sharma, L. X. Shi, L. Smith, J. T. Springenberg, K. Stachowicz, W. Stoeckle, A. Swerdlow, J. Tanner, M. Torne, Q. Vuong, A. Walling, H. Wang, B. Williams, S. Yoo, L. Yu, U. Zhilinsky, and Z. Zhou. 
+
+π∗
+
+> 0.6
+
+: a vla that learns from experience, 2025. URL https://arxiv.org/abs/2511.14759 .[6] Z. Hu, R. Wu, N. Enock, J. Li, R. Kadakia, Z. Erickson, and A. Kumar. Rac: Robot learning for long-horizon tasks by scaling recovery and correction, 2025. URL https://arxiv.org/ abs/2509.07953 .[7] J. Luo, C. Xu, J. Wu, and S. Levine. Precise and dexterous robotic manipulation via human-in-the-loop reinforcement learning. Science Robotics , 10(105):eads5033, 2025. [8] A. Mandlekar, C. R. Garrett, D. Xu, and D. Fox. Human-in-the-loop task and motion planning for imitation learning. In 7th Annual Conference on Robot Learning , 2023. URL https: //openreview.net/forum?id=G_FEL3OkiR .[9] R. Hoque, L. Y. Chen, S. Sharma, K. Dharmarajan, B. Thananjeyan, P. Abbeel, and K. Goldberg. Fleet-dagger: Interactive robot fleet learning with scalable human supervision. In Conference on Robot Learning , pages 368–380. PMLR, 2023. [10] R. Hoque, A. Balakrishna, C. Putterman, M. Luo, D. S. Brown, D. Seita, B. Thananjeyan, E. Novoseller, and K. Goldberg. Lazydagger: Reducing context switching in interactive imitation learning. In 2021 IEEE 17th international conference on automation science and engineering (case) , pages 502–509. IEEE, 2021. [11] R. Hoque, A. Balakrishna, E. Novoseller, A. Wilcox, D. S. Brown, and K. Goldberg. ThriftyDAg-ger: Budget-aware novelty and risk gating for interactive imitation learning. In 5th An-nual Conference on Robot Learning , 2021. URL https://openreview.net/forum?id= KKBfrCzCVOn .9[12] F. Ebert, S. Dasari, A. X. Lee, S. Levine, and C. Finn. Robustness via retrying: Closed-loop robotic manipulation with self-supervised learning. In Conference on robot learning , pages 983–993. PMLR, 2018. [13] M. Du, A. Khazatsky, T. Gerstenberg, and C. Finn. To err is robotic: Rapid value-based trial-and-error during deployment, 2024. URL https://arxiv.org/abs/2406.15917 .[14] S. Xu, R. Jin, H. Zhou, B. Yue, G. Qiao, Y. Deng, Y. Tai, K. Jia, and G. Liu. From reaction to anticipation: Proactive failure recovery through agentic task graph for robotic manipulation. In 
+
+Robotics: Science and Systems (RSS) , 2026. [15] Z. Liu, A. Bahety, and S. Song. REFLECT: Summarizing robot experiences for failure explanation and correction. In 7th Annual Conference on Robot Learning , 2023. URL https: //openreview.net/forum?id=8yTS_nAILxt .[16] Q. Gu, Y. Ju, S. Sun, I. Gilitschenski, H. Nishimura, M. Itkina, and F. Shkurti. SAFE: Multitask failure detection for vision-language-action models. In The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2026. URL https://openreview.net/forum?id= XPyAukgsFf .[17] J. Duan, W. Pumacay, N. Kumar, Y. R. Wang, S. Tian, W. Yuan, R. Krishna, D. Fox, A. Man-dlekar, and Y. Guo. AHA: A vision-language-model for detecting and reasoning over failures in robotic manipulation. In The Thirteenth International Conference on Learning Representations ,2025. URL https://openreview.net/forum?id=JVkdSi7Ekg .[18] C. Grislain, H. Rahimi, O. Sigaud, and M. Chetouani. I-failsense: Towards general robotic failure detection with vision-language models. In Proceedings of the International Conference on Robotics and Automation (ICRA) , 2026. URL https://arxiv.org/abs/2509.16072 .[19] W. Lu, M. Ye, Z. Ye, R. Tao, S. Yang, and B. Zhao. Robofac: A comprehensive framework for robotic failure analysis and correction, 2025. URL https://arxiv.org/abs/2505.12224 .[20] Z. Lin, J. Duan, H. Fang, D. Fox, R. Krishna, C. Tan, and B. Wen. Failsafe: Reasoning and recovery from failures in vision-language-action models, 2025. URL https://arxiv.org/ abs/2510.01642 .[21] H. Chen, Y. Yao, R. Liu, C. Liu, and J. Ichnowski. Robot failure recovery using vision-language models with optimized prompts. In 2025 American Control Conference (ACC) , pages 1983–1988, 2025. doi:10.23919/ACC63710.2025.11107751. [22] Y. Hong, H. Huang, M. Li, L. F.-F. Li, J. Wu, and Y. Choi. Learning from trials and errors: Reflective test-time planning for embodied llms, 2026. URL http://arxiv.org/abs/2602. 21198 .[23] B. Thananjeyan, A. Balakrishna, S. Nair, M. Luo, K. Srinivasan, M. Hwang, J. E. Gonzalez, J. Ibarz, C. Finn, and K. Goldberg. Recovery rl: Safe reinforcement learning with learned recovery zones. IEEE Robotics and Automation Letters , 6(3):4915–4922, 2021. doi:10.1109/ LRA.2021.3070252. [24] W. Xiao, H. Lin, A. Peng, H. Xue, T. He, Z. Luo, Y. Xie, F. Hu, L. Fan, G. Shi, and Y. Zhu. Self-improving vision-language-action models with data generation via residual RL. In The Fourteenth International Conference on Learning Representations , 2026. URL https:// openreview.net/forum?id=eUGoqrZ6Ea .[25] H. Li, K. Lei, S. Zang, K. Hu, Y. Liang, B. An, X. Li, and H. Xu. Failure-aware rl: Reliable offline-to-online reinforcement learning with self-recovery for real-world manipulation, 2026. URL https://arxiv.org/abs/2601.07821 .10 [26] X. Xu, Y. Hou, Z. Liu, and S. Song. Compliant residual DAgger: Improving real-world contact-rich manipulation with human corrections. In The Thirty-ninth Annual Conference on Neural Information Processing Systems (NeurIPS) , 2025. URL https://openreview.net/forum? id=cjcm5LYVWm .[27] J. Liang, R. He, and T. Tan. A comprehensive survey on test-time adaptation under distribution shifts. International Journal of Computer Vision , 133(1):31–64, 2025. [28] Z. Wang, Y. Luo, L. Zheng, Z. Chen, S. Wang, and Z. Huang. In search of lost online test-time adaptation: A survey. International Journal of Computer Vision , 133(3):1106–1139, 2025. [29] D. Chen, D. Wang, T. Darrell, and S. Ebrahimi. Contrastive test-time adaptation. In CVPR ,2022. [30] Y. Sun, X. Wang, Z. Liu, J. Miller, A. Efros, and M. Hardt. Test-time training with self-supervision for generalization under distribution shifts. In H. D. III and A. Singh, editors, 
+
+Proceedings of the 37th International Conference on Machine Learning , volume 119 of Pro-ceedings of Machine Learning Research , pages 9229–9248. PMLR, 13–18 Jul 2020. URL 
+
+https://proceedings.mlr.press/v119/sun20b.html .[31] H. S. Yoon, E. Yoon, J. T. J. Tee, M. A. Hasegawa-Johnson, Y. Li, and C. D. Yoo. C-TPT: Calibrated test-time prompt tuning for vision-language models via text feature dispersion. In The Twelfth International Conference on Learning Representations , 2024. URL https: //openreview.net/forum?id=jzzEHTBFOT .[32] Y. Iwasawa and Y. Matsuo. Test-time classifier adjustment module for model-agnostic domain generalization. In M. Ranzato, A. Beygelzimer, Y. Dauphin, P. Liang, and J. W. Vaughan, editors, Advances in Neural Information Processing Systems , volume 34, pages 2427–2440. Curran Associates, Inc., 2021. URL https://proceedings.neurips.cc/paper_files/ paper/2021/file/1415fe9fea0fa1e45dddcff5682239a0-Paper.pdf .[33] A. Chen, Z. Liu, J. Zhang, A. Prabhakar, Z. Liu, S. Heinecke, S. Savarese, V. Zhong, and C. Xiong. Test-time adaptation for LLM agents via environment interaction. In The Fourteenth International Conference on Learning Representations , 2026. URL https://openreview. net/forum?id=OH4PE0TDo0 .[34] J. Hu, Z. Zhang, G. Chen, X. Wen, C. Shuai, W. Luo, B. Xiao, Y. Li, and M. Tan. Test-time learning for large language models. In Forty-second International Conference on Machine Learning , 2025. URL https://openreview.net/forum?id=iCYbIaGKSR .[35] S. Niu, C. Miao, G. Chen, P. Wu, and P. Zhao. Test-time model adaptation with only forward passes. In The International Conference on Machine Learning , 2024. [36] S. Kim, G. Oh, H. Ko, D. Ji, D. Lee, B.-J. Lee, S. Jang, and S. Kim. Test-time adaptation for online vision-language navigation with feedback-based reinforcement learning. In Forty-second International Conference on Machine Learning , 2025. URL https://openreview.net/ forum?id=K4GaB4fdIq .[37] A. Wagenmaker, Z. Zhou, and S. Levine. Behavioral exploration: Learning to explore via in-context adaptation. In Forty-second International Conference on Machine Learning , 2025. URL https://openreview.net/forum?id=tlLkY9E2bZ .[38] M. Yoo, J. Jang, S. Yoon, and H. Woo. World model implanting for test-time adaptation of embodied agents. In Forty-second International Conference on Machine Learning , 2025. URL 
+
+https://openreview.net/forum?id=tpbtodnI1p .[39] M. Liu, D. Pathak, and A. Agarwal. Locoformer: Generalist locomotion via long-context adaptation. In 9th Annual Conference on Robot Learning , 2025. 11 [40] Z. Bai, C. Gao, and M. Z. Shou. Evolve-vla: Test-time training from environment feedback for vision-language-action models, 2025. URL https://arxiv.org/abs/2512.14666 .[41] T. Xie, N. Jiang, H. Wang, C. Xiong, and Y. Bai. Policy finetuning: Bridging sample-efficient offline and online reinforcement learning. Advances in neural information processing systems ,34:27395–27407, 2021. [42] H. Zhang, W. Xu, and H. Yu. Policy expansion for bridging offline-to-online reinforcement learning. In The Eleventh International Conference on Learning Representations , 2023. URL 
+
+https://openreview.net/forum?id=-Y34L45JR6z .[43] S. Lee, Y. Seo, K. Lee, P. Abbeel, and J. Shin. Offline-to-online reinforcement learning via balanced replay and pessimistic Q-ensemble. In Conference on Robot Learning , pages 1702–1712. PMLR, 2022. [44] P. J. Ball, L. Smith, I. Kostrikov, and S. Levine. Efficient online reinforcement learning with offline data. In International Conference on Machine Learning , pages 1577–1594. PMLR, 2023. [45] M. Nakamoto, Y. Zhai, A. Singh, M. S. Mark, Y. Ma, C. Finn, A. Kumar, and S. Levine. Cal-QL: Calibrated offline RL pre-training for efficient online fine-tuning. In Thirty-seventh Conference on Neural Information Processing Systems , 2023. URL https://openreview.net/forum? id=GcEIvidYSw .[46] Q. Li, J. Zhang, D. Ghosh, A. Zhang, and S. Levine. Accelerating exploration with unlabeled prior data. In Thirty-seventh Conference on Neural Information Processing Systems , 2023. URL 
+
+https://openreview.net/forum?id=Itorzn4Kwf .[47] Q. Li, Z. Zhou, and S. Levine. Reinforcement learning with action chunking. In The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2026. URL https: //openreview.net/forum?id=XUks1Y96NR .[48] I. Kostrikov, A. Nair, and S. Levine. Offline reinforcement learning with implicit q-learning. In 
+
+International Conference on Learning Representations , 2022. URL https://openreview. net/forum?id=68n2s9ZJWF8 .[49] A. Z. Ren, J. Lidard, L. L. Ankile, A. Simeonov, P. Agrawal, A. Majumdar, B. Burchfiel, H. Dai, and M. Simchowitz. Diffusion policy policy optimization. In arXiv preprint arXiv:2409.00588 ,2024. [50] S. Park, Q. Li, and S. Levine. Flow q-learning. In Forty-second International Conference on Machine Learning , 2025. URL https://openreview.net/forum?id=KVf2SFL1pi .[51] T. Zhang, C. Yu, S. Su, and Y. Wang. Reinflow: Fine-tuning flow matching policy with online reinforcement learning. In The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2026. URL https://openreview.net/forum?id=ACagRwCCqu .[52] J. Liu, F. Gao, B. Wei, X. Chen, Q. Liao, Y. Wu, C. Yu, and Y. Wang. What can RL bring to VLA generalization? an empirical study. In The Thirty-ninth Annual Conference on Neural Informa-tion Processing Systems , 2026. URL https://openreview.net/forum?id=qmBMPInbZC .[53] H. Li, Y. Zuo, J. Yu, Y. Zhang, Y. Zhaohui, K. Zhang, X. Zhu, Y. Zhang, T. Chen, G. Cui, D. Wang, D. Luo, Y. Fan, Y. Sun, J. Zeng, J. Pang, S. Zhang, Y. Wang, Y. Mu, B. Zhou, and N. Ding. SimpleVLA-RL: Scaling VLA training via reinforcement learning. In The Fourteenth International Conference on Learning Representations , 2026. URL https://openreview. net/forum?id=TQhSodCM4r .12 [54] Y. Guo, J. Zhang, X. Chen, X. Ji, Y.-J. Wang, Y. Hu, and J. Chen. Improving vision-language-action model with online reinforcement learning. In 2025 IEEE International Conference on Robotics and Automation (ICRA) , pages 15665–15672, 2025. doi:10.1109/ICRA55743.2025. 11127299. [55] A. K. Jain, V. Mohta, S. Kim, A. Bhardwaj, J. Ren, Y. Feng, S. Choudhury, and G. Swamy. A smooth sea never made a skilled SAILOR: Robust imitation via learning to search. In 
+
+The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2025. URL 
+
+https://openreview.net/forum?id=qN5hmLkBtC .[56] C. Gokmen, D. Ho, and M. Khansari. Asking for help: Failure prediction in behavioral cloning through value approximation. In 2023 IEEE International Conference on Robotics and Automation (ICRA) , pages 5821–5828, 2023. doi:10.1109/ICRA48891.2023.10161004. [57] R. Rafailov, A. Sharma, E. Mitchell, C. D. Manning, S. Ermon, and C. Finn. Direct preference optimization: Your language model is secretly a reward model. In Thirty-seventh Conference on Neural Information Processing Systems , 2023. URL https://openreview.net/forum? id=HPuSIXJaa9 .[58] B. Wallace, M. Dang, R. Rafailov, L. Zhou, A. Lou, S. Purushwalkam, S. Ermon, C. Xiong, S. Joty, and N. Naik. Diffusion model alignment using direct preference optimization. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 8228–8238, 2024. [59] S. Tao, F. Xiang, A. Shukla, Y. Qin, X. Hinrichsen, X. Yuan, C. Bao, X. Lin, Y. Liu, T. kai Chan, Y. Gao, X. Li, T. Mu, N. Xiao, A. Gurha, V. N. Rajesh, Y. W. Choi, Y.-R. Chen, Z. Huang, R. Calandra, R. Chen, S. Luo, and H. Su. Maniskill3: Gpu parallelized robotics simulation and rendering for generalizable embodied ai. Robotics: Science and Systems , 2025. [60] Y. Zhu, J. Wong, A. Mandlekar, R. Mart ´ın-Mart ´ın, A. Joshi, S. Nasiriany, Y. Zhu, and K. Lin. robosuite: A modular simulation framework and benchmark for robot learning. In arXiv preprint arXiv:2009.12293 , 2020. [61] A. Mandlekar, D. Xu, J. Wong, S. Nasiriany, C. Wang, R. Kulkarni, L. Fei-Fei, S. Savarese, Y. Zhu, and R. Mart ´ın-Mart ´ın. What matters in learning from offline human demonstrations for robot manipulation. In Conference on Robot Learning (CoRL) , 2021. [62] A. Mandlekar, D. Xu, J. Wong, S. Nasiriany, C. Wang, R. Kulkarni, L. Fei-Fei, S. Savarese, Y. Zhu, and R. Mart ´ın-Mart ´ın. What matters in learning from offline human demonstrations for robot manipulation. In 5th Annual Conference on Robot Learning , 2021. URL https: //openreview.net/forum?id=JrsfBJtDFdI .[63] Y. Wu and K. He. Group normalization. In Proceedings of the European conference on computer vision (ECCV) , pages 3–19, 2018. [64] D. Misra. Mish: A self regularized non-monotonic neural activation function, 2019. [65] J. Ho, A. Jain, and P. Abbeel. Denoising diffusion probabilistic models. In H. Larochelle, M. Ranzato, R. Hadsell, M. Balcan, and H. Lin, editors, Advances in Neural Information Processing Systems , volume 33, pages 6840–6851. Curran Associates, Inc., 2020. URL https://proceedings.neurips.cc/paper_files/paper/2020/file/ 4c5bcfec8584af0d967f1ab10179ca4b-Paper.pdf .[66] A. Q. Nichol and P. Dhariwal. Improved denoising diffusion probabilistic models. In Interna-tional conference on machine learning , pages 8162–8171. PMLR, 2021. [67] J. Song, C. Meng, and S. Ermon. Denoising diffusion implicit models. In International Conference on Learning Representations , 2021. URL https://openreview.net/forum? id=St1giarCHLP .13 [68] S. Fujimoto, H. Hoof, and D. Meger. Addressing function approximation error in actor-critic methods. In International conference on machine learning , pages 1587–1596. PMLR, 2018. [69] I. Loshchilov and F. Hutter. Decoupled weight decay regularization. In International Con-ference on Learning Representations , 2019. URL https://openreview.net/forum?id= Bkg6RiCqY7 .[70] D. A. Pomerleau. Alvinn: An autonomous land vehicle in a neural network. Advances in neural information processing systems , 1, 1988. [71] T. Zhang, Z. McCarthy, O. Jow, D. Lee, X. Chen, K. Goldberg, and P. Abbeel. Deep imitation learning for complex manipulation tasks from virtual reality teleoperation. In 2018 IEEE International Conference on Robotics and Automation (ICRA) , pages 5628–5635. IEEE, 2018. [72] P. Florence, L. Manuelli, and R. Tedrake. Self-supervised correspondence in visuomotor policy learning. IEEE Robotics and Automation Letters , 5(2):492–499, 2019. [73] R. Rahmatizadeh, P. Abolghasemi, L. B ¨ol ¨oni, and S. Levine. Vision-based multi-task manip-ulation for inexpensive robots using end-to-end learning from demonstration. In 2018 IEEE international conference on robotics and automation (ICRA) , pages 3758–3765. IEEE, 2018. [74] P. Florence, C. Lynch, A. Zeng, O. A. Ramirez, A. Wahid, L. Downs, A. Wong, J. Lee, I. Mordatch, and J. Tompson. Implicit behavioral cloning. In 5th Annual Conference on Robot Learning , 2021. [75] A. Zeng, P. Florence, J. Tompson, S. Welker, J. Chien, M. Attarian, T. Armstrong, I. Krasin, D. Duong, V. Sindhwani, et al. Transporter networks: Rearranging the visual world for robotic manipulation. In Conference on Robot Learning , pages 726–747. PMLR, 2021. [76] J. Wu, X. Sun, A. Zeng, S. Song, J. Lee, S. Rusinkiewicz, and T. Funkhouser. Spatial action maps for mobile manipulation. In Proceedings of Robotics: Science and Systems (RSS) , 2020. [77] X. Liu, C. Gong, and Q. Liu. Flow straight and fast: Learning to generate and transfer data with rectified flow. arXiv preprint arXiv:2209.03003 , 2022. [78] Y. Lipman, R. T. Chen, H. Ben-Hamu, M. Nickel, and M. Le. Flow matching for generative modeling. arXiv preprint arXiv:2210.02747 , 2022. [79] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman, B. Ichter, et al. π0: A vision-language-action flow model for general robot control. arXiv preprint arXiv:2410.24164 , 2024. [80] J. Wen, Y. Zhu, M. Zhu, Z. Tang, J. Li, Z. Zhou, X. Liu, C. Shen, Y. Peng, and F. Feng. Diffusion-VLA: Scaling robot foundation models via unified diffusion and autoregression. In Forty-second International Conference on Machine Learning , 2025. URL https://openreview.net/ forum?id=VdwdU81Uzy .[81] Z. Hou, T. Zhang, Y. Xiong, H. Duan, H. Pu, R. Tong, C. Zhao, X. Zhu, Y. Qiao, J. Dai, and Y. Chen. Dita: Scaling diffusion transformer for generalist vision-language-action policy. In 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , pages 7686–7697, October 2025. [82] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry, A. Askell, P. Mishkin, J. Clark, et al. Learning transferable visual models from natural language supervision. In International conference on machine learning , pages 8748–8763. PmLR, 2021. [83] M. Laskin, A. Srinivas, and P. Abbeel. Curl: Contrastive unsupervised representations for reinforcement learning. In International Conference on Machine Learning , pages 5639–5650. PMLR, 2020. 14 [84] S. Qiu, L. Wang, C. Bai, Z. Yang, and Z. Wang. Contrastive ucb: Provably efficient contrastive self-supervised learning in online reinforcement learning. In International Conference on Machine Learning , pages 18168–18210. PMLR, 2022. [85] B. Eysenbach, R. Salakhutdinov, and S. Levine. C-learning: Learning to achieve goals via recursive classification. In International Conference on Learning Representations , 2020. [86] D. Xu and M. Denil. Positive-unlabeled reward learning. In Conference on Robot Learning ,pages 205–219. PMLR, 2021. [87] T. Ma, J. Zhou, Z. Wang, R. Qiu, and J. Liang. Contrastive imitation learning for language-guided multi-task robotic manipulation. In 8th Annual Conference on Robot Learning , 2024. URL https://openreview.net/forum?id=9HkElMlPbU .[88] S.-W. Lee, X. Kang, B. Y. Yang, and Y.-L. Kuo. CLASS: Contrastive learning via action sequence supervision for robot manipulation. In 9th Annual Conference on Robot Learning ,2025. URL https://openreview.net/forum?id=9f3klkpa4y .[89] Y. Fu, Y. Zhang, Q. Yang, L. Yan, Z. Cao, and Y. Gao. Contrastive forward prediction reinforcement learning for adaptive fault-tolerant legged robots. In 9th Annual Conference on Robot Learning , 2025. URL https://openreview.net/forum?id=P0uqo7CpL8 .[90] B. Eysenbach, T. Zhang, S. Levine, and R. Salakhutdinov. Contrastive learning as goal-conditioned reinforcement learning. In A. H. Oh, A. Agarwal, D. Belgrave, and K. Cho, editors, 
+
+Advances in Neural Information Processing Systems , 2022. URL https://openreview.net/ forum?id=vGQiU5sqUe3 .15 A Appendix Overview 
+
+• Section B: Additional experimental results. • Section C: Implementation details. • Section D: Additional experimental details. • Section E: Extended related work. 
+
+# B Additional Experimental Results 
+
+B.1 Continual Policy Improvement DP DP-NR DP-BGR DP-FAR 0 250 500 Episodes 
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0Success Rate
+
+(a) Pullcube |D exp | = 20 0 250 500 Episodes  
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+
+(b) Liftpeg |D exp | = 20 0 250 500 Episodes  
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+
+(c) Square |D exp | = 100 0.0 0.5 1.0Timesteps ×10 5
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1.0Success Rate 
+
+(d) Lift |D exp | = 5 0.0 0.5 1.0 1.5Timesteps ×10 5 
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+(e) Door |D exp | = 3 0.0 0.5 1.0 1.5 2.0Timesteps ×10 5 
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+(f) Can |D exp | = 10 0 5Timesteps ×10 4
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1.0Success Rate 
+
+(g) Pullcube |D exp | = 20 0.0 0.5 1.0 1.5 2.0Timesteps ×10 5 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+
+(h) Liftpeg |D exp | = 20 0.0 0.5 1.5 2.5Timesteps ×10 5 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+
+(i) Square |D exp | = 100 
+
+Figure 6: Results on Continual Policy Improvement. The first row reports success rate against the number of online episodes, while the remaining plots report success rate against environment timesteps. FAR improves performance through online interactions, increasing data efficiency in terms of both resets and timesteps. In Figure 6, we present additional results on continual policy improvement. FAR consistently im-proves the base policy across different tasks. We also report success rates as a function of environment timesteps. Under the same timestep budget, FAR achieves higher success rates than the base policy. Although allowing multiple attempts within each episode introduces additional interactions, these interactions are concentrated on challenging failure cases. Such cases are particularly informative, as 16 they often lie near the boundary of the current policy’s capabilities, and allocating more timesteps to them leads to greater policy improvement. 
+
+B.2 Additional Ablation Studies 
+
+Table 4: Additional Results of Ablation Studies on FCPA. We evaluate the effectiveness of critic-based positive sample construction, as well as the impact of varying the number of positive samples. The gray-shaded rows indicate the default settings in each ablation block. 
+
+Task Pullcube Liftpeg Bread Door Lift Average 
+
+|D exp | 20 20 15 3 5 10 –
+
+Positive Sample Construction 
+
+Critic Guided 68.0 ± 3.5 57.3 ± 8.3 56.7 ± 7.0 87.3 ± 13.3 80.7 ± 1.2 86.7 ± 7.6 72.8 ± 4.3 
+
+Random 64.7 ± 4.2 54.7 ± 9.5 58.7 ± 4.2 80.0 ± 17.4 67.3 ± 10.3 88.7 ± 6.1 69.0 ± 3.2 
+
+Number of Positive Samples 
+
+K = 1 65.3 ± 4.6 54.7 ± 10.1 54.0 ± 8.7 82.7 ± 14.7 74.7 ± 7.6 86.0 ± 8.7 69.6 ± 9.1 
+
+K = 8 68.0 ± 3.5 57.3 ± 8.3 56.7 ± 7.0 87.3 ± 13.3 80.7 ± 1.2 86.7 ± 7.6 72.8 ± 4.3 
+
+K = 16 64.7 ± 5.8 54.0 ± 9.2 50.0 ± 7.2 82.0 ± 17.8 71.3 ± 3.1 84.7 ± 8.1 67.8 ± 8.5 
+
+Table 5: Results of Ablation Studies on Retry Perturbation. We conduct experiments with varying perturbation frequencies and compare the effects of different types of perturbations. The gray-shaded rows indicate the default settings in each ablation block. 
+
+Task Pullcube Liftpeg Bread Door Lift Average 
+
+|D exp | 20 20 15 3 5 10 –
+
+Perturbation Frequency 
+
+ϵexplore = 0 .0 68.0 ± 3.5 57.3 ± 8.3 56.7 ± 7.0 87.3 ± 13.3 80.7 ± 1.2 86.7 ± 7.6 72.8 ± 4.3 
+
+ϵexplore = 0 .3 68.7 ± 4.2 56.0 ± 12.2 54.7 ± 8.1 83.3 ± 10.1 77.3 ± 8.3 90.7 ± 1.2 71.8 ± 3.5 
+
+ϵexplore = 0 .5 70.7 ± 5.0 58.7 ± 6.1 56.7 ± 1.2 86.7 ± 7.0 84.7 ± 2.3 92.0 ± 2.0 74.9 ± 2.2 
+
+ϵexplore = 0 .7 69.3 ± 2.3 60.0 ± 12.5 55.3 ± 1.2 72.7 ± 12.2 78.7 ± 3.1 90.7 ± 4.2 71.1 ± 3.1 
+
+ϵexplore = 1 .0 70.0 ± 6.9 58.0 ± 6.9 55.3 ± 1.2 72.7 ± 8.1 80.7 ± 7.6 94.0 ± 4.0 71.8 ± 1.5 Adaptive 68.7 ± 4.2 58.0 ± 12.5 56.7 ± 8.1 86.0 ± 8.0 82.0 ± 2.0 88.7 ± 3.1 73.3 ± 4.7 
+
+Perturbation Type 
+
+Gaussian 70.7 ± 5.0 58.7 ± 6.1 56.7 ± 1.2 86.7 ± 7.0 84.7 ± 2.3 92.0 ± 2.0 74.9 ± 2.2 
+
+Smoothed 67.3 ± 5.0 58.7 ± 6.1 59.3 ± 6.1 84.7 ± 8.3 78.7 ± 6.4 94.0 ± 4.0 73.8 ± 3.2 
+
+Positive Sample Construction. As shown in Table 4, performance drops when distance-based filtering and critic-based selection are removed, and positive samples are instead obtained by directly sampling action chunks from the policy. This indicates that naive sampling does not sufficiently account for the relative quality and diversity of candidate actions. In particular, actions that are overly similar to the previously failed action should be suppressed, while diverse alternatives with high critic values should be prioritized. 
+
+Number of Positive Samples. As shown in Table 4, the number of positive samples plays an important role in FCPA. Using too few positive samples ( K = 1 ) provides unstable guidance for model adaptation and therefore limits performance gains. In contrast, using too many positive samples (K = 16 ) can also hurt performance, potentially because noisy positives are introduced and the resulting updates contain conflicting optimization directions. 
+
+Perturbation. Table 5 presents the ablation results for retry perturbation. We first vary the perturba-tion frequency by changing the perturbation probability ϵexplore . Using fewer perturbations improves performance on some long-horizon tasks, such as Door, but reduces performance on shorter-horizon tasks, such as Pullcube and Lift. This may be because insufficient perturbation limits exploration and causes the robot to remain stuck in local optima. In contrast, using more perturbations improves performance on shorter-horizon tasks but hurts performance on longer-horizon tasks, possibly because excessive perturbation drives the policy away from the training distribution and limits its effectiveness. 17 Table 6: Results of Ablation Studies on the Full FAR Framework. We further conduct ablation studies to examine the design choices of the full FAR framework. Overall, we observe trends consistent with the FCPA-only ablations. The gray-shaded rows indicate the default settings in each ablation block. 
+
+Task Pullcube Liftpeg Bread Door Lift Average 
+
+|D exp | 20 20 15 3 5 10 –
+
+Failure Attribution 
+
+Value-Percentile 70.7 ± 5.0 58.7 ± 6.1 56.7 ± 1.2 86.7 ± 7.0 84.7 ± 2.3 92.0 ± 2.0 74.9 ± 2.2 
+
+Value-Threshold 68.0 ± 5.3 58.0 ± 3.5 62.7 ± 5.0 76.7 ± 8.3 80.0 ± 5.3 92.7 ± 5.8 73.0 ± 3.6 Whole Trajectory 67.3 ± 7.0 57.3 ± 5.0 56.0 ± 5.3 78.0 ± 10.0 80.7 ± 11.4 92.7 ± 3.1 72.0 ± 1.5 
+
+Adaptation Objective 
+
+Pairwise Preference 70.7 ± 5.0 58.7 ± 6.1 56.7 ± 1.2 86.7 ± 7.0 84.7 ± 2.3 92.0 ± 2.0 74.9 ± 2.2 
+
+w/o Positive 69.3 ± 5.0 55.3 ± 5.0 46.0 ± 7.2 44.0 ± 22.0 72.7 ± 5.0 80.7 ± 6.1 61.3 ± 5.5 w/o Negative 68.0 ± 6.0 58.0 ± 9.2 53.3 ± 4.2 81.3 ± 10.3 86.7 ± 5.0 90.0 72.9 ± 1.6 AWR 70.0 ± 3.5 56.7 ± 11.0 42.0 ± 10.4 78.0 ± 6.0 74.7 ± 7.6 90.7 ± 4.2 69.2 ± 2.1 
+
+Positive Sample Construction 
+
+Critic Guided 70.7 ± 5.0 58.7 ± 6.1 56.7 ± 1.2 86.7 ± 7.0 84.7 ± 2.3 92.0 ± 2.0 74.9 ± 2.2 
+
+Random 68.7 ± 2.0 61.3 ± 7.2 56.7 ± 4.2 86.7 ± 4.2 73.3 ± 8.0 87.3 ± 2.0 72.3 ± 3.6 
+
+Number of Positive Samples 
+
+K = 1 66.7 ± 4.2 56.7 ± 9.2 54.7 ± 4.6 80.0 ± 5.3 82.0 ± 6.9 88.7 ± 3.1 71.4 ± 2.0 
+
+K = 8 70.7 ± 5.0 58.7 ± 6.1 56.7 ± 1.2 86.7 ± 7.0 84.7 ± 2.3 92.0 ± 2.0 74.9 ± 2.2 
+
+K = 16 64.7 ± 7.6 58.0 ± 9.2 38.7 ± 10.1 85.3 ± 9.0 75.3 ± 7.6 86.0 ± 9.2 68.0 ± 4.7 
+
+We further evaluate an adaptive perturbation strategy that gradually increases the exploration strength across retries, using ϵ(k) 
+
+> explore
+
+= 0 .3 + 0 .1k, where k denotes the retry index starting from 0. Overall, we find that a moderate fixed perturbation probability, ϵexplore = 0 .5, achieves the best trade-off between exploration and exploitation and yields the best overall performance. We also compare different types of perturbations. Using pure Gaussian noise works relatively well in simulation environments. However, high-frequency noise may damage the robot and cause excessive jitter on a real robot. Compared with pure Gaussian noise, the smoothed perturbation achieves similar performance while being more robot-friendly and safer for real-robot deployment. 
+
+Ablation on FAR. We further provide ablation results on the full FAR framework for a more comprehensive evaluation. The results are shown in Table 6. We observe a similar trend when combining FCPA with additional perturbations for exploration, demonstrating that the design of FCPA does not conflict with extra noise-based perturbations. 0 250 500 Episodes   
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0Success Rate
+> DP DP-FAR 05Timesteps ×10 4
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> DP DP-FAR
+
+(a) Pullcube |D exp | = 20 
+
+Figure 7: Continual policy improvement under sparse reward on Pullcube. Left: success rate versus on-line episodes. Right: success rate versus environment timesteps. With a challenging sparse reward function, FAR still achieves continual improvement and effec-tively enhances the data efficiency of online learning. 
+
+Reward Type. In addition, we examine the impact of the reward function. We replace the dense reward provided by the environment with a sparse reward, assign-ing a reward of 3 upon task completion and 0 otherwise. The results of policy im-provement are shown in Figure 7. Even with this extremely sparse reward, FAR still achieves continual improvement and effectively enhances the data efficiency of online learning. This demonstrates that allocating additional interaction bud-get to hard failure cases can yield more informative training data, and the newly collected successful trajectories provide a more stable estimate of the optimization direction, ultimately leading to improvements over the standard rollout of the diffusion policy. 18 C Implementation Details 
+
+C.1 Network Architecture Policy Network. We adopt a diffusion-based policy as the backbone policy, following the general design of prior diffusion policy methods [ 1, 55 ]. At each decision step, the policy is conditioned on a short history of observations, i.e., the previous and current states [st−1, s t], and outputs an action chunk at:t+H−1 with horizon length H. Each state st consists of both proprioceptive measurements and RGB observations. For visual observations, we employ a ResNet-18 image encoder initialized with ImageNet1K V1 pretrained weights. Following common practice in visuomotor policy learning, the feature maps produced by the encoder are further processed by a Spatial Softmax layer [ 62 ] to obtain compact image representations. Different camera views, or image inputs at different timesteps, are encoded by separate encoder instances. The resulting visual embeddings are then concatenated with the proprioceptive features and used as the observation condition for the denoising network ϵ.The denoising model is implemented as a conditional 1D U-Net. Condition information is injected through FiLM layers, similar to the architecture used in Diffusion Policy [ 1]. Specifically, the U-Net is conditioned on both the encoded observation and the diffusion step. The diffusion step is first mapped to a 16-dimensional representation using sinusoidal positional encoding, followed by a lightweight MLP. The U-Net contains a hierarchy of convolutional and transposed-convolutional blocks with channel dimensions [64 , 128 , 256] and kernel size 3. We use Group Normalization [ 63 ]and Mish activations [ 64 ] throughout the network to improve optimization stability. Training follows the standard denoising diffusion formulation [ 65 , 66 ]. Given an expert action sequence of length H,Gaussian noise is progressively added in the forward diffusion process, and the policy is optimized to predict the injected noise conditioned on the observation and diffusion timestep. This corresponds to a behavior cloning objective expressed as a denoising task over action chunks. At test time, we use DDIM sampling [ 67 ] to iteratively denoise a randomly initialized action sequence and obtain the executable action chunk under the current observation. 
+
+Critic Network. The critic module contains two components: a state-value function and an action-value function. Both networks share the same observation encoding design as the policy network, while using separate prediction heads on top of the encoded features. The value network is equipped with a single linear output head. For the action-value network, we employ two independent output heads, following the commonly used double-critic design [68] to mitigate overestimation bias. 
+
+C.2 Training 
+
+Given the offline demonstrations Dexp , we first train a diffusion policy via behavior cloning. We then train the critic models using the same set of demonstrations, initializing the state encoder with the pretrained weights from the diffusion policy. During continual policy improvement, we use the trained diffusion policy to interact with the environment and collect additional training data. We maintain two additional replay buffers, Dsucc and Dfail , which store successful online trajectories (including recovered ones) and failed trajectories, respectively. In each learning epoch, we collect data from 20 episodes with different initial states. We add a small noise sampled from N (0 , 0.12) to the action to encourage exploration while collecting data from the environment. After data collection, we first update the critic models using the aggregated dataset 
+
+D = Dexp ∪ D succ ∪ D fail according to Eq. (1) and Eq. (2). We then use the updated critic models to compute the advantage of each sample in Dexp ∪ D succ , and optimize the diffusion policy using Eq. (8). We use AdamW [69] for optimization. 
+
+C.3 Evaluation 
+
+During evaluation, we use the same diffusion policy as the base policy and roll it out in the envi-ronment. Within the time limit, if the robot fails to achieve the goal, the episode is regarded as a failure. The robot is then given multiple chances to retry from the failure state. In each retry, only the 19 Name Value DP Training 
+
+Batch size 128 Optimizer AdamW Training iterations 30,000 Online finetuning iterations per epoch 1,000 LR scheduler Cosine annealing LR scheduler warmup steps 100 LR range [1 × 10 −4, 1 × 10 −5]
+
+Critic Training 
+
+Batch size 128 Optimizer AdamW Training iterations 15,000–30,000 Online finetuning iterations per epoch 2,000 LR 1 × 10 −4
+
+Expectile τ 0.7 Discount factor γ 0.99 
+
+Failure-Aware Retry 
+
+Percentile ρ 10% Number of action candidates M 64 Deviation range [dmin , d max ] [dmean , 1.0] 
+
+Number of positive samples K 8Preference learning temperature β 0.1 Optimizer AdamW LR 1 × 10 −5
+
+Test-time adaptation steps 10 Perturbation probability ϵexplore 0.5 Noise std σ 0.1 Smoothing coefficient α 0.3 Table 7: Hyperparameters used in our experiments. 
+
+robot arm is returned to its initial configuration, while the object states and the environment remain unchanged. Given the previous failure trajectory, FAR first uses the critic to identify potential action chunks that lead to failure according to Eq. (4), where the percentile is set to 10% by default. With the constructed preference pairs, we optimize the denoising network for 10 steps using AdamW, which can be completed within seconds. 
+
+C.4 Hyperparameters 
+
+We list the hyperparameters used in our experiments in Table 7. Unless otherwise specified, the same hyperparameters are used across all tasks. Task-dependent hyperparameters are reported as ranges. 
+
+# D Additional Experimental Details 
+
+D.1 Baselines DP is the base policy trained via behavior cloning on the offline demonstration dataset, evaluated using standard rollouts. 
+
+DP-NR utilizes the same policy model but allows multiple execution attempts without resetting the environment. 20 DP-BGR is a non-parametric baseline adapted from Du et al. [13] , which employs rejection sampling to steer actions away from past failures. In our implementation, we leverage a trained value function to identify failure-inducing actions by computing the temporal value difference: 
+
+∆Vt = Vψ (st+H ) − Vψ (st). (9) An action chunk at is classified as failure-inducing if ∆Vt falls below a predefined threshold. The corresponding state-action pair (st, at) is then appended to a failure memory. During a retry attempt, the agent computes the L2 distance between the current state and all stored failure states in the latent space of the state encoder. If the minimum distance falls below a predefined threshold, the recovery mode is triggered; the policy then samples 16 candidate action chunks from the diffusion policy and selects the one furthest from the previously failed action. This method does not require any parameter updates at test time. In the policy improvement experiments, we add simple Gaussian action noise to all baselines during data collection to encourage exploration. For a fair comparison, DP-FAR uses the same action noise during data collection, but additionally applies perturbations during retry to further enhance exploration at test time. Table 8: The maximum episode length (Horizon), environment steps and description of the tasks. Domain Task Horizon Description ManiSkill Pullcube 50 Pull the cube to the target area. Pokecube 100 Use the tool to poke the cube to the target area. Liftpeg 150 Lift the peg and make it stand upright. RoboSuite Stack 150 Lift the red block and place it on top of the other block. Door 200 Pull down the handle and open the door. Bread 200 Lift the bread and place it in the correct bin. RoboMimic Lift 100 Lift the block above the table. Can 200 Lift the can and place it in the correct bin. Square 200 Pick up the square tool and insert it into the slot. Real Drawer 100 Push the handle and close the drawer. Pot 200 Pick up the lid and place it on the pot. Tea 150 Pick up the teapot and pour water into the cup. 
+
+D.2 Simulated Experiments 
+
+We consider three manipulation benchmarks: ManiSkill [ 59 ], RoboSuite [ 60 ], and RoboMimic [ 61 ], covering nine manipulation tasks in total. The task setups are visualized in Figure 3. Each task provides two RGB observations: one from a third-person camera and one from a wrist-mounted camera. In addition, each task provides proprioceptive states, including the position and orientation of the end effector and the gripper position. The action space is a 7-dimensional vector with values in 
+
+[−1, 1] . The first six dimensions control changes in the position and orientation of the end effector, while the last dimension controls the opening and closing of the gripper. By default, the reward signals used for critic training are the shaped rewards provided by the environments. For evaluating test-time failure recovery, we run 50 evaluation episodes for each task. The maximum number of attempts per episode is set to 5. We report the average success rate and standard deviation over three random seeds. For policy improvement experiments, we run 20 episodes to collect data at each training epoch and evaluate the updated policy every 5 epochs. For the Lift, Door, and Can tasks, the maximum number of attempts is set to 5; for the Pullcube, Liftpeg, and Square tasks, the maximum number of attempts is set to 3. We report the average success rate and standard deviation over three random seeds. Table 8 provides the episode horizon and a brief description of each task. 21 D.3 Real-world Experiments 
+
+We use the same diffusion policy architecture and evaluate it on three real-world manipulation tasks. All experiments are conducted on an xArm7 robot with end-effector delta-position control at 30 Hz. The inputs to the policy and critic models include a third-person RGB observation from a ZED Mini camera and the robot proprioceptive state. For each task, we collect 20 successful demonstrations, which are used to train both the policy and critic models. The rewards in the collected datasets are labeled as −0.1 before task completion and 3 upon task completion. During evaluation, perturbations are applied only to the x, y, and z axes at the end-effector delta-action level. We apply the temporal smoothing introduced in Section 4.1 to avoid high-frequency jitter. For each task, we evaluate each method over 20 episodes with varying initial configurations to test generalization. The same set of initial configurations is used across different methods for a fair comparison. In each episode, the maximum number of attempts is set to 3 by default. An episode is considered successful if the task is completed within the allowed number of attempts, as determined by human inspection. 
+
+# E Extended Related Work 
+
+Generative Policy Modeling. Conventional policy models usually learn a direct mapping from observations to actions with regression losses [ 70 , 71 , 72 , 73 ]. However, such models often strug-gle to represent the inherently multi-modal action distributions in demonstration data [ 74 ]. Prior efforts address this limitation by discretizing the action space and casting policy learning as classi-fication [ 75 , 76 ], or by predicting the parameters of simple action distributions such as Gaussians [ 61 ]. Recently, generative policy models, including diffusion-based models [ 65 , 67 ] and flow-/flow-matching-based models [ 77 , 78 ], have shown strong capability in modeling complex and multi-modal action distributions [ 1 ]. These paradigms have also been adopted in large-scale vision-language-action (VLA) models pretrained on diverse robotic datasets [ 79 , 3 , 80 , 81 ]. By representing a distribution over plausible actions rather than a single deterministic output, such policies are better suited to modeling the diversity and ambiguity inherent in real-world manipulation. 
+
+Contrastive Learning. Contrastive learning has been widely used for learning structured rep-resentations [ 82 , 83 , 84 ], and has also been applied in reinforcement learning and robotics [ 85 , 84 , 86 , 87 , 88 , 89 , 90 ]. For example, Eysenbach et al. [90] show that contrastive learning can be cast as goal-conditioned reinforcement learning, with the learned similarity function cor-responding to a goal-conditioned value function. More recently, contrastive objectives have been extended beyond representation learning to preference-based fine-tuning of generative models. In large language models, Direct Preference Optimization (DPO) [ 57 ] aligns pretrained models using paired preference data. Similar ideas have also been explored in diffusion models, where Diffusion-DPO [ 58 ] fine-tunes pretrained diffusion policies from human-labeled preference pairs. These works suggest that supervision from both preferred and dispreferred samples provides an effective way to reshape a pretrained model’s output distribution. This is particularly relevant in our setting, where adaptation must be performed from limited test-time experience: using only negative feedback from previous failures can easily destabilize the policy, while contrastive supervision provides a more balanced update signal. Inspired by contrastive and preference learning, our method uses failed actions as negative samples and alternative actions as positive samples to perform failure-aware adaptation at test time. 22

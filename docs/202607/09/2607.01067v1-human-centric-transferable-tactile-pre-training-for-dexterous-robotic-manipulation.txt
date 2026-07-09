@@ -1,0 +1,630 @@
+Title: Human-Centric Transferable Tactile Pre-Training for Dexterous Robotic Manipulation
+
+URL Source: https://arxiv.org/pdf/2607.01067v1
+
+Published Time: Thu, 02 Jul 2026 01:14:14 GMT
+
+Number of Pages: 22
+
+Markdown Content:
+智在 ⽆界
+
+# BeingBeyond 
+
+# ∝
+
+# ∝ 智在 ⽆界 BeingBeyond Human-Centric Transferable Tactile Pre-Training for Dexterous Robotic Manipulation 
+
+## Chi Zhang 1,2,∗ Penglin Cai 1,2,∗ Ziheng Xi 2,3 Haoqi Yuan 1,2
+
+## Hao Luo 1,2 Wanpeng Zhang 1,2 Sipeng Zheng 2
+
+## Chaoyi Xu 1,2 Zongqing Lu 1,2,†
+
+> 1
+
+Peking University 2BeingBeyond 3Tsinghua University 
+
+https://beingbeyond.github.io/TTP/ 
+
+## Abstract 
+
+As an essential modality for dexterous and contact-rich tasks, tactile sensing provides precise force feedback that cannot be reliably inferred from vision. However, limited by hardware and data collection systems, existing datasets with tactility remain small in scale and narrow in contact coverage. Meanwhile, Vision-Language-Action (VLA) models with tactile modality are constrained on dynamics-agnostic post-training, which limits the performance ceiling on downstream tasks. In this paper, we present H-Tac, a large-scale tactile-action dataset with 160-hour egocentric human videos containing more than 300 tasks and 135k episodes. Building upon this, we propose Transferable 
+
+Tactile Pre-Training ( TTP ), a system of tactile-based pre-training on human data for fine-grained robotic tasks. To bridge the gap between humans and robots, we use unified tactile and action spaces throughout the pre-training and post-training phases, preserving prior knowledge during human-to-robot transfer. By leveraging a tactile expert for future tactile prediction, our framework explicitly models the contact dynamics and precise physical interactions. Extensive experiments in simulation and on real robots demonstrate that our model achieves superior performance, exhibiting robust generalization and fine-grained manipulation capabilities. TTP paves the way for scalable tactile pre-training via human-to-robot transfer.  
+
+> Date:
+
+July 2, 2026 
+
+## 1 Introduction 
+
+While visual perception dominates in many robotic task, tactile sensing is essential for achieving complex, fine-grained, and dexterous manipulation, especially when struggling with problems including occlusion and ambiguity in complex interactions. Tasks such as assembly, threading, or manipulating fragile items cannot be robustly executed without tactile sensing, indicating tactile sensing is a fundamental modality in advanced robotic systems. However, collecting tactile data on real robots remains difficult and expensive. Tactile sensors on different embodiments (especially dexterous hands) are non-unified in hardware integration, and teleoperating robots for contact-rich tasks are labor-intensive and hard to scale [ 63 ]. In contrast, acquiring human demonstration data is considerably easier and more scalable. This disparity has motivated a series of interest in learning from human demonstrations and human-to-robot  
+
+> *Equal contribution. Orders are decided by flipping a coin.
+> †Correspondence to Zongqing Lu <lu@beingbeyond.com >.
+> arXiv:2607.01067v1 [cs.RO] 1 Jul 2026
+
+# TTP System Overview   
+
+> QKV
+> Und. Expert
+> <state>
+> QKV
+> Act. Expert
+> FFN
+> QKV
+> Tac. Expert
+> <tac.>
+> Shared Attention
+> <lan.> <vis.>
+> FFN FFN
+> tac. pred.
+
+## H-TAC Dataset 
+
+## Human Tactile Pre-training 
+
+## Real World Deployment             
+
+> Unified Tactile & Action Space
+> MANO Spatial Tac.
+> Traj. w/ Tac.
+> Large-Scale Tactile & Action Dataset
+> VTDexManip 2032
+> AgiBot World 5337
+> FreeTacMan 10,000
+> OmniViTac 21,879
+> H-Tac 135,000
+> 160 hours
+> 300 tasks
+> 135k episodes
+> Diverse Tactile Sensing
+> Robot Post-Training
+> unified act.
+> 𝜋𝜋 0.5𝜋𝜋 0.5
+> w/ tac. BeingH-0.5 TTP-scratch TTP
+> Overall Performance
+> 25.87 29.18 32.72
+> 51.5
+> 73.12
+
+Figure 1: Overview of the Transferable Tactile Pre-Training (TTP) system. skill transfer [ 43 , 44 , 62 , 67 ]. Yet, existing human demonstration datasets overwhelmingly focus on vision and action, largely overlooking the tactile modality. To fill in such gaps, collecting large-scale human-centric tactile-based dataset can be a possible solution. On the other hand, apart from tactile-rich human data, we also need proper architectures to learn skills and policies from these datasets. Recent vision-language-action (VLA) models have exhibited impressive abilities in performing complex and long-horizon tasks, demonstrating strong capabilities of planning and semantically reasoning [ 4 , 28 , 32 , 44 ]. In the meanwhile, learning from large-scale egocentric human videos has paving a promising path forward, as human data are relatively easy to collect and readily scalable [ 16 , 23 , 43 , 44 , 62 ]. However, standard VLA models, which lack tactile sensing, suffer from a critical limitation: the learned policies remain predominantly driven by visual cues and systematically ignore tactile information, leading to degraded performance in contact-intensive scenarios. This leads to a natural yet challenging question: can we unify large-scale tactile pre-training within the VLA paradigm and form a transferrable tactile-based pre-training for human-to-robot skill transfer? To address this, we propose Transferable Tactile Pre-Training ( TTP ), a system of human-centric tactile pre-training for transferable robot skill learning. Our system includes H-Tac, a human-centric tactile dataset (Section 3), tactile-based pre-training (Section 4), as well as post-training for downstream tasks (Section 5). We propose to pre-train a VLA model on large-scale egocentric human videos enriched with tactile and action data. This pre-training phase endows the model with rich domain-relevant priors and enables it to leverage the inherent alignment capabilities of VLA architectures to implicitly associate tactile signals with vision and language. The model is subsequently post-trained on downstream robotic tactile tasks while maintaining strict consistency with the pre-training setup, avoiding the pre-train/post-train distribution mismatch in previous literature [ 3 , 11 , 36 , 66 ]. To preserve consistency between human pre-training and robot post-training, our model adopts a unified action space and a unified tactile space that standardizes heterogeneous tactile representations across embodiments. Additionally, we propose to build the model as a dual-expert system, in which an action expert generating future action chunks and a tactile expert predicting future tactile signals, which effectively models the tactile dynamics of the environment. These objectives encourage the model to balance semantic reasoning and physical interaction, bridging the long-standing gap between high-level task understanding and low-level fine-grained contact control. Our contributions are threefold: 2• We collect and open-source a large-scale egocentric human demonstration dataset with dense tactile and action annotations and verify the benefit of such human-centric tactile data, which provides a critical resource for researches on tactile-conditioned pre-training. • We are the first to leverage tactile pre-training with human-centric demonstrations, enabling a VLA model to acquire tactile-grounded priors at scale before robot-specific post-training. • After post-training on a suite of real-robot tactile tasks, our model achieves superior performance with precise and fine-grained manipulation, exhibiting strong cross-embodiment capabilities and demonstrating the effectiveness of human-to-robot policy transfer. 
+
+## 2 Related Work 
+
+Tactile-based manipulation. To achieve dexterous and fine-grained manipulation, there has been many works on tactile-relevant tasks, datasets, benchmarks, and policies in the previous literature. Tactile-based datasets including OpenTouch [ 53 ], EgoPressure [ 73 ], VTDexManip [ 40 ] and OmniViTac [ 75 ] provide large-scale tactile-action aligned data for contact-rich tasks. As a tactile benchmark, ROTO [ 46 ] is proposed to encourage embodied agents to incorporate tactile sensing to overcome sensory deficits and reliance on idealised state information. As for tactile-based policies, RDP [ 60 ] is proposed as a slow-fast system, with the fast policy takes tactile sensing as input for reactive responses. Other methods based on reinforcement learning (RL) [ 24 ] leverages binary contact information in decoupled robot-object motion. In this paper, we tackle the problems in tactile-relevant manipulation by collecting human-centric transferable data and tactile-based pre-training, which demonstrates robust capabilities of fine-grained manipulation. 
+
+Human to robot skill transfer. Due to the high cost of collecting robot data, many previous works opt for learning from human-centric skills or human demonstrations, transferring such learned prior knowledge in the human space into robot space. Some works focus on learning robot arms and/or dexterous hands manipulation from demonstration teaching, teleoperation, or human videos [ 2 , 12 , 22 , 31 , 59 , 76 ], while pre-training on large-scale egocentric human demonstration videos has become widely used [ 29 , 43 , 44 , 68 , 74 ]. In the field of tactile-based fine-grained manipulation, TactAlign [ 58 ] and UniTacHand [ 67 ] pave the path towards a universal tactile representation aligning human hands and dexterous robotic hands, and UniTacHand demonstrates zero-shot human-to-robot transfer with only a small amount of paired data. In our work, we achieve such a transfer by human-tactile pre-training on a vision-language-action (VLA) model. After few-shot post-training on downstream tasks, our model demonstrates excellent performance with fine-grained manipulation and robust control. 
+
+Fusing tactile modality into vision-language-action (VLA) models. Some literature explores to fuse tactile modality into VLA models, forming vision-tactile-language-action (VTLA) models. Following TLA [ 20 ], VTLA [ 66 ] is directly trained on simulation-collected data with both vision and visuo-tactile modalities on the basis of a vision-language model (VLM). Tactile-VLA [ 26 ] introduces tactile-aware instruction following, leveraging the language common senses acquired by the pre-training phase of VLA. Some other works [ 36 , 37 , 70 ] focus on the problem of tactile-vision mismatch in the semantic or time domain during post-training, adopting curriculum tactile fine-tuning or disentangling low-frequency semantic planning with high-frequency tactile-relevant control. Instead of directly injecting tactile tokens in VLA models with all the burden left on the post-training phase, some other works [ 3 , 11 , 17 , 72 ] tend to use an explicit learning process to align tactility and other modalities before plugging the relevant modules into policies. In our work, we lead in tactile-included pre-training, making the implicit tactile fusing process much more efficient, adaptive and generalizable with pre-trained prior knowledge. 
+
+## 3 Tactile-Based Dataset Collection for Pre-Training 
+
+In this section, we introduce our tactile-based dataset for pre-training, overviewed as Figure 2. 
+
+3.1 HOI-Tac Dataset 
+
+We use multiple public datasets spanning hand-object (ARCTIC [ 14 ], DexYCB [ 9 ], H2O [ 35 ], H2O3D [ 19 ], HO3D v2/v3 [ 18 ], HOCap [ 56 ], HOI4D [ 41 ], HOT3D [ 1], InterHand2.6M [ 47 ], OakInk-v1 [ 61 ], OakInk-v2 [ 65 ]), hand-face (Decaf [ 6]), and hand-scene (PROX [ 21 ], RICH [ 25 ]) interactions. For each frame, we generate per-vertex binary contact labels on the 778-vertex MANO hand mesh by thresholding the distance between the hand surface and object meshes. 3ALOHA Lift2 Genie1 
+
+> HOCapv2
+
+…
+
+> H2Ov2
+> OakInkv2
+> HOT3Dv2
+
+(a) HOI-Tac 
+
+# H-Tac Datasets 
+
+(b) DeskTask-Tac  (c) InternData-Tac 
+
+> RawHand Pipe.
+> AprilTag Pipe.
+
+Figure 2: Our H-Tac datasets, composed of (a) HOI-Tac, (b) DeskTask-Tac, and (c) InternData-Tac. In total, H-Tac contains 160-hour vison-tactile-action data, including 300+ tasks and 135k+ episodes. These per-vertex contact signals are then projected onto the 351-taxel UniTacHand UV space [ 67 ] to serve as tactile supervision, forming our HOI-Tac dataset. In total, the composite contains approximately 11.5M frames ( ∼106 hours) across 124.8K sequences, encompassing egocentric videos with single-hand and bimanual grasps, static and dynamic object interactions, and diverse environments from tabletop to whole-body scenes. 
+
+3.2 DeskTask-Tac Dataset 
+
+We design a data collection system as in Figure 3 to collect our DeskTask-Tac dataset, which is for bimanual manip-ulation data in real-world desktop scenarios. Three RealSense cameras, including two external-view devices and an egocentric one, record the videos in different views. Each episode uses the first-person video timeline as the main axis, organizing hand geometry, tactile data, task labels, and action targets. The system supports two types of upstream hand reconstruction pipelines: 
+
+RawHand Pipeline : We use image-based hand keypoint detection and multi-view triangulation to recover the 3D state of the hands, reducing reliance on external reference hardware on hands. In this pipeline, we only need a tactile glove to record the tactility on the human hands. 
+
+AprilTag Pipeline : We use scene AprilTags to recover bimanual poses combining hand reference structures in MANO [ 52 ] and tactile information. In this case, we need both a tactile and a motion capture (MoCap) glove to record the hand motion and tactility simultaneously, with additional april tags for wrist locating. In the post-processing phase, we use the first-person camera timeline as a reference to perform temporal sampling or interpolation on multi-view observations, tactile readings, and hand states. The processed Spatial Tactile representation combines tactile signals, MANO parameters [ 52 ], and the wrist pose to estimate the 3D coordinates for each tactile unit. Given the hand pose θh ∈ R45 , shape βh ∈ R10 , and the wrist pose in the camera frame (Rh,th), the MANO model yields 778 mesh vertices and 21 joints. The tactile sensors are mapped to an 891-dimensional UV vertex, then converted to 351-dimensions via validation mask. In total, the DeskTask-Tac dataset contains 37.2 hours of 30 Hz data (947 episodes, 
+
+∼4M frames). 
+
+3.3 Tactile-Augmented InternData-Tac Dataset 
+
+We augment the InternDataEngine [ 55 ] pipeline with a lightweight tactile recorder that saves contact forces and patch details (position, normal, distance, force) as an episodic sidecar, strictly preserving the original visuo-linguo-motor streams. To enable cross-embodiment supervision independent of specific robot grippers, we project the collected contact patches onto a shared MANO hand surface. Active contact patches are transformed into the MANO frame, dispersed to adjacent vertices via a Gaussian kernel, and converted to local vertex pressure to yield a compact 351-D tactile vector. Additionally, near-surface zero-force patches are converted into a distance-decayed pseudo-contact signal, providing geometric proximity supervision prior to physical impulses. Inactive arm fields are ignored to prevent 4Desk-Tac Data 
+
+Collection  Realsense D435 
+
+April Tag 
+
+Pedal 
+
+Tactile Glove in RawHand Pipline 
+
+Tactile and Motion Capture Glove in AprilTag Pipline Figure 3: Data collection system of our DeskTask-Tac dataset. confusion with valid zero-contact states. In total, the dataset encompasses 17.8 hours of 30 Hz data (9,563 episodes, 
+
+∼1.9M frames) across three diverse robot configurations: Genie1, Lift2, and Split ALOHA. 
+
+3.4 Dataset Statistics 
+
+We provide some statistics over our pre-training datasets, as shown in Figure 4. Specifically, we provide: (a) The mean tactile values visualized on MANO surfaces (left and right hands). (b) Statistics on task language instruction prefixes (sorted by count). Figure 4 (a) shows that right hands have tactile sensings with higher magnitudes overall, and tactile readings on fingertips are much more significant than those on palms, indicating that hand-object contacts on fingertips appear more frequently than on palms in these datasets. From Figure 4 (b), we can see that most language instructions begin with verbs, and the word “grasp” occupies an absolute dominant position compared with other verbs (e.g., stack, pour, erase). 
+
+(a) The mean tactile values visualized on MANO surfaces (left and right hands). Grasp play organize operate stack work assemble read make cycle pour use fold tie screw doing erase type write roll 
+
+> Task prefix (sorted by count)
+> 100 1000 10000 100000
+> Episode count (log10 scale)
+
+(b) Statistics on task language instruction prefixes (sorted by count). 
+
+Figure 4: Statistics on our pre-training datasets. 5<text> 
+
+> ⋯
+
+FFN 
+
+QKV           
+
+> ×𝑵 Blocks ×𝑵 Blocks
+> Act. Expert Und. Expert
+> ⋯⋯⋯
+> <vision> <act. & tac. pred> <state> <act. chunk>
+> ℒact
+> noised
+
+TTP 
+
+FFN 
+
+QKV     
+
+> ×𝑵 Blocks
+> Tac. Expert
+> ⋯⋯
+> <tac. obs> <tac. pred>
+> ℒtac
+> Unified Action -Tactile Space
+> Human Hand
+> Action & Tactile
+> Robot Hand
+> Action & Tactile
+> contact
+> force
+> noised
+
+FFN 
+
+Shared Attention 
+
+QKV 
+
+> EEF Pos.
+> EEF Rot.
+> Gripper
+> DexHand
+> Dual -Expert Prediction
+> masked tokens
+
+Figure 5: Training architecture of TTP. Our model includes an understanding expert for visual and text interpretation, an action expert, and a tactile expert. We use a unified action and tactile space to preserve pre-traing period knowledge. 
+
+## 4 Tactile-Based Pre-Training 
+
+Our model is built on top of BeingH-0.5 [ 44 ], a state-of-the-art foundation VLA model with unified cross-embodiment control capabilities. BeingH-0.5 contains a multimodal understanding expert initialized from InternVL-3.5 [ 57 ] and an action generation expert for robot control. We extend the VLM part to tactile modality, and introduce a novel tactile prediction expert, enabling the model to jointly predict future actions and future tactile information . 
+
+4.1 Problem Formulation 
+
+We consider table-top fine-grained manipulation tasks with multi-modal observations. At physical timestep t, the observation consists of a language instruction l, one or multiple RGB images It = {I(v) 
+
+> t
+
+}Vv=1 with I(v) 
+
+> t
+
+∈ RHI ×WI ×3 from different views v, proprioceptive state st ∈ RDact , and tactile readings ot ∈ RDtac . Here HI and WI denote image height and width, Dact denotes the state and action space dimension, and Dtac denotes the tactile space dimension. We use K to denote the prediction horizon, i.e., the action chunk length. To preserve recent contact information, the policy conditions on a strided tactile history: 
+
+Ohist  
+
+> t
+
+= ot−d(L−1), . . . , ot−d , ot
+
+ ∈ RL×Dtac , (1) where L is the history length and d is the temporal stride, balancing between reducing the computational burden and preserving dominant tactile information among frames. The model predicts both a future action chunk and future tactile readings: 
+
+At = [ at , . . . , at+K−1] ∈ RK×Dact , O+ 
+
+> t
+
+= [ ot , . . . , ot+K−1] ∈ RK×Dtac . (2) Thus, the policy is formulated as   ˆAt , ˆO+
+
+> t
+
+ ∼ πθ
+
+
+
+At , O+ 
+
+> t
+
+| l, It , st , Ohist 
+
+> t
+
+
+
+. (3) 
+
+4.2 Unified Action and Tactile Space 
+
+We aim to keep the consistency between human-demonstrations pre-training and real-robot post-training, with various embodiments including human hands, dexterous hands with piezoresistive tactile sensings, and even grippers with visuo-tactile sensings. Such a unification requires a universal action and tactile space to represent different actions and tactile readings on different embodiments while preserving morphological structures and meanings. Following BeingH-0.5 [ 44 ], our unified action space contains Dact = 200 dimensions, including end effector pose (location and axis-angle rotation), dexterous hand actions, human MANO values (beta, translocations, and theta) [ 52 ], etc. The 200-dimensional space is semantically organized into slots as in Table 1, with each slot has a specific purpose. 6Table 1: Semantic organization of the 200-dimensional action space. 
+
+Slot Indices Semantic Name Dimensions Description Right Arm End-Effector (Dims 0-8) 
+
+0-2 eef_position 3 Right arm end-effector position (x, y, z) 3-5 eef_rotation 3 Right arm end-effector rotation (axis-angle) 6-8 Reserved 3 Reserved for future use 
+
+Left Arm End-Effector (Dims 9-17) 
+
+9-11 left_eef_position 3 Left arm end-effector position (x, y, z) 12-14 left_eef_rotation 3 Left arm end-effector rotation (axis-angle) 15-17 Reserved 3 Reserved for future use 
+
+Grippers (Dims 18-19) 
+
+18 gripper_position 1 Right gripper open/close (0=closed, 1=open) 19 left_gripper_position 1 Left gripper open/close 
+
+Dexterous Hands (Dims 20-43) 
+
+20-25 dexhand_position 6 Right dexterous hand joints 26-31 Reserved 6 Right hand extension 32-37 left_dexhand_position 6 Left dexterous hand joints 38-43 Reserved 6 Left hand extension 
+
+Legacy/Special Slots (Dims 44-49) 
+
+44-45 libero_gripper_position 2 LIBERO-specific gripper state 46-49 Reserved 4 Reserved for future use 
+
+Arm Joints (Dims 50-69) 
+
+50-56 arm_joint_position 7 Right arm joint positions (7-DoF) 57-63 left_arm_joint_position 7 Left arm joint positions (7-DoF) 64-65 head_position 2 Head pan/tilt joints 66-68 waist_position 3 Waist/torso joints 69 Reserved 1 Reserved for future use 
+
+Mobile Base (Dims 70-75) 
+
+70-72 base_position 3 Mobile base position (x, y, z) 73 base_motion 1 Base motion command 74 control_mode 1 Control mode flag 75 Reserved 1 Reserved for future use 
+
+Reserved (Dims 76-89) 
+
+76-89 Reserved 14 Reserved for future embodiments and extensions 
+
+Human Hands (Dims 90-199) 
+
+90-99 right_beta 10 Right Hand Shape (only for state, MANO parameter β )100-109 left_beta 10 Left Hand Shape (only for state, MANO parameter β )110-154 right_theta 45 Right Hand Articulation (axis-angle, MANO parameter θ )155-199 left_theta 45 Left Hand Articulation (axis-angle, MANO parameter θ )We use UniTacHand [ 67 ] as the unified space of tactile representation to yield a maximum preservation of morphological consistency. Following UniTacHand, we preserve Dtac = 351 taxels for each hand, which are distributed on the surface of the MANO hand model. We project piezoresistive tactilities from different embodiments onto these taxels, which preserves the consistency between pre-training (human hands) and post-training (robot hands). Similar to the unified action space in BeingH-0.5, such a unified tactile space enables our model with capabilities of cross-embodiment tactile prediction, exhibiting strong performances in various arm-hand combinations. 
+
+4.3 Large Scale Tactile Pre-Training 
+
+We represent supervision as a unified multimodal sequence and train the model in a VQA-style query-answer format 
+
+[SQ; SA]. The query SQ contains image tokens, language tokens, proprioceptive state tokens, and tactile observation tokens, while the answer SA contains action tokens and tactile prediction tokens. Let Ht denote the observation-conditioned token-level context at physical timestep t. During flow matching, after 7inserting the noisy action or tactile trajectory at flow timestep τ, the understanding expert produces a hidden context denoted by Ht,τ . Here, Ht is the observation context, while Ht,τ is the flow-time-dependent context used for velocity prediction. For each modality m ∈ { act , tac }, define the clean target as xact 1 = At , and xtac 1 = O+ 
+
+> t
+
+, we sample xm 
+
+> 0
+
+∼ N (0, I) and a flow timestep τm ∈ [0, 1], then construct 
+
+xm 
+
+> τm
+
+= ( 1 − τm)xm 
+
+> 0
+
++ τmxm 
+
+> 1
+
+. (4) The target velocity is 
+
+um = xm 
+
+> 1
+
+− xm 
+
+> 0
+
+. (5) The action expert and tactile expert predict ˆum 
+
+> θ
+
+= vm 
+
+> θ
+
+(xm 
+
+> τm
+
+, τm, Ht,τm ) , m ∈ { act , tac }. (6) Therefore, the flow matching loss is 
+
+Lm = Exm 
+
+> 0,τm
+
+h
+
+∥(vm 
+
+> θ
+
+(xm 
+
+> τm
+
+, τm, Ht,τm ) − (xm 
+
+> 1
+
+− xm 
+
+> 0
+
+)) ∥22
+
+i
+
+, m ∈ { act , tac }, (7) after masking padded or unavailable dimensions. The total objective is 
+
+L = λact Lact + λtac Ltac , (8) where λact and λtac are the weights of each loss term. 
+
+4.4 Tactile-Action Manifold-Preserving Gating 
+
+Tactile-Action Manifold-Preserving Gating (MPG) operates on the same flow-time-dependent context Ht,τ used by the action and tactile experts. Specifically, Ht,τ denotes the suffix token features projected to the VLM hidden space, including proprioceptive state, tactile observation, noisy action, and noisy tactile prediction token features at physical timestep t and flow timestep τ. MPG enhances this context before velocity decoding by ˜Ht,τ = MPG (Ht,τ ), with the specific formula in Equation 11. The velocity field is then evaluated as ˆum 
+
+> θ
+
+= vm
+
+> θ
+
+ xm 
+
+> τ
+
+, τ, ˜Hmt,τ
+
+ . (9) Since Ht,τ contains task-specific and behavior-specific semantics, small distribution shifts in the conditioning context may lead to unstable predictions. For one Euler step, 
+
+xm 
+
+> τ+∆τ
+
+= xm 
+
+> τ
+
++ ∆τ · vm 
+
+> θ
+
+(xm 
+
+> τ
+
+, τ; Ht,τ ), (10) if Ht,τ = H∗ 
+
+> t,τ
+
++ ε (with a small disturbance ε), a first-order approximation indicates that prediction variance scales with   
+
+> ∂vm
+> θ
+> ∂Ht,τ
+> 2
+
+Var (ε).To reduce the variance, following DiG-Flow [ 69 ] and BeingH-0.5 [ 44 ], MPG computes a reliability gate g ∈ (0, 1] and modulates the residual enhancement: ˜Ht,τ = Ht,τ + λ [WMPG (gsg ⊙ Eobs (Ht,τ )) + bMPG ] , (11) where gsg = stopgrad (g), and λ is the weight of the residual term. To compute g, we construct noise-free action and tactile anchors. Let Znf ,act and Znf ,tac denote the action and tactile token embeddings encoded at noise-free level, and we mean-pool them as ¯Zact = MeanPool (Znf ,act ), ¯Ztac = MeanPool (Znf ,tac ). (12) We project observation, action, and tactile features into a shared normalized space: ˆHt,τ = LN (Eobs (Ht,τ )) , ˆZact = LN  Eact ( ¯Zact ) , ˆZtac = LN  Etac ( ¯Ztac ) , (13) 8(a) Original images  (b) Empty inpainting  (c) Robot inpainting Figure 6: Visualization showcase. After tactile-based pre-training, our TTP model can generate hand motion and tactile predictions well, and can generalize to OOD inpainted scenes. and quantify the feature–action-tactile distributional discrepancy in a shared, scale-invariant space using the sliced Wasserstein distance (SWD) [5, 34]: 
+
+Dact = 1
+
+M
+
+> M
+
+# ∑
+
+> i=1
+
+sort 
+
+
+
+θ ⊤ 
+
+> i
+
+ˆHt,τ
+
+
+
+− sort 
+
+
+
+θ ⊤ 
+
+> i
+
+ˆZact  22 ,
+
+Dtac = 1
+
+M
+
+> M
+
+# ∑
+
+> i=1
+
+sort 
+
+
+
+θ ⊤ 
+
+> i
+
+ˆHt,τ
+
+
+
+− sort 
+
+
+
+θ ⊤ 
+
+> i
+
+ˆZtac  22 ,
+
+(14) where each θi is a random unit projection direction. The joint discrepancy and gate are computed as 
+
+D = 12 (Dact + Dtac ) , g = exp (−D/τg). (15) This dual-anchor design enhances Ht,τ only when it aligns with both action and tactile manifolds, ensuring that the feature-dependent correction becomes increasingly insensitive when the context is unreliable (small g), and improving robustness under context shifts. 9Table 2: Success rates (%) on LIBERO, LIBERO-plus, and RoboCasa benchmarks. We compare TTP with state-of-the-art models. Best results per benchmark are bolded , second-best are underlined . LIBERO: mean over 50 episodes per task. LIBERO-plus: zero-shot, mean over 70 trials per category. RoboCasa: mean over 50 trials per task (24 tasks).                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+
+> Method LIBERO LIBERO-plus RoboCasa
+> Spat. Obj. Goal Long Avg. Cam. Rob. Lang. Light Bg. Noise Lay. Avg. P&P Door/Draw. Others Avg. OpenVLA [32] 84.7 88.4 79.2 53.7 76.5 0.8 3.5 23.0 8.1 34.8 15.2 28.5 15.6 ----OpenVLA-OFT [33] 97.6 98.4 97.9 94.5 97.1 56.4 31.9 79.5 88.7 93.3 75.8 74.2 69.6 ----OpenVLA-OFT_w [33] 96.2 98.3 96.2 90.7 95.3 10.4 38.7 70.5 76.8 93.6 49.9 69.9 55.8 ----OpenVLA-OFT_m [33] 95.2 94.2 95.2 93.2 94.5 55.6 21.7 81.0 92.7 91.0 78.6 68.7 67.9 ----NORA [27] 92.2 95.4 89.4 74.6 87.9 2.2 37.0 65.1 45.7 58.6 12.8 62.1 39.0 ----WorldVLA [8] 85.1 90.9 84.0 52.4 78.1 0.1 27.9 41.6 43.7 17.1 10.9 38.0 25.0 ----UniVLA [7] 96.5 96.8 95.6 92.0 95.2 1.8 46.2 69.6 69.0 81.0 21.2 31.9 42.9 ----RIPT-VLA [54] 92.7 95.6 98.4 87.5 93.6 55.2 31.2 77.6 88.4 91.6 73.5 74.2 68.4 ----GR00T-N1 [49] 94.4 97.6 93.0 90.6 93.9 --------18.6 50.2 39.1 36.0 Diffusion Policy [13] 78.5 87.5 73.5 64.8 76.1 ------------SpatialVLA [51] 88.2 89.9 78.6 55.5 78.1 ------------CoT-VLA [71] 87.5 91.6 87.6 69.0 83.9 ------------F1 [45] 98.2 97.8 95.4 91.3 95.7 ------------InternVLA-M1 [10] 98.0 99.0 93.8 92.6 95.9 ------------Discrete Diffusion VLA [38] 97.2 98.6 97.4 92.0 96.3 ------------3DA (3D) [30] -------------0.0 2.3 13.1 5.5 DP3 (3D) [64] -------------1.5 41.7 32.0 22.8 GWM (3D) [42] -------------14.8 54.3 49.8 39.3 BC (RGB 256) [48] -------------4.3 47.0 42.2 28.9
+> π0-Fast [50] 96.4 96.8 88.6 60.2 85.5 65.1 21.6 61.0 73.2 73.2 74.4 68.8 61.6 9.5 53.0 32.2 29.8
+> π0[4] 98.0 96.8 94.4 88.4 94.4 13.8 6.0 58.8 85.0 81.4 79.0 68.9 53.6 14.0 53.1 58.5 42.4
+> π0.5[28] 98.8 98.2 98.0 92.4 96.8 53.0 50.3 65.7 83.1 77.3 53.2 72.7 65.0 21.5 57.8 44.9 41.4 BeingH-0.5 [44] 98.8 97.6 98.8 96.6 98.0 46.8 41.2 81.8 87.0 86.8 82.2 76.0 71.7 36 71.7 57.6 53.9 TTP w/o pre-training 98.0 97.4 97.6 96.6 97.4 48.6 43.9 83.2 93.9 85.4 76.8 82.1 73.4 33 72.3 55.6 52.3
+> TTP (ours) 98.8 98.2 98.2 97.0 98.1 48.9 49.5 84.3 94.6 87.1 81.8 83.6 75.7 35 76.3 58.4 55.1
+
+## 5 Experiments: Towards Human-to-Robot Transfer 
+
+In the experiments, we aim to answer the following questions: (1) After tactile-based pre-training, can TTP generate the hand motion and tactile sensings well, with capabilities of generalization? (2) Even though with more training cost and burden from the newly-added tactile modality, can TTP maintain comparable performances in simulation benchmarks, and even better generalization abilities? (3) With tactile information enhanced, can TTP demonstrate great capabilities in real-world tactile-relevant tasks? 
+
+5.1 Visualizations of Tactile-Aided Pre-Training 
+
+To answer the first question, we visualize the motion generation and tactile prediction results in Figure 6. We visualize the predicted hand motion and tactile sensings together, with tactile predictions rendered on the surface of MANO motions with a heatmap. We test the motion generation and tactile prediction on both original validation sets and those with inpaintings, including human hand inpainted with empty as well as with robot arms. 
+
+5.2 Simulation Environment Experiments 
+
+For the second question, we evaluate TTP on simulation benchmarks including LIBERO [ 39 ], LIBERO-plus [ 15 ], and Robocasa [ 48 ]. Since these benchmarks do not have tactile modalities inherently, to keep the dual-level optimization objective (action generation and tactile prediction), we use the difference between last action and current proprioceptive state as “tactile proxy” during post-training. Specifically, we define oproxy  
+
+> t
+
+= padding (st − at−1) as the substitution of tactile observations, with zero-padding due to mismatch between Dact = 200 and Dtac = 351. The results on the three benchmarks are listed in Table 2. Even though with much training cost and burden due to newly-added tactile modality with more tokens in sequence modeling, TTP still achieves comparable results against baselines in 10 DexBotic DexHand021  Inspire 6-DOF Tactile Hand  
+
+> DAIMON Visual-Tactile Sensors & Inspire Gripper
+> Franka 7-DOF Arm Realman 6-DOF Dual Arms
+
+Figure 7: Hardware settings in our real-robot experiments. each test suite, especially with a high performance in the LIBERO-long suite. For the zero-shot results on LIBERO-plus benchmark, our policy achieves better performance in Language , Light , and Layout , demonstrating better overall generalization capabilities. As for the Robocasa benchmark, TTP achieves comparable or better performances in all kinds of tasks, including Pick & Place , Doors/Drawers , and Others , with relatively the best performance overall. 
+
+5.3 Real Robot Experiments 
+
+Experiments on real robot answer the third question. Our real robot experiments cover various platforms and embodi-ments, with robot arms ranging from single to dual arm, including both 6-DoF Realman and 7-DoF Franka arms. The end effectors vary from 6-DoF Inspire hands with piezoresistive tactility, to 12-DoF DexBotic hands, and even grippers with visuo-tactile sensings. As for task settings, our tasks range from fine-grained to contact-rich settings, with various arms and hands of different degrees of freedom (DoF) and tactile sensors. From the perspective of types and contents, our tasks vary from fine-grained peeling of white radish skins, tasks with vision defects (e.g., hand-object visual occlusion during plug in), to contact-rich picking and placing fragile potato chips. 
+
+5.3.1 Hardware Settings 
+
+In our work, we use various platforms and embodiments for real-robot experiments, as shown in Figure 7. Specifically, the embodiments used in our experiments are: • Franka arm: a 7-DoF robot arm with, with its base fixed on the tabletop. • Realman arm(s): two 6-DoF robot arms, with the bases fixed on the tabletop. • Inspire hand: a 6-DoF dexterous hand with piezoresistive tactile sensings, distributed on both the fingers and the palm. • DM-Tac gripper: a parallel gripper with visuo-tactile sensors. • DexBotic hand: a 12-DoF dexterous hand with 3D tactile sensings, distributed on the fingertips. 
+
+5.3.2 Task Definitions 
+
+In our real robot experiments, we have 9 tasks as listed in Table 3, categorized in different types. Table 3 also lists the platforms and embodiments each task uses, including different robot arms (Franka, Realman), different end effectors 11 Table 3: Task settings and definitions. Our tasks range from fine-grained to contact rich settings, with various arms and hands of different DoFs and tactile sensors. 
+
+Category Task Platform Embodiment 
+
+Fine-Grained Peeling (Inspire) Franka + Inspire Single arm & hand VaseWiping (single hand) Franka + Inspire Single arm & hand VaseWiping (bimanual) Realman + Inspire Dual arm & hand Peeling (Gripper) Franka + DM-Tac Single arm & gripper Contact-Rich & Fragile PickPlaceChips Franka + Inspire Single arm & hand PaperFolding Realman + Inspire Dual arm & hand Vision Defect SoftHard Realman + Inspire Single arm & hand PlugIn (Gripper) Franka + DM-Tac Single arm & gripper PlugIn (DexBotic) Franka + DexBotic Single arm & hand (Inspire hands with piezoresistive tactile sensings, DM-Tac grippers with visuo-tactile sensings, DexBotic hands with 3D tactile sensings). Specifically, the 9 tasks in our work are defined as follows, including task settings, embodiment configurations, and evaluation metrics: 1. Peeling (Inspire). A single Franka arm with an Inspire hand, which grasps a peeler in hand, peels on the surface of the radish. We evaluate the performance of policies by the average length of peeled skins (centimeters). 2. VaseWiping (single hand). A single Franka arm with an Inspire hand, which grasps a sponge in hand, wipes on the surface of a fixed vase to clean the handwriting marks on it. The results are evaluated by success rate, i.e., whether the policy can successfully clean the marks. 3. VaseWiping (bimanual). Two Realman arms with Inspire hands, in which the left hand grasping the vase, while the right hand grasping the sponge, cleans the handwriting marks by wiping on the surface. The results are also evaluated by success rate. 4. Peeling (Gripper). A single Franka arm, with parallel grippers and DM-Tac visuo-tactile sensors, peels on the surface of the radish. We evaluate the performance of policies by the average length of peeled skins (centimeters). 5. PickPlaceChips. A single Franka arm with an Inspire hand picks up a fragile potato chip, and place it onto a plate. The success is determined only if the chips is intactly placed on the plate, without any damaging or cracking. 6. PaperFolding. We use two Realman arms with Inspire hands. The left hand grasps the paper in hand, and the right hand needs to fold the paper by pinching and applying moderate pressure. If the pressure force is too small, it cannot make a proper crease; if the pressure is too large, the paper might be broken due to tearing. We apply colorful paint in the shape of a line in one of the inner surfaces of the paper in advance, and when the paper is folded, the paint will stick to the other inner surface. We measure the length of that paint line appeared on the surface, and calculate the proportion of that of the original length (manually applied paint), to serve as the evaluation metric. 7. SoftHard. One single Realman arm with and Inspire hand picks up a small object in hand, and places it into one of the two boxes (which stands for “soft” and “hard” ones) according to the softness of the object. We evaluate the performance of policies by success rate, which requires the object to be placed in the correct box. 8. PlugIn (Gripper). A single Franka arm, with parallel grippers and DM-Tac visuo-tactile sensors, inserts a plug into the socket. We evaluate the performance of policies by the success rate. 9. PlugIn (DexBotic). A single Franka arm, with a DexBotic hand, inserts a plug into the socket. We evaluate the performance of policies by the success rate. 12 Table 4: Results on real-robot experiments, categorized by task types. Average task progress rates are calculated over in-distribution (ID) and out-of-distribution (OOD) tests, each for 15 trials (10 for ID and 5 for OOD). 
+
+Task Category π0.5 π0.5 + tactile BeingH-0.5 TTP w/o pre-train TTP (ours) 
+
+Fine-grained 43.2% 48.3% 57.3% 71.0% 96.7% Contact-rich & Fragile 3.3% 8.0% 9.2% 49.7% 79.2% Vision Defect 17.8% 17.8% 15.6% 26.7% 37.8% VaseWiping (single hand) VaseWiping (bimanual)  PaperFolding  SoftHard  SoftHard    
+
+> PlugIn (DexBotic) Peeling (Inspire) PickPlaceChips Peeling (Gripper) PlugIn (Gripper)
+
+Figure 8: Real robot showcases. Our TTP demonstrate strong capabilities of precise and fine-grained manipulation, outperforming various baselines. 
+
+5.3.3 Results and Analysis 
+
+Different categories of tasks are evaluated with different metrics, including (a) Peeling : average length of successfully peeled skins (cm), (b) PaperFolding : average proportion (%) of folded length over the length of applied paint, and (c) Others : success rate (%). We calculate the average task progress rate over each task category (metrics of different dimensions using TTP (ours) as 100% for proportional conversion), with results listed in Table 4, and showcases shown in Figure 8. TTP outperforms tactile-free state-of-the-art (SOTA) baselines (including BeingH-0.5 [ 44 ] and π0.5 [28 ]) by a large margin, demonstrating the effectiveness of tactile modality. TTP exhibits a robust and moderate behavior mode. For instance, TTP can continuously peel the radish skin for a length of over 20 cm, while baseline methods peel only for a short length with jitter. When picking up the fragile potato chips, TTP applies a moderate grasping force, neither so strong as to crush them, nor so weak as to let them slip. In contrast, baseline methods often suffer from these problems. Additionally, we also compare TTP against a variant without tactile-based pre-training (denoted as TTP w/o pre-training). The results that TTP achieves higher performances than TTP w/o pre-training demonstrate that through tactile-based pre-training, TTP leverages such prior knowledge, which is beneficial for human-to-robot skill transfer. 
+
+5.3.4 In-Distribution and Out-of-Distribution Results on Real Robot Experiments 
+
+For our real-robot experiments, we test each methods for 10 in-distribution (ID) trails which are consistent with the post-training datasets, and calculate the average results in the corresponding metrics, with the results listed in Table 5. More demonstration showcases of test rollouts are shown in Figure 9. In addition, we test each methods for 5 out-of-distribution (OOD) trails, and calculate the average results in the corresponding metrics, with the results listed in Table 6. More demonstration showcases of test rollouts are shown in Figure 10. The OOD generalization categories include object generalization (peeling carrots and cucumbers, folding papers with different materials, wiping new vases, distinguishing unseen soft and hard objects), location generalization (potato chips located at different locations), scene generalization (plugging in a socket in black), etc. 13 Figure 9: Demonstration showcases in our real-robot experiments (in distribution). From top to bottom are our 9 tasks: Peeling (Inspire) , VaseWiping (single hand) , VaseWiping (bimanual) , Peeling (Gripper) ,
+
+PickPlaceChips , PaperFolding , SoftHard , PlugIn (Gripper) , and PlugIn (DexBotic) .14 Figure 10: Demonstration showcases in our real-robot experiments (out of distribution). For Peeling tasks, we demonstrate object generalization including carrots and cucumbers. For VaseWiping tasks, we demonstrate object generalization including unseen vases and even wiping a whiteboard. For PickPlaceChips , we demonstrate location and object generalization with crispy instant noodles. For PaperFolding , we demonstrate object generalization with various unseen paper-like objects (A4, cardboards, and a piece of soft cloth). For SoftHard , we demonstrate object generalization including unseen soft and hard objects. For PlugIn tasks, we demonstrate visual interruption by painting the socket into black. 15 Table 5: Detailed results on real-robot experiments (in distribution), averaged over 10 test trails. Metrics including: (a) Peeling: average length of successfully peeled skins (cm), (b) PaperFolding: average proportion (%) of folded length over the length of applied paint, and (c) Others: success rate (%).                                                      
+
+> Category Task π0.5π0.5+ tactile BeingH-0.5 TTP w/o pre-train TTP (ours)
+> Fine-Grained Peeling (Inspire) 10.63 cm 9.27 cm 12.49 cm 14.65 cm 23.33 cm VaseWiping (single hand) 30% 50% 50% 70% 100% VaseWiping (bimanual) 50% 40% 70% 60% 90% Peeling (Gripper) 10.39 cm 12.02 cm 11.37 cm 14.48 cm 15.24 cm Contact-Rich & Fragile PickPlaceChips 10% 20% 10% 60% 80% PaperFolding 0% 4% 12% 57% 84% Vision Defect SoftHard 50% 60% 40% 80% 80% PlugIn (Gripper) 0% 0% 0% 0% 20% PlugIn (DexBotic) 0% 0% 0% 10% 10%
+
+Table 6: Detailed results on real-robot experiments (out of distribution), averaged over 5 test trails. Metrics including: (a) Peeling: average length of successfully peeled skins (cm), (b) PaperFolding: average proportion (%) of folded length over the length of applied paint, and (c) Others: success rate (%).                                                      
+
+> Category Task π0.5π0.5+ tactile BeingH-0.5 TTP w/o pre-train TTP (ours)
+> Fine-Grained Peeling (Inspire) 5.74cm 5.48cm 9.28 cm 11.25cm 19.12 cm VaseWiping (single hand) 20% 20% 40% 80% 100% VaseWiping (bimanual) 40% 60% 60% 40% 80% Peeling (Gripper) 6.68 cm 8.71 cm 7.04 cm 15.83 cm 16.24 cm Contact-Rich & Fragile PickPlaceChips 0% 0% 0% 40% 60% PaperFolding 0% 0% 11% 24% 87% Vision Defect SoftHard 60% 40% 60% 60% 80% PlugIn (Gripper) 0% 0% 0% 0% 20% PlugIn (DexBotic) 0% 0% 0% 0% 20%
+
+5.4 Ablation Study 
+
+5.4.1 Ablation Studies on Model Design 
+
+In this part, we provide ablations on whether using Tactile-Action MPG and whether using tactile expert for future tactile prediction will help the model training. We conduct such an ablation study during the pre-training phase (150k training steps each), testing motion prediction performances under each different settings on the validation set. Specifically, we use MPJPE, PA-MPJPE, MPJAE, PA-MPJAE as metrics. We use w/o MPG to denote our training methods without Tactile-Action MPG, and w/o tac-pred to denote our methods without future tactile prediction. The test results on validation set are shown in Table 7. The results show that both excluding MPG and excluding tactile prediction will have a negative effect on training performances, yielding higher motion prediction errors. Such results demonstrate the effectiveness of our design on Tactile-Action MPG and tactile expert modules. 
+
+5.4.2 Ablation Studies on Scaling 
+
+We also conduct ablation studies on scaling up in dataset size during pre-training, focusing on how data amount affects training performances. We conduct such an ablation study during the pre-training phase (150k training steps each, with different amount of training data including 10%, 25%, 50%, 75%, and 100% uniformly sampled from the original pre-training dataset), testing motion prediction performances under each different settings on the fixed validation set. Similarly, we use MPJPE, PA-MPJPE, MPJAE, PA-MPJAE as metrics. The test results on validation set are shown in Table 8. The results show that the motion prediction error decreases as more training data are used, which demonstrate that our proposed tactile-based pre-training can scale up. 16 Table 7: Ablations on whether using Tactile-Action MPG and whether using tactile expert for future tactile prediction will help the model training. We show the motion prediction errors on validation sets during tactile pre-training. 
+
+Method MPJPE PA-MPJPE MPJAE PA-MPJAE 
+
+TTP w/o MPG w/o tac-pred 25.5850 0.8622 0.0277 0.0620 TTP w/o MPG 24.7597 0.8151 0.0267 0.0598 TTP w/o tac-pred 24.5518 0.8009 0.0263 0.0583 TTP (ours) 23.5711 0.7877 0.0257 0.0559 
+
+Table 8: Ablations on the relationships between training data amount (percentage uniformly sampled from the original pre-training dataset) and model performance during tactile pre-training. 
+
+Percentage of Training Data MPJPE PA-MPJPE MPJAE PA-MPJAE 
+
+10% 33.1917 1.4066 0.0421 0.0958 25% 29.6462 1.2563 0.0374 0.0806 50% 25.4919 1.1336 0.0335 0.0698 75% 24.4753 0.9162 0.0295 0.0623 100% (ours) 23.5711 0.7877 0.0257 0.0559 
+
+## 6 Conclusion 
+
+In this paper, we propose TTP, the first system with human-centric tactile pre-training with egocentric videos, language instructions, and paired action and tactile annotations. By tactile pre-training, TTP manages to align tactile sensings with other modalities implicitly, which can handle both tactile observation inputs and future tactile predictions, modeling the tactile dynamics in the environment. In tactile-relevant and contact rich tasks that need dexterous and fine-grained manipulation, TTP demonstrates excellent performances under extensive experiments, outperforming non-pre-trained and non-tactile baselines. TTP paves a pathway to scalable tactile pre-training, revealing the capabilities of human-to-robot skill transfer. 
+
+## References 
+
+[1] Prithviraj Banerjee, Sindi Shkodrani, Pierre Moulon, Shreyas Hampali, Shangchen Han, Fan Zhang, Linguang Zhang, Jade Fountain, Edward Miller, Selen Basol, et al. Hot3d: Hand and object tracking in 3d from egocentric multi-view videos. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 7061–7071, 2025. [2] Homanga Bharadhwaj, Debidatta Dwibedi, Abhinav Gupta, Shubham Tulsiani, Carl Doersch, Ted Xiao, Dhruv Shah, Fei Xia, Dorsa Sadigh, and Sean Kirmani. Gen2act: Human video generation in novel scenarios enables generalizable robot manipulation. In Conference on Robot Learning, pages 3936–3951. PMLR, 2025. [3] Jianxin Bi, Kevin Yuchen Ma, Ce Hao, Mike Shou Zheng, and Harold Soh. Vla-touch: Enhancing vision-language-action model with dual-level tactile feedback. IEEE Robotics and Automation Letters, 2026. [4] Kevin Black, Noah Brown, Danny Driess, Adnan Esmail, Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy Groom, Karol Haus-man, Brian Ichter, et al. π0: A vision-language-action flow model for general robot control. arXiv preprint arXiv:2410.24164, 2024. [5] Nicolas Bonneel, Julien Rabin, Gabriel Peyré, and Hanspeter Pfister. Sliced and radon wasserstein barycenters of measures. Journal of Mathematical Imaging and Vision, 51(1):22–45, 2015. [6] Samarth Brahmbhatt, Cheng-You Li, Heeseung Kim, Zerong Zheng, Gurprit Singh, Giljoo Bernstein, Taehyun Kim, Hyeongwoo Kim, Ramesh Raskar, and Yaser Sheikh. Decaf: Monocular deformation capture for face and hand interactions. In SIGGRAPH Asia 2024 Conference Papers, pages 1–12, 2024. [7] Qingwen Bu, Yanting Yang, Jisong Cai, Shenyuan Gao, Guanghui Ren, Maoqing Yao, Ping Luo, and Hongyang Li. Univla: Learning to act anywhere with task-centric latent actions. arXiv preprint arXiv:2505.06111, 2025. 
+
+17 [8] Jun Cen, Chaohui Yu, Hangjie Yuan, Yuming Jiang, Siteng Huang, Jiayan Guo, Xin Li, Yibing Song, Hao Luo, Fan Wang, et al. Worldvla: Towards autoregressive action world model. arXiv preprint arXiv:2506.21539, 2025. [9] Yu-Wei Chao, Wei Yang, Yu Xiang, Pavlo Molchanov, Ankur Handa, Jonathan Tremblay, Yashraj S Narang, Karl Van Wyk, Umar Iqbal, Stan Birchfield, et al. DexYCB: A benchmark for capturing hand grasping of objects. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 9044–9053, 2021. [10] Xinyi Chen, Yilun Chen, Yanwei Fu, Ning Gao, Jiaya Jia, Weiyang Jin, Hao Li, Yao Mu, Jiangmiao Pang, Yu Qiao, et al. Internvla-m1: A spatially guided vision-language-action framework for generalist robot policy. arXiv preprint arXiv:2510.13778, 2025. [11] Zhengxue Cheng, Yiqian Zhang, Wenkang Zhang, Haoyu Li, Keyu Wang, Li Song, and Hengdi Zhang. Omnivtla: Vision-tactile-language-action model with semantic-aligned tactile sensing. arXiv preprint arXiv:2508.08706, 2025. [12] Cheng Chi, Zhenjia Xu, Chuer Pan, Eric Cousineau, Benjamin Burchfiel, Siyuan Feng, Russ Tedrake, and Shuran Song. Universal manipulation interface: In-the-wild robot teaching without in-the-wild robots. Robotics: Science and Systems, 2024. [13] Cheng Chi, Zhenjia Xu, Siyuan Feng, Eric Cousineau, Yilun Du, Benjamin Burchfiel, Russ Tedrake, and Shuran Song. Diffusion policy: Visuomotor policy learning via action diffusion. The International Journal of Robotics Research, 44(10-11):1684–1704, 2025. [14] Zicong Fan, Omid Taheri, Dimitrios Tzionas, Muhammed Kocabas, Manuel Kaufmann, Michael J Black, and Otmar Hilliges. Arctic: A dataset for dexterous bimanual hand-object manipulation. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 12943–12954, 2023. [15] Senyu Fei, Siyin Wang, Junhao Shi, Zihao Dai, Jikun Cai, Pengfang Qian, Li Ji, Xinzhe He, Shiduo Zhang, Zhaoye Fei, Jinlan Fu, Jingjing Gong, and Xipeng Qiu. Libero-plus: In-depth robustness analysis of vision-language-action models. arXiv preprint arXiv:2510.13626, 2025. [16] Kristen Grauman, Andrew Westbury, Eugene Byrne, Zachary Chavis, Antonino Furnari, Rohit Girdhar, Jackson Hamburger, Hao Jiang, Miao Liu, Xingyu Liu, et al. Ego4d: Around the world in 3,000 hours of egocentric video. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 18995–19012, 2022. [17] Konstantin Gubernatorov, Mikhail Sannikov, Ilya Mikhalchuk, Egor Kuznetsov, Makar Artemov, Ogunwoye Faith Ouwatobi, Marcelino Fernando, Artem Asanov, Ziang Guo, and Dzmitry Tsetserukou. Hapticvla: Contact-rich manipulation via vision-language-action model without inference-time tactile sensing. arXiv preprint arXiv:2603.15257, 2026. [18] Shreyas Hampali, Mahdi Rad, Markus Oberweger, and Vincent Lepetit. HOnnotate: A method for 3D annotation of hand and object poses. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 3196–3206, 2020. [19] Shreyas Hampali, Sayan Deb Sarkar, Mahdi Rad, and Vincent Lepetit. Keypoint transformer: Solving joint identification in challenging hands and object interactions for accurate 3D pose estimation. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 11090–11100, 2022. [20] Peng Hao, Chaofan Zhang, Dingzhe Li, Xiaoge Cao, Xiaoshuai Hao, Shaowei Cui, and Shuo Wang. Tla: tactile-language-action model for contact-rich manipulation. Robot Learning, 3(1):17–18, 2026. [21] Mohamed Hassan, Vasileios Choutas, Dimitrios Tzionas, and Michael J Black. Resolving 3D human pose ambiguities with 3D scene constraints. In Proceedings of the IEEE/CVF international conference on computer vision, pages 2282–2292, 2019. [22] Nick Heppert, Minh Quang Nguyen, and Abhinav Valada. Scaling single human demonstrations for imitation learning using generative foundational models. arXiv preprint arXiv:2602.12734, 2026. [23] Ryan Hoque, Peide Huang, David J Yoon, Mouli Sivapurapu, and Jian Zhang. Egodex: Learning dexterous manipulation from large-scale egocentric video. arXiv preprint arXiv:2505.11709, 2025. [24] Xiao Hu and Yang Ye. Tactile-based reinforcement learning for adaptive grasping under observation uncertainties. arXiv preprint arXiv:2505.16167, 2025. [25] Chun-Hao P Huang, Hongwei Yi, Markus Höschle, Matvey Safroshkin, Tsvetelina Alexiadis, Senya Polikovsky, Daniel Scharstein, and Michael J Black. Capturing and inferring dense full-body human-scene contact. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 13274–13285, 2022. [26] Jialei Huang, Shuo Wang, Fanqi Lin, Yihang Hu, Chuan Wen, and Yang Gao. Tactile-vla: unlocking vision-language-action model’s physical knowledge for tactile generalization. arXiv preprint arXiv:2507.09160, 2025. 
+
+18 [27] Chia-Yu Hung, Qi Sun, Pengfei Hong, Amir Zadeh, Chuan Li, U Tan, Navonil Majumder, Soujanya Poria, et al. Nora: A small open-sourced generalist vision language action model for embodied tasks. arXiv preprint arXiv:2504.19854, 2025. [28] Physical Intelligence, Kevin Black, Noah Brown, James Darpinian, Karan Dhabalia, Danny Driess, Adnan Esmail, Michael Equi, Chelsea Finn, Niccolo Fusai, et al. π0.5: A vision-language-action model with open-world generalization. arXiv preprint arXiv:2504.16054, 2025. [29] Simar Kareer, Dhruv Patel, Ryan Punamiya, Pranay Mathur, Shuo Cheng, Chen Wang, Judy Hoffman, and Danfei Xu. Egomimic: Scaling imitation learning via egocentric video. In 2025 IEEE International Conference on Robotics and Automation (ICRA), pages 13226–13233. IEEE, 2025. [30] Tsung-Wei Ke, Nikolaos Gkanatsios, and Katerina Fragkiadaki. 3d diffuser actor: Policy diffusion with 3d scene representations. Arxiv, 2024. [31] Hanjung Kim, Jaehyun Kang, Hyolim Kang, Meedeum Cho, Seon Joo Kim, and Youngwoon Lee. Uniskill: Imitating human videos via cross-embodiment skill representations. In Conference on Robot Learning, pages 4269–4294. PMLR, 2025. [32] Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted Xiao, Ashwin Balakrishna, Suraj Nair, Rafael Rafailov, Ethan Foster, Grace Lam, Pannag Sanketi, et al. Openvla: An open-source vision-language-action model. arXiv preprint arXiv:2406.09246, 2024. [33] Moo Jin Kim, Chelsea Finn, and Percy Liang. Fine-tuning vision-language-action models: Optimizing speed and success. arXiv preprint arXiv:2502.19645, 2025. [34] Soheil Kolouri, Kimia Nadjahi, Umut Simsekli, Roland Badeau, and Gustavo Rohde. Generalized sliced wasserstein distances. Advances in neural information processing systems, 32, 2019. [35] Taein Kwon, Bugra Tekin, Jan Stühmer, Federica Bogo, and Marc Pollefeys. H2O: Two hands manipulating objects for first person interaction recognition. In Proceedings of the IEEE/CVF international conference on computer vision, pages 10138–10148, 2021. [36] Xiaoqi Li, Muhe Cai, Jiadong Xu, Juan Zhu, Hongwei Fan, Yan Shen, Guangrui Ren, and Hao Dong. At-vla: Adaptive tactile injection for enhanced feedback reaction in vision-language-action models. arXiv preprint arXiv:2605.07308, 2026. [37] Yao Li, Peiyuan Tang, Wuyang Zhang, Chengyang Zhu, Yifan Duan, Weikai Shi, Xiaodong Zhang, Zijiang Yang, Jianmin Ji, and Yanyong Zhang. Favla: A force-adaptive fast-slow vla model for contact-rich robotic manipulation. arXiv preprint arXiv:2602.23648, 2026. [38] Zhixuan Liang, Yizhuo Li, Tianshuo Yang, Chengyue Wu, Sitong Mao, Tian Nian, Liuao Pei, Shunbo Zhou, Xiaokang Yang, Jiangmiao Pang, et al. Discrete diffusion vla: Bringing discrete diffusion to action decoding in vision-language-action policies. arXiv preprint arXiv:2508.20072, 2025. [39] Bo Liu, Yifeng Zhu, Chongkai Gao, Yihao Feng, Qiang Liu, Yuke Zhu, and Peter Stone. Libero: Benchmarking knowledge transfer for lifelong robot learning. Advances in Neural Information Processing Systems, 36:44776–44791, 2023. [40] Qingtao Liu, Yu Cui, Zhengnan Sun, Gaofeng Li, Jiming Chen, and Qi Ye. Vtdexmanip: A dataset and benchmark for visual-tactile pretraining and dexterous manipulation with reinforcement learning. In The Thirteenth International Conference on Learning Representations, 2025. [41] Yunze Liu, Yun Liu, Che Jiang, Kangbo Lyu, Weikang Wan, Hao Shen, Boqiang Liang, Zhoujie Fu, He Wang, and Li Yi. HOI4D: A 4D egocentric dataset for category-level human-object interaction. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 21013–21022, 2022. [42] Guanxing Lu, Baoxiong Jia, Puhao Li, Yixin Chen, Ziwei Wang, Yansong Tang, and Siyuan Huang. Gwm: Towards scalable gaussian world models for robotic manipulation. In Proceedings of the IEEE/CVF International Conference on Computer Vision, pages 9263–9274, 2025. [43] Hao Luo, Yicheng Feng, Wanpeng Zhang, Sipeng Zheng, Ye Wang, Haoqi Yuan, Jiazheng Liu, Chaoyi Xu, Qin Jin, and Zongqing Lu. Being-h0: vision-language-action pretraining from large-scale human videos. arXiv preprint arXiv:2507.15597, 2025. [44] Hao Luo, Ye Wang, Wanpeng Zhang, Sipeng Zheng, Ziheng Xi, Chaoyi Xu, Haiweng Xu, Haoqi Yuan, Chi Zhang, Yiqing Wang, et al. Being-h0.5: Scaling human-centric robot learning for cross-embodiment generalization. arXiv preprint arXiv:2601.12993, 2026. 
+
+19 [45] Qi Lv, Weijie Kong, Hao Li, Jia Zeng, Zherui Qiu, Delin Qu, Haoming Song, Qizhi Chen, Xiang Deng, and Jiangmiao Pang. F1: A vision-language-action model bridging understanding and generation to actions. arXiv preprint arXiv:2509.06951, 2025. [46] Elle Miller, Trevor McInroe, David Abel, Oisin Mac Aodha, and Sethu Vijayakumar. Enhancing tactile-based reinforcement learning for robotic control. Advances in Neural Information Processing Systems, 38:129460–129494, 2025. [47] Gyeongsik Moon, Shoou-I Yu, He Wen, Takaaki Shiratori, and Kyoung Mu Lee. Interhand2. 6m: A dataset and baseline for 3d interacting hand pose estimation from a single rgb image. In European Conference on Computer Vision, pages 548–564. Springer, 2020. [48] Soroush Nasiriany, Abhiram Maddukuri, Lance Zhang, Adeet Parikh, Aaron Lo, Abhishek Joshi, Ajay Mandlekar, and Yuke Zhu. Robocasa: Large-scale simulation of everyday tasks for generalist robots. arXiv preprint arXiv:2406.02523, 2024. [49] J Bjorck Nvidia, Fernando Castaneda, N Cherniadev, X Da, R Ding, L Fan, Y Fang, D Fox, F Hu, S Huang, et al. Gr00t n1: An open foundation model for generalist humanoid robots. arXiv preprint arXiv:2503.14734, 2025. [50] Karl Pertsch, Kyle Stachowicz, Brian Ichter, Danny Driess, Suraj Nair, Quan Vuong, Oier Mees, Chelsea Finn, and Sergey Levine. Fast: Efficient action tokenization for vision-language-action models. arXiv preprint arXiv:2501.09747, 2025. [51] Delin Qu, Haoming Song, Qizhi Chen, Yuanqi Yao, Xinyi Ye, Yan Ding, Zhigang Wang, JiaYuan Gu, Bin Zhao, Dong Wang, et al. Spatialvla: Exploring spatial representations for visual-language-action model. arXiv preprint arXiv:2501.15830, 2025. [52] Javier Romero, Dimitrios Tzionas, and Michael J Black. Embodied hands: Modeling and capturing hands and bodies together. arXiv preprint arXiv:2201.02610, 2022. [53] Yuxin Ray Song, Jinzhou Li, Rao Fu, Devin Murphy, Kaichen Zhou, Rishi Shiv, Yaqi Li, Haoyu Xiong, Crystal Elaine Owens, Yilun Du, et al. Opentouch: Bringing full-hand touch to real-world interaction. arXiv preprint arXiv:2512.16842, 2025. [54] Shuhan Tan, Kairan Dou, Yue Zhao, and Philipp Krähenbühl. Interactive post-training for vision-language-action models. arXiv preprint arXiv:2505.17016, 2025. [55] Yang Tian, Yuyin Yang, Yiman Xie, Zetao Cai, Xu Shi, Ning Gao, Hangxu Liu, Xuekun Jiang, Zherui Qiu, Feng Yuan, et al. Interndata-a1: Pioneering high-fidelity synthetic data for pre-training generalist policy. arXiv preprint arXiv:2511.16651, 2025. [56] Jikai Wang, Qifan Zhang, Yu-Wei Chao, Bowen Wen, Xiaohu Guo, and Yu Xiang. HO-Cap: A capture system and dataset for 3D reconstruction and pose tracking of hand-object interaction. In The Thirty-ninth Annual Conference on Neural Information Processing Systems Datasets and Benchmarks Track, 2025. [57] Weiyun Wang, Zhangwei Gao, Lixin Gu, Hengjun Pu, Long Cui, Xingguang Wei, Zhaoyang Liu, Linglin Jing, Shenglong Ye, Jie Shao, et al. Internvl3.5: Advancing open-source multimodal models in versatility, reasoning, and efficiency. arXiv preprint arXiv:2508.18265, 2025. [58] Youngsun Wi, Jessica Yin, Elvis Xiang, Akash Sharma, Jitendra Malik, Mustafa Mukadam, Nima Fazeli, and Tess Hellebrekers. Tactalign: Human-to-robot policy transfer via tactile alignment. arXiv preprint arXiv:2602.13579, 2026. [59] Sicheng Xie, Haidong Cao, Zejia Weng, Zhen Xing, Haoran Chen, Shiwei Shen, Jiaqi Leng, Zuxuan Wu, and Yu-Gang Jiang. Human2robot: Learning robot actions from paired human-robot videos. In Proceedings of the AAAI Conference on Artificial Intelligence, volume 40, pages 11078–11086, 2026. [60] Han Xue, Jieji Ren, Wendi Chen, Gu Zhang, Yuan Fang, Guoying Gu, Huazhe Xu, and Cewu Lu. Reactive diffusion policy: Slow-fast visual-tactile policy learning for contact-rich manipulation. In Proceedings of Robotics: Science and Systems (RSS), 2025. [61] Lixin Yang, Kailin Li, Xinyu Zhan, Fei Wu, Anran Xu, Liu Liu, Sheng Xie, Kai Xu, and Dacheng Tao. OakInk: A large-scale knowledge repository for understanding hand-object interaction. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 20953–20962, 2022. [62] Ruihan Yang, Qinxi Yu, Yecheng Wu, Rui Yan, Borui Li, An-Chieh Cheng, Xueyan Zou, Yunhao Fang, Xuxin Cheng, Ri-Zhao Qiu, et al. Egovla: Learning vision-language-action models from egocentric human videos. arXiv preprint arXiv:2507.12440, 2025. [63] Jessica Yin, Haozhi Qi, Youngsun Wi, Sayantan Kundu, Mike Lambeta, William Yang, Changhao Wang, Tingfan Wu, Jitendra Malik, and Tess Hellebrekers. Osmo: Open-source tactile glove for human-to-robot skill transfer. arXiv preprint arXiv:2512.08920, 2025. [64] Yanjie Ze, Gu Zhang, Kangning Zhang, Chenyuan Hu, Muhan Wang, and Huazhe Xu. 3d diffusion policy: Generalizable visuomotor policy learning via simple 3d representations. In Proceedings of Robotics: Science and Systems (RSS), 2024. 
+
+20 [65] Xinyu Zhan, Lixin Yang, Yifei Zhao, Kangrui Mao, Hanwen Xu, Zenan Lin, Kailin Li, and Kai Xu. OakInk2: A dataset of bimanual hands-object manipulation in complex task completion. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 504–514, 2024. [66] Chaofan Zhang, Peng Hao, Xiaoge Cao, Xiaoshuai Hao, Shaowei Cui, and Shuo Wang. Vtla: Vision-tactile-language-action model with preference learning for insertion manipulation. Biomimetic Intelligence and Robotics, page 100333, 2026. [67] Chi Zhang, Penglin Cai, Haoqi Yuan, Chaoyi Xu, and Zongqing Lu. Unitachand: Unified spatio-tactile representation for human to robotic hand skill transfer. arXiv preprint arXiv:2512.21233, 2025. [68] Gu Zhang, Qicheng Xu, Haozhe Zhang, Jianhan Ma, Long He, Yiming Bao, Zeyu Ping, Zhecheng Yuan, Chenhao Lu, Chengbo Yuan, et al. Unidex: A robot foundation suite for universal dexterous hand control from egocentric human videos. arXiv preprint arXiv:2603.22264, 2026. [69] Wanpeng Zhang, Ye Wang, Hao Luo, Haoqi Yuan, Yicheng Feng, Sipeng Zheng, Qin Jin, and Zongqing Lu. Dig-flow: Discrepancy-guided flow matching for robust vla models. arXiv preprint arXiv:2512.01715, 2025. [70] Yike Zhang, Yaonan Wang, Xinxin Sun, Kaizhen Huang, Zhiyuan Xu, Junjie Ji, Zhengping Che, Jian Tang, and Jingtao Sun. Craft: Adapting vla models to contact-rich manipulation via force-aware curriculum fine-tuning. arXiv preprint arXiv:2602.12532, 2026. [71] Qingqing Zhao, Yao Lu, Moo Jin Kim, Zipeng Fu, Zhuoyang Zhang, Yecheng Wu, Zhaoshuo Li, Qianli Ma, Song Han, Chelsea Finn, et al. Cot-vla: Visual chain-of-thought reasoning for vision-language-action models. In Proceedings of the Computer Vision and Pattern Recognition Conference, pages 1702–1713, 2025. [72] Ruiteng Zhao, Wenshuo Wang, Yicheng Ma, Xiaocong Li, Francis EH Tay, Marcelo H Ang Jr, and Haiyue Zhu. Fd-vla: Force-distilled vision-language-action model for contact-rich manipulation. arXiv preprint arXiv:2602.02142, 2026. [73] Yiming Zhao, Taein Kwon, Paul Streli, Marc Pollefeys, and Christian Holz. Egopressure: A dataset for hand pressure and pose estimation in egocentric vision. In Proceedings of the Computer Vision and Pattern Recognition Conference, pages 27727–27738, 2025. [74] Ruijie Zheng, Dantong Niu, Yuqi Xie, Jing Wang, Mengda Xu, Yunfan Jiang, Fernando Castañeda, Fengyuan Hu, You Liang Tan, Letian Fu, et al. Egoscale: Scaling dexterous manipulation with diverse egocentric human data. arXiv preprint arXiv:2602.16710, 2026. [75] Yuhang Zheng, Songen Gu, Weize Li, Yupeng Zheng, Yujie Zang, Shuai Tian, Xiang Li, Ce Hao, Chen Gao, Si Liu, et al. Omnivta: Visuo-tactile world modeling for contact-rich robotic manipulation. arXiv preprint arXiv:2603.19201, 2026. [76] Han Zhou, Jinjin Cao, Liyuan Ma, Xueji Fang, and Guo jun Qi. Traj2action: A co-denoising framework for trajectory-guided human-to-robot skill transfer. arXiv preprint arXiv:2510.00491, 2025. 
+
+21 Appendix 
+
+## A Hyperparameters 
+
+In our method, we have some hyperparameters that can be tuned during training, as listed in Table 9. For simulation benchmarks and real robot experiments, we keep the hyperparameters during inference the same as those during training. Table 9: Hyperparameters for pre-training and post-training. 
+
+Hyperparameter Pre-Training Post-Training (sim) Post-Training (real robot) Training Configuration 
+
+learning rate 1e-4 1e-4 1e-4 weight decay 1e-5 1e-5 1e-5 warmup ratio 0.05 0.05 0.05 
+
+Loss Weight 
+
+action loss weight 1.0 1.0 1.0 tactile loss weight 1.0 1.0 1.0 
+
+Sequence Configuration and Batch Size 
+
+max num tokens 8192 8192 8192 expected num tokens 7680 7680 7680 equivalent batch size 128 128 128 
+
+Image Configuration 
+
+image size 448 ×448 224 ×224 224 ×224 downsample ratio 0.5 0.5 0.5 
+
+State & Action Configuration 
+
+action chunk size 32 8 24 tactile history size 4 2 4tactile history stride 8 1 422

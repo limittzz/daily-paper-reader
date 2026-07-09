@@ -1,0 +1,999 @@
+Title: SPECTRA: Context-Conditioned Spectral Movement Primitives for Robot Skill Generalization
+
+URL Source: https://arxiv.org/pdf/2607.06978v1
+
+Published Time: Thu, 09 Jul 2026 00:33:54 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+> 1
+
+# SPECTRA: Context-Conditioned Spectral Movement Primitives for Robot Skill Generalization 
+
+Boxuan Zhang 1, Sheng Liu 2, Chenglin Ming 3, Ahmed Abdelrahman 11 School of Computation, Information and Technology, Technical University of Munich, Germany  
+
+> 2
+
+Karlsruhe Institute of Technology, Germany  
+
+> 3
+
+The Department of Automation, Shanghai Jiao Tong University, China 
+
+Correspondence: boxuan.zhang@tum.de, sheng.liu@student.kit.edu 
+
+Abstract —Robot imitation learning for manipulation should preserve demonstrated task geometry while producing dynam-ically admissible robot motions. Existing pipelines often learn task-dependent trajectories and impose execution limits after-ward through filtering, smoothing, clipping, or time scaling, which may distort task-critical end-effector paths. We propose the Spectral Movement Primitive (SMP), afrequency-domain imitation learning framework that couples task-space skill generation with joint-space execution regula-tion. Demonstrations are represented by truncated finite-horizon Fourier coefficients. An empirically selected low-frequency task band captures the dominant motion geometry, while higher harmonics contribute disproportionately to derivative growth. A frame-aware context-conditioned GMM/GMR prior predicts the task-band coefficients in a canonical task frame, and the resulting Cartesian trajectory is mapped to joint space through sequential inverse kinematics. A phase-coupled regulator then limits the requested phase progression without modifying the spectral coefficients, thereby enforcing joint velocity and acceleration limits while preserving the represented path. Experiments evaluate task-band reconstruction, robustness to composite demonstration corruption, out-of-distribution cross-board generalization, joint-space dynamic admissibility, end-effector path preservation, and deployment on a Franka Panda robot. Results show compact geometric reconstruction, consistent transfer across unseen task frames, substantial reductions in dynamic violations and jerk, and preservation of the intended end-effector path during phase regulation. 
+
+Index Terms —Learning from demonstration, natural machine motion, motion control of manipulators, frequency-domain mo-tion modeling. 
+
+I. I NTRODUCTION 
+
+Robot imitation learning for manipulation must satisfy two tightly coupled requirements. First, a learned skill should generalize across task instances, such as changes in target po-sition, orientation, scale, or task frame. Second, the generated motion should remain dynamically admissible at execution time, where joint velocity and acceleration must stay within acceptable ranges for hardware safety, tracking quality, and contact stability [1], [2]. In many existing pipelines, however, these requirements are handled in separate stages: contex-tual adaptation is learned in trajectory space or in a latent representation, while execution-time admissibility is imposed afterward through filtering, clipping, smoothing, or temporal rescaling [3], [4]. Sample-wise correction may distort task-critical geometry, whereas path-preserving timing methods  
+
+> Fig. 1. Overview of the proposed framework. Demonstrations are encoded in a task-band spectral representation, generalized across task contexts in a frame-aware manner, and deployed on the real robot with shape-preserving phase regulation for dynamic admissibility.
+
+typically assume that the geometric path has already been specified. This separation leaves a structural gap between learning what motion should be performed and determining how it should be executed admissibly. This issue is particularly relevant to periodic and quasi-periodic manipulation skills, such as wiping, stirring, polish-ing, scrubbing, and rhythmic free-space motions [5]. In these tasks, successful execution depends not only on reaching a set of positions, but also on preserving the geometric and rhythmic structure of the demonstrated motion. A frequency-domain representation is therefore natural: low-frequency harmonics often capture the dominant task geometry, whereas higher-frequency components contribute disproportionately to rapid temporal variation and derivative growth [5], [6]. This structure suggests that contextual motion generation and execution-level admissibility can be addressed within a common spectral formulation. In this paper, we propose the Spectral Movement Prim-itive (SMP), a frequency-domain imitation learning frame-work that combines spectral motion representation, context-conditioned skill generation, and shape-preserving phase reg-ulation. Demonstrations are encoded using truncated finite-horizon Fourier coefficients, and an empirically selected low-frequency task band is used to represent the dominant motion geometry. A frame-aware context-conditioned GMM/GMR prior predicts the task-band coefficients in a canonical task frame. By handling translation, rotation, and in-plane scale explicitly through task-frame transformations, the statistical model only needs to predict the residual motion structure that remains after canonicalization. An overview of the proposed framework is shown in Fig. 1. The resulting Cartesian trajectory is mapped to a continuous arXiv:2607.06978v1 [cs.RO] 8 Jul 2026 2
+
+joint-space trajectory through sequential inverse kinematics and encoded using a separate joint-space spectral represen-tation. Execution timing is then regulated through the phase progression of the SMP. Rather than modifying the spectral coefficients or correcting trajectory samples pointwise, the regulator retains the represented path and limits the requested phase speed only when required by prescribed joint veloc-ity or acceleration bounds. Since joint derivatives can be expressed analytically through phase-domain derivatives, the largest admissible constant phase speed can be computed while preserving the underlying joint-space and end-effector paths. This follows the general principle of temporal coupling and path parameterization, in which execution timing is adapted without changing the geometric path [3]. Dynamic admissibility and task fidelity are evaluated in the spaces where they are physically meaningful. Velocity and acceleration limits are enforced in joint space, where they directly reflect robot hardware and controller constraints. Motion-shape preservation is assessed in end-effector space, where the geometry of wiping and related manipulation tasks is defined. Jerk is additionally reported as an execution-level smoothness measure but is not imposed as a hard constraint. The contributions of this paper are summarized as follows:  
+
+> •
+
+We introduce the Spectral Movement Primitive, a finite-horizon frequency-domain representation with an em-pirical task-band selection rule that captures dominant motion geometry for periodic and smooth non-closed skills while exposing the derivative contribution of higher harmonics.  
+
+> •
+
+We develop a frame-aware context-conditioned GMM/GMR spectral prior that predicts task-band coefficients in a canonical task frame and transfers the resulting motion across changes in task-frame position, orientation, surface pose, and in-plane scale.  
+
+> •
+
+We propose a shape-preserving phase regulation layer that enforces joint-space velocity and acceleration admissibil-ity by limiting the requested phase progression.  
+
+> •
+
+We evaluate the representation, robustness, contextual generalization, and regulation components through task-band reconstruction, composite demonstration corruption, out-of-distribution cross-board transfer, joint-space dy-namic evaluation, and real-robot validation on a Franka Panda platform. II. R ELATED WORK 
+
+A. Imitation Learning and Movement Primitive Representa-tions 
+
+Learning from demonstration provides a principled way to transfer motion skills from expert executions to robot controllers, and movement primitives have become one of the most established representations in this setting [1], [2], [7]– [10]. Early formulations such as motor primitives and dynam-ical movement primitives (DMPs) introduced structured low-dimensional motion representations with favorable stability and modulation properties [8], [9]. Probabilistic extensions, in-cluding Probabilistic Movement Primitives (ProMPs), further enabled learning from multiple demonstrations and reasoning over distributions of trajectory parameters [11]. Kernelized Movement Primitives (KMPs) later improved flexibility and nonparametric generalization, while uncertainty-aware variants further emphasized probabilistic adaptation under limited data [12], [13]. Recent formulations have also studied constrained or unified views of movement primitives, including con-strained ProMPs, ProDMPs, and orientation-aware ProMPs on manifolds [14]–[16]. Despite their success, most movement primitive formula-tions are expressed primarily in the time domain or through time-indexed latent parameters. Consequently, task geometry, temporal variation, and execution-level dynamic characteristics are often entangled in the same representation. Dynamic ad-missibility is then commonly addressed after a nominal motion has already been generated, through modulation, smoothing, filtering, clipping, or time scaling. Our work follows the movement primitive philosophy of compact structured skill encoding and formulates the primitive in the frequency do-main. This makes the harmonic structure of the motion explicit and enables a separation between spectral coefficients, which define the motion shape, and the phase law, which determines how the motion is executed over time. 
+
+B. Context-Aware and Task-Parameterized Skill Generaliza-tion 
+
+A central problem in robot imitation learning is how to generalize demonstrated skills across varying task conditions, such as changes in target position, object pose, workspace geometry, or task scale. Several works addressed this problem by adapting movement primitives according to contextual in-formation [17], [18]. Among the most influential formulations, task-parameterized probabilistic models represent demonstra-tions relative to task-dependent frames and retrieve context-conditioned motion distributions with minimal intervention control [19]–[21]. This line of work has shown strong ability to encode structured geometric variation and has also been extended to improve extrapolation behavior and probabilistic policy modeling [22], [23]. Related formulations based on products of experts and task priorities further demonstrate the usefulness of combining multiple task-space constraints or local models during skill reproduction [24]–[26]. These methods provide an important foundation for our ap-proach. However, in most existing task-parameterized frame-works, context is used to predict trajectory distributions in the time domain, while downstream execution regularization is handled separately. In contrast, our formulation uses task context to predict a reduced low-frequency spectral repre-sentation. The task-parameterized prior therefore operates on the coefficients that encode the dominant motion geometry, while execution admissibility is later handled by regulating the phase progression of the decoded primitive. This distinction is particularly important in periodic or quasi-periodic manip-ulation skills, where frequency content is part of the task representation. 
+
+C. Rhythmic and Frequency-Domain Motion Modeling 
+
+Rhythmic and periodic robot skills have long motivated dedicated movement representations beyond standard point-3
+
+to-point formulations. Prior work studied nonlinear oscillators and periodic DMP variants for encoding and modulating rhythmic movements [27]–[29]. Coupled movement primitives further extended this idea to interaction-rich settings and coor-dinated behaviors [30]. Fourier Movement Primitives (FMPs) demonstrated the advantages of representing rhythmic skills directly in the Fourier domain, including compact encoding of periodic structure and improved handling of phase-related variability [5]. Recent work has also explored frequency-domain repre-sentations beyond classical rhythmic movement primitives. MSTOMP uses frequency-domain denoising and a spectrum-based similarity metric to preserve demonstrated shape while improving trajectories from suboptimal demonstrations [6]. And recent visuomotor policies have also motivated frequency-domain action modeling. Diffusion Policy represents action generation as conditional diffusion over action sequences, while ACT popularized action chunking for fine-grained ma-nipulation with low-cost hardware [31], [32]. FreqPolicy mod-els action sequences through hierarchical frequency compo-nents, while FocalPolicy applies frequency-domain supervi-sion to improve long-horizon action-chunk coherence [33], [34]. These works support the view that low-frequency com-ponents often capture global motion structure, whereas higher-frequency components encode local details, jitter, or execution-level variation. These studies establish the value of frequency-domain rep-resentations, but they do not jointly address frame-aware con-text generalization and execution-level dynamic admissibility within a learned movement primitive. In our framework, a canonical task-band representation is used to infer the task-intended motion from context, while an explicit phase law separately determines its execution timing. This separation allows contextual adaptation and dynamic regulation to be combined without modifying the predicted spectral shape. 
+
+D. Dynamic Admissibility Through Timing and Phase Regu-lation 
+
+Another important research direction concerns how to en-sure that learned motions remain admissible at execution time. For movement primitives, several works introduced velocity- or acceleration-aware modulation strategies, includ-ing adaptive trajectory generation under velocity constraints and temporal coupling mechanisms for constrained velocities and accelerations [3], [35], [36]. These approaches are highly relevant because they explicitly acknowledge that execution constraints cannot be ignored once a nominal primitive is deployed on a physical robot. Related work in trajectory scaling and path timing addresses admissible execution by adjusting the temporal evolution along a given path. Classical time-optimal path parameterization and path-tracking methods compute feasible timing profiles under velocity, acceleration, or torque-related constraints [4], [37]– [39]. Related trajectory-scaling and filtering methods further adapt the temporal evolution of a reference trajectory under execution constraints [40], [41]. Jerk-aware path tracking and online trajectory generation provide additional mechanisms for real-time admissible execution under higher-order kinematic limits [42]–[44]. These methods show that, when the geomet-ric path is meaningful, adapting the timing or phase of motion is often preferable to changing the path itself. However, conventional path-timing and temporal-coupling methods generally assume that the geometric path is already given and do not address how that path is learned and gener-alized from demonstrations across task contexts. We integrate the same path-preserving timing principle with a frame-aware learned spectral primitive: the spectral coefficients specify the context-dependent motion shape, while analytic phase-domain derivatives determine an admissible phase speed under joint velocity and acceleration limits. III. F REQUENCY -D OMAIN IMITATION LEARNING 
+
+FRAMEWORK 
+
+A. Problem Setup and Framework Overview 
+
+Consider a dataset of demonstrated robot motions 
+
+D =
+
+n 
+
+xn, y(w)
+
+> n
+
+o Nn=1 
+
+, y(w) 
+
+> n
+
+=
+
+n
+
+y(w) 
+
+> n
+
+(ti) ∈ Rdy
+
+oTi=1 
+
+,
+
+(1) where xn ∈ Rp denotes the task context and y(w) 
+
+> n
+
+is the cor-responding world-frame end-effector trajectory. The context may include task-frame position, orientation, in-plane scale, and other local task parameters. Given a query context x∗, the objective is to generate an end-effector trajectory that preserves the demonstrated task structure and to realize it through a dynamically admissible joint trajectory. Admissibility refers to prescribed joint velocity and acceleration limits. Joint jerk is reported as a smoothness measure but is not imposed as a hard constraint. Collision avoidance, torque limits, and contact-force constraints are outside the scope of this work. The framework operates at two coupled levels. In task space, demonstrations are canonicalized and encoded by finite-horizon Fourier coefficients, from which a frame-aware prior predicts the task-relevant spectral representation for the query context. The decoded Cartesian trajectory is mapped to joint space through sequential inverse kinematics. A separate joint-space spectral representation is then used to regulate the phase progression under the prescribed dynamic limits. Thus, task-space prediction and joint-space regulation use distinct coefficient vectors connected through Cartesian decoding and inverse kinematics. 
+
+B. Spectral Movement Primitive Representation 1) Finite-Horizon Fourier Parameterization: Let 
+
+y(τ ) = y1(τ ) · · · ydy (τ )⊤ , τ ∈ [0 , H ], (2) denote a dy -dimensional trajectory over a finite horizon H.Each dimension is represented by the truncated Fourier ex-pansion 
+
+yj (τ ) = aj, 0 +
+
+> K
+
+X
+
+> k=1
+
+
+
+aj,k cos( kωτ )+ bj,k sin( kωτ )
+
+
+
+, ω = 2πH ,
+
+(3) 4
+
+where K is the maximum harmonic order. Stacking all co-efficients gives the task-space Spectral Movement Primitive (SMP) parameter vector 
+
+cy = vec 
+
+
+
+{aj, 0, a j,k , b j,k }j,k 
+
+
+
+∈ RMy ,My = dy (2 K + 1) ,
+
+(4) where j = 1 , . . . , d y and k = 1 , . . . , K .The pair consisting of the coefficient vector cy and the associated Fourier basis defines a finite-horizon SMP. Unlike a sample-wise trajectory representation, the SMP exposes the harmonic structure of the demonstrated motion: low-order har-monics typically capture its dominant geometry, whereas the contribution of a harmonic to temporal derivatives increases with its frequency. The same SMP parameterization is instantiated in two different spaces within the proposed framework. In task space, it provides the compact representation used for context-conditioned skill generation. After sequential inverse kinemat-ics, a distinct joint-space SMP represents the corresponding robot trajectory and supports execution-time phase regulation. The task-space and joint-space primitives therefore share the same Fourier structure but use different coefficient vectors and serve different roles. For periodic and quasi-periodic skills, the SMP coefficients directly encode the recurrent motion structure. Smooth non-closed motions are represented as finite-horizon approxima-tions over [0 , H ], without assuming an indefinitely repeating limit cycle. 
+
+2) Demonstration-Driven Task-Band Decomposition: 
+
+Context-conditioned inference is restricted to a compact low-frequency task band of the task-space SMP. Its order is selected empirically from canonical task-space trajectories after prepro-cessing and, for periodic skills, circular phase alignment. We first choose a sufficiently large maximum order K
+
+such that the full SMP encoding provides a near-lossless reconstruction reference. For each candidate retained order 
+
+k ∈ { 1, . . . , K }, we reconstruct the trajectory using harmonics up to k and compute the normalized reconstruction MSE 
+
+e(k) = 1
+
+T
+
+> T
+
+X
+
+> i=1
+
+∥yi − byi, ≤k∥22
+
+max 1
+
+T
+
+> T
+
+X
+
+> i=1
+
+∥yi − ¯y∥22 , ϵ 
+
+! , (5) where by≤k is the reconstruction using the first k harmonics, ¯y
+
+is the temporal mean of the reference trajectory, and ϵ = 10 −12 
+
+prevents division by zero. The relative improvement obtained by adding harmonic k
+
+is 
+
+Ik = max 
+
+
+
+0, e(k − 1) − e(k)max ( e(k − 1) , ϵ )
+
+
+
+, k = 2 , . . . , K. (6) The cutoff is selected using an absolute reconstruction floor followed by a saturation criterion. If an order satisfying 
+
+e(k) ≤ efloor (7) exists, Ktask is the smallest such order. Otherwise, it is the smallest retained order after which the next P harmonics all provide less than τ relative improvement: 
+
+Ktask = min {Kc : IKc+r < τ, r = 1 , . . . , P } . (8) If neither condition is satisfied, the full order K is retained. All experiments use 
+
+efloor = 10 −6, τ = 0 .05 , P = 3 . (9) The selection parameters are fixed globally, while the resulting 
+
+Ktask adapts to the geometric complexity of each trajectory family. The retained and complementary harmonic sets are 
+
+Btask = {1, . . . , K task }, Bcomp = {Ktask + 1 , . . . , K }.
+
+(10) The reduced task-band SMP coefficient vector is 
+
+cLF = Sc y ∈ RMt , Mt = dy (2 Ktask + 1) , (11) where S ∈ { 0, 1}Mt×My retains the DC coefficient and the sine–cosine pairs indexed by Btask . Once selected for a skill family, S is fixed across its demonstrations and query contexts. The geometric effect of spectral truncation follows from Fourier orthogonality. If yj, ≤Kc (τ ) denotes the reconstruction of dimension j using harmonics up to Kc, then 
+
+Z H
+
+> 0
+
+|yj (τ ) − yj, ≤Kc (τ )|2 dτ = H
+
+2
+
+> K
+
+X
+
+> k=Kc+1
+
+ a2 
+
+> j,k
+
++ b2
+
+> j,k
+
+ .
+
+(12) Thus, the reconstruction error is determined by the energy of the omitted harmonics. To characterize their derivative contribution, define 
+
+rj,k =
+
+q
+
+a2 
+
+> j,k
+
++ b2
+
+> j,k
+
+. (13) The corresponding conservative derivative envelopes are 
+
+∥ ˙yj ∥∞ ≤
+
+> K
+
+X
+
+> k=1
+
+(kω )rj,k , (14) 
+
+∥¨yj ∥∞ ≤
+
+> K
+
+X
+
+> k=1
+
+(kω )2rj,k , (15) 
+
+∥y(3)  
+
+> j
+
+∥∞ ≤
+
+> K
+
+X
+
+> k=1
+
+(kω )3rj,k . (16) Additional harmonics may therefore provide diminishing re-construction improvements while contributing increasingly to velocity, acceleration, and jerk. The complementary band is not assumed to be irrelevant. Trajectories with sharper or more localized structures naturally yield a larger Ktask under the same selection rule. The decomposition only restricts context-conditioned learning to the empirically selected task band. Execution admissibility is subsequently enforced on the resulting joint-space SMP through phase regulation, without modifying its spectral coef-ficients. 5 
+
+> Fig. 2. Geometric task-context variations handled by the proposed frame-aware formulation. From left to right: changes in task-frame position and in-plane orientation, changes in surface orientation, and changes in the in-plane scale of the target region.
+
+C. Frame-Aware Context-Conditioned Spectral Prior 1) Task-Frame and Phase Canonicalization: The variation of a manipulation skill is often structured by the associated task geometry rather than being arbitrary in the world coor-dinate system. For surface-constrained skills such as wiping, polishing, and scrubbing, changes in surface position, orienta-tion, and in-plane extent induce predictable transformations of the demonstrated motion. We therefore handle these geometric transformations explicitly before statistical learning. For the n-th demonstration, let the task context be 
+
+xn =
+
+h
+
+p⊤ 
+
+> n
+
+, η⊤ 
+
+> n
+
+, s⊤ 
+
+> n
+
+, ξ⊤
+
+> n
+
+i⊤
+
+, (17) where pn ∈ R3 is the task-frame origin, ηn ∈ R4 is the task-frame orientation represented by a unit quaternion, 
+
+sn = su,n sv,n 
+
+⊤ , su,n > 0, sv,n > 0, (18) contains the two in-plane task scales, and ξn contains optional residual task variables. Figure 2 illustrates the geometric components of the task context considered in this work. The task frame may vary in position and in-plane orientation, in full surface orienta-tion, and in the in-plane extent of the target region. These variations are handled explicitly through the frame and scale transformations defined below, rather than being learned as arbitrary world-frame trajectory changes. Before constructing the frame transform, the quaternion is normalized and sign-canonicalized: 
+
+ηn ← ηn
+
+∥ηn∥2
+
+, ηw,n ≥ 0. (19) This removes the double-cover ambiguity between ηn and 
+
+−ηn.Let 
+
+Rn = eu,n ev,n e⊥,n 
+
+ ∈ SO (3) (20) denote the rotation from the canonical task frame to the world frame. The vectors eu,n and ev,n span the local surface plane, while e⊥,n denotes the surface normal. We define the planar scale matrix as 
+
+Ds,n = diag ( su,n , s v,n , 1) . (21) Only the two in-plane coordinates are normalized. The surface-normal coordinate is left unscaled, avoiding an undefined or singular normal-direction scale. Given a world-frame end-effector trajectory y(w,n )(t), the corresponding canonical trajectory is 
+
+y(c,n )(t) = D−1
+
+> s,n
+
+R⊤
+
+> n
+
+
+
+y(w,n )(t) − pn
+
+
+
+. (22) The inverse transformation is 
+
+y(w,n )(t) = RnDs,n y(c,n )(t) + pn. (23) For an ideal surface-constrained motion, the canonical normal coordinate satisfies 
+
+y(c,n ) 
+
+> ⊥
+
+(t) = 0 . (24) Task-frame canonicalization removes spatial transforma-tions, but it does not remove the arbitrary starting point of a periodic demonstration. Since Fourier coefficients depend on the selected starting phase, geometrically equivalent cycles with different starting points may otherwise produce different coefficient vectors. We therefore apply circular phase align-ment before spectral encoding. All periodic demonstrations of the same skill are first resampled on a common phase grid 
+
+ϕi = 2π(i − 1) 
+
+T , i = 1 , . . . , T. (25) The first canonical training demonstration is used as the fixed phase reference, 
+
+y(c)ref = y(c, 1) . (26) This choice defines the canonical phase origin of the skill. For compact notation, define the circular index map 
+
+σℓ(i) = 1 + (( i − 1 + ℓ) mod T ) . (27) The optimal circular shift of the n-th demonstration is then 
+
+ℓ⋆n = arg min  
+
+> ℓ∈{ 0,...,T −1}
+> T
+
+X
+
+> i=1
+
+y(c,n )  ϕσℓ(i)
+
+ − y(c)ref (ϕi) 22
+
+.
+
+(28) 6
+
+The phase-aligned canonical trajectory is then defined as 
+
+ey(c,n ) (ϕi) = y(c,n ) 
+
+ϕσℓ⋆n (i)
+
+
+
+. (29) The same circular shift is applied to all trajectory dimensions. Therefore, the alignment removes only the global starting-phase ambiguity while preserving the inter-dimensional and inter-harmonic phase relationships that deter-mine the motion geometry. For the reference demonstration, 
+
+ℓ⋆ 
+
+> 1
+
+= 0 by construction. Demonstrations belonging to the same skill are collected with a consistent traversal direction. Motions with opposite traversal directions are treated as different task modes rather than being automatically reversed. Periodic demonstrations are segmented over complete cycles and checked for small position and tangent mismatch at the cycle boundary, reducing artificial high-frequency content caused by a discontinuous periodic extension. Circular phase alignment is not applied to smooth non-closed motions, which are represented using a common normalized finite-horizon parameterization. 
+
+2) Context-Conditioned GMM/GMR in the Canonical Task Band: After task-frame and phase canonicalization, each demonstration is encoded in the retained task-band spectral subspace: 
+
+c(n)LF ,c = SLF SMPEncode 
+
+ey(c,n )1: T
+
+
+
+, (30) where SLF is the selection matrix associated with the task-band order defined in Sec. III-B2. The global task-frame pose (pn, ηn) is not treated as an ordinary regression variable because its geometric effect has already been handled explicitly by (22) and (23). The context provided to the statistical model contains only variables that remain meaningful after canonicalization: 
+
+x(n)gmr =
+
+h
+
+s⊤ 
+
+> n
+
+, ξ⊤
+
+> n
+
+i⊤
+
+. (31) The in-plane scales are retained in the regression context when the canonical motion contains residual scale-dependent variation beyond the explicit geometric normalization. If no such dependence is modeled, the corresponding entries can be omitted. The learning set is therefore 
+
+DLF =
+
+n 
+
+x(n)gmr , c(n)LF ,c 
+
+o Nn=1 
+
+. (32) We define the joint variable 
+
+z =
+
+xgmr 
+
+cLF ,c 
+
+
+
+∈ Rpgmr +Mt (33) and approximate its density using a Gaussian mixture model, 
+
+p(z) = 
+
+> J
+
+X
+
+> m=1
+
+πmN (z | μm, Σm) , (34) where J is the number of mixture components and πm, μm,and Σm are the corresponding mixture parameters. For each component, the mean and covariance are parti-tioned as 
+
+μm =
+
+μxm
+
+μcm
+
+
+
+, Σm =
+
+Σxx m Σxc m
+
+Σcx m Σcc m
+
+
+
+. (35) For a query task context x⋆, we first construct x⋆ 
+
+> gmr
+
+accord-ing to (31). Gaussian mixture regression gives the component-wise conditional mean 
+
+bcLF ,c,m = μcm + Σcx m (Σxx m + ϵI)−1  x⋆ 
+
+> gmr
+
+− μxm
+
+ , (36) where ϵ > 0 is a small numerical regularization constant. The corresponding responsibility is 
+
+hm
+
+ x⋆
+
+> gmr
+
+ = πmN  x⋆ 
+
+> gmr
+
+| μxm, Σxx m
+
+
+
+> J
+
+X
+
+> ℓ=1
+
+πℓN  x⋆ 
+
+> gmr
+
+| μxℓ , Σxx ℓ
+
+ . (37) The predicted canonical task-band code is 
+
+bcLF ,c =
+
+> J
+
+X
+
+> m=1
+
+hm
+
+ x⋆
+
+> gmr
+
+ bcLF ,c,m . (38) The statistical module in (34)–(38) is a joint GMM followed by GMR after explicit task-frame canonicalization. It does not combine multiple frame-specific Gaussian experts in the classical TP-GMM sense. We therefore refer to it as a frame-aware context-conditioned GMM/GMR spectral prior. If no residual context variable remains after canonicaliza-tion, the prediction reduces to the empirical canonical task-band mean: 
+
+bcLF ,c = 1
+
+N
+
+> N
+
+X
+
+> n=1
+
+c(n)LF ,c . (39) In this case, variation in global task-frame pose and in-plane scale is handled primarily through the explicit geometric transformation rather than through statistical extrapolation. 
+
+3) Task-Band Decoding and World-Frame Reconstruction: 
+
+The predicted vector bcLF ,c parameterizes the nominal task-band motion in the canonical frame. For trajectory reconstruc-tion, the predicted coefficients are placed in their correspond-ing harmonic entries, while coefficients outside the retained task band are set to zero: 
+
+bcc = S⊤
+
+> LF
+
+bcLF ,c . (40) The nominal canonical trajectory is then reconstructed as 
+
+by(c)1: T = SMPDecode ( bcc) . (41) For a surface-constrained task, the decoded normal coordinate is set according to (24). The Cartesian trajectory is subse-quently mapped to the query task frame: 
+
+by(w)1: T = R⋆D⋆s by(c)1: T + p⋆, (42) where R⋆, D⋆s , and p⋆ are constructed from the query context. The spectral prior determines the task-band motion in the canonical task frame, while the explicit frame transformation determines its position, orientation, and in-plane extent in the world frame. The resulting Cartesian trajectory is converted into a continuous joint trajectory by the inverse-kinematics procedure described in the next subsection. The joint trajectory is then encoded using a separate joint-space spectral coeffi-cient vector for execution-level phase regulation. Task-space prediction and joint-space regulation therefore use coupled but distinct spectral representations. 7
+
+D. Shape-Preserving Dynamic Regulation 
+
+The frame-aware spectral prior produces the world-frame end-effector trajectory by(w)1: T in (42). Since execution limits are defined in joint space, we first obtain a continuous nominal joint trajectory through sequential inverse kinematics and then regulate its phase progression. Let 
+
+bR(w)1: T =
+
+n bR(w)
+
+> i
+
+oTi=1 
+
+(43) denote the desired end-effector orientations. For the surface-constrained tasks considered here, the tool orientation is fixed relative to the query surface frame. Starting from q0, sequen-tial inverse kinematics gives 
+
+bq1 = IK 
+
+by(w)1 , bR(w)1 ; q0
+
+
+
+, (44) 
+
+bqi = IK 
+
+by(w) 
+
+> i
+
+, bR(w) 
+
+> i
+
+; bqi−1
+
+
+
+, i = 2 , . . . , T. (45) Warm-starting from the preceding solution encourages conti-nuity on a consistent local kinematic branch. Only trajectories satisfying solver convergence and joint-position limits over the complete horizon are passed to the regulator. The resulting joint trajectory is encoded as 
+
+bcq = SMPEncode ( bq1: T ) , bq1: T = {bqi}Ti=1 . (46) This code is distinct from the canonical task-space code 
+
+bcLF ,c : the latter represents the predicted end-effector geometry, whereas bcq parameterizes its joint-space realization. For notational simplicity, hats are omitted below. Each joint trajectory is represented as 
+
+qd(ϕ) = ad, 0 +
+
+> K
+
+X
+
+> k=1
+
+[ad,k cos( kϕ ) + bd,k sin( kϕ )] , (47) 
+
+d = 1 , . . . , D, ϕ ∈ [0 , 2π].
+
+The nominal phase law is 
+
+ϕnom (t) = ωt, ω = 2πH , (48) where H is the nominal duration. The corresponding coeffi-cient vector is 
+
+cq = vec 
+
+
+
+{ad, 0, a d,k , b d,k }D,K d=1 ,k =1 
+
+
+
+. (49) The regulator keeps cq fixed and modifies only the phase law, thereby preserving the represented joint-space path. Differentiating (47) with respect to phase gives 
+
+∂q d
+
+∂ϕ =
+
+> K
+
+X
+
+> k=1
+
+k [−ad,k sin( kϕ ) + bd,k cos( kϕ )] , (50) 
+
+∂2qd
+
+∂ϕ 2 = −
+
+> K
+
+X
+
+> k=1
+
+k2 [ad,k cos( kϕ ) + bd,k sin( kϕ )] . (51) The corresponding time derivatives are 
+
+˙qd(t) = ∂q d
+
+∂ϕ ˙ϕ(t), (52) 
+
+¨qd(t) = ∂2qd
+
+∂ϕ 2 ˙ϕ(t)2 + ∂q d
+
+∂ϕ ¨ϕ(t). (53)  
+
+> Fig. 3. Shape preservation under phase-coupled regulation. Nominal and regulated end-effector paths are evaluated on a common normalized phase grid. Regulation changes the completion time while preserving the represented path.
+
+For each joint, define the exact phase-derivative envelopes 
+
+Γ(1)  
+
+> d
+
+= max 
+
+> ϕ∈[0 ,2π]
+
+∂q d
+
+∂ϕ , (54) 
+
+Γ(2)  
+
+> d
+
+= max 
+
+> ϕ∈[0 ,2π]
+
+∂2qd
+
+∂ϕ 2 . (55) These envelopes are evaluated on a dense phase grid. Defining 
+
+rd,k =
+
+q
+
+a2 
+
+> d,k
+
++ b2
+
+> d,k
+
+, (56) also yields the conservative bounds 
+
+Γ(1)  
+
+> d
+
+≤
+
+> K
+
+X
+
+> k=1
+
+kr d,k , (57) 
+
+Γ(2)  
+
+> d
+
+≤
+
+> K
+
+X
+
+> k=1
+
+k2rd,k . (58) The regulated execution uses a constant phase speed, 
+
+ϕreg (t) = ˙ϕreg t, ¨ϕreg (t) = 0 . (59) Let ¯vd and ¯ad denote the prescribed joint velocity and ac-celeration limits. The corresponding admissible phase-speed bounds are 
+
+˙ϕv = min 
+
+> d
+
+¯vd
+
+Γ(1) 
+
+> d
+
+, (60) 
+
+˙ϕa = min 
+
+> d
+
+s ¯ad
+
+Γ(2) 
+
+> d
+
+. (61) A desired execution speed is specified relative to the nom-inal timing: ˙ϕdes = αω, α > 0, (62) where α > 1 accelerates the motion, α < 1 slows it down, and α = 1 recovers the nominal timing. The regulated phase speed is 
+
+˙ϕreg = min 
+
+n ˙ϕdes , ˙ϕv , ˙ϕa
+
+o
+
+. (63) 8
+
+Thus, the desired timing is retained when admissible; other-wise, the phase speed is reduced to the largest value satisfying both joint-space limits. The regulated duration and trajectory are 
+
+Hreg = 2π
+
+˙ϕreg 
+
+, (64) 
+
+qreg (t) = q (ϕreg (t)) , t ∈ [0 , H reg ]. (65) Figure 3 illustrates the resulting path preservation in end-effector space. On a common phase grid, define 
+
+xnom (ϕ) = FK ( q(ϕ)) , (66) 
+
+xreg (ϕ) = FK ( qreg (ϕ)) . (67) Their geometric discrepancy is 
+
+Eshape = dist ( xreg (ϕ), xnom (ϕ)) , (68) where dist( ·, ·) is instantiated as direct end-effector MSE or Procrustes-aligned MSE. Since the spectral coefficients remain fixed, this discrepancy reflects only numerical, tracking, and implementation-level deviations. Mean joint jerk is additionally reported as 
+
+Jq = 1
+
+NsNsX
+
+> i=1
+
+q(3) (ti) 2 , (69) where Ns is the number of execution samples. Jerk is not imposed as a hard constraint. The resulting guarantees are limited to joint-space velocity and acceleration admissibility. They do not imply bounds on end-effector derivatives, torque, contact force, or collision avoidance, which additionally depend on the environment. IV. E XPERIMENTS 
+
+The experiments are designed to validate the three roles of the proposed spectral formulation. First, we verify that the demonstration-driven task band preserves the dominant task geometry while the complementary band is derivative-heavy. Second, we evaluate whether the context-conditioned spectral prior can generalize the task-band representation across unseen task contexts. Third, we test whether spectral regulation improves execution-level admissibility while pre-serving task-space motion shape. All simulation experiments are implemented in MuJoCo, and the physical robot execution is performed on a Franka Panda platform using a ROS 2-based control stack [45], [46]. 
+
+A. Task-Band Decomposition and Empirical Cutoff Selection 
+
+We first evaluate whether the proposed spectral representa-tion admits a compact task-band description of demonstrated motion geometry, and how the task-band cutoff can be se-lected empirically from data. This experiment focuses only on the representation layer. It does not evaluate robustness to corrupted demonstrations or execution-level dynamic admissi-bility, which are studied separately in later sections. Given a demonstrated trajectory encoded with a sufficiently large maximum harmonic order K, we construct a family of partial reconstructions by retaining only the first k harmonics, with k = 1 , . . . , K . For each k, we decode the corresponding truncated trajectory and compute its normalized reconstruction error with respect to the original demonstration. This yields a reconstruction-saturation curve that reveals how rapidly the dominant trajectory geometry is recovered as more harmonics are added. Fig. 4a shows representative reconstructions at the selected cutoff Kc for three trajectories of increasing geometric com-plexity. For the smooth figure-eight trajectory, only a very small number of harmonics is needed to recover the dominant shape. For the flower trajectory, a moderately larger cutoff is required, but the selected low-frequency band still captures the principal geometry well. In contrast, the spiky star trajec-tory contains sharper local structures and therefore requires a substantially larger number of harmonics. This qualitative comparison supports the central modeling assumption of the paper: the dominant task geometry of smooth manipulation trajectories is typically concentrated in a relatively small low-frequency band, while trajectories with sharper local features demand a broader spectrum. Fig. 4b plots the reconstruction-saturation curves for several trajectory families. For smooth trajectories, the error decreases rapidly at very low harmonic orders and then quickly reaches a flat regime. For more structured trajectories, the saturation point occurs later, leading to a larger selected cutoff. Fig. 4c visualizes the corresponding empirical cutoff rule through the relative MSE improvement curves. The selected Kc is the earliest order after which the incremental benefit of adding more harmonics becomes consistently negligible. An important observation is that sharply varying or non-smooth shapes are intrinsically harder to approximate with a low-order Fourier expansion. The spiky star example il-lustrates this clearly: even though increasing the harmonic order improves reconstruction, the reduction in error is slower and the selected cutoff is much larger than for the smoother trajectories. This behavior is expected, since localized sharp structures are distributed across a broader range of frequencies. In other words, such trajectories are not only less compact in the spectral domain, but also less naturally aligned with the low-frequency task-band assumption. At the same time, this limitation does not undermine the practical relevance of the proposed representation for robot im-itation learning. Most manipulation trajectories considered in this paper, as well as many real robot motions in practice, are smooth by construction due to kinesthetic teaching, controller bandwidth limits, and the need for dynamically admissible execution. For this class of trajectories, the dominant task geometry is typically recovered well by a small empirically selected low-frequency band. The task-band representation is a practical and physically meaningful representation for smooth demonstrated robot skills. Although the proposed framework is primarily motivated by periodic and quasi-periodic manipulation skills, the finite-horizon spectral parameterization is not mathematically re-stricted to closed trajectories. We therefore include a repre-sentative smooth non-closed motion as an extension example. Fig. 5 shows that the dominant geometry of this finite-horizon motion is recovered with a relatively compact task 9        
+
+> (a) Selected reconstructions at the empirical cutoff.
+> (b) Reconstruction saturation. (c) Relative-improvement cutoff rule.
+> Fig. 4. Task-band decomposition and empirical cutoff selection. (a) Representative reconstructions at the selected cutoff Kcfor trajectories of increasing geometric complexity. (b) Normalized reconstruction MSE as a function of retained harmonic order, showing saturation for smooth trajectories. (c) Relative reconstruction improvement used for empirical cutoff selection. The selected Kcis the smallest order after which the improvement remains below the prescribed threshold for several consecutive harmonics.
+> Fig. 5. Task-band reconstruction on smooth non-closed finite-horizon motions. Representative reconstructions are shown for increasing task-band orders Kc,together with the corresponding reconstruction error curve. The dominant geometry is recovered with a relatively small number of low-frequency harmonics, while sharper local structures require a larger cutoff.
+
+band. Increasing the retained harmonic order progressively reduces the reconstruction error, while sharper local turns and endpoint-sensitive structures require additional harmonics for accurate approximation. This example demonstrates that the proposed representation can also be applied beyond strictly closed periodic motions. Overall, the experiment supports two main observations. First, a compact low-frequency task band is sufficient to preserve the dominant geometry of the smooth demonstrated motions considered here. Second, the required cutoff can be selected directly from reconstruction saturation. These results motivate the use of the selected task band as the representa-tion learned by the context-conditioned spectral prior in the following experiments. 
+
+B. Robust Reconstruction Under Composite Demonstration Corruption 
+
+We evaluate whether the fixed task-band representation can recover the underlying motion geometry from corrupted demonstration sets. Unlike the preceding cutoff analysis, this experiment compares SMP with alternative movement repre-sentations over independently generated corruption trials. 10                                                                                                                   
+
+> TABLE I ROBUST RECONSTRUCTION UNDER COMPOSITE DEMONSTRATION CORRUPTION . E ACH ENTRY REPORTS MEAN ±STANDARD DEVIATION OVER 30
+> TRIALS . PA-MSE IS REPORTED IN UNITS OF 10 −3AND MEAN TRAJECTORY JERK IN UNITS OF 10 3OVER A NORMALIZED ONE -SECOND HORIZON .LOWER VALUES ARE BETTER .Metric Method Figure-eight Lissajous 2:3 Five-petal flower Rounded star PA-MSE ProMP 1.154 ±1.042 3.219 ±2.101 1.823 ±1.092 0.884 ±0.557 (×10 −3)FMP 1.274 ±1.043 3.324 ±2.097 1.930 ±1.093 1.007 ±0.556
+> MSTOMP 3.112 ±0.992 6.514 ±2.559 5.639 ±1.561 4.799 ±1.919
+> SMP 0.610 ±0.628 2.015 ±1.370 1.462 ±0.830 0.834 ±0.560
+> Mean jerk ProMP 70 .872 ±29 .696 115 .798 ±39 .222 82 .652 ±22 .350 61 .255 ±29 .430 (×10 3)FMP 694 .425 ±71 .616 700 .685 ±50 .854 698 .905 ±85 .869 696 .474 ±69 .988
+> MSTOMP 746 .368 ±121 .652 995 .709 ±231 .752 502 .313 ±179 .373 551 .384 ±212 .147
+> SMP 0.944 ±0.001 4.249 ±0.003 8.146 ±0.030 3.151 ±0.038
+
+We consider figure-eight, Lissajous 2:3 , five-petal flower, and rounded-star trajectories. Each clean reference is resam-pled to T = 200 points, centered, and normalized to unit root-mean-square radius. For each trajectory family, we generate 30 
+
+trials, each containing Ndemo = 10 corrupted demonstrations. Let 
+
+ϕi = 2π(i − 1) 
+
+T , i = 1 , . . . , T, (70) denote the common phase grid. The phase of demonstration 
+
+n is perturbed as 
+
+ϕ′ 
+
+> n,i
+
+= ϕi + ∆ ϕn + 0 .12 sin( ϕi + ψn), (71) where ∆ϕn, ψ n ∼ U (0 , 2π). The corrupted trajectory is 
+
+ycorr  
+
+> n,i
+
+= y⋆(ϕ′
+
+> n,i
+
+) + ϵG 
+
+> n,i
+
++ ϵHF  
+
+> n,i
+
++ ϵsp 
+
+> n,i
+
+, (72) where 
+
+ϵG 
+
+> n,i
+
+∼ N  0, 0.015 2I . (73) The high-frequency term contains two sinusoidal components whose harmonic indices, amplitudes, directions, and phases are independently sampled from 
+
+kHF ∼ U{ 12 , . . . , 20 }, AHF ∼ U [0 .02 , 0.04] . (74) Sparse outliers occur independently with probability 0.01 and have displacements distributed as 
+
+ϵsp  
+
+> n,i
+
+∼ N  0, 0.12 2I . (75) All corruption magnitudes are defined after unit-RMS normal-ization. All methods receive the same corrupted demonstrations within each trial. For trajectory-family index s ∈ { 0, . . . , 3}
+
+and trial index r ∈ { 0, . . . , 29 }, the random seed is 
+
+ζs,r = 20260615 + 10 5s + r. (76) Before reconstruction, demonstrations are circularly aligned to the first demonstration in the trial using the phase-canonicalization procedure in Sec. III-C. We compare ProMP, FMP, MSTOMP, and SMP. ProMP uses 30 Gaussian basis functions with width 0.02 and decodes the mean weight vector. FMP averages the Fourier weights obtained from the complete aligned demonstrations. MSTOMP uses the authors’ reconstruction routine with γ = 20 , recon-structing each demonstration before averaging. SMP encodes each demonstration with K = 30 , averages only the fixed task-band coefficients, and sets all remaining coefficients to zero. The task-band orders selected in the preceding experiment are 
+
+Ktask = 2 , 3, 6, 6 (77) for the figure-eight, Lissajous, flower, and rounded-star fam-ilies, respectively. They are not re-estimated from corrupted data. Geometric fidelity is measured by Procrustes-aligned MSE, 
+
+EPA = 1
+
+T
+
+> T
+
+X
+
+> i=1
+
+sR
+
+byi − by
+
+
+
+−  y⋆i − y⋆ 22
+
+, (78) where (s, R) is the optimal similarity transform following circular phase alignment. We use PA-MSE because the bench-mark targets recovery of the underlying trajectory shape rather than residual global translation, rotation, or scale. We additionally report mean trajectory jerk over a normal-ized one-second horizon: 
+
+Jtraj = 1
+
+T
+
+> T
+
+X
+
+> i=1
+
+by(3) (ti) 2
+
+, (79) where the third derivative is evaluated by periodic Fourier differentiation. This task-space quantity is distinct from the joint-space execution jerk considered in Sec. III-D. Table I shows that SMP achieves the lowest PA-MSE and trajectory jerk for all four families. The smaller PA-MSE margin on the rounded-star trajectory is consistent with its sharper local structure and wider task band. Overall, the results show that fixed task-band reconstruction suppresses derivative-heavy corruption while preserving the dominant motion geometry. 
+
+C. Cross-Board Generalization and Representation Ablation 
+
+This experiment evaluates out-of-distribution transfer of a periodic figure-eight wiping skill across changes in board position, orientation, scale, and surface pose. Each trajectory contains 240 samples over a normalized one-second hori-zon. The training set contains 24 board contexts with three demonstrations per context, while the 2D and 3D evaluations each contain 24 independently sampled out-of-distribution test contexts. The experiment therefore focuses exclusively on extrapolation beyond the demonstrated task configurations. 11  
+
+> Fig. 6. Quantitative cross-board extrapolation over independently sampled out-of-distribution contexts. The reported metrics are: (a) 2D board-local MSE, (b) 2D Procrustes-aligned shape MSE, (c) 3D world-frame end-effector MSE, and (d) 3D normal-distance error. Boxes indicate interquartile ranges, black lines indicate medians, white diamonds indicate means, and points denote individual test contexts. Values are shown on logarithmic axes; lower is better. Numerical-zero normal-distance errors are clipped to the visualization floor.
+
+Training demonstrations are generated on horizontal or mildly tilted boards. The 2D test set extends the demonstrated ranges of board position, in-plane orientation, and wiping-region scale, whereas the 3D test set introduces vertical boards with unseen surface normals and workspace poses. W-Spec uses K = 10 , while the proposed method uses the empirically selected canonical task band Kc = 4 . All experiments use a fixed random seed. We compare four GMM/GMR variants:  
+
+> •
+
+TD : time-domain prediction in the world frame;  
+
+> •
+
+W-Spec : spectral prediction in the world frame;  
+
+> •
+
+C-TD : time-domain prediction in the canonical board frame;  
+
+> •
+
+Ours : task-band spectral prediction in the canonical board frame. This ablation isolates the effects of spectral encoding, task-frame canonicalization, and task-band spectral inference. For quantitative evaluation, the 2D setting uses board-local MSE and Procrustes-aligned shape MSE. The former measures placement and scale within the local board frame, while the latter measures intrinsic shape distortion after removing translation, rotation, and uniform scale. The 3D setting uses world-frame end-effector MSE and normal-distance error to the target board plane. Fig. 6 confirms that the world-frame variants often retain the shared figure-eight template but fail to place it consistently      
+
+> Fig. 7. Qualitative cross-orientation extrapolation. The canonical figure-eight primitive is transferred to horizontal and vertical boards with previously unseen surface normals. 12
+> Fig. 8. Temporal progression and end-effector speed under nominal, accelerated, and phase-regulated timings. The motion is completed in 2.00 s ,1.00 s ,and 1.48 s , respectively.
+
+in unseen task frames. Their relatively low Procrustes errors indicate that the intrinsic periodic shape remains recognizable, whereas their substantially larger board-local and world-frame errors reveal inaccurate translation, orientation, scale, or sur-face alignment. Fig. 7 further illustrates the three-dimensional cross-orientation setting. The world-frame variants remain biased toward the demonstrated workspace, whereas the canonical variants align the generated figure-eight with the unseen ver-tical board planes. This behavior arises because ordinary world-frame GMM/GMR does not enforce geometric equivariance between the task context and the predicted trajectory. Translation, rotation, and scale are embedded directly in the world-frame trajectory coordinates, so the statistical model must extrapolate the complete task transformation from finite demonstrations. Its conditional prediction may therefore preserve the common trajectory structure while remaining biased toward positions and orientations observed during training. Spectral encoding alone does not remove this limitation, since W-Spec still predicts the world-frame transformation statistically. Canonicalization consequently provides the dominant im-provement in both evaluations. Ours further reduces board-local, shape, and world-frame errors by predicting only the retained task-band coefficients instead of time-indexed canon-ical samples. The results therefore show that explicit task-frame geometry is responsible for reliable cross-board place-ment, while task-band spectral inference provides an additional compact and phase-consistent representation. 
+
+D. Joint-Space Dynamic Regulation and End-Effector Path Preservation 
+
+We evaluate whether phase-coupled spectral regulation can recover a dynamically admissible execution from an aggressive requested timing without modifying the underlying geometric path. The experiment uses periodic drawing and wiping mo-tions executed by a simulated robot arm through the same trajectory-generation and inverse-kinematics pipeline as in the preceding experiments. Three timing conditions are compared for the same phase-domain path: the nominal timing , an intentionally accelerated timing , and the resulting phase-regulated timing . The nominal execution completes the motion in 2.00 s . The accelerated command requests completion in 1.00 s and exceeds the prescribed joint-space velocity and acceleration limits. The regulator retains the same joint-space spectral coefficients and reduces only the requested phase speed to the largest admissible constant value. Dynamic admissibility is evaluated in joint space. For each joint j, we compute the normalized peak velocity and acceleration ratios 
+
+r ˙q,j = max t | ˙qj (t)|
+
+¯vj
+
+, r¨q,j = max t |¨qj (t)|
+
+¯aj
+
+, (80) where ¯vj and ¯aj are the prescribed limits. A ratio not exceed-ing one indicates admissibility over the complete execution. Mean joint jerk is additionally reported as an execution-level smoothness measure: 
+
+Jq = 1
+
+NsNsX
+
+> i=1
+
+q(3) (ti) 2
+
+, (81) where Ns is the number of execution samples. Jerk is not imposed as a hard constraint. Fig. 8 compares the temporal progression and end-effector speed under the three timing conditions. The accelerated execution produces substantially larger speed peaks, whereas phase regulation moderates the temporal variation and com-pletes the motion in 1.48 s. The regulated execution is therefore slower than the infeasible accelerated command but approximately 26% faster than the nominal reference. End-effector speed is shown only to visualize the timing change; constraint satisfaction is evaluated using joint-space quantities. The maximum normalized velocity and acceleration ratios are 0.726 and 0.527 for the nominal execution, 1.452 and 
+
+2.108 for the accelerated execution, and 0.980 and 0.960 after 13  
+
+> Fig. 9. Phase-aligned joint velocity and acceleration profiles before and after phase-coupled regulation. RAW denotes the accelerated execution before regulation, and Phase Coupling denotes the regulated execution. Dashed red lines indicate the prescribed joint-space limits. Joint 7 is omitted because it remains stationary.
+
+phase regulation. Thus, the nominal timing is feasible but leaves unused dynamic margin, whereas the accelerated com-mand violates both prescribed limits. The regulated execution remains within the admissible range while retaining a shorter completion time than the nominal reference. The corresponding mean joint jerk values are 264 .0, 2112 .3,and 649 .6 for the nominal, accelerated, and regulated exe-cutions, respectively. Phase regulation therefore substantially reduces the dynamic burden introduced by the aggressive timing, although its jerk remains higher than that of the slower nominal execution. Fig. 9 shows the phase-aligned joint velocity and accelera-tion profiles before and after regulation. Under the accelerated timing, several active joints exceed the prescribed limits, particularly in phase intervals with rapid joint variation. The regulator reduces the requested phase speed to the largest admissible constant value, keeping all regulated profiles within their corresponding envelopes. The regulated profiles retain the same phase-dependent structure as the accelerated profiles, while their magnitudes decrease according to the selected phase speed. Because the joint-space spectral coefficients remain fixed, the regulator changes only the physical timing used to traverse the phase-domain path. It does not apply pointwise clipping, local smoothing, or harmonic attenuation. The accelerated and reg-ulated executions therefore represent the same joint-space and end-effector paths as functions of phase, up to numerical and implementation-level deviations.  
+
+> (a) Horizontal-board execution.
+> (b) Vertical-board execution.
+> Fig. 10. Real-robot validation on a Franka Panda robot. All demonstrations are collected only on the horizontal board, while the learned wiping motions are executed on both horizontal and vertical boards through the corresponding local task frames.
+
+Overall, the experiment shows that the proposed regulator preserves a requested timing whenever it is admissible and limits it only when the corresponding joint-space constraints would otherwise be violated. In this case, the infeasible accelerated command is converted into the fastest admissible constant-phase execution while preserving the represented task-space path. 
+
+E. Real-Robot Validation 
+
+We finally validate the proposed framework on a real 7-DoF Franka Panda robot. All demonstrations are collected only on a horizontal board, with the board plane parallel to the ground. The demonstrated motions are represented in the corresponding local board frame and transferred to the target board pose during execution. We evaluate three representative trajectory geometries: a circular-like trajectory, a figure-eight trajectory, and an open C-shaped trajectory. The first two correspond to closed periodic motions, whereas the open C-shaped trajectory is included as a smooth nonperiodic example. As shown in Fig. 10, the learned motions can be ex-ecuted on both the horizontal board used during demon-stration collection and a vertical board with a substantially different surface orientation. The circular-like and figure-eight trajectories preserve their closed motion structure, while the open C-shaped trajectory retains its finite-horizon nonperiodic geometry. These results provide qualitative real-robot evidence 14 
+
+TABLE II REAL -ROBOT EXECUTION RESULTS UNDER DIFFERENT PHASE -SPEED SETTINGS .Execution α Duration [s] ˙ϕ [rad/s] Demonstration 1.00 19 .98 0.315 
+
+Faster 1.25 15 .98 0.393 
+
+Slower 0.80 24 .97 0.252 
+
+that the proposed frame-aware spectral representation can transfer demonstrated wiping motions across different board orientations without requiring additional demonstrations for the vertical-board configuration. We additionally evaluate phase-based timing modulation on the physical robot. Starting from the recorded demonstration, we generate faster and slower executions by changing the con-stant phase speed. Table II summarizes the resulting execution durations and phase speeds. As shown in Table II, changing the phase-speed factor from 
+
+1.00 to 1.25 reduces the execution duration from 19 .98 s to 
+
+15 .98 s , while a factor of 0.80 increases it to 24 .97 s . The corresponding phase speeds are 0.315 , 0.393 , and 0.252 rad /s,respectively. These results provide physical evidence that the execution rate of the demonstrated motion can be adjusted through phase modulation on the real robot. Quantitative enforcement of the prescribed joint velocity and acceleration limits is evaluated separately in Sec. IV-D. The supplementary video accompanying this paper shows shape-preserving dynamic regulation under different execution speeds, kinesthetic demonstration collection, and real-robot ex-ecution in horizontal-board and vertical-board configurations. V. C ONCLUSION 
+
+This paper presented a frequency-domain imitation learning framework for directly generating robot motions that are both task-faithful and dynamically admissible. The proposed method represents demonstrations as finite-horizon Fourier coefficients, predicts the task-relevant low-frequency spectral structure from context, and regulates execution within the same spectral formulation through phase regulation. The experi-ments show that the task-band representation preserves dom-inant motion geometry, the frame-aware spectral prior gener-alizes across task contexts, and the phase-coupled regulator reduces joint velocity and acceleration violations while main-taining the end-effector path. These results support the central claim that imitation learning and execution-level dynamic feasibility need not be treated as separate stages: for periodic and finite-horizon manipulation skills, a spectral formulation can generate motions that remain close to demonstrations while being better suited for robot execution. Future work will extend this formulation to contact-rich robot manipulation. REFERENCES [1] S. Schaal, “Learning from demonstration,” in Advances in Neural Information Processing Systems , M. Mozer, M. Jordan, and T. Petsche, Eds., vol. 9. MIT Press, 1996. [On-line]. Available: https://proceedings.neurips.cc/paper files/paper/1996/ file/68d13cf26c4b4f4f932e3eff990093ba-Paper.pdf [2] M. Saveriano, F. Abu-Dakka, A. Kramberger, and L. Peternel, “Dynamic movement primitives in robotics: A tutorial survey,” The International Journal of Robotics Research , vol. 42, 09 2023. [3] A. Dahlin and Y. Karayiannidis, “Temporal coupling of dynamical movement primitives for constrained velocities and accelerations,” IEEE Robotics and Automation Letters , vol. 6, no. 2, pp. 2233–2239, 2021. [4] T. Kunz and M. Stilman, “Time-optimal trajectory generation for path following with bounded acceleration and velocity,” in 
+
+Robotics: Science and Systems , 2012. [Online]. Available: https: //api.semanticscholar.org/CorpusID:15630193 [5] T. Kulak, J. Silv´ erio, and S. Calinon, “Fourier movement primitives: an approach for learning rhythmic robot skills from demonstrations,” in 
+
+Proc. Robotics: Science and Systems (RSS) , 2020. [6] C. Ming, Z. Wang, B. Zhang, Z. Cao, X. Duan, and J. He, “Stochastic trajectory optimization for robotic skill acquisition from a suboptimal demonstration,” IEEE Robotics and Automation Letters , vol. 10, no. 6, pp. 6127–6134, 2025. [7] S. Calinon, F. D’halluin, E. Sauser, D. Caldwell, and A. Billard, “Learn-ing and reproduction of gestures by imitation,” Robotics & Automation Magazine, IEEE , vol. 17, pp. 44 – 54, 07 2010. [8] A. J. Ijspeert, J. Nakanishi, and S. Schaal, “Learning attractor landscapes for learning motor primitives,” in Advances in Neural Information Processing Systems , vol. 15, 2002, pp. 1547–1554. [9] A. J. Ijspeert, J. Nakanishi, H. Hoffmann, P. Pastor, and S. Schaal, “Dynamical movement primitives: Learning attractor models for motor behaviors,” Neural Computation , vol. 25, no. 2, pp. 328–373, 2013. [10] N. B. Gutierrez and W. J. Beksi, “Movement primitives in robotics: A comprehensive survey,” 2025. [Online]. Available: https: //arxiv.org/abs/2601.02379 [11] A. Paraschos, C. Daniel, and J. Peters, “Probabilistic movement primi-tives,” 01 2013. [12] Y. Huang, L. Rozo, J. Silv´ erio, and D. Caldwell, “Kernelized movement primitives,” The International Journal of Robotics Research , vol. 38, pp. 833–852, 05 2019. [13] J. Silv´ erio, Y. Huang, F. J. Abu-Dakka, L. Rozo, and D. G. Caldwell, “Uncertainty-aware imitation learning using kernelized movement prim-itives,” in 2019 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2019, pp. 90–97. [14] F. Frank, A. Paraschos, P. van der Smagt, and B. Cseke, “Constrained probabilistic movement primitives for robot trajectory adaptation,” IEEE Transactions on Robotics , vol. 38, no. 4, pp. 2276–2294, 2022. [15] G. Li, Z. Jin, M. Volpp, F. Otto, R. Lioutikov, and G. Neumann, “Prodmp: A unified perspective on dynamic and probabilistic movement primitives,” IEEE Robotics and Automation Letters , vol. 8, no. 4, pp. 2325–2332, 2023. [16] L. Rozo and V. Dave, “Orientation probabilistic movement primitives on riemannian manifolds,” 2021. [Online]. Available: https://arxiv.org/ abs/2110.15036 [17] D. Wilbers, R. Lioutikov, and J. Peters, “Context-driven movement prim-itive adaptation,” in 2017 IEEE International Conference on Robotics and Automation (ICRA) , 2017, pp. 3469–3475. [18] A. F. Abdelrahman, A. Mitrevski, and P. G. Pl¨ oger, “Context-aware task execution using apprenticeship learning,” in 2020 IEEE International Conference on Robotics and Automation (ICRA) , 2020, pp. 1329–1335. [19] S. Calinon, D. Bruno, and D. Caldwell, “A task-parameterized proba-bilistic model with minimal intervention control,” 06 2014. [20] S. Calinon, “Robot learning with task-parameterized generative models,” in Proc. Intl Symp. on Robotics Research (ISRR) , 2015. [21] ——, “A tutorial on task-parameterized movement learning and re-trieval,” Intelligent Service Robotics , vol. 9, 01 2016. [22] S. Calinon, T. Alizadeh, and D. G. Caldwell, “On improving the extrapolation capability of task-parameterized movement models,” in 
+
+2013 IEEE/RSJ International Conference on Intelligent Robots and Systems , 2013, pp. 610–616. [23] E. Pignat and S. Calinon, “Bayesian gaussian mixture model for robotic policy imitation,” IEEE Robotics and Automation Letters , vol. PP, pp. 1–1, 08 2019. [24] E. Pignat, J. Silv´ erio, and S. Calinon, “Learning from demonstration using products of experts: applications to manipulation and task prioritization,” 2020. [Online]. Available: https://arxiv.org/abs/2010. 03505 [25] J. Silv´ erio, S. Calinon, L. Rozo, and D. G. Caldwell, “Learning task priorities from demonstrations,” IEEE Transactions on Robotics , vol. 35, no. 1, pp. 78–94, 2019. [26] Y. Huang, J. Silv´ erio, L. Rozo, and D. G. Caldwell, “Generalized task-parameterized skill learning,” 2018. [Online]. Available: https: //arxiv.org/abs/1707.01696 15 
+
+[27] A. Gams, A. Ijspeert, S. Schaal, and J. Lenarcic, “On-line learning and modulation of periodic movements with nonlinear dynamical systems,” 
+
+Autonomous Robots , vol. 27, pp. 3–23, 07 2009. [28] L. Righetti, S. Gay, and A. Ijspeert, “Toward simple control for complex, autonomous robotic applications: Combining discrete and rhythmic motor primitives,” Autonomous Robots , vol. 31, pp. 155–181, 10 2011. [29] J. Ernesti, L. Righetti, M. Do, T. Asfour, and S. Schaal, “Encoding of periodic and their transient motions by a single dynamic movement primitive,” in 2012 12th IEEE-RAS International Conference on Hu-manoid Robots (Humanoids 2012) , 2012, pp. 57–64. [30] A. Gams, B. Nemec, A. J. Ijspeert, and A. Ude, “Coupling movement primitives: Interaction with the environment and bimanual tasks,” IEEE Transactions on Robotics , vol. 30, no. 4, pp. 816–830, 2014. [31] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” 2024. [Online]. Available: https://arxiv.org/abs/2303.04137 [32] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn, “Learning fine-grained bimanual manipulation with low-cost hardware,” 2023. [Online]. Available: https://arxiv.org/abs/2304.13705 [33] Y. Zhong, Y. Liu, C. Xiao, Z. Yang, Y. Wang, Y. Zhu, Y. Shi, Y. Sun, X. Zhu, and Y. Ma, “Freqpolicy: Frequency autoregressive visuomotor policy with continuous tokens,” arXiv preprint arXiv:2506.01583 , 2025. [34] Q. He, Y. Zhenshuo, W. Liang, C. Hao, N. Sebe, and J. Tian, “Focalpol-icy: Frequency-optimized chunking and locally anchored flow matching for coherent visuomotor policy,” 05 2026. [35] A. Dahlin and Y. Karayiannidis, “Adaptive trajectory generation under velocity constraints using dynamical movement primitives,” IEEE Con-trol Systems Letters , vol. 4, no. 2, pp. 438–443, 2020. [36] A. Sidiropoulos, D. Papageorgiou, and Z. Doulgeri, “A novel frame-work for generalizing dynamic movement primitives under kinematic constraints,” Autonomous Robots , vol. 47, pp. 1–14, 10 2022. [37] J. E. Bobrow, S. Dubowsky, and J. S. Gibson, “Time-optimal control of robotic manipulators along specified paths,” The International Journal of Robotics Research , vol. 4, pp. 17 – 3, 1985. [Online]. Available: https://api.semanticscholar.org/CorpusID:15201673 [38] D. Verscheure, B. Demeulenaere, J. Swevers, J. De Schutter, and M. Diehl, “Time-optimal path tracking for robots: A convex optimization approach,” Automatic Control, IEEE Transactions on , vol. 54, pp. 2318 – 2327, 11 2009. [39] H. Pham and Q. C. Pham, “A new approach to time-optimal path parameterization based on reachability analysis,” IEEE Transactions on Robotics , vol. 34, pp. 645 – 659, 06 2018. [40] C. Guarino Lo Bianco and F. Wahl, “A novel second order filter for the real-time trajectory scaling,” 05 2011, pp. 5813–5818. [41] A. Dahlin and Y. Karayiannidis, “Trajectory scaling for reactive motion planning,” in 2022 International Conference on Robotics and Automa-tion (ICRA) , 2022, pp. 5242–5248. [42] A. Palleschi, M. Garabini, D. Caporale, and L. Pallottino, “Time-optimal path tracking for jerk controlled robots,” IEEE Robotics and Automation Letters , vol. 4, no. 4, pp. 3932–3939, 2019. [43] T. Kr¨ oger and F. M. Wahl, “Online trajectory generation: Basic concepts for instantaneous reactions to unforeseen events,” IEEE Transactions on Robotics , vol. 26, no. 1, pp. 94–111, 2010. [44] L. Berscheid and T. Kr¨ oger, “Jerk-limited real-time trajectory generation with arbitrary target states,” 2021. [Online]. Available: https://arxiv.org/abs/2105.04830 [45] E. Todorov, T. Erez, and Y. Tassa, “Mujoco: A physics engine for model-based control,” in 2012 IEEE/RSJ International Conference on Intelligent Robots and Systems . IEEE, 2012, pp. 5026–5033. [46] S. Macenski, T. Foote, B. Gerkey, C. Lalancette, and W. Woodall, “Robot operating system 2: Design, architecture, and uses in the wild,” 
+
+Science Robotics , vol. 7, no. 66, p. eabm6074, 2022. [Online]. Available: https://www.science.org/doi/abs/10.1126/scirobotics.abm6074 
+
+ACKNOWLEDGMENT 
+
+The authors used ChatGPT for language polishing and formatting-related proofreading. All technical content was produced and verified by the authors.

@@ -6,86 +6,77 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-30 ~ 2026-07-09
-- 运行时间：2026-07-09 12:21:00 UTC
+- 最新运行日期：2026-07-09
+- 运行时间：2026-07-09 21:52:32 UTC
 - 运行状态：成功
-- 本次总论文数：22
-- 精读区：11
+- 本次总论文数：19
+- 精读区：8
 - 速读区：11
 
 ### 今日简报（AI）
-今日推荐22篇论文，重点聚焦机器人控制与模仿学习领域，精读11篇中两篇获得满分。值得关注《Language-Critique Imitation Learning from Suboptimal Demonstrations》与《WSA1：3D-Centric World-Spatial-Action Model for Generalizable Robot Control》两篇满分工作。建议优先精读这两篇论文，并留意ELASTIC等自适应计算控制策略的进展。
-- 详情：[/20260630-20260709/README](/20260630-20260709/README)
+今日聚焦 Vision-Language-Action 模型，精读两篇高分论文：Q-Guided 流匹配策略与任务无关的 VLA 预训练方法。最值得关注的方向是提升 VLA 策略的推理效率与泛化能力。建议优先精读两篇 9.0 分论文，再配合速读中的加速技巧（Action Caching）与低维世界模型（KAM-WM）扩展理解。
+- 详情：[/202607/09/README](/202607/09/README)
 
 ### 精读区论文标签
-1. [Language-Critique Imitation Learning from Suboptimal Demonstrations](/20260630-20260709/2607.01225v1-language-critique-imitation-learning-from-suboptimal-demonstrations)  
-   标签：评分：10.0/10、query:imitation
-   evidence：语言批判模仿学习
-2. [WSA$_1$: a 3D-Centric World-Spatial-Action Model for Generalizable Robot Control](/20260630-20260709/2607.03941v1-wsa1-a-3d-centric-world-spatial-action-model-for-generalizable-robot-control)  
-   标签：评分：10.0/10、query:imitation
-   evidence：通过示范的模仿学习训练的机器人基础模型
-3. [Efficient Sim-to-Real Transfer of World-Action Models from Synthetic Priors](/20260630-20260709/2606.31101v1-efficient-sim-to-real-transfer-of-world-action-models-from-synthetic-priors)  
+1. [Guided Action Flow: Q-Guided Inference for Flow-Matching Vision-Language-Action Policies](/202607/09/2607.02092v2-guided-action-flow-q-guided-inference-for-flow-matching-vision-language-action-policies)  
    标签：评分：9.0/10、query:imitation
-   evidence：通过仿真到现实迁移，视频扩散模型适应于视觉运动控制
-4. [Learning from Demonstration via Spatiotemporal Tubes for Unknown Euler-Lagrange Systems](/20260630-20260709/2607.00534v1-learning-from-demonstration-via-spatiotemporal-tubes-for-unknown-euler-lagrange-systems)  
+   evidence：流匹配视觉-语言-动作策略结合Q引导推理；直接针对机器人控制的扩散策略
+2. [Learning to Move Before Learning to Do: Task-Agnostic pretraining for VLAs](/202607/09/2607.02466v1-learning-to-move-before-learning-to-do-task-agnostic-pretraining-for-vlas)  
    标签：评分：9.0/10、query:imitation
-   evidence：从演示学习框架
-5. [A Lightweight Self-Supervised Learning Framework for Multivariate Time Series using Hierarchical-JEPA on ECG Data](/20260630-20260709/2607.01145v1-a-lightweight-self-supervised-learning-framework-for-multivariate-time-series-using-hierarchical-jepa-on-ecg-data)  
+   evidence：提出面向VLA模型的任务无关预训练，利用模仿数据学习运动先验
+3. [ObjRetarget: An Object-Aware Motion Retargeting Framework with Anthropomorphic Arm Constraints and Polyhedral Hand Modeling](/202607/09/2607.03828v1-objretarget-an-object-aware-motion-retargeting-framework-with-anthropomorphic-arm-constraints-and-polyhedral-hand-modeling)  
    标签：评分：9.0/10、query:imitation
-   evidence：提出ER-JEPA，一种基于JEPA的多变量时间序列框架
-6. [SiamJEPA: On the Role of Siamese Student Encoders in JEPA](/20260630-20260709/2607.04044v1-siamjepa-on-the-role-of-siamese-student-encoders-in-jepa)  
+   evidence：将人类操作重定向到机器人动作，实现从人类视频的模仿学习
+4. [Spatial Attention: Adapting Execution Horizons for Diffusion Policies via Observation Sensitivity](/202607/09/2607.04739v1-spatial-attention-adapting-execution-horizons-for-diffusion-policies-via-observation-sensitivity)  
    标签：评分：9.0/10、query:imitation
-   evidence：研究JEPA自我监督学习中孪生学生编码器的作用
-7. [Simple-to-Complex Structured Demonstrations for Vision-Language-Action Learning](/20260630-20260709/2607.04591v1-simple-to-complex-structured-demonstrations-for-vision-language-action-learning)  
+   evidence：针对机器人示教学习中的扩散策略自适应调整执行视野
+5. [Optimal Transport Q-Learning for Flow Policy Steering and Acceleration](/202607/09/2607.06262v1-optimal-transport-q-learning-for-flow-policy-steering-and-acceleration)  
    标签：评分：9.0/10、query:imitation
-   evidence：模仿学习演示组织
-8. [Qantara: Bridge-Flow Training for Multi-Paradigm JEPA Control](/20260630-20260709/2607.04978v1-qantara-bridge-flow-training-for-multi-paradigm-jepa-control)  
+   evidence：微调流策略用于机器人控制；与扩散策略和从演示学习直接相关
+6. [LAMP: Latent Motion Prior-Guided Real-World Learning for Dexterous Hand Manipulation](/202607/09/2607.06323v1-lamp-latent-motion-prior-guided-real-world-learning-for-dexterous-hand-manipulation)  
    标签：评分：9.0/10、query:imitation
-   evidence：提出了一种新的JEPA训练目标，支持多种推理范式，包括行为克隆
-9. [SIEVE: Structure-Aware Data Selection for Imitation Learning with VLA Models](/20260630-20260709/2607.06442v1-sieve-structure-aware-data-selection-for-imitation-learning-with-vla-models)  
+   evidence：模仿学习与强化学习结合用于灵巧手操作
+7. [SPECTRA: Context-Conditioned Spectral Movement Primitives for Robot Skill Generalization](/202607/09/2607.06978v1-spectra-context-conditioned-spectral-movement-primitives-for-robot-skill-generalization)  
    标签：评分：9.0/10、query:imitation
-   evidence：提出了结构感知的数据选择方法用于VLA模仿学习
-10. [RynnWorld-Teleop: An Action-Conditioned World Model for Digital Teleoperation](/20260630-20260709/2607.06558v1-rynnworld-teleop-an-action-conditioned-world-model-for-digital-teleoperation)  
+   evidence：面向机器人操作模仿学习的谱运动基元
+8. [Compositional Motion Generation from Demonstration with Object-Centric Neural Fields](/202607/09/2607.07129v1-compositional-motion-generation-from-demonstration-with-object-centric-neural-fields)  
    标签：评分：9.0/10、query:imitation
-   evidence：数字遥操作结合世界模型生成模仿学习轨迹
-11. [PriGo: Test-Time Primitive Guidance to Diffusion and Flow Policies for Adaptive Robotic Manipulation](/20260630-20260709/2607.07076v1-prigo-test-time-primitive-guidance-to-diffusion-and-flow-policies-for-adaptive-robotic-manipulation)  
-   标签：评分：9.0/10、query:imitation
-   evidence：基于原语引导的扩散和流策略自适应用于机器人操作模仿学习
+   evidence：生成式学习从示范中，通过组合建模用于操作
 
 ### 速读区论文标签
-1. [ELASTIC: Efficiently Learning to Adaptively Scale Test-Time Compute for Generative Control Policies](/20260630-20260709/2606.31132v1-elastic-efficiently-learning-to-adaptively-scale-test-time-compute-for-generative-control-policies)  
+1. [High-Fidelity One-Step Generative Visuomotor Policy via Recursive Correction, Frequency Consistency, and Contrastive Flow Matching](/202607/09/2607.03865v1-high-fidelity-one-step-generative-visuomotor-policy-via-recursive-correction-frequency-consistency-and-contrastive-flow-matching)  
    标签：评分：8.0/10、query:imitation
-   evidence：扩散策略测试时计算缩放
-2. [ChronoFlow-Policy: Unifying Past-Current-Future Interaction Flow in Visuomotor Policy Learning](/20260630-20260709/2606.31493v2-chronoflow-policy-unifying-past-current-future-interaction-flow-in-visuomotor-policy-learning)  
+   evidence：高保真一步生成式视觉运动策略，结合扩散与流匹配用于机器人控制
+2. [KAM-WM: Kinematic Affordance Maps from Latent World Models for Robot Manipulation](/202607/09/2607.04652v1-kam-wm-kinematic-affordance-maps-from-latent-world-models-for-robot-manipulation)  
    标签：评分：8.0/10、query:imitation
-   evidence：使用扩散模型统一视觉运动策略中的时序交互
-3. [Z-1: Efficient Reinforcement Learning for Vision-Language-Action Models](/20260630-20260709/2606.31846v1-z-1-efficient-reinforcement-learning-for-vision-language-action-models)  
+   evidence：基于世界模型提取的运动学affordance图条件扩散策略用于少样本操作
+3. [Training-Free Acceleration for Vision-Language-Action Models with Action Caching and Refinement](/202607/09/2607.06370v1-training-free-acceleration-for-vision-language-action-models-with-action-caching-and-refinement)  
    标签：评分：8.0/10、query:imitation
-   evidence：通过行为克隆和强化学习提升机器人模仿学习
-4. [VLAFlow: A Unified Training Framework for Vision-Language-Action Models via Co-training and Future Latent Alignment](/20260630-20260709/2607.01586v1-vlaflow-a-unified-training-framework-for-vision-language-action-models-via-co-training-and-future-latent-alignment)  
+   evidence：基于流匹配的VLA模型机器人控制，动作缓存加速
+4. [WAM-TTT: Steering World-Action Models by Watching Human Play at Test Time](/202607/09/2607.06988v1-wam-ttt-steering-world-action-models-by-watching-human-play-at-test-time)  
    标签：评分：8.0/10、query:imitation
-   evidence：统一的流匹配训练框架，支持模仿学习目标的系统比较
-5. [Unleashing More Actions via Action Compositional Training for VLA Models](/20260630-20260709/2607.00351v1-unleashing-more-actions-via-action-compositional-training-for-vla-models)  
+   evidence：从人类玩耍视频适应世界动作模型，一种模仿学习形式
+5. [FAR: Failure-Aware Retry for Test-Time Recovery and Continual Policy Improvement](/202607/09/2607.01111v1-far-failure-aware-retry-for-test-time-recovery-and-continual-policy-improvement)  
    标签：评分：7.0/10、query:imitation
-   evidence：VLA模型的动作组合训练以提升模仿学习泛化性
-6. [AutoSpeed: Annotation-Free Stage-Adaptive Motion Speed Learning for Robot Manipulation](/20260630-20260709/2607.01051v2-autospeed-annotation-free-stage-adaptive-motion-speed-learning-for-robot-manipulation)  
+   evidence：利用失败数据进行机器人策略自适应
+6. [WorldSample: Closed-loop Real-robot RL with World Modelling](/202607/09/2607.02431v1-worldsample-closed-loop-real-robot-rl-with-world-modelling)  
    标签：评分：7.0/10、query:imitation
-   evidence：面向IL的视觉运动策略的阶段自适应速度
-7. [Rank-Then-Act: Reward-Free Control from Frame-Order Progress](/20260630-20260709/2607.01897v1-rank-then-act-reward-free-control-from-frame-order-progress)  
+   evidence：利用世界模型克服模仿学习限制；与机器人操作模仿学习的最新进展相关
+7. [Function-Space Diffusion for Motion Planning](/202607/09/2607.02977v1-function-space-diffusion-for-motion-planning)  
    标签：评分：7.0/10、query:imitation
-   evidence：利用VLM从专家视频演示中实现无奖励控制
-8. [ComplexMimic: Human-Scene Interaction Imitation in Complex 3D Environments](/20260630-20260709/2607.02034v2-complexmimic-human-scene-interaction-imitation-in-complex-3d-environments)  
+   evidence：函数空间扩散用于运动规划，可应用于机器人控制
+8. [CoRE-VLA: Towards Scalable and Robust Vision-Language-Action Modeling via Conditional Routing of Experts](/202607/09/2607.03693v1-core-vla-towards-scalable-and-robust-vision-language-action-modeling-via-conditional-routing-of-experts)  
    标签：评分：7.0/10、query:imitation
-   evidence：基于物理的人-场景交互模仿学习
-9. [HABIT: Human-Aware Behavior and Interaction Training Dataset for Robot Manipulation](/20260630-20260709/2606.31682v1-habit-human-aware-behavior-and-interaction-training-dataset-for-robot-manipulation)  
+   evidence：面向机器人操作的VLA模型，基于模仿学习范式
+9. [Human-Centric Transferable Tactile Pre-Training for Dexterous Robotic Manipulation](/202607/09/2607.01067v1-human-centric-transferable-tactile-pre-training-for-dexterous-robotic-manipulation)  
    标签：评分：6.0/10、query:imitation
-   evidence：面向人类在场环境的大规模机器人演示数据集
-10. [RoboTacDex: A Dexterous Visual-Tactile-Action Dataset for Humanoid Manipulation](/20260630-20260709/2606.31836v1-robotacdex-a-dexterous-visual-tactile-action-dataset-for-humanoid-manipulation)  
+   evidence：触觉预训练用于灵巧操作，与模仿学习相关
+10. [TACO: TActile World Model as a Self-COrrector forScalable VLA Post-Training](/202607/09/2607.02840v1-taco-tactile-world-model-as-a-self-corrector-forscalable-vla-post-training)  
    标签：评分：6.0/10、query:imitation
-   evidence：机器人模仿学习数据集
-11. [One Demonstration Is Enough for Real-World Robotic Reinforcement Learning](/20260630-20260709/2607.01651v1-one-demonstration-is-enough-for-real-world-robotic-reinforcement-learning)  
+   evidence：触觉世界模型用于VLA策略后训练；改善接触丰富操作中的模仿学习
+11. [HALO-WA: Hybrid-Attention Latent-Guided Online Reinforcement Learning for World-Action Models](/202607/09/2607.04265v1-halo-wa-hybrid-attention-latent-guided-online-reinforcement-learning-for-world-action-models)  
    标签：评分：6.0/10、query:imitation
-   evidence：利用单次演示自动化机器人强化学习
+   evidence：用于机器人操作的世界动作模型的在线强化学习自适应
 
 
 <div class="dpr-home-promo-card">

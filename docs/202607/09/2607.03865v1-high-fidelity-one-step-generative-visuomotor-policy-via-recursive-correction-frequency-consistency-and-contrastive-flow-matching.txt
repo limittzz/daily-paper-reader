@@ -1,0 +1,953 @@
+Title: High-Fidelity One-Step Generative Visuomotor Policy via Recursive Correction, Frequency Consistency, and Contrastive Flow Matching
+
+URL Source: https://arxiv.org/pdf/2607.03865v1
+
+Published Time: Tue, 07 Jul 2026 02:12:53 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> PREPRINT SUBMITTED TO ARXIV 1
+
+# High-Fidelity One-Step Generative Visuomotor Policy via Recursive Correction, Frequency Consistency, and Contrastive Flow Matching 
+
+Yuran Chen, Xinye Cai, Zhonglin Gong, and Yang Huang 
+
+Abstract —Generative models such as Diffusion and Flow Matching have significantly advanced robotic visuomotor poli-cies by modeling complex and multimodal action distribu-tions. However, their reliance on multi-step sampling or ODE solvers introduces substantial inference latency. Existing single-step acceleration methods improve efficiency, but they often approximate the entire iterative action-generation process with a single large update, introducing an approximation gap. We characterize this gap as three coupled failure modes: spatial deviation, where large-step approximation ignores local flow geometry; frequency distortion, where over-smoothed predictions suppress fine-grained manipulation details; and mode averaging, where entangled multimodal flows produce ambiguous actions. To address these challenges, we propose a high-fidelity one-step generative visuomotor policy framework based on three com-plementary mechanisms: recursive correction, frequency consis-tency, and contrastive flow matching. First, Recursive Consistent Action Flow (RCAF) performs high-order recursive correction to compensate for spatial truncation errors, aligning one-step predictions with recursively refined flow trajectories. Second, Dual-Timestep Frequency Consistency (DTFC) preserves high-frequency manipulation details by encouraging adaptive spectral consistency across different flow timesteps. Third, Contrastive Flow Matching (CFM) separates entangled action flows with a margin-based repulsive objective, reducing mode averaging and action ambiguity in multimodal manipulation scenarios. Exten-sive experiments on RoboTwin, RoboTwin 2.0, Adroit, DexArt, and real-world robot platforms show that our method achieves competitive or superior manipulation performance compared with strong 10-step generative policy baselines while requiring only a single forward pass (1 NFE), reducing inference cost for low-latency visuomotor control. 
+
+Index Terms —Visuomotor Policy, Flow Matching, Consistency Model, Robot Learning 
+
+I. I NTRODUCTION 
+
+Visual imitation learning [1], [2] enables robots to acquire manipulation skills by learning direct mappings from observa-tions to actions from expert demonstrations. As an important paradigm in robot learning, it has shown promising results in a wide range of manipulation scenarios, including dexterous grasping, precise assembly, bimanual coordination, and long-horizon object manipulation [3], [4], [5], [6], [7], [8], [9], [10].  
+
+> This work was supported in part by the National Natural Science Foundation of China under Grants 62572005 and U24A20267. (Corresponding author: Xinye Cai.)
+> Yuran Chen, Zhonglin Gong, and Yang Huang are with the School of Safety Science and Engineering, Anhui University of Science and Technology, Huainan 232001, China, and also with the State Key Laboratory of Digital In-telligent Technology for Unmanned Coal Mining, Anhui University of Science and Technology, Huainan 232001, China (e-mail: 1014913959@qq.com). Xinye Cai is with the State Key Laboratory of Digital Intelligent Technol-ogy for Unmanned Coal Mining, Anhui University of Science and Technology, Huainan 232001, China, and also with the School of Artificial Intelligence, Anhui University of Science and Technology, Hefei 231131, China (e-mail: xinye@aust.edu.cn).
+
+A central challenge in this setting is that expert action distri-butions are often high-dimensional, temporally correlated, and multimodal, since multiple valid action sequences may solve the same task under the same visual observation. Recently, generative models based on continuous-time dy-namics, such as diffusion models [11], [12] and flow matching models [13], [14], have become effective tools for visuomotor policy learning. By modeling action generation as a gradual transformation from noise to expert actions, these methods can capture multimodal action distributions and generate temporally coherent action trajectories conditioned on visual observations [3], [5], [15], [6]. However, their high genera-tion quality usually comes with substantial inference latency. During deployment, standard diffusion or flow-based policies require multiple denoising steps or ODE solver evaluations to produce one action chunk. This iterative inference process limits their applicability to high-frequency closed-loop control, where the robot must react quickly to changing observations and contact dynamics. To reduce inference cost, recent studies have explored single-step or few-step action generation strategies, including knowledge distillation methods [16], [17], mean-flow-based approaches [18], [19], [20], and consistency-based policies [21], [22], [23], [24]. While these methods improve sampling efficiency, they often compress a complex iterative genera-tion process into a single large update. We argue that the main difficulty of single-step visuomotor generation lies in the approximation gap introduced by this compression. In high-dimensional manipulation, expert action distributions are not only multimodal, but also lie on nonlinear manifolds with fine-grained temporal and spatial structures. Therefore, a single large update must simultaneously approximate local flow geometry, preserve high-frequency motion details, and distinguish different valid action modes, which is challenging for precise contact-rich control. As illustrated in Figure 1, this approximation gap manifests as three common failure modes. First, a large integration step can ignore local manifold geometry, causing spatial truncation errors (Figure 1(b)). Second, optimizing a single long-span prediction can encourage over-smoothed outputs, suppressing high-frequency manipulation details that are important for precise control (Figure 1(c)). Third, when multiple valid action modes are entangled in the same flow space, the model may produce averaged or ambiguous actions, reducing the reliability of generated trajectories in multimodal manipulation scenarios (Figure 1(d)). To address these limitations, we propose a high-fidelity one-step generative visuomotor policy framework that targets the approximation gap between iterative action generation   
+
+> arXiv:2607.03865v1 [cs.RO] 4 Jul 2026 PREPRINT SUBMITTED TO ARXIV 2
+> Fig. 1. Qualitative analysis of the single-step generation models. (a) Task sequence: Visual progression of the bimanual manipulation task. (b) Joint error heatmaps: Compared to baselines, our method (Ours, N=1) exhibits lower joint angle errors, helping mitigate spatial truncation errors. (c) High-frequency gripper tracking: Plagued by error accumulation, the baseline (blue line) suffers from larger high-frequency oscillations and instability. Conversely, our model (red line) better preserves transient dynamics with improved high-frequency stability. (d) Flow space trajectories: Contrastive Flow Matching (bottom) helps decouple the intertwined vector fields seen in the standard method (top) into independent paths, mitigating mode averaging.
+
+and one-step inference. Consistent with this objective, the framework integrates three complementary mechanisms: re-cursive correction for compensating spatial truncation errors, frequency consistency for preserving fine-grained manipula-tion details, and contrastive flow matching for separating multimodal action flows. First, Recursive Consistent Action Flow (RCAF) performs high-order recursive correction to compensate for spatial trun-cation errors induced by large-step approximation. Second, 
+
+Dual-Timestep Frequency Consistency (DTFC) enforces adaptive spectral consistency across different flow timesteps to reduce frequency distortion and preserve high-frequency ma-nipulation details. Third, Contrastive Flow Matching (CFM) 
+
+introduces a margin-based repulsive objective to separate conflicting action flows, thereby alleviating multimodal flow entanglement and mode averaging. Together, these designs improve the fidelity of one-step action generation while main-taining the efficiency of single-step inference. We evaluate the proposed framework on a diverse set of simulation benchmarks and real-world robotic platforms. The simulation experiments cover bimanual manipulation, cross-domain generalization, and dexterous control tasks from RoboTwin [25], RoboTwin 2.0 [8], Adroit [4], and DexArt [26]. Furthermore, we deploy our method on real robotic platforms, including a low-cost SO101 platform and an industrial UR7E collaborative robot. Experimental results show that our method achieves competitive or better manip-ulation success rates than strong multi-step generative policy baselines while using only a single function evaluation. The main contributions of this paper are summarized as follows:  
+
+> •
+
+We propose Recursive Consistent Action Flow (RCAF) ,a high-order recursive correction mechanism that com-pensates for spatial deviations induced by long-step ap-proximation.  
+
+> •
+
+We introduce Dual-Timestep Frequency Consistency (DTFC) and Contrastive Flow Matching (CFM) to pre-serve high-frequency manipulation details and separate multimodal action flows, respectively.  
+
+> •
+
+We validate the proposed framework on diverse sim-ulation benchmarks and real-world robotic platforms, demonstrating competitive manipulation performance with only one function evaluation. The remainder of this paper is organized as follows: Section 2 reviews related work in visuomotor policy and genera-tive policies. Section 3 introduces the problem formulation and necessary preliminaries. Section 4 details the proposed recursive correction, frequency consistency, and contrastive flow matching mechanisms, along with the overall training objectives. Section 5 presents the quantitative and qualitative experimental analyses in both simulation environments and on real-world robots. Finally, Section 6 concludes the paper and discusses future research directions. II. R ELATED WORK 
+
+A. Generative Visuomotor Policies 
+
+Imitation learning aims to acquire control policies directly from expert demonstrations. Traditional behavioral cloning methods often struggle with multimodal expert data, where averaging over multiple valid actions can lead to ambiguous or suboptimal predictions. Recently, generative models have become increasingly important for visuomotor policy learning due to their ability to represent complex and multimodal action distributions. Representative methods such as Diffusion Policy [3] and its 3D extensions [5], [27] formulate action generation as a conditional iterative denoising process, often combined with action chunking for temporally coherent con-trol. Flow Matching (FM) [13], [14] provides a continuous-time alternative by learning deterministic ODE paths between PREPRINT SUBMITTED TO ARXIV 3
+
+noise and expert actions. Compared with diffusion-based sam-pling, FM can produce smoother transport paths and has been adopted in various dexterous manipulation settings [15], [28]. In parallel, large-scale Vision-Language-Action (VLA) mod-els, such as RDT [6] and π0 [7], further combine generative action modeling with large-scale pretraining to improve cross-task generalization. Despite their strong modeling capacity, these generative visuomotor policies typically rely on iterative denoising or ODE integration during inference. This multi-step generation process introduces non-negligible latency, making it challeng-ing to deploy such policies in high-frequency closed-loop robotic control, where actions must be produced quickly in response to changing observations and contact dynamics. 
+
+B. Accelerated Visuomotor Policies 
+
+To reduce the inference cost of iterative generation, re-cent studies have explored several acceleration paradigms. Knowledge distillation and consistency-based methods [29], [30], [31] learn to approximate multi-step generative processes with fewer sampling steps, achieving significant speedups in robotic manipulation [22], [16], [17]. These ideas have also been integrated into Flow Matching frameworks [21], [32], with recent methods introducing multi-step consistency con-straints to improve training stability [23]. However, directly compressing a curved iterative generation process into a one-step approximation may introduce spatial deviation when local action-flow geometry is not well preserved. Another line of work studies mean-flow-based acceleration. Mean Flow methods [33], [34] and their robotic adaptations [18], [19], [20] directly learn interval-averaged velocities, enabling efficient single-NFE generation. While effective for reducing sampling cost, the interval-average formulation may be limited when approximating highly nonlinear action man-ifolds over long temporal spans. Warm-start approaches [35], [36], [37] instead use historical trajectories as priors to shorten the sampling path, but they still require iterative refinement at inference time. Other auxiliary techniques, such as Conditional Optimal Transport [38] and frequency-aware alignment [39], attempt to improve the geometry or temporal structure of the generative process. Overall, existing acceleration methods mainly focus on re-ducing the number of sampling steps, while the approximation gap introduced by single-step inference remains insufficiently addressed. In particular, single-step visuomotor policies still face spatial deviation, frequency distortion, and multimodal flow entanglement. Our framework addresses these issues through RCAF, DTFC, and CFM, which respectively improve spatial correction, high-frequency detail preservation, and mul-timodal action-flow separation for efficient robotic automation. III. P RELIMINARIES 
+
+A. Visuomotor Policy 
+
+In visuomotor policy learning, the objective is to learn a conditional policy that maps visual observations and robot states to continuous actions. Given an expert demonstration dataset D = {τi}Mi=1 , each trajectory is represented as τ =
+
+{(ok, a k)}Tk=1 , where ok and ak denote the observation and expert action at control timestep k. The observation is encoded as a conditioning feature ck.Following action-chunking policies, the model predicts a future action sequence rather than a single action. We denote the expert action chunk under condition ck as x1 ∈ RD , where 
+
+D is the flattened action dimension. For simplicity, we omit the control index and write the condition as c hereafter. 
+
+B. Flow Matching 
+
+Flow Matching learns a continuous vector field that trans-ports samples from a simple prior distribution to the expert action distribution. Let x0 ∼ N (0 , I ) denote a noise action sample, and let x1 ∼ q(x1|c) denote an expert action chunk. The generation process is defined by the ODE: 
+
+dx t
+
+dt = vθ (xt, t, c ), t ∈ [0 , 1] , (1) where vθ is the learned conditional vector field. A commonly used conditional OT path linearly interpolates between x0 and 
+
+x1:
+
+xt = (1 − t)x0 + tx 1. (2) The corresponding target velocity is x1 − x0, yielding the standard Flow Matching objective: 
+
+LFM = Et∼U [0 ,1] ,x 0,x 1,c 
+
+h
+
+∥vθ (xt, t, c ) − (x1 − x0)∥22
+
+i
+
+. (3) 
+
+C. Consistency Training 
+
+Consistency training learns a function fθ (xt, t, c ) that maps different states along the same generation trajectory to a consistent endpoint. An exponential moving average (EMA) teacher is commonly used for self-distillation between nearby timesteps: 
+
+LCT = Ext,t, ∆t,c 
+
+h
+
+∥fθ (xt, t, c ) − sg ( fθEMA (xt+∆ t, t + ∆ t, c )) ∥22
+
+i
+
+,
+
+(4) where sg( ·) denotes the stop-gradient operation. This formulation enables fast one-step inference by directly mapping an intermediate noisy action state to the final action chunk. However, replacing iterative generation with a one-step approximation may under-model intermediate trajectory corrections, especially over long integration spans. This can introduce spatial deviation from the iterative generation tra-jectory, motivating our RCAF design for high-order recursive correction. IV. M ETHODS 
+
+To achieve fast, high-fidelity single-step inference for robotic visuomotor control, we propose a generative policy framework based on recursive correction, frequency consis-tency, and contrastive flow matching, as illustrated in Figure 2. The framework targets three key issues in existing accelerated generative policies: spatial truncation errors, high-frequency detail loss, and multimodal action-flow entanglement. Specifically, the framework processes multimodal inputs (e.g., proprioception, 2D images, or point clouds) through a unified Diffusion Transformer (DiT) backbone [40], [21] PREPRINT SUBMITTED TO ARXIV 4 
+
+> Fig. 2. Overview of the proposed framework. (a) The multimodal Diffusion Transformer (DiT) policy network architecture. (b) Recursive Consistent Action Flow (RCAF) for mitigating spatial truncation errors via high-order residual correction. (c) Contrastive Flow Matching (CFM) for decoupling interwoven flow fields and resolving mode averaging. (d) Dual-Timestep Frequency Consistency (DTFC) for adaptive high-frequency detail recovery.
+
+equipped with adaptive layer normalization (adaLN) for ef-ficient condition fusion (Figure 2a), ultimately predicting a continuous action velocity field. Building upon this generative backbone, we integrate three complementary mechanisms: First, we introduce Recursive Consistent Action Flow (RCAF) (Section IV-A), which performs recursive correction by distilling multi-step manifold curvature into a single-step residual direction (Figure 2b). Second, to prevent the pol-icy from degenerating into low-frequency, overly smoothed motions, we propose Dual-Timestep Frequency Consistency (DTFC) (Section IV-B), which preserves important high-frequency manipulation details through adaptive spectral su-pervision (Figure 2d). Finally, to reduce the action ambigu-ity caused by multimodal distribution overlap, we formulate Contrastive Flow Matching (CFM) (Section IV-C), which introduces a margin-based repulsive objective to separate in-terwoven dynamics in the flow space (Figure 2c). 
+
+A. Recursive Consistent Action Flow (RCAF) 
+
+Single-step action generation improves inference efficiency, but direct one-step approximation may fail to capture interme-diate trajectory corrections in high-dimensional action spaces. This can introduce spatial truncation errors, especially for manipulation tasks that require accurate joint or end-effector motion. Motivated by recursive consistency learning [31], we propose Recursive Consistent Action Flow (RCAF), a robotic action generation method that constructs a corrected velocity target by comparing a long-span teacher prediction with a recursively estimated multi-step trajectory. 
+
+Time Span Sampling. RCAF adopts a multi-timestep sampling strategy [41] by augmenting the policy network with a time span parameter ∆t, denoted as vθ (xt, t, ∆t, c ).PREPRINT SUBMITTED TO ARXIV 5
+
+For each expert action sequence x1 and its Gaussian noise 
+
+x0 ∼ N (0 , I ), we sample a random span ∆t ∼ U [dt min , 1.0] 
+
+and a starting time ts ∼ U [0 , 1.0 − ∆t]. Based on Eq. 2, the noisy action state at ts is determined by xs = (1 −ts)x0 +tsx1,while the OT target velocity driving this evolution remains constant as vtrue = x1 − x0.
+
+Recursive Displacement Estimation. To quantify the de-viation from the curved manifold, an EMA teacher θEMA first executes a long-term prediction over ∆t to estimate the aver-age velocity vlong = vθEMA (xs, t s, ∆t, c ), yielding a single-step displacement Dlong = vlong · ∆t. For a more precise trajectory evolution, RCAF divides ∆t into an Anchor Step ( dt anc =
+
+ρ·∆t, with ρ = 0 .2) and an N -step Recursive Tail. The anchor step strictly propagates the state using the OT target velocity to obtain the intermediate state xanchor = xs + vtrue · dt anc at 
+
+t1 = ts + dt anc . Starting from xanchor , the teacher performs iterative integration over the remaining interval [t1, t e] with sub-step size dt s = ( te − t1)/N , accumulating the precise recursive displacement Drec = PNi=1 vθEMA (xi, t i, dt s, c ) · dt s.
+
+Residual Correction. Given the temporal span ∆t, a dis-crepancy ∆D = Dlong − Drec arises between the single-step linear leap and the manifold-adhering recursive prediction. We formulate this deviation as the accumulated spatial error of the long-term prediction. By amortizing ∆D over the anchor step, we derive the teacher model’s implicit starting velocity estimate vest and the corresponding directional residual cor-rection ξ:
+
+vest = Dlong − Drec 
+
+dt anc 
+
+, ξ = Clamp( vest − vtrue , −γ, γ ) (5) where γ bounds the correction magnitude to prevent gradient explosion. The intuition behind ξ is to guide the student model—constrained to a linear projection—to adjust its initial heading to better align at the final state of the teacher’s curved evolution. Thus, ξ acts as an explicit error vector, quantifying the directional offset required to prevent the single-step model from diverging from the non-linear action manifold. 
+
+Training Objective. To achieve precise single-step infer-ence, we align the student’s predicted velocity vθ with a residually corrected target vtarget = sg (vlong − ξ), where sg (·)
+
+denotes the Stop-Gradient operation to ensure target stability. The final RCAF loss function is formulated as: 
+
+LRCAF = Ex0,x 1,c,t s,∆t
+
+h
+
+∥vθ (xs, t s, ∆t, c ) − vtarget ∥22
+
+i
+
+, (6) Through this explicit recursive correction, RCAF constructs an 
+
+N -th order temporal consistency constraint. Mathematically, as derived in Appendix D, this target construction can be in-terpreted as an implicit high-gain feedback mechanism, where any subtle deviation from the curved manifold is inversely amplified to provide a corrective direction. This mechanism helps the single-step policy compensate for spatial truncation errors, providing a favorable trade-off between inference effi-ciency and manipulation fidelity. The complete procedure for generating the RCAF target is summarized in Algorithm 1. 
+
+B. Dual-Timestep Frequency Consistency (DTFC) 
+
+Although RCAF mitigates spatial truncation errors, opti-mizing the single-step model solely with global MSE can 
+
+Algorithm 1 Recursive Consistent Action Flow (RCAF) 
+
+Require: Expert actions x1, noise x0, EMA teacher vθEMA ,steps N , ratio ρ, condition c. 
+
+> 1:
+
+Function RCAF( xC 
+
+> 1
+
+, x C 
+
+> 0
+
+, v θEMA , c ): 
+
+> 2:
+
+Sample span ∆t ∼ U [dt min , 1] , start ts ∼ U [0 , 1 − ∆t], set 
+
+te = ts + ∆ t 
+
+> 3:
+
+xs = (1 − ts)x0 + tsx1, vtrue = x1 − x0 
+
+> 4:
+
+# 1. Teacher long-term prediction  
+
+> 5:
+
+vlong = vθEMA (xs, t s, ∆t, c ) 
+
+> 6:
+
+# 2. Anchor step via OT target velocity  
+
+> 7:
+
+dt anc = ρ · ∆t, t1 = ts + dt anc , xcurr = xs + vtrue · dt anc  
+
+> 8:
+
+# 3. Teacher N-step recursive tail estimation  
+
+> 9:
+
+Drec ← 0, dt s = ( te − t1)/N  
+
+> 10:
+
+for i = 1 to N do  
+
+> 11:
+
+tc = t1 + ( i − 1) dt s, vi = vθEMA (xcurr , t c, dt s, c ) 
+
+> 12:
+
+Drec ← Drec + vi · dt s, xcurr ← xcurr + vi · dt s 
+
+> 13:
+
+end for  
+
+> 14:
+
+# 4. Residual correction ξ and target computing  
+
+> 15:
+
+ξ = Clamp 
+
+ vlong ·∆t−Drec  
+
+> dt anc
+
+− vtrue , −γ, γ 
+
+ 
+
+> 16:
+
+vtarget = sg( vlong − ξ) 
+
+> 17:
+
+return xs, t s, ∆t, v target 
+
+bias predictions toward low-frequency, overly smooth motions. This may suppress high-frequency manipulation details that are important for precise control, such as fine fingertip adjust-ments and rapid contact-rich corrections. To overcome this bottleneck, inspired by [39], we propose the Dual-Timestep Frequency Consistency (DTFC) mecha-nism. DTFC encourages adaptive spectral consistency across different flow timesteps, preventing high-frequency manipu-lation details from being overly suppressed during one-step generation. To leverage the temporal dynamics of action chunks, we employ the 1D Type-II Discrete Cosine Transform ( DCT ) to map the time-domain velocity predictions v ∈ RH×D into the spectral domain. This transformation separates high- and low-frequency signals across the prediction horizon H, which often provides a compact representation with dominant low-frequency components. Specifically, we independently sample two flow timesteps ta, t b ∼ U [0 , 1] and construct their cor-responding noisy states xa and xb via the standard Optimal Transport formulation (Eq. 2). Next, we predict the corre-sponding action flow velocities and apply the DCT operator to map these sequential features into the spectral domain: 
+
+ˆva = DCT (vθ (xa, t a, 0, c )) , ˆvb = DCT (vθ (xb, t b, 0, c )) 
+
+(7) where ˆva, ˆvb ∈ RH×D denote the frequency-domain repre-sentations of the predicted velocities. The span input is set to 0 to indicate the standard instantaneous velocity prediction branch. To quantify spectral consistency across different flow timesteps, we compute the discrepancy at frequency band k
+
+as 
+
+E(k) 
+
+> abs
+
+= 1
+
+D
+
+> D
+
+X
+
+> d=1
+
+ˆv(k,d ) 
+
+> a
+
+− ˆv(k,d ) 
+
+> b
+
+. (8) To prevent the model from merely fitting easy-to-learn low-PREPRINT SUBMITTED TO ARXIV 6
+
+frequency components, we design a combined adaptive weight 
+
+ω(k) 
+
+> comb
+
+for the k-th frequency band by coupling two core mechanisms: 
+
+(1) Dynamic Focal Weight: This mechanism allo-cates attention based on the relative spectral error, en-couraging the model to actively focus on the frequencies with the largest discrepancies. It is defined as ω(k) 
+
+> focal
+
+=
+
+1 + E(k) 
+
+> abs
+
+/(max j E(j) 
+
+> abs
+
++ ϵ)
+
+α
+
+, where α ≥ 0 controls the penalty degree for hard samples. 
+
+(2) Dual-Timestep Perception Mask: We further introduce a timestep-aware spectral mask to adapt the frequency weights according to the sampled flow timesteps. Specifically, we normalize the discrete frequency index into fk ∈ [0 , 1] and use it as a frequency coordinate. This design provides a simple spectral prior: earlier flow stages are assigned larger weights on lower-frequency bands to emphasize global action structure, while later stages place more weight on higher-frequency bands to preserve local manipulation details. Accordingly, we construct a Gaussian mask centered around the sampled timesteps ta and tb:
+
+ω(k) 
+
+> time
+
+= max  
+
+> t∈{ ta,t b}
+
+exp 
+
+
+
+− (fk − t)2
+
+2σ2
+
+
+
+(9) We fuse these weights via element-wise multiplication (ω(k) 
+
+> comb
+
+= ω(k) 
+
+> focal
+
+· ω(k)
+
+> time
+
+) and channel normalization. The final DTFC loss penalizes spectral inconsistencies as: 
+
+LDTFC = Ex0,x 1,c,t a,t b
+
+" HX
+
+> k=1
+
+ω(k) 
+
+> comb
+
+· 1
+
+D
+
+> D
+
+X
+
+> d=1
+
+
+
+ˆv(k,d ) 
+
+> a
+
+− ˆv(k,d )
+
+> b
+
+2
+
+#
+
+.
+
+(10) 
+
+Algorithm 2 Dual-Timestep Frequency Consistency (DTFC) 
+
+Require: State xa, time ta, pred. vel. va, target vel. vtrue ,student vθ , condition c, hyperparams σ, α, ϵ  
+
+> 1:
+
+Function DTFC( xa, t a, v a, v true , v θ , c ): 
+
+> 2:
+
+# Sample random timestep and compute state  
+
+> 3:
+
+Sample tb ∼ U [0 , 1] ; compute state xb = xa +( tb −ta)vtrue  
+
+> 4:
+
+# Predict velocity and transform to frequency  
+
+> 5:
+
+Predict velocity at tb: vb = vθ (xb, t b, 0, c ) 
+
+> 6:
+
+ˆva, ˆvb = DCT( va), DCT( vb) 
+
+> 7:
+
+Let E(k) 
+
+> abs
+
+= 1
+
+> D
+
+PDd=1 ˆv(k,d ) 
+
+> a
+
+− ˆv(k,d ) 
+
+> b
+
+denote the absolute spectral error  
+
+> 8:
+
+# 1. Adaptive Focal Weight  
+
+> 9:
+
+ωfocal =
+
+
+
+1 + Eabs 
+
+> max( Eabs )+ ϵ
+
+α 
+
+> 10:
+
+# 2. Dual-Timestep Gaussian Mask  
+
+> 11:
+
+ωtime = max t∈{ ta,t b} exp 
+
+
+
+− (f −t)2
+
+> 2σ2
+
+ 
+
+> 12:
+
+# 3. Aggregate weights and compute final loss  
+
+> 13:
+
+ωcombined = ωfocal ⊙ ωtime {⊙ is element-wise product } 
+
+> 14:
+
+return Mean 
+
+ ωcombined  
+
+> Mean( ωcombined )
+
+⊙ (Eabs )2
+
+
+
+Frequency Curriculum Learning. To improve training stability and prevent the model from being prematurely overwhelmed by high-frequency penalty gradients before the foundational spatial flow field converges, we introduce alinear warmup curriculum. Specifically, the DTFC objective is dynamically scaled by a curriculum coefficient αcurr =min(1 .0, epoch /E warmup ), where Ewarmup denotes the warmup duration. This dynamic weighting ensures a smooth training transition from learning macroscopic spatial trajectories to refining fine-grained high-frequency manipulation details. 
+
+C. Contrastive Flow Matching (CFM) 
+
+In standard flow matching, single-step models can suffer from mode averaging when different valid actions correspond to similar observations or diverse spatial layouts. As illustrated in Figure 2c, trajectories generated from 100 Gaussian noise samples across two distinct scenes show noticeable overlap in the flow space, indicating entangled action modes. Such entanglement can lead to two issues. First, it may produce ambiguous actions when different modes require conflicting motion directions. Second, interwoven flow fields can increase trajectory curvature, making one-step approximation more prone to spatial truncation errors. To reduce multimodal flow entanglement, we introduce Contrastive Flow Matching (CFM), a margin-based objective that encourages non-matching action flows to remain separated in the velocity space, thereby reducing mode averaging. The contrastive loss is defined as: 
+
+LCFM = Ex0,x 1,c,t [Lpos + λCFM · max(0 , m − L neg )] , (11) where Lpos = ∥vθ (xt, t, 0, c ) − vtarget ∥22 minimizes the distance between the predicted flow and the target velocity under the current condition c. Conversely, the negative distance 
+
+Lneg = ∥vθ (xt, t, 0, c ) − vneg target ∥22 calculates the repulsive distance from the target velocity fields of non-matching scenes, where m denotes the margin threshold. 
+
+In-Batch Cyclic Negative Sampling. To minimize the com-putational overhead of generating negative samples, we adopt an efficient in-batch cyclic shifting strategy inspired by [42]. Within each training batch, the target velocity field is shifted along the batch dimension: vneg target = Roll( vtarget , shift = 1) .This simple strategy provides non-matching target flows with negligible computational overhead. As shown in Figure 2c, the resulting repulsive objective encourages different action modes to become more separated in the flow space. The complete procedure of the proposed CFM objective is summarized in Algorithm 3. 
+
+Algorithm 3 Contrastive Flow Matching (CFM) 
+
+Require: Predicted velocity vpred , target velocity vtarget , mar-gin threshold m, penalty weight λCFM  
+
+> 1:
+
+Function CFM( vpred , v target ): 
+
+> 2:
+
+# 1. Compute flow matching loss for positive pairs  
+
+> 3:
+
+Lpos = ∥vpred − vtarget ∥22 
+
+> 4:
+
+# 2. Generate negative targets via in-batch cyclic shifting  
+
+> 5:
+
+vneg target = Roll( vtarget , shift = 1)  
+
+> 6:
+
+# 3. Compute distance to negative samples  
+
+> 7:
+
+Lneg = ∥vpred − vneg target ∥22 
+
+> 8:
+
+# 4. Compute contrastive regularization with margin  
+
+> 9:
+
+Lcontrastive = max(0 , m − L neg ) 
+
+> 10:
+
+# 5. Aggregate the final CFM loss  
+
+> 11:
+
+return Lpos + λCFM · L contrastive PREPRINT SUBMITTED TO ARXIV 7
+
+D. Overall Training Objective 
+
+By integrating the three core modules detailed above, our end-to-end joint training objective is formulated as follows: 
+
+LTotal = LRCAF + LCFM + λfreq · αcurr · L DTFC (12) where λfreq serves as the base balancing coefficient for the frequency consistency loss, and αcurr is the epoch-dependent curriculum multiplier (defined in Section IV-B). By jointly optimizing LTotal , the policy is regularized through recursive correction (RCAF), frequency consistency (DTFC), and contrastive flow matching (CFM). These objec-tives jointly improve the fidelity of single-step action genera-tion while preserving the efficiency of 1-NFE inference. The overall training pipeline of our framework is summarized in Algorithm 4. 
+
+Algorithm 4 Overall Training Pipeline for our Framework 
+
+Require: Expert dataset D, student model vθ , EMA teacher 
+
+vθEMA , flow batch ratio rflow . 
+
+> 1:
+
+while not converged do  
+
+> 2:
+
+Sample expert actions x1 ∼ D and noise x0 ∼ N (0 , I) 
+
+> 3:
+
+Partition batch into flow-matching pair (xF 
+
+> 1
+
+, x F 
+
+> 0
+
+) and consistency pair (xC 
+
+> 1
+
+, x C 
+
+> 0
+
+) via ratio rflow  
+
+> 4:
+
+Sample ta ∼ U [0 , 1] and set xFta = (1 − ta)xF 
+
+> 0
+
++ taxF 
+
+> 1
+> 5:
+
+vF 
+
+> true
+
+= xF 
+
+> 1
+
+− xF 
+
+> 0
+
+, vFa = vθ (xFta , t a, 0, c ) 
+
+> 6:
+
+LCFM = CFM( vFa , v F
+
+> true
+
+) 
+
+> 7:
+
+LDTFC = DTFC( xFta , t a, v Fa , v F
+
+> true
+
+, v θ , c ) 
+
+> 8:
+
+xC
+
+> start
+
+, t s, ∆t, v C 
+
+> target
+
+= RCAF( xC 
+
+> 1
+
+, x C 
+
+> 0
+
+, v θEMA , c ) 
+
+> 9:
+
+LRCAF = ∥vθ (xC
+
+> start
+
+, t s, ∆t, c ) − vC
+
+> target
+
+∥22 
+
+> 10:
+
+LTotal = LRCAF + LCFM + λfreq αcurr LDTFC  
+
+> 11:
+
+θ ← θ − η∇θ LTotal  
+
+> 12:
+
+θEMA ← βθ EMA + (1 − β)θ # EMA update  
+
+> 13:
+
+end while 
+
+E. Single-Step Inference 
+
+Given a condition c extracted from current observations, we initialize a pure Gaussian noise trajectory x0 ∼ N (0 , I). For single-step inference ( N = 1 ), we fix the starting time at t = 0 
+
+and the integration span at ∆t = 1 .0. The policy network 
+
+vθ directly maps the noise x0 to the global action velocity 
+
+vpred . The final physical action trajectory x1 is then generated via a single Euler integration step: x1 = x0 + vθ (x0, t =0, ∆t = 1 .0, c ). This non-iterative paradigm avoids iterative ODE solving, enabling low-latency closed-loop control while maintaining competitive manipulation performance. V. E XPERIMENTS 
+
+We evaluate the proposed framework on 33 tasks across four simulation benchmarks using both 2D image and 3D point-cloud inputs. We further conduct ablation studies and real-world robot experiments to analyze the effectiveness and deployability of our method. 
+
+A. Simulation Benchmarks 
+
+As shown in Figure 3, we evaluate our method under two observation modalities. 2D Visuomotor Control. Fol-lowing established protocols [3], [21], we use a pre-trained ResNet-18 [43] to encode image observations. The 2D evalu-ation includes 5 bimanual manipulation tasks from RoboTwin 1.0 [25], 21 cross-domain tasks from RoboTwin 2.0 [8] for OOD generalization, and 7 dexterous manipulation tasks from Adroit [4] and DexArt [26]. 
+
+3D Visuomotor Control. To evaluate 3D spatial reasoning, we extract geometric features from point clouds and adopt 3D-conditioned policy architectures following [5], [21]. The 3D setting is evaluated on RoboTwin 1.0, Adroit, and DexArt to test the policy’s ability to process raw spatial geometry. 
+
+B. Evaluation Metrics and Implementation Details 
+
+Evaluation Metrics. We report the task Success Rate , the 
+
+Number of Function Evaluations (NFE) , and Cross-Domain Generalization performance. All models are trained and eval-uated under the same computational settings. Our method uses only 1 NFE for single-step generation, while strong generative baselines such as 3D Diffusion Policy [5] and ManiFlow [21] use their default 10-step inference configuration. 
+
+Implementation Details. Detailed hyperparameters, tem-poral horizon settings, and module-specific configurations for RCAF, DTFC, and CFM are provided in the APPENDIX A. 
+
+C. Comparisons with the State-of-the-Art 
+
+As shown in Table I, we compare our 1-NFE framework with representative generative visuomotor policies across both 2D image-based and 3D point-cloud settings. Across all benchmarks, our method achieves the best overall average performance while requiring only a single function evaluation, whereas strong generative baselines typically use 10 inference steps. 
+
+2D Visuomotor Setting. In the image-based setting, our method achieves an overall average success rate of 65 .3% ,outperforming 10-step ManiFlow ( 56 .5% ) and Diffusion Pol-icy ( 39 .4% ) while using only 1 NFE. The improvement is particularly clear on RoboTwin, where our method increases the average success rate from 46 .1% to 58 .9% compared with ManiFlow. On challenging spatial reasoning tasks such as Pick Apple Messy , Diverse Bottles Pick , and Empty Cup Place , our method consistently improves over the strongest baseline, suggesting that the proposed one-step policy better preserves action-flow geometry under complex visual layouts. On Adroit and DexArt, our method also achieves higher average performance, indicating that the proposed modules remain effective in dexterous manipulation scenarios with high-dimensional actions. 
+
+3D Point Cloud Setting. In the 3D setting, our method achieves an overall average success rate of 74 .2% , improv-ing over 3D ManiFlow ( 66 .5% ) under the same point-cloud observation modality. The gains are especially notable on Adroit, where the average success rate improves from 78 .6% to 
+
+88 .9% . For example, on the pen task, our method substantially PREPRINT SUBMITTED TO ARXIV 8  
+
+> Fig. 3. Overview of simulation benchmarks and real-world experiments. Left: the simulation evaluation suite includes 33 diverse tasks across DexArt, Adroit, RoboTwin 1.0, and RoboTwin 2.0, covering dexterous manipulation and complex bimanual coordination. Right: the real-world evaluation consists of multiple experiments on two physical 6-DoF robotic platforms: the SO101 arm with a global camera and a wrist-mounted camera, and the UR7E arm equipped with a RealSense D455 camera and a DM vision-tactile gripper.
+
+improves performance over 3D ManiFlow, suggesting better handling of fine-grained dexterous motion. On RoboTwin and DexArt, our method also improves the average success rate from 61 .9% to 67 .2% and from 63 .2% to 66 .5% , respectively. These results indicate that the proposed framework can benefit both image-based and geometry-based visuomotor policies. 
+
+Cross-Domain Generalization. To evaluate robustness in unseen environments, we further conduct cross-domain ex-periments on RoboTwin 2.0 and compare our single-step policy with ManiFlow, a strong generative policy baseline (Table II). Despite using only one function evaluation, our method improves the average success rate from 28 .8% to 
+
+34 .5% . The gains are consistent across most tasks, including 
+
+Click Alarmclock , Dump Bin Bigbin , Shake Bottle Horiz. , and 
+
+Turn Switch . These improvements suggest that the proposed RCAF, DTFC, and CFM modules help reduce the approxima-tion gap of single-step generation, leading to better robustness under visual and physical domain shifts. Overall, the results show that our method achieves com-petitive or superior manipulation performance compared with strong 10-step generative policy baselines, while reducing the inference process to a single forward pass. This demonstrates that high-fidelity one-step visuomotor generation is feasible when spatial correction, frequency preservation, and multi-modal flow separation are jointly considered. 
+
+D. Ablation Studies 
+
+To analyze the contribution of each module, we conduct systematic ablation studies on the bimanual manipulation          
+
+> Fig. 4. Performance Comparison with SOTA Methods. Average success rates across five image-based manipulation benchmarks. Our single-step framework (NFE=1) achieves strong average performance while requiring an order of magnitude fewer inference steps than multi-step generative baselines.
+
+benchmark RoboTwin [25]. 
+
+Efficacy of Core Components. Table III shows the incre-mental contribution of each module. The 10-step baseline [21] yields a 46 .1% success rate. Introducing RCAF compresses in-ference to a single step and improves the success rate to 54 .8% ,indicating the effectiveness of its spatial truncation correction. Adding DTFC to preserve high-frequency manipulation details further raises success to 57 .6% . Finally, integrating CFM to separate entangled action flows achieves the best performance of 59 .8% .
+
+RCAF Hyperparameters. Table IV studies the effects of the recursive step number N and the anchor ratio ρ. When PREPRINT SUBMITTED TO ARXIV 9
+
+TABLE I MAIN SIMULATION RESULTS ACROSS DEXTEROUS MANIPULATION AND BIMANUAL MANIPULATION BENCHMARKS .Algorithm \ Task Obs. NFE Adroit (10 demos) DexArt (100 demos) hammer door pen Average laptop faucet bucket toilet Average Diffusion Policy Img 10 54 .0 ± 3.6 41 .8 ± 2.7 18 .5 ± 2.5 38 .1 ± 2.9 81 .7 ± 2.1 29 .3 ± 2.1 26 .0 ± 2.4 77 .3 ± 1.9 53 .6 ± 2.1
+
+Flow Matching Policy Img 10 55 .7 ± 4.2 40 .0 ± 1.6 21 .2 ± 0.8 39 .0 ± 2.2 81 .7 ± 2.5 31 .3 ± 3.7 24 .0 ± 2.2 76 .3 ± 1.2 53 .3 ± 2.4
+
+2D ManiFlow Img 10 100 .0 ± 0.0 67 .0 ± 2.2 56 .0 ± 3.6 74 .3 ± 1.9 85 .7 ± 2.1 32 .3 ± 0.5 29 .7 ± 3.4 77 .7 ± 3.3 56 .3 ± 2.3
+
+Ours Img 1 100 .0 ± 0.0 68 .0 ± 2.7 59 .0 ± 1.4 75 .6 ± 2.1 88 .0 ± 2.7 41 .0 ± 2.2 34 .0 ± 2.2 82 .0 ± 2.7 61 .3 ± 2.4
+
+3D Diffusion Policy PC 10 100 .0 ± 0.0 76 .7 ± 4.7 56 .7 ± 2.6 77 .8 ± 2.4 89 .7 ± 0.9 41 .7 ± 0.5 31 .3 ± 0.5 79 .7 ± 0.9 60 .6 ± 0.7
+
+3D Flow Matching* PC 10 100 .0 ± 0.0 77 .7 ± 6.1 53 .5 ± 3.9 77 .1 ± 3.3 92 .7 ± 1.2 42 .0 ± 0.8 32 .3 ± 1.9 79 .7 ± 0.5 61 .7 ± 1.1
+
+3D ManiFlow PC 10 100 .0 ± 0.0 80 .3 ± 1.2 55 .5 ± 5.8 78 .6 ± 2.3 93 .0 ± 1.6 45 .0 ± 3.6 35 .3 ± 2.1 79 .3 ± 3.3 63 .2 ± 2.7
+
+Ours PC 1 100 .0 ± 0.0 85 .0 ± 0 81 .7 ± 2.9 88 .9 ± 1.0 96 .0 ± 2.2 44 .0 ± 2.2 39 .2 ± 2.0 86 .7 ± 2.9 66 .5 ± 2.2
+
+Algorithm \ Task Obs. NFE RoboTwin (50 demos) Overall Avg. 
+
+Pick Apple Messy Diverse Bottles Pick Dual Bottles Pick Hard Empty Cup Place Shoe Place Average Diffusion Policy Img 10 17 .0 ± 0.8 36 .3 ± 2.4 41 .3 ± 3.7 42 .0 ± 1.6 7.3 ± 2.9 28 .8 ± 2.3 39 .4 ± 2.3
+
+Flow Matching Policy Img 10 15 .3 ± 1.9 32 .0 ± 4.5 43 .0 ± 0.0 38 .0 ± 5.4 7.3 ± 1.7 27 .1 ± 2.7 38 .8 ± 2.5
+
+2D ManiFlow Img 10 37 .3 ± 4.8 37 .0 ± 1.6 47 .3 ± 2.1 63 .7 ± 1.2 45 .3 ± 3.7 46 .1 ± 2.7 56 .5 ± 2.4
+
+Ours Img 1 64 .3 ± 0.6 50 .0 ± 1.0 53 .7 ± 1.2 76 .7 ± 0.6 49 .7 ± 1.2 58 .9 ± 0.9 65 .3 ± 1.8
+
+3D Diffusion Policy PC 10 9.3 ± 3.7 38 .3 ± 7.1 46 .3 ± 2.5 73 .0 ± 0.8 46 .5 ± 2.5 42 .7 ± 3.3 57 .4 ± 2.2
+
+3D Flow Matching* PC 10 16 .0 ± 7.1 56 .3 ± 6.6 46 .5 ± 0.5 82 .3 ± 1.7 39 .3 ± 15 .5 48 .1 ± 6.3 59 .9 ± 2.8
+
+3D ManiFlow PC 10 42 .0 ± 0.8 72 .3 ± 1.7 54 .0 ± 2.2 72 .7 ± 4.8 68 .3 ± 2.9 61 .9 ± 2.5 66 .5 ± 2.5
+
+Ours PC 1 46 .3 ± 3.2 79 .0 ± 1.7 58 .0 ± 2.6 86 .3 ± 1.5 66 .3 ± 3.2 67 .2 ± 2.4 74 .2 ± 1.9
+
+TABLE II CROSS -DOMAIN PERFORMANCE COMPARISON BETWEEN MANI FLOW AND OURS ON ROBO TWIN 2.0. B EST RESULTS ARE IN BOLD .
+
+Task ManiFlow Ours Task ManiFlow Ours Adjust Bottle 84 88 Pick Dual Bottles 15 19 
+
+Beat Block Hammer 36 39 Place Bread Basket 6 6
+
+Click Alarmclock 41 49 Place Burger Fries 21 31 
+
+Click Bell 22 20 Place Empty Cup 3 8
+
+Dump Bin Bigbin 63 71 Press Stapler 17 27 
+
+Handover Block 24 31 Put Object Cabinet 17 18 
+
+Lift Pot 32 31 Shake Bottle Horiz. 36 50 
+
+Move Can Pot 39 45 Stack Bowls Three 48 51 
+
+Move Playingcard Away 33 41 Stamp Seal 3 7
+
+Open Laptop 43 52 Turn Switch 17 31 
+
+Pick Diverse Bottles 4 10 Average 28.8 34.5 
+
+TABLE III ABLATION OF CORE FRAMEWORK COMPONENTS .
+
+Method NFE Pick Diverse Dual Empty Shoe Average 
+
+Baseline 10 37.3 37.0 47.3 63.7 45.3 46.1 + RCAF 1 58.0 47.0 51.0 72.0 46.0 54.8 + RCAF + DTFC 1 62.0 50.0 53.0 76.0 47.0 57.6 
+
++ RCAF + DTFC + CFM 1 65.0 51.0 55.0 77.0 51.0 59.8 
+
+the anchor ratio becomes too small ( ρ → 0), the anchor step 
+
+dt anc = ρ∆t approaches zero, making the residual correction in Eq. 5 numerically unstable and leading to model divergence. Increasing the recursive order to N = 4 brings only amarginal improvement over our default setting ( 60 .0% vs. 
+
+59 .8% ), while requiring more recursive teacher evaluations during training. Considering stability, computational overhead, and performance, we use N = 2 and ρ = 0 .2 as the default setting. 
+
+Superiority over Single-Step Baselines. To validate RCAF against existing 1-NFE acceleration techniques, we benchmark against the Meanflow family (Table V). RCAF achieves an average success rate of 54 .8% , outperforming the strongest single-step baseline, Split-Meanflow, by 4.6% absolute im-provement. These results support our hypothesis that directly learning an interval-averaged velocity can be limited when approximating nonlinear action trajectories. In contrast, RCAF 
+
+TABLE IV ABLATION OF RCAF HYPERPARAMETERS (N AND ρ). 
+
+Settings Pick Diverse Dual Empty Shoe Average 
+
+ρ = 0 .2, N = 2 (Ours) 65 51 55 77 51 59.8 
+
+ρ = 0 .2, N = 3 59 48 52 76 50 57.0 
+
+ρ = 0 .2, N = 4 64 52 54 78 52 60.0 
+
+ρ → 0, N = 2 0 - - - - -
+
+ρ = 0 .15 , N = 2 62 49 53 74 48 57.2 
+
+ρ = 0 .25 , N = 2 63 50 52 74 45 56.8 TABLE V COMPARISON WITH 1-NFE M EANFLOW -BASED GENERATIVE BASELINES .
+
+Method Task Success Rate (%) Average Pick Diverse Dual Empty Shoe 
+
+Meanflow [33] 49 40 49 65 42 49 IMF [34] 44 43 45 67 40 47.8 Split-Meanflow [44] 50 42 50 67 42 50.2 
+
+Ours 58 47 51 72 46 54.8 
+
+estimates a recursive multi-step reference trajectory and ap-plies residual correction to compensate for spatial deviation induced by long-span one-step approximation. This improves manipulation robustness while maintaining 1-NFE inference efficiency. 
+
+TABLE VI COMPARISON OF FREQUENCY -DOMAIN CONSTRAINT STRATEGIES .
+
+Method Task Success Rate (%) Average Pick Diverse Dual Empty Shoe 
+
+Wavelet Transform (db4) 54.0 44.0 48.0 72.0 42.0 52.0 Freqpolicy [39] 56.0 46.0 51.0 76.0 40.0 53.8 
+
+DTFC (w/o Curriculum) 60.0 49.0 51.0 74.0 45.0 55.8 
+
+DTFC (Ours) 62.0 50.0 53.0 76.0 47.0 57.6 
+
+Ablation on DTFC. As shown in Table VI, even without curriculum learning, the dual-timestep frequency consistency design outperforms both Freqpolicy [39] and wavelet-based PREPRINT SUBMITTED TO ARXIV 10 
+
+frequency constraints. Adding the linear warmup curriculum further improves the average success rate to 57 .6% , achieving the best performance among the compared frequency-domain strategies. These results suggest that a coarse-to-fine optimiza-tion schedule, which first learns the global action structure and then gradually strengthens high-frequency constraints, helps reduce early-stage gradient conflicts and improves high-frequency detail preservation.                                               
+
+> TABLE VII ABLATION OF CFM MARGIN STRATEGIES .
+> Margin Type Parameter λcfm Pick Diverse Dual Empty Shoe Avg.
+> Dynamic α= 1 .00.05 61.0 48.0 46.0 76.0 46.0 55.4 Dynamic α= 1 .00.1 63.0 49.0 47.0 75.0 48.0 56.4 Static m= 0 .40.05 64.0 50.0 53.0 80.0 50.0 59.4
+> Static (Ours) m= 0 .40.1 65.0 51.0 55.0 77.0 51.0 59.8
+
+Ablation on CFM Margin. Table VII compares a dynamic margin scaled by velocity discrepancies with a static margin. The dynamic margin underperforms in our experiments, likely because margin fluctuations introduce additional instability during early training. In contrast, the static margin with 
+
+m = 0 .4 provides a stable repulsive constraint and achieves the best average success rate, suggesting that a fixed separation threshold is more reliable for separating entangled action flows. 
+
+E. Real-World Robot Experiments 
+
+To further evaluate physical deployment, we conduct real-world experiments on two robotic platforms, as shown on the right side of Figure 3: the low-cost SO101 platform and an industrial UR7E collaborative robot. The SO101 platform uses a global camera and a wrist-mounted camera for visual feedback, while the UR7E platform is equipped with a Re-alSense D455 camera and a DM vision-tactile gripper, en-abling evaluation across different robot embodiments, sensing configurations, and manipulation scales. On SO101, we evaluate three manipulation tasks under low-data settings: Pick & Place , Stand Bottle , and Drop Pen .The Pick & Place task is further tested under both regular placement and position-generalization settings. On UR7E, we evaluate a stacking task and a position-generalization Pick & Place task to examine whether the learned policy can transfer to a larger industrial arm and handle object-position variations. Each setting is evaluated over 20 trials. As shown in Table VIII, our method outperforms Dif-fusion Policy across both platforms. On SO101, we report a DP+RCAF variant and the complete DP+Ours framework to analyze the contribution of the proposed modules un-der low-data physical deployment. In the 30-demo position-generalization setting of Pick & Place , DP+Ours improves the success rate from 1/20 to 5/20. With 60 demonstrations, the gains become more pronounced, especially on challenging tasks such as Stand Bottle and Drop Pen . Compared with DP+RCAF, DP+Ours further improves performance on tasks requiring precise and stable manipulation, suggesting that DTFC and CFM provide additional benefits beyond spatial truncation-error correction. On the UR7E platform, we evaluate our full method directly against Diffusion Policy. Our method improves the success rate from 4/20 to 7/20 on Stack Cylinder and from 1/20 to 6/20 on the position-generalization Pick & Place task, indicating better robustness to unseen object placements. For completeness, we also evaluate π0 in selected SO101 settings. While π0 succeeds in one setting, some executions are aborted due to hardware safety triggers. Overall, these real-world results demonstrate that the proposed framework improves the reliability of accelerated visuomotor policies across different robot embodiments.                                         
+
+> TABLE VIII REAL -WORLD SUCCESS RATES ON SO101 AND UR7E. E ACH RESULT IS REPORTED OVER 20 TRIALS . “P OS . G EN .” DENOTES POSITION GENERALIZATION , “A BORT ”DENOTES EXECUTIONS STOPPED BY HARDWARE SAFETY TRIGGERS ,AND “N/A” DENOTES SETTINGS NOT EVALUATED .
+> SO101 Platform Task Demos Diffusion Policy DP+RCAF DP+Ours π0
+> Pick & Place (Pos. Gen.) 30 1/20 3/20 5/20 Abort Pick & Place (Pos. Gen.) 60 4/20 7/20 10/20 6/20 Pick & Place (Regular) 60 12/20 20/20 20/20 Abort Stand Bottle (Regular) 60 2/20 14/20 18/20 N/A Drop Pen (Regular) 60 8/20 8/20 12/20 N/A
+
+UR7E Platform Task Demos Diffusion Policy Ours 
+
+Stack Cylinder 80 4/20 7/20 
+
+Pick & Place (Pos. Gen.) 80 1/20 6/20 
+
+VI. C ONCLUSION 
+
+This paper presents a high-fidelity one-step generative vi-suomotor policy framework for efficient robotic manipula-tion. The framework integrates recursive correction, frequency consistency, and contrastive flow matching to address three key challenges in one-step action generation: spatial trun-cation, frequency distortion, and multimodal flow entangle-ment. Experiments across 33 simulation tasks and real-world robot platforms show that the proposed framework achieves competitive or superior performance compared with strong multi-step generative policy baselines while requiring only one function evaluation. These results suggest that jointly improv-ing recursive spatial correction, frequency-domain consistency, and multimodal flow separation is important for high-fidelity single-step visuomotor control. 
+
+Limitations and Future Work. Although our framework shows strong empirical performance, it introduces module-specific hyperparameters, such as recursive steps, frequency weights, and contrastive margins, which may require tuning when transferred to new robot embodiments or task dis-tributions. Future work will explore scaling this single-step acceleration paradigm to larger multimodal robot foundation models and integrating tactile feedback for more dynamic contact-rich manipulation. APPENDIX 
+
+A. Experimental Setup 
+
+To ensure the strict reproducibility of our framework, Ta-ble IX details the exhaustive hyperparameter configurations, PREPRINT SUBMITTED TO ARXIV 11 
+
+Fig. 5. Training dynamics and convergence analysis logged over 120k steps. The subplots systematically evaluate (a) the total loss, (b-d) the convergence of the three core sub-objectives, (e-f) the synchronous recovery of cross-spectral relative errors, and (g-h) the bounded stabilization of the internal structural constraints (the RCAF spatial clamp ξ and the CFM margin penalty). 
+
+network architectures, and hardware specifications utilized across all benchmarks. 
+
+TABLE IX DETAILED HYPERPARAMETERS AND IMPLEMENTATION CONFIGURATIONS ACROSS SIMULATION BENCHMARKS .                                   
+
+> Parameter RoboTwin Adroit & DexArt
+> Hardware & Software Specifications
+> Compute Hardware NVIDIA RTX 4090 Deep Learning Framework PyTorch 2.4.1 (CUDA 11.8)
+> Network Architecture
+> Visual Encoder R3M (ResNet-18) / DP3 Policy Backbone DiTX (12 layers, 8 heads, 768 dim) Diffusion Timestep Embed Dim 128
+> General Training Configurations
+> Optimizer AdamW (Base LR: 5×10 −5)Batch Size 64 192 Training Epochs 1010 (2D) / 2010 (3D) 5010 Observation Horizon ( Tobs )2Prediction Horizon ( Tpred )16 4Action Execution Steps ( Tact )16 3
+> Framework-Specific Settings
+> Flow / Consistency Batch Ratio 0.75 / 0.25 Recursive Steps ( N)2Anchor Step Ratio ( ρ)0.2 Residual Clamp Magnitude ( γ)5.0 Freq. Consistency Weight ( λfreq )0.2 Focal Weight Alpha ( α)2.0 Gaussian Mask Bandwidth ( σ)0.3 Curriculum Warmup Epochs ( Ewarmup )200 Contrastive Margin / Weight m= 0 .4/λCFM = 0 .1
+> EMA Decay Rate ( β)0.9999
+
+B. Training Dynamics and Convergence Analysis 
+
+Figure 5 visualizes the training dynamics, validating the optimization stability of our framework without numerical oscillations or gradient explosion. 
+
+Core Objectives Convergence: (a) Total Loss converges smoothly after an initial rapid descent. (b) Flow Matching Loss drops rapidly, effectively establishing the base action manifold topology. (c) RCAF Consistency Loss decays syn-chronously with the flow loss, confirming the stable distillation of high-order residual corrections from the EMA teacher. (d) DTFC Frequency Loss steadily declines under the curriculum warmup, bridging the spectral gap across timesteps. Spectral Fidelity & Internal Constraints: Relative errors in both (e) Low-Frequency and (f) High-Frequency bands decay synchronously to ∼ 1.0. This verifies that our dynamic focal weighting successfully prevents low-pass degradation, captur-ing both global macro-motions and transient high-frequency details. Critically, (g) the Maximum Residual Displacement ( ξ)drops dramatically from an initial peak of ∼ 4.7 to near zero. This signifies that the single-step student naturally internalizes the manifold curvature as training progresses, aligning its linear predictions with the true multi-step trajectories. Finally, (h) the CFM Repulsive Penalty stabilizes strictly around the defined margin, providing a continuous, non-destructive decoupling force for intertwined action flows. 
+
+C. Phenomenon-Analysis 
+
+To explicitly evaluate the stability and discriminative ca-pacity of our approach in the challenging single-step regime (N = 1 ), we visualize the comprehensive action generation process in Figure 6. 
+
+Action Stability and Spectral Fidelity. As demonstrated by the absolute error heatmaps (Fig. 6b), the conventional 1-NFE baseline suffers from larger systematic errors. Physically, this degradation manifests as severe geometric jittering—evident in the less structured 2D action manifold (Fig. 6c) and the temporal chattering of the grippers (Fig. 6d). Conversely, our generated trajectory tightly adheres to the expert ground-truth (GT) manifold, executing sharp state transitions without physi-cal oscillation. Frequency-domain analysis (Fig. 6d,e) provides one explanation for this gap: our mechanism successfully suppresses anomalous high-frequency noise by over an order of magnitude compared to the baseline. 
+
+Empirical Verification of CFM Decoupling. To visualize how Contrastive Flow Matching (CFM) mitigates the mode-averaging bottleneck, Figure 6f traces the continuous integra-tion of 100 identical Gaussian noise samples evolving toward PREPRINT SUBMITTED TO ARXIV 12     
+
+> Fig. 6. Comprehensive Qualitative Analysis and CFM Empirical Verification. (a-e) Action Generation Stability: (a) RGB observation sequence; (b) Absolute action error heatmaps; (c) 2D phase space action manifold; (d) Time-domain trajectories of grippers; (e) Frequency-domain velocity spectrum demonstrating high-frequency noise suppression. (f) Empirical Verification of CFM: Trajectories of 100 identical Gaussian noise samples evolving to predicted actions for two distinct scenes. Standard flow-matching (top rows) suffers from mode-averaging entanglement, whereas our CFM (bottom rows) establishes a latent repulsive field, encouraging more separated, decoupled, and scene-specific action manifolds.
+
+the action space for two visually distinct scenes. Without explicit contrastive constraints (Fig. 6f, top rows), standard flow-matching struggles with overlapping state-action spaces. Trajectories from different scenes entangle and collapse toward an ambiguous mean center, inducing high ODE curvature and amplifying single-step truncation errors. In stark contrast, our CFM-equipped policy (Fig. 6f, bottom rows) constructs a latent repulsive field. This cleanly decouples the previously in-terwoven flows into independent manifolds. The evolutionary paths remain straight and deterministically map identical initial noises to distinct, scene-specific action distributions, thereby guaranteeing execution precision. 
+
+D. Theoretical Analysis of Recursive Consistent Action Flow 
+
+To deeply understand the optimization dynamics of RCAF, we provide a theoretical analysis from a control theory per-spective. 
+
+Implicit High-Gain Feedback. Let ∆t be the integration span, dt anc = ρ · ∆t the anchor duration, vlong the teacher’s global velocity, Drec the N -step accumulated displacement, and vtrue the physical ground-truth velocity. The target velocity for the student policy is defined by the residual correction 
+
+ξ = vest − vtrue :
+
+vtarget = vlong −
+
+ vlong ∆t − Drec 
+
+dt anc 
+
+| {z }
+
+> vest
+
++vtrue (13) Defining the scaling constant k = ∆t/dt anc = 1/ρ , this expands to: 
+
+vtarget = (1 − k)vlong + k Drec 
+
+∆t + vtrue (14) This reveals RCAF intrinsically acts as a High-Gain Pro-portional Controller. For our default ρ = 0 .2 (k = 5 ), the coefficient for vlong is −4, meaning prediction deviations are inversely amplified by a factor of 4. This aggressive negative feedback strongly penalizes deviations from the curved mani-fold, forcing the policy away from erroneous linear shortcuts. 
+
+Fixed-Point Convergence. Despite aggressive amplifica-tion, the system suggests a stable fixed point under the assumed formulation where the student matches the target and the EMA teacher ( vtarget = vlong ), yielding ξ → 0. Substituting this into the expansion and recalling 1/k = dt anc /∆t, we arrive at the analytical solution: 
+
+vlong = vtrue · dt anc + Drec 
+
+∆t (15) This mathematical fixed point is exactly the Global Average Secant Velocity across the action manifold, ensuring the model aligns with the true multi-step integration path. 
+
+Gradient Magnification. Let vopt denote the ideal secant velocity derived above. We can algebraically reformulate the target as vtarget = vlong − k(vlong − vopt ). Minimizing the standard MSE objective L = 12 ∥vstudent − sg (vtarget )∥2 yields the gradient: 
+
+∇vstudent L = ( vstudent − vlong ) + k(vlong − vopt ) (16) PREPRINT SUBMITTED TO ARXIV 13 
+
+Since the EMA teacher’s local predictions are highly corre-lated with the student ( vstudent ≈ vlong ), the effective gradient driving the optimization simplifies to: 
+
+∇vstudent L ≈ k · (vlong − vopt ) (17) REFERENCES [1] S. Levine, C. Finn, T. Darrell, and P. Abbeel, “End-to-end training of deep visuomotor policies,” Journal of Machine Learning Research ,vol. 17, no. 39, pp. 1–40, 2016. [2] B. Zheng, S. Verma, J. Zhou, I. W. Tsang, and F. Chen, “Imitation learning: Progress, taxonomies and challenges,” IEEE Transactions on Neural Networks and Learning Systems , vol. 35, no. 5, pp. 6322–6337, 2022. [3] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” The International Journal of Robotics Research , vol. 44, no. 10-11, pp. 1684–1704, 2025. [4] A. Rajeswaran, V. Kumar, A. Gupta, G. Vezzani, J. Schulman, E. Todorov, and S. Levine, “Learning complex dexterous manipulation with deep reinforcement learning and demonstrations,” arXiv preprint arXiv:1709.10087 , 2017. [5] Y. Ze, G. Zhang, K. Zhang, C. Hu, M. Wang, and H. Xu, “3d diffusion policy: Generalizable visuomotor policy learning via simple 3d representations,” arXiv preprint arXiv:2403.03954 , 2024. [6] S. Liu, L. Wu, B. Li, H. Tan, H. Chen, Z. Wang, K. Xu, H. Su, and J. Zhu, “Rdt-1b: a diffusion foundation model for bimanual manipula-tion,” arXiv preprint arXiv:2410.07864 , 2024. [7] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman, B. Ichter, et al. , “ π0: A Vision-Language-Action flow model for general robot control,” arXiv preprint arXiv:2410.24164 , 2024. [8] T. Chen, Z. Chen, B. Chen, Z. Cai, Y. Liu, Z. Li, Q. Liang, X. Lin, Y. Ge, Z. Gu, et al. , “Robotwin 2.0: A scalable data generator and benchmark with strong domain randomization for robust bimanual robotic manipulation,” arXiv preprint arXiv:2506.18088 , 2025. [9] Q. Liu, G. Wang, Z. Liu, and H. Wang, “Visuomotor navigation for em-bodied robots with spatial memory and semantic reasoning cognition,” 
+
+IEEE Transactions on Neural Networks and Learning Systems , vol. 36, no. 5, pp. 9512–9523, 2024. [10] G. Wang, M. Xin, W. Wu, Z. Liu, and H. Wang, “Learning of long-horizon sparse-reward robotic manipulator tasks with base controllers,” 
+
+IEEE Transactions on Neural Networks and Learning Systems , vol. 35, no. 3, pp. 4072–4081, 2022. [11] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,” 
+
+Advances in neural information processing systems , vol. 33, pp. 6840– 6851, 2020. [12] J. Song, C. Meng, and S. Ermon, “Denoising diffusion implicit models,” 
+
+arXiv preprint arXiv:2010.02502 , 2020. [13] Y. Lipman, R. T. Chen, H. Ben-Hamu, M. Nickel, and M. Le, “Flow matching for generative modeling,” arXiv preprint arXiv:2210.02747 ,2022. [14] X. Liu, C. Gong, and Q. Liu, “Flow straight and fast: Learning to generate and transfer data with rectified flow,” arXiv preprint arXiv:2209.03003 , 2022. [15] E. Chisari, N. Heppert, M. Argus, T. Welschehold, T. Brox, and A. Val-ada, “Learning robotic manipulation policies from point clouds with conditional flow matching,” arXiv preprint arXiv:2409.07343 , 2024. [16] G. Lu, Z. Gao, T. Chen, W. Dai, Z. Wang, W. Ding, and Y. Tang, “Manicm: Real-time 3d diffusion policy via consistency model for robotic manipulation,” arXiv preprint arXiv:2406.01586 , 2024. [17] Z. Wang, Z. Li, A. Mandlekar, Z. Xu, J. Fan, Y. Narang, L. Fan, Y. Zhu, Y. Balaji, M. Zhou, et al. , “One-step diffusion policy: Fast visuomotor policies via diffusion distillation,” arXiv preprint arXiv:2410.21257 ,2024. [18] J. Sheng, Z. Wang, P. Li, and M. Liu, “Mp1: Meanflow tames policy learning in 1-step for robotic manipulation,” arXiv preprint arXiv:2507.10543 , 2025. [19] G. Zou, H. Wang, H. Wu, Y. Qian, Y. Wang, and W. Li, “Dm1: Meanflow with dispersive regularization for 1-step robotic manipulation,” arXiv preprint arXiv:2510.07865 , 2025. [20] G. Zhan, L. Tao, P. Wang, Y. Wang, Y. Li, Y. Chen, M. Tomizuka, and S. E. Li, “Mean flow policy with instantaneous velocity constraint for one-step action generation,” arXiv preprint arXiv:2602.13810 , 2026. [21] G. Yan, J. Zhu, Y. Deng, S. Yang, R.-Z. Qiu, X. Cheng, M. Mem-mel, R. Krishna, A. Goyal, X. Wang, et al. , “Maniflow: A general robot manipulation policy via consistency flow training,” arXiv preprint arXiv:2509.01819 , 2025. [22] A. Prasad, K. Lin, J. Wu, L. Zhou, and J. Bohg, “Consistency policy: Accelerated visuomotor policies via consistency distillation,” arXiv preprint arXiv:2405.07503 , 2024. [23] Y. Fang, X. Wang, X. Zhang, W. Xue, M. Zhang, S. Chen, and J. Zhao, “Imitation learning policy based on multi-step consistent integration shortcut model,” arXiv preprint arXiv:2510.19356 , 2025. [24] Q. Zhang, Z. Liu, H. Fan, G. Liu, B. Zeng, and S. Liu, “Flowpolicy: Enabling fast and robust 3d flow-based policy via consistency flow matching for robot manipulation,” in Proceedings of the AAAI Con-ference on Artificial Intelligence , vol. 39, pp. 14754–14762, 2025. [25] Y. Mu, T. Chen, Z. Chen, S. Peng, Z. Lan, Z. Gao, Z. Liang, Q. Yu, Y. Zou, M. Xu, et al. , “Robotwin: Dual-arm robot benchmark with generative digital twins,” in Proceedings of the computer vision and pattern recognition conference , pp. 27649–27660, 2025. [26] C. Bao, H. Xu, Y. Qin, and X. Wang, “Dexart: Benchmarking generaliz-able dexterous manipulation with articulated objects,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,pp. 21190–21200, 2023. [27] T.-W. Ke, N. Gkanatsios, and K. Fragkiadaki, “3d diffuser ac-tor: Policy diffusion with 3d scene representations,” arXiv preprint arXiv:2402.10885 , 2024. [28] N. Gkanatsios, J. Xu, M. Bronars, A. Mousavian, T.-W. Ke, and K. Fragkiadaki, “3d flowmatch actor: Unified 3d policy for single-and dual-arm manipulation,” arXiv preprint arXiv:2508.11002 , 2025. [29] Y. Song, P. Dhariwal, M. Chen, and I. Sutskever, “Consistency models,” 2023. [30] C. Lu and Y. Song, “Simplifying, stabilizing and scaling continuous-time consistency models,” arXiv preprint arXiv:2410.11081 , 2024. [31] P. Sun and T. Lin, “Any-step generation via n-th order recursive consistent velocity field estimation,” in The Fourteenth International Conference on Learning Representations .[32] L. Yang, Z. Zhang, Z. Zhang, X. Liu, M. Xu, W. Zhang, C. Meng, S. Er-mon, and B. Cui, “Consistency flow matching: Defining straight flows with velocity consistency,” arXiv preprint arXiv:2407.02398 , 2024. [33] Z. Geng, M. Deng, X. Bai, J. Z. Kolter, and K. He, “Mean flows for one-step generative modeling,” arXiv preprint arXiv:2505.13447 , 2025. [34] Z. Geng, Y. Lu, Z. Wu, E. Shechtman, J. Z. Kolter, and K. He, “Improved mean flows: On the challenges of fastforward generative models,” arXiv preprint arXiv:2512.02012 , 2025. [35] Y. Wang, Y. Zhang, M. Huo, R. Tian, X. Zhang, Y. Xie, C. Xu, P. Ji, W. Zhan, M. Ding, et al. , “Sparse diffusion policy: A sparse, reusable, and flexible policy for robot learning,” arXiv preprint arXiv:2407.01531 ,2024. [36] S. Jiang, X. Fang, N. Roy, T. Lozano-P´ erez, L. P. Kaelbling, and S. Ancha, “Streaming flow policy: Simplifying diffusion/flow-matching policies by treating action trajectories as flow trajectories,” arXiv preprint arXiv:2505.21851 , 2025. [37] J. Li, Y. Cong, Y. Wang, H. Xia, S. Huang, Y. Zhang, N. Xu, and G. Dai, “Step: Warm-started visuomotor policies with spatiotemporal consistency prediction,” arXiv preprint arXiv:2602.08245 , 2026. [38] A. Sochopoulos, N. Malkin, N. Tsagkas, J. Moura, M. Gienger, and S. Vijayakumar, “Fast flow-based visuomotor policies via conditional optimal transport couplings,” arXiv preprint arXiv:2505.01179 , 2025. [39] Y. Su, N. Liu, D. Chen, Z. Zhao, K. Wu, M. Li, Z. Xu, Z. Che, and J. Tang, “Freqpolicy: Efficient flow-based visuomotor policy via frequency consistency,” arXiv preprint arXiv:2506.08822 , 2025. [40] W. Peebles and S. Xie, “Scalable diffusion models with transformers,” in Proceedings of the IEEE/CVF international conference on computer vision , pp. 4195–4205, 2023. [41] K. Frans, D. Hafner, S. Levine, and P. Abbeel, “One step diffusion via shortcut models,” arXiv preprint arXiv:2410.12557 , 2024. [42] G. Stoica, V. Ramanujan, X. Fan, A. Farhadi, R. Krishna, and J. Hoff-man, “Contrastive flow matching,” in Proceedings of the IEEE/CVF International Conference on Computer Vision , pp. 1185–1194, 2025. [43] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image recognition,” in Proceedings of the IEEE conference on computer vision and pattern recognition , pp. 770–778, 2016. [44] Y. Guo, W. Wang, Z. Yuan, R. Cao, K. Chen, Z. Chen, Y. Huo, Y. Zhang, Y. Wang, S. Liu, et al. , “Splitmeanflow: Interval splitting consistency in few-step generative modeling,” arXiv preprint arXiv:2507.16884 , 2025.

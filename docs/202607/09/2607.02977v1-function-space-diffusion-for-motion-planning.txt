@@ -1,0 +1,485 @@
+Title: Function-Space Diffusion for Motion Planning
+
+URL Source: https://arxiv.org/pdf/2607.02977v1
+
+Published Time: Tue, 07 Jul 2026 00:30:21 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# Function-Space Diffusion for Motion Planning 
+
+Zinuo Chang, Yipu Chen, Byoungwoo Park, Hongzhe Yu, and Yongxin Chen 
+
+Abstract —Diffusion-based motion planners have demonstrated strong performance in generating diverse and high-quality robot trajectories in cluttered environments with multiple feasible so-lutions. However, existing approaches typically operate on fixed-length waypoint sequences, making the learned model resolution-dependent, thereby preventing zero-shot generalization across resolutions. In this work, we propose Function-Space Diffusion for Motion Planning (FSD-MP), a diffusion-based motion planner that models trajectories as continuous functions and performs diffusion directly in function space, achieving discretization-invariant trajectory generation. We define a mode-wise forward process in the spectral domain, driven by Gaussian noise with a Matérn-type covariance, and parameterize the reverse pro-cess with a boundary-compatible Discrete Sine Transform-based Fourier Neural Operator (DST-FNO) that preserves start-goal constraints across resolutions. We evaluate FSD-MP on 2D point robot and 7-DoF Franka manipulator planning benchmarks. Our method achieves competitive planning performance at the training resolution and generalizes zero-shot across resolutions up to 16× higher, preserving consistent planning behavior without retraining. These results demonstrate that function-space diffu-sion provides an effective framework for discretization-invariant motion planning. 
+
+I. I NTRODUCTION 
+
+Motion planning is a crucial component of robotic systems, aiming to find smooth and collision-free trajectories that con-nect start and goal configurations in cluttered environments. The problem is inherently non-convex due to obstacles, and often admits multiple distinct solutions. Classical motion planning methods have been extensively studied from both optimization-based and sampling-based perspectives. Trajectory optimization methods refine an initial trajectory by minimizing costs related to smoothness, collision avoidance, and task objectives [1]–[4]. While often effective in practice, they are sensitive to initialization and may converge to poor local minima or infeasible solutions under non-convex collision constraints. Sampling-based planners explore the configuration space and provide probabilistic completeness guarantees [5]–[7], but their exploration can become inefficient in high-dimensional spaces or narrow passages. Moreover, the resulting paths often require post-processing to satisfy smoothness or control-related requirements. These limitations have motivated learning-based motion planners that directly generate feasible trajectories by learning from expert demonstrations. By capturing the distribution of feasible trajectories, such models can rapidly generate diverse, 
+
+> Z. Chang is with the School of Electrical and Computer Engineering, Yipu Chen, H. Yu and Yongxin Chen are with the School of Aerospace Engi-neering, Georgia Institute of Technology, Atlanta, GA; {zchang40, ychen3302, hyu419, yongchen}@gatech.edu B. Park is with Korea Advanced Institute of Science and Technology, Daejeon, Republic of Korea; bw.park@kaist.ac.kr
+
+high-quality solutions without exhaustive online search or carefully designed initialization. Among these approaches, diffusion-based generative models [8]–[10] have proven to be a powerful framework for modeling complex, multimodal trajectory distributions, making them well-suited for motion planning in cluttered and high-dimensional spaces. Despite their promise, existing diffusion-based planners represent trajectories as fixed-length waypoint sequences. This tightly couples the learned model to a specific discretization: a model trained at one resolution cannot generalize to another without retraining. This dependence is undesirable in motion planning, where trajectories are naturally continuous, and the appropriate resolution may vary across tasks, environments, and downstream controllers. Coarse discretizations are com-putationally efficient but may miss geometric details near ob-stacles, whereas fine discretizations improve fidelity at higher computational cost. To address this gap, we propose Function-Space Diffusion for Motion Planning (FSD-MP), which achieves discretization invariance by treating trajectories as continuous functions and performing diffusion directly in function space. This formu-lation enables zero-shot generalization to arbitrary resolutions without retraining. We demonstrate that a model trained at a base resolution can generate trajectories at up to 16× higher resolution while converging to the same solution modes, maintaining both feasibility and multimodality. Our key contributions are:  
+
+> •
+
+A function-space diffusion framework for motion plan-ning that is inherently discretization-invariant, enabling flexible trajectory generation at arbitrary resolutions with-out retraining.  
+
+> •
+
+A boundary-compatible neural operator architecture that consistently satisfies start-goal constraints across resolu-tions.  
+
+> •
+
+Experimental demonstration of zero-shot super-resolution up to 16× the training resolution, while preserving con-sistent planning behavior across resolutions. II. R ELATED WORK 
+
+a) Learning-based Planning: Learning-based methods aim to encode trajectory distributions from demonstrations or expert planners, providing informative biases for sampling, optimization, or direct trajectory generation. Early approaches use Gaussian Mixture Models and Probabilistic Movement Primitives [11], [12], but such models scale poorly to high-dimensional configuration spaces. More recent approaches adopt deep generative models, including generative adver-sarial networks (GANs), variational autoencoders (VAEs), normalizing flows, and energy-based models (EBMs), to learn 
+
+> arXiv:2607.02977v1 [cs.RO] 3 Jul 2026
+
+Fig. 1: Overview of FSD-MP. (Top) The forward process performs zero-end projection, transforms trajectories into DST coefficients and applies mode-wise diffusion with variance scaled by eigenvalue λk. (Bottom) The reverse process denoises via FiLM-conditioned DST-FNO layers, together with guidance based on the predicted clean trajectory ˆx0. The function-space formulation enables discretization-invariant trajectory generation across both coarse and fine discretizations. richer trajectory distributions for planning [13]–[16]. However, these models often require trade-offs among distributional expressiveness, training stability, and conditional generation flexibility, motivating diffusion models as a flexible framework for modeling complex, multimodal trajectory distributions. 
+
+b) Diffusion Models in Robotics: Diffusion models gen-erate samples by learning to reverse an iterative noising pro-cess [17], [18]. Their expressive modeling capacity and flexi-ble conditioning have led to broad adoption in robotics, includ-ing policy learning, manipulation, and decision-making [19]– [22]. In motion planning, Diffuser [8] pioneered the appli-cation of diffusion models to offline reinforcement learning and trajectory planning. Motion Planning Diffusion (MPD) [9] further adapted diffusion for robot manipulation to generate diverse, collision-free trajectories conditioned on task goals. These works demonstrate the effectiveness of diffusion mod-els for capturing multimodal trajectory distributions. How-ever, most existing diffusion-based methods operate on finite-dimensional waypoint or action sequences with a fixed dis-cretization, limiting their ability to generalize across different resolutions. 
+
+c) Diffusion Models in Function Space: Recent works have extended diffusion and score-based generative models to infinite-dimensional function spaces [23]–[25], enabling discretization-invariant generation. These function-space for-mulations have been applied to diverse domains with naturally continuous structure, including image generation and physics-informed problems governed by PDEs such as Navier–Stokes. Despite this progress, function-space diffusion remains largely unexplored in robotics and motion planning, even though trajectories are inherently continuous functions and practical deployment often requires flexible discretizations. Our work addresses this gap by formulating motion planning as diffusion over trajectory functions, enabling zero-shot generalization across arbitrary discretizations. III. P ROBLEM FORMULATION 
+
+Motion planning involves finding a smooth, collision-free trajectory between the start and goal configurations qs, q g ∈
+
+Rd, where d denotes the dimension of the robot configuration space. We represent a trajectory as a continuous function 
+
+x(τ ) : [0 , 1] → Rd (1) where τ ∈ [0 , 1] denotes normalized time. The planning problem is to find an optimal trajectory x⋆(τ ) that minimizes a cost functional J for a given set of end-point configurations: 
+
+x⋆ = arg min  
+
+> x
+
+J(x) s.t. x(0) = qs, x (1) = qg , (2) with the objective decomposed as 
+
+J(x) = Jprior (x) + Jtask (x), (3) where Jprior encourages smoothness or consistency with prior knowledge of feasible trajectories, and Jtask penalizes task-dependent constraint violations in the environment O.We adopt a probabilistic perspective and view motion plan-ning as posterior inference over trajectory functions: 
+
+p(x | O ) ∝ p(x) p(O | x) (4) where p(x) represents a prior distribution over smooth, fea-sible trajectories, and the likelihood p(O | x) encodes task-specific constraints such as collision avoidance and joint limits. This posterior perspective generalizes deterministic opti-mization by capturing uncertainty and multimodality in feasi-ble motions. Our goal is to generate collision-free trajectories by sampling from the posterior p(x | O ).IV. F UNCTION -S PACE DIFFUSION MOTION PLANNING 
+
+We propose Function-Space Diffusion for Motion Planning 
+
+(FSD-MP), which samples from the posterior p(x|O ) defined in Section III while achieving discretization invariance. Rather than parameterizing trajectories as fixed-length waypoint se-quences, FSD-MP represents each trajectory as a continuous function x(τ ) ∈ H , in a Hilbert space H = L2([0 , 1] , Rd). The model learns the function-space prior p(x), while the likeli-hood p(O| x) is incorporated at inference time via classifier guidance [9], [26]. This function-space formulation enables trajectory generation at arbitrary resolutions without retraining, as discretization is introduced only during evaluation. 
+
+A. Function-Space Forward Diffusion 
+
+We define the forward diffusion process over trajectories as a linear SDE in the trajectory space H:
+
+dxt = − 12 β(t) Fxtdt + pβ(t) GdWt (5) where xt ∈ H is the noisy trajectory function at diffusion time t ∈ [0 , T ], β(t) ≥ 0 is a noise schedule, F : D(F) ⊂H → H is the linear drift operator, G : H → H is the linear diffusion operator, and Wt is a cylindrical Wiener process. The corresponding noise covariance operator is C = GG ∗.This construction generalizes the Variance Preserving (VP) SDE to function space: F controls the diffusion rate across spectral modes, while G determines the covariance geometry of the injected noise. To make (5) analytically tractable, we assume F and G share an orthonormal eigenbasis {ϕk}k∈N with eigenvalues 
+
+Fϕk = λkϕk, Gϕk = μkϕk, λk, μ k > 0
+
+Projecting xt onto each spectral mode, Xkt = ⟨xt, ϕ k⟩, the SDE (5) decouples into independent coefficient SDEs: 
+
+dXkt = − 12 λkβ(t)Xkt dt + μk
+
+pβ(t)d W kt , k ∈ N (6) where {W kt } are independent standard Brownian motions. This modal decomposition admits closed-form marginals: 
+
+Xkt = pαk(t)Xk 
+
+> 0
+
++ σk(t)ϵk, ϵk ∼ N (0 , 1) , (7) where αk(t) = exp 
+
+
+
+− λk
+
+Z t
+
+> 0
+
+β(s)d s
+
+
+
+= α(t)λk
+
+σ2
+
+> k
+
+(t) = μ2
+
+> k
+
+λk
+
+(1 − αk(t)) 
+
+and α(t) is the noise schedule in standard diffusion. To simplify the expression, we introduce a rescaled noise variable ξ ∼ N (0 , F−1 C), whose coefficients satisfy 
+
+ξk := ⟨ξ, ϕ k⟩ = μk
+
+√λk
+
+ϵk (8) With this reparameterization, the forward process in (7) admits a compact form analogous to standard diffusion: 
+
+Xkt = pαk(t)Xk 
+
+> 0
+
++ p1 − αk(t) ξk. (9) This yields a training objective that decomposes over modes (see Appendix A): 
+
+L(θ) = Et,x 0,ξ 
+
+" ∞X
+
+> k=1
+
+ξkθ (xt, t ) − ξk 2
+
+#
+
+. (10) By Parseval’s identity, this is equivalent to minimizing the MSE of ξ in the trajectory domain: 
+
+L(θ) = Et,x 0,ξ 
+
+∥ξθ (xt, t ) − ξ∥2
+
+> H
+
+. (11) 
+
+Well-Defined Noise in Function Spaces: A critical challenge in infinite-dimensional diffusion is defining valid Gaussian noise in H. A Gaussian measure N (0 , C) is supported on H
+
+only if its covariance C is trace-class [23], [25]. This rules out white noise, whose identity covariance I is not trace-class. We therefore adopt a Matérn-type covariance operator: 
+
+C = σ2  −∆ + κ2I−α , (12) where ∆ is the Laplacian under the chosen boundary con-dition, and σ, κ, α > 0 control variance, length scale, and smoothness. For time-parameterized trajectories, C is trace-class when α > 1/2. Details are provided in Appendix B. 
+
+B. Resolution-Agnostic Neural Operator 
+
+The reverse diffusion process requires learning a noise pre-diction operator ξθ (xt, t ) : H× [0 , T ] → H . Standard diffusion models typically parameterize this mapping with architectures like U-Net [17], [27] operating on fixed-size vectors in RN ×d,making them inherently resolution-dependent. To achieve discretization invariance, we parameterize ξθ as a neural operator that learns the mapping between function spaces. We adopt Fourier Neural Operator (FNO) [28], which operates in the Fourier domain by learning spectral kernels that act on frequency modes rather than spatial discretizations. An FNO model consists of a lifting layer P that embeds the input into feature space, a series of Fourier layers, and a projection layer Q mapping back to the trajectory space. Each 
+
+Fourier layer defines an operator N that transforms a feature function u : [0 , 1] → Rc, where c denotes the hidden channel dimension, as: 
+
+(N u)( τ ) = σ  W u (τ ) + F −1(R · F u)( τ ) (13) where F and F −1 denote the Fast Fourier Transform (FFT) and its inverse, R ∈ CK×c×c contains learned complex weights applied to the first K modes, W ∈ Rc×c is a pointwise linear transform, and σ is a nonlinear activation. This frequency-domain transformation enables the same operator to be evaluated at different resolutions without re-training. 
+
+C. Endpoint Constraint Enforcement 
+
+In motion planning problems, trajectories must satisfy fixed endpoint constraints: x(0) = qs and x(1) = qg . Existing diffu-sion planners such as Diffuser and MPD [8], [9] enforce this through inpainting, directly replacing endpoint values during training and sampling. However, in our function-space formu-lation, the trajectories are continuous functions with global spatial correlation. Naively fixing endpoints will therefore introduce inconsistencies and degrade sampling stability. We address this through three components: zero-end projection, endpoint-conditioning via FiLM, and a boundary-compatible DST-based neural operator. 
+
+a) Zero-End Projection : We enforce endpoint con-straints by reformulating constrained trajectory generation as a zero-boundary residual learning problem: 
+
+˜x(τ ) = x(τ ) − (1 − τ )qs − τ q g (14) which satisfies ˜x(0) = ˜ x(1) = 0 by construction. We apply this projection to all trajectories during training, so the model learns the distribution over zero-boundary residuals p(˜ x).At inference, we sample a residual function ˜x(τ ) and recover the full trajectory via 
+
+x(τ ) = ˜ x(τ ) + (1 − τ )qs + τ q g (15) Since (15) is a deterministic affine transformation applied after sampling, the reconstructed trajectory is guaranteed to satisfy x(0) = qs and x(1) = qg exactly, without post-hoc endpoint clamping or iterative correction. 
+
+b) Conditional Generation via FiLM : The zero-end projection removes absolute position information from tra-jectories, making the residual distribution p(˜ x) endpoint-dependent. We therefore condition the neural operator on the endpoint information using Feature-wise Linear Modulation (FiLM) [29], which modulates intermediate feature functions 
+
+u via learned affine transformations: FiLM (u; γ, δ ) = γ ⊙ u + δ (16) where γ, δ ∈ Rc are channel-wise scale and shift parameters. These modulation parameters are generated from the condi-tioning vector c = [ qs; qg ; emb( t)] through a per-layer MLP: 
+
+γℓ, δ ℓ = MLP ℓ(c) (17) where ℓ indexes the neural-operator layer. This allows the network to adapt its predictions to each start-goal configuration while preserving the zero-boundary residual representation. 
+
+Algorithm 1 Training with Zero-End Projection 
+
+Require: Collision-free trajectories D, diffusion model ξθ ,spectral schedule αk(t), learning rate η 
+
+> 1:
+
+while training not finished do  
+
+> 2:
+
+Sample x0 ∼ D , ξ ∼ N (0 , F−1 C), t ∼ U (0 , T ) 
+
+> 3:
+
+Extract start and goal configurations (qs, q g) from x0 
+
+> 4:
+
+Zero-End Projection ˜x0(τ ) = x0(τ ) − (1 − τ )qs − τ q g 
+
+> 5:
+
+Forward diffusion process in coefficient space ˜Xkt =pαk(t) ˜Xk 
+
+> 0
+
++ p1 − αk(t) ξk 
+
+> 6:
+
+Loss L(θ) = ∥ξ − ξθ (˜ xt, t, q s, q g)∥22 
+
+> 7:
+
+Update θ ← θ − η∇θ L(θ) 
+
+> 8:
+
+end while Algorithm 2 Guided Diffusion Inference 
+
+Require: Pre-trained diffusion model ξθ , start/goal states 
+
+(qs, q g), covariance operator F−1C, spectral schedule 
+
+αk(t), Sampling sequence T = t1 > t 2 > · · · > t M = 0 
+
+Ensure: Planned trajectory x0 
+
+> 1:
+
+Sample initial noise ˜xT ∼ N (0, F−1C) 
+
+> 2:
+
+for i = 1 , 2, . . . , M − 1 do  
+
+> 3:
+
+t ← ti, s ← ti+1  
+
+> 4:
+
+Estimate denoised coefficients ˆ˜Xk 
+
+> 0
+
+← ˜Xkt −√1−αk (t) ξkθ
+
+√αk (t) 
+
+> 5:
+
+Compute DDIM update ˜μks = pαk(s) ˆ˜Xk 
+
+> 0
+
++p1 − αk(s)p1 − η2 ˆξkθ 
+
+> 6:
+
+Recover trajectory ˆx0(τ ) = ˆ ˜x0(τ ) + (1 − τ )qs + τ q g 
+
+> 7:
+
+Compute guidance direction g ← −∇ ˜μs J (ˆ x0) 
+
+> 8:
+
+Apply classifier guidance 
+
+˜xs ∼ N  ˜μs + F−1C g, η 2F−1C 
+
+> 9:
+
+end for  
+
+> 10:
+
+Recover the trajectory x0(τ ) ← ˜x0(τ ) + (1 − τ )qs + τ q g
+
+c) Boundary-Compatible DST-FNO : The zero-end pro-jection imposes a boundary structure that should be preserved when the model is evaluated at resolutions different from the training resolution. However, standard FNO (Sec IV-B) relies on the FFT, whose periodic basis does not encode the zero-boundary condition. As a result, although the periodic basis fits the training-resolution data well, it may produce endpoint artifacts and degrade cross-resolution generalization. To provide a boundary-compatible spectral representation, we replace the FFT with the discrete sine transform (DST), whose sine basis ϕk(s) = sin( kπs ) are naturally compatible with the endpoint structure. The Fourier layer becomes: 
+
+(N u)( τ ) = σ  W u (τ ) + S−1(R · S u)( τ ) (18) where S and S−1 denote the DST and inverse DST, and 
+
+R ∈ RK×c×c is a real-valued spectral kernel. For intermediate features with nonzero endpoints, we apply zero-end projec-tion (14) before S and reconstruct afterward. We refer to this modified architecture as DST-FNO , aminimal yet principled modification that provides the correct boundary inductive bias for cross-resolution generalization. (a) Simple2D (b) Dense2D (c) Spheres3D (d) Warehouse 
+
+Fig. 2: Environments used in the motion planning experiments. Gray obstacles are present during training, while red obstacles are introduced only at inference time to evaluate generalization to unseen obstacles. 
+
+D. Inference via Guided Sampling 
+
+To generate collision-free trajectories, we sample from the learned prior p(˜ x) and incorporate guidance during the reverse process. Since the forward process (9) admits a closed-form marginal for each spectral mode, we perform DDIM [30] updates mode-wise in the spectral domain. It is also possible to use other more advanced inference algorithms [31], [32]. Given the noisy coefficient ˜Xkt and the noise prediction 
+
+ξkθ (˜ xt, t, q s, q g), we first estimate the clean coefficient: 
+
+ˆ˜Xk 
+
+> 0
+
+= 1
+
+pαk(t)
+
+ ˜Xkt − p1 − αk(t) ξkθ
+
+
+
+(19) where ξθ is our trained DST-FNO. DDIM then transports ˜Xkt
+
+to the next step s < t :
+
+˜Xks = pαk(s) ˆ˜Xk 
+
+> 0
+
++ p1 − αk(s)
+
+p 1 − η2 ξkθ + η z k
+
+(20) where zk ∼ N (0 , μ 2
+
+> k
+
+/λ k) and η ∈ [0 , 1] controls the stochas-ticity. The DDIM sampler generates trajectories from the learned prior but does not explicitly enforce collision avoidance. To incorporate obstacle constraints, we introduce a Boltzmann-form likelihood p(O | x) ∝ exp( −C(x)) , where C(x) is a differentiable collision cost, and adopt a classifier guidance style update to incorporate it during sampling. A common practice is to evaluate this likelihood directly on the noisy sample xt [8], [9], but collision avoidance should be evaluated with respect to the final trajectory x0. Formally, this likelihood requires marginalization over the unknown clean trajectory: 
+
+p(O | xt) = 
+
+Z
+
+p (O | x0) p (x0 | xt) d x0 (21) which is intractable in practice. Following [33], [34], we approximate it using the current clean prediction ˆx0:
+
+p(O | xt) ≃ p(O | ˆx0) ∝ exp( −C(ˆ x0)) (22) This avoids computing collision gradients on highly cor-rupted samples and better aligns the guidance with the final denoised trajectory. During each reverse step, we first perform an unguided DDIM update using (20) to obtain an intermediate prediction 
+
+˜μs, at which the guidance direction is evaluated: 
+
+g := ∇xt log p (O | ˆx0)|xt=˜ μs (23) We then obtain the guided iterate through a covariance-preconditioned update [26]: 
+
+˜xs = ˜ μs + Σ tg, (24) where Σt denotes the covariance preconditioner. V. E XPERIMENTS 
+
+A. Experimental Setup a) Environments and Datasets: We evaluate FSD-MP across four environments covering 2D point robot and 3D manipulator planning, following the setup of MPD [9]. As shown in Fig. 2, Simple2D and Dense2D involve a point robot navigating in 2D workspaces with sparse and dense obstacles, respectively. Spheres3D and Warehouse evaluate a 7-DoF Franka manipulator planning in 3D workspaces, where Spheres3D contains spherical obstacles, while Warehouse of-fers a more realistic environment with tables and a shelf. To test the generalization capability to unseen obstacles, each environment is further extended with additional obstacles not present during training. For each environment, we generate an expert dataset using the same pipeline as MPD. We first use RRTConnect [7] to obtain initial feasible trajectories, then refine them with GPMP [3] to produce smooth demonstrations for diffusion training. 
+
+b) Baselines: We compare FSD-MP against four base-lines. MPD [9] is a diffusion-based planner trained and evaluated at a fixed resolution. MPD-Spline [10] fits training trajectories with B-spline curves and trains a diffusion model over the resulting low-dimensional control points, yielding a continuous trajectory representation. GPMP [3] represents tra-jectories as continuous-time Gaussian processes and optimizes them via factor graph inference. Additionally, we evaluate 
+
+MPD-Retrain , which retrains MPD from scratch at each target resolution, to examine whether a single FSD-MP model can match resolution-specific retraining. c) Metrics: We evaluate the performance through two average metrics. Success rate measures the percentage of start-goal pairs for which at least one generated trajectory is collision-free. Valid rate measures the percentage of generated trajectories that are collision-free. Each method is evaluated over 120 randomly sampled start–goal pairs per environment, generating 100 trajectory samples per pair. 
+
+B. Planning Results 
+
+Tab. I compares FSD-MP with baselines in both training and extra-obstacle environments (see Fig. 2). In the training environments, diffusion-based methods are evaluated without guidance to assess the quality of the learned trajectory distri-bution. In the extra-obstacle settings, we introduce additional obstacles during inference and apply guidance to adapt to these unseen obstacles. GPMP is optimized directly in the corresponding environment for each setting. At the training resolution, FSD-MP achieves competitive or higher success and valid rates compared with the baselines across both 2D point robot and 3D Franka manipulator en-vironments. These results indicate that FSD-MP can generate high-quality samples and generalize across diverse planning problems, including high-dimensional manipulation tasks. To evaluate cross-resolution generalization, we train the model only at resolution N = 64 and perform inference at unseen resolutions without retraining. As shown in Tab. I, FSD-MP maintains nearly identical performance across N =64 and N = 1024 , demonstrating zero-shot cross-resolution inference. Fig. 3 further visualizes Dense2D results with extra obstacles at N = 50 , N = 64 , N = 1024 , and N = 2000 ,yielding nearly identical trajectories across resolutions. Fig. 4 visualizes representative planning results of FSD-MP in the 3D Franka environments. Across different start-goal contexts in both Spheres3D and Warehouse, the generated trajectories remain smooth and avoid the additional obstacles. 
+
+C. Ablation Studies 
+
+We conduct ablation studies on Dense2D and Warehouse to validate the key design components of FSD-MP. We evaluate three variants: FNO , which replaces the DST-based spectral layers with standard FFT layers; White Noise , which replaces the Matérn-type covariance with an identity covariance; and 
+
+UNet , which replaces the DST-FNO backbone with a UNet of comparable parameter count. All models are trained at N = 64 
+
+and evaluated across multiple resolutions without retraining. Table II reports the collision-free rate. FSD-MP maintains nearly constant performance across res-olutions in both environments, whereas the ablated variants degrade under cross-resolution inference. The standard FNO performs well near N = 64 but drops substantially at high res-olutions, showing the importance of the boundary-compatible DST basis. White noise consistently underperforms FSD-MP across all resolutions, indicating the benefit of well-defined function-space perturbations. The UNet variant performs well only at the training resolution and fails to generalize across resolutions, confirming the need for a resolution-agnostic neural operator.           
+
+> (a) N= 64 , Context 1 (b) N= 1024 , Context 1
+> (c) N= 50 , Context 2 (d) N= 2000 , Context 2
+
+Fig. 3: FSD-MP planning results in Dense2D with extra obstacles. The model is trained only at resolution N = 64 
+
+and evaluated at multiple resolutions without retraining. VI. C ONCLUSION 
+
+We presented Function-Space Diffusion for Motion Plan-ning (FSD-MP), a diffusion-based motion planner that op-erates in infinite-dimensional function space. By combining function-space diffusion with a boundary-compatible DST-FNO, FSD-MP achieves zero-shot generalization across ar-bitrary resolutions without retraining. Experiments on 2D point robot and 3D Franka manipulator environments demon-strate competitive planning performance at the training reso-lution and nearly identical performance under cross-resolution inference. Future work will explore extension to higher-dimensional configuration spaces, coarse-to-fine inference, and adaptive-resolution generation with local refinement near dense obstacles or narrow passages. APPENDIX 
+
+A. Objective for FSD-MP 
+
+We derive the training objective from the conditional dis-tribution p(xt | x0) in the function space. From the closed-form marginal (9), the coefficients {Xkt } are conditionally independent given x0, with 
+
+p(xt | x0) = 
+
+> ∞
+
+Y
+
+> k=1
+
+p(Xkt | Xk 
+
+> 0
+
+) (25) where each component follows a Gaussian distribution. TABLE I: Benchmarking in different resolutions and environments 
+
+Training Environment (Prior Only) Extra Obstacles (Guided) 
+
+N = 64 N = 1024 N = 64 N = 1024 
+
+Env Method Succ. (%) Valid (%) Succ. (%) Valid (%) Succ. (%) Valid (%) Succ. (%) Valid (%) SIMPLE 2D  GPMP 100 98.6 100 99.8 100 98.0 99.2 96.9 MPD 100 99.7 – – 100 91.6 – –MPD-Retrain – – 100 99.8 – – 100 94.4 MPD-Spline 100 94.3 100 92.8 100 76.3 100 75.6 FSD-MP (Ours) 100 99.9 100 99.8 100 97.7 100 98.4 DENSE 2D  GPMP 98.3 58.3 75.8 50.7 91.7 50.2 35.8 24.5 MPD 100 99.7 – – 89.2 54.3 – –MPD-Retrain – – 100 99.8 – – 90 63.7 MPD-Spline 91.7 71.5 85 54.1 83.3 31.1 79.2 28.5 FSD-MP (Ours) 100 99.8 100 99.9 91.7 62.6 91.7 66.4 SPHERES 3D  GPMP 95.8 79.6 92.5 89.3 91.7 76.4 90.0 80.2 MPD 95 71.7 – – 89.2 62.0 – –MPD-Retrain – – 96.7 73.3 – – 92.5 72.8 MPD-Spline 80.8 27.2 80 26.1 86.7 42.3 83.3 39.6 FSD-MP (Ours) 100 83.8 100 83.4 96.7 75.5 96.7 75.5 WAREHOUSE  GPMP 99.2 92.1 93.3 86.3 99.2 95.0 91.7 85.4 MPD 94.2 88.5 – – 99.2 98.7 – –MPD-Retrain – – 95.0 88.8 – – 99.2 99.1 MPD-Spline 92.5 75.9 91.7 74.6 96.7 93.2 96.7 94.5 FSD-MP (Ours) 95.8 90.3 95.8 90.2 100 100 100 100 
+
+(a) Spheres3D, Context 1 (b) Spheres3D, Context 2 (c) Warehouse, Context 1 (d) Warehouse, Context 2 
+
+Fig. 4: Planning results of FSD-MP in 3D Franka arm environments. Orange lines are end-effector trajectories. TABLE II: Ablation on Architecture and Diffusion Noise: Valid Rate (%) Across Resolution N
+
+Dense2D Warehouse Method N =32 N =64 N =256 N =512 N =1024 N =32 N =64 N =256 N =512 N =1024 FSD-MP 99.5 99.8 99.8 99.8 99.8 90.8 90.3 90.1 90.2 90.2 
+
+FNO 95 99.6 88.7 73.4 63.5 90.1 90.5 84.8 80.6 77.2 White Noise 94.7 96.0 96.7 96.8 97.0 85.8 86.1 86.4 86.6 86.8 UNet 0.3 97.3 0.1 0 0 64.2 87.2 51.6 38.8 26.4 
+
+The score in the function space is defined as ∇xt log p(xt |
+
+x0), which admits the expansion in the basis {ϕk}:
+
+∇xt log p(xt | x0) = 
+
+> ∞
+
+X
+
+> k=1
+
+∂Xkt log p(Xkt | Xk 
+
+> 0
+
+) ϕk (26) We consider score matching in the function space, which minimizes 
+
+E∥sθ (xt, t ) − ∇ xt log p(xt | x0)∥2
+
+> H
+
+. (27) Using the orthonormal basis {ϕk}, this objective decom-poses into 
+
+E
+
+" ∞X
+
+> k=1
+
+skθ (xt, t ) − ∂Xkt log p(Xkt | Xk 
+
+> 0
+
+) 2
+
+#
+
+. (28) For each mode, the conditional distribution is Gaussian, and its score is linearly related to the noise ξk. Up to a mode-dependent scalar, predicting the score is equivalent to predicting the noise ξk. This leads to the objective 
+
+L(θ) = Et,x 0,ξ 
+
+" ∞X
+
+> k=1
+
+ξkθ (xt, t ) − ξk 2
+
+#
+
+. (29) Finally, Parseval’s identity P∞ 
+
+> k=1
+
+ξkθ − ξk 2 = ∥ξθ − ξ∥2
+
+> H
+
+yields 
+
+L(θ) = Et,x 0,ξ 
+
+∥ξθ (xt, t ) − ξ∥2
+
+> H
+
+ (30) which recovers the objective in (11). 
+
+B. Trace-Class Gaussian Noise in Function Space 
+
+A Gaussian measure N (0 , C) on H is the infinite-dimensional analogue of a multivariate Gaussian noise, charac-terized by a covariance operator C : H → H . It is supported on 
+
+H only if C is trace-class, self-adjoint, and positive, ensuring finite expected energy E ∥x∥2
+
+> H
+
+ = tr( C) < ∞. The identity operator fails this requirement since tr( I) = P∞ 
+
+> k=1
+
+1 = ∞,making white noise N (0 , I) ill-defined in H.The Matérn-type operator C = σ2(−∆ + κ2I)−α satisfies all three conditions when α is sufficiently large. Its covariance eigenvalues decay as λk ∼ k−2α/D , giving tr( C) = P 
+
+> k
+
+λk <
+
+∞ when α > D/ 2, where D is the input dimension of the function. For time-parameterized trajectories, D = 1 and the condition reduces to α > 1/2.REFERENCES [1] N. Ratliff, M. Zucker, J. A. Bagnell, and S. Srinivasa, “Chomp: Gra-dient optimization techniques for efficient motion planning,” in IEEE International Conference on Robotics and Automation (ICRA) , 2009, pp. 489–494. [2] M. Kalakrishnan, S. Chitta, E. Theodorou, P. Pastor, and S. Schaal, “Stomp: Stochastic trajectory optimization for motion planning,” in 
+
+IEEE International Conference on Robotics and Automation (ICRA) ,2011, pp. 4569–4574. [3] M. Mukadam, J. Dong, X. Yan, F. Dellaert, and B. Boots, “Continuous-time gaussian process motion planning via probabilistic inference,” The International Journal of Robotics Research , vol. 37, no. 11, pp. 1319– 1340, 2018. [4] H. Yu and Y. Chen, “A gaussian variational inference approach to motion planning,” IEEE Robotics and Automation Letters , vol. 8, no. 5, pp. 2518–2525, 2023. [5] L. Kavraki, P. Svestka, J.-C. Latombe, and M. Overmars, “Probabilistic roadmaps for path planning in high-dimensional configuration spaces,” 
+
+IEEE Transactions on Robotics and Automation , vol. 12, no. 4, pp. 566– 580, 1996. [6] S. Karaman and E. Frazzoli, “Sampling-based algorithms for optimal motion planning,” The International Journal of Robotics Research ,vol. 30, no. 7, pp. 846–894, 2011. [7] J. J. Kuffner and S. M. LaValle, “Rrt-connect: An efficient approach to single-query path planning,” in Proceedings 2000 ICRA. Millennium conference. IEEE international conference on robotics and automation. Symposia proceedings (Cat. No. 00CH37065) , vol. 2. IEEE, 2000, pp. 995–1001. [8] M. Janner, Y. Du, J. B. Tenenbaum, and S. Levine, “Planning with diffusion for flexible behavior synthesis,” in International Conference on Machine Learning , 2022, pp. 9902–9915. [9] J. Carvalho, A. T. Le, M. Baierl, D. Koert, and J. Peters, “Motion planning diffusion: Learning and planning of robot motions with diffu-sion models,” in 2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . IEEE, 2023, pp. 1916–1923. [10] J. Carvalho, A. T. Le, P. Kicki, D. Koert, and J. Peters, “Motion planning diffusion: Learning and adapting robot motion planning with diffusion models,” IEEE Transactions on Robotics , 2025. [11] S. Calinon, F. Guenter, and A. Billard, “On learning, representing, and generalizing a task in a humanoid robot,” IEEE Transactions on Systems, Man, and Cybernetics, Part B (Cybernetics) , vol. 37, no. 2, pp. 286–298, 2007. [12] A. Paraschos, C. Daniel, J. R. Peters, and G. Neumann, “Probabilis-tic movement primitives,” Advances in neural information processing systems , vol. 26, 2013. [13] T. S. Lembono, E. Pignat, J. Jankowski, and S. Calinon, “Learning con-strained distributions of robot configurations with generative adversarial network,” IEEE Robotics and Automation Letters , vol. 6, no. 2, pp. 4233–4240, 2021. [14] B. Ichter, J. Harrison, and M. Pavone, “Learning sampling distributions for robot motion planning,” in 2018 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2018, pp. 7087–7094. [15] T. Power and D. Berenson, “Learning a generalizable trajectory sam-pling distribution for model predictive control,” IEEE Transactions on Robotics , vol. 40, pp. 2111–2127, 2024. [16] J. Urain, A. T. Le, A. Lambert, G. Chalvatzaki, B. Boots, and J. Peters, “Learning implicit priors for motion optimization,” in 2022 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) .IEEE, 2022, pp. 7672–7679. [17] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,” 
+
+Advances in neural information processing systems , vol. 33, pp. 6840– 6851, 2020. [18] Y. Song, J. Sohl-Dickstein, D. P. Kingma, A. Kumar, S. Ermon, and B. Poole, “Score-based generative modeling through stochastic differ-ential equations,” arXiv preprint arXiv:2011.13456 , 2020. [19] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” The International Journal of Robotics Research , vol. 44, no. 10-11, pp. 1684–1704, 2025. [20] U. A. Mishra, S. Xue, Y. Chen, and D. Xu, “Generative skill chaining: Long-horizon skill planning with diffusion models,” in Conference on Robot Learning . PMLR, 2023, pp. 2905–2925. [21] A. Ajay, Y. Du, A. Gupta, J. Tenenbaum, T. Jaakkola, and P. Agrawal, “Is conditional generative modeling all you need for decision-making?” in International Conference on Learning Representations , 2023. [22] U. A. Mishra and Y. Chen, “Reorientdiff: Diffusion model based reorien-tation for object manipulation,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2024, pp. 10 867–10 873. [23] J. H. Lim, N. B. Kovachki, R. Baptista, C. Beckham, K. Azizzadenesheli, J. Kossaifi, V. Voleti, J. Song, K. Kreis, J. Kautz et al. , “Score-based diffusion models in function space,” Journal of Machine Learning Research , vol. 26, no. 158, pp. 1–62, 2025. [24] G. Kerrigan, J. Ley, and P. Smyth, “Diffusion generative models in infi-nite dimensions,” in International Conference on Artificial Intelligence and Statistics , 2023. [25] J. Pidstrigach, Y. Marzouk, S. Reich, and S. Wang, “Infinite-dimensional diffusion models,” Journal of Machine Learning Research , vol. 25, no. 414, pp. 1–52, 2024. [26] P. Dhariwal and A. Nichol, “Diffusion models beat gans on image synthesis,” Advances in neural information processing systems , vol. 34, pp. 8780–8794, 2021. [27] O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolutional networks for biomedical image segmentation,” in International Conference on Medical image computing and computer-assisted intervention . Springer, 2015, pp. 234–241. [28] Z. Li, N. B. Kovachki, K. Azizzadenesheli, B. liu, K. Bhattacharya, A. Stuart, and A. Anandkumar, “Fourier neural operator for parametric partial differential equations,” in International Conference on Learning Representations , 2021. [29] E. Perez, F. Strub, H. De Vries, V. Dumoulin, and A. Courville, “Film: Visual reasoning with a general conditioning layer,” in Proceedings of the AAAI conference on artificial intelligence , vol. 32, no. 1, 2018. [30] J. Song, C. Meng, and S. Ermon, “Denoising diffusion implicit models,” in International Conference on Learning Representations , 2021. [31] Q. Zhang and Y. Chen, “Fast sampling of diffusion models with exponential integrator,” arXiv preprint arXiv:2204.13902 , 2022. [32] Q. Zhang, M. Tao, and Y. Chen, “gddim: Generalized denoising diffusion implicit models,” arXiv preprint arXiv:2206.05564 , 2022. [33] H. Chung, J. Kim, M. T. Mccann, M. L. Klasky, and J. C. Ye, “Diffusion posterior sampling for general noisy inverse problems,” in The Eleventh International Conference on Learning Representations , 2023. [34] J. Song, Q. Zhang, H. Yin, M. Mardani, M.-Y. Liu, J. Kautz, Y. Chen, and A. Vahdat, “Loss-guided diffusion models for plug-and-play con-trollable generation,” in International Conference on Machine Learning .PMLR, 2023, pp. 32 483–32 498.
