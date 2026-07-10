@@ -1,0 +1,7189 @@
+Title: Expressivity and Statistical Trade-offs in Diffusion Policy Learning
+
+URL Source: https://arxiv.org/pdf/2607.07967v1
+
+Published Time: Fri, 10 Jul 2026 00:23:16 GMT
+
+Number of Pages: 61
+
+Markdown Content:
+# Expressivity and Statistical Trade-offs in Diffusion Policy Learning 
+
+## Viet Vu ∗ Renyuan Xu ∗ Jiacheng Zhang † Yufei Zhang ‡
+
+## July 10, 2026 
+
+Abstract 
+
+Diffusion-based policies have recently emerged as powerful policy parameterizations for reinforcement learning, representing state-conditioned action distributions as terminal laws of diffusion processes with parameterized drifts. This terminal-law representation has shown substantial expressive flexibility in practice, enabling diffusion policies to model complex, multimodal, and highly non-Gaussian action distributions; however, it remains unclear what mathematically drives this expressivity and how to fully exploit it when the policy is learned from finite data. In this paper, we identify the drift Lipschitz budget K as a central quantity governing the expressivity and statistical behavior of diffusion policies. We quantify expressivity through approximation: diffusion policies with K-Lipschitz drifts can concentrate near optimal deterministic policies and achieve value approximation error of order 1/K ; moreover, we prove a matching lower bound under nondegenerate diffusion noise. This increased expressivity comes with a statistical cost. When the drift is parameterized by neural networks, increasing K improves approximation but increases statistical complexity. Balancing these two terms yields a finite-sample performance gap of order ˜O(n−2/(m+6) ) for generic neural-network drifts, and a sharper rate ˜O(n−2/(m+4) ) for one-sided dissipative drift classes, where 
+
+n is the sample size and m is the dimension of the state space. Numerical experiments provide empirical evidence for the sample-dependent trade-off in K, supporting both theoretical regimes. Our framework also suggests a practical implementation principle: choose the diffusion budget K according to the available sample size, and then select a neural-network architecture with the corresponding fixed Lipschitz coefficient. 
+
+# 1 Introduction 
+
+Many reinforcement learning (RL) problems concern learning a stochastic policy that optimizes an expected objective through repeated interaction with the environment [ 58 ]. Policy-gradient and its variants are among the most widely used approaches for this task [ 20 , 29 , 51 , 52 , 59 ]. Their performance, however, depends critically on the choice of policy parameterization. An effective policy class must satisfy three requirements: (i) it should be expressive enough to approximate good, or even optimal, policies; (ii) it should allow efficient sampling of actions during interaction with the environment; and (iii) it should support tractable likelihood evaluation for constructing policy-gradient estimators (e.g., [59]). Designing such policy classes becomes especially challenging beyond finite action spaces. In continuous-action RL, classical methods often rely on tractable stochastic policy families, such as Gaussian, Beta, Gaussian-mixture, or exponential-family policies, because these distributions are easy to sample from and have tractable likelihoods [ 20 , 22 , 51 , 52 ]. This computational convenience, however, comes with limited expressivity. Gaussian policies may be poorly matched to bounded or constrained action spaces, log-concave families cannot represent many multimodal action distributions, and mixture models can introduce numerical and optimization difficulties. As a result, these simple policy classes can struggle to represent the complex, multimodal, or strongly non-Gaussian action distributions that arise in modern RL tasks, such as multi-stage manipulation [ 12 , 33 , 49 ] and locomotion [27]. Diffusion-based policies provide a more expressive alternative by representing state-conditioned action distributions as terminal laws of diffusion processes with parameterized drifts. The key idea is to transform a simple reference distribution into a complex action law through stochastic dynamics. This approach has shown      
+
+> ∗Stanford University, Emails: vietvu01@stanford.edu and renyuanxu@stanford.edu
+> †Chinese University of Hong Kong, Email: jiachengzhang@cuhk.edu.hk
+> ‡Imperial College London, Email: yufei.zhang@imperial.ac.uk
+
+1arXiv:2607.07967v1 [stat.ML] 8 Jul 2026 strong expressive power in generative modeling, including image and video generation [ 24 , 54 , 55 ]. Building on these advances, recent works have used diffusion models as policy parameterizations in control and RL [ 3, 12 , 14 , 33 , 41 , 46 , 47 , 49 , 63 ]. These methods represent the action distribution at each state through a parameterized diffusion process. This allows the policy to capture rich and potentially multimodal action distributions that are difficult to express with standard policy families, while still allowing actions to be sampled by simulating the diffusion process. Despite this empirical success, the theoretical understanding of diffusion-based policies in RL remains limited. Existing theory for diffusion models mainly focuses on generative modeling and does not directly explain what drives the expressivity of diffusion policies for decision-making objectives. In particular, it remains unclear which structural quantity controls their ability to approximate optimal policies, and how to fully exploit this expressive power when the policy is learned from finite data. This leads to two fundamental questions: 1. Expressivity of diffusion policies : What mathematically governs the ability of diffusion policies to approximate optimal policies for a given RL objective? 2. Impact on learning and statistical guarantees: How does the increased expressivity of diffusion policies affect the finite-sample statistical error of policy learning? Answering these questions is challenging because the expressivity of diffusion policies is not merely a qualitative property of the representation. It depends on the Markov decision process (MDP) structure, the regularity of the optimal policy, and the quantitative complexity of the diffusion dynamics. Moreover, increasing expressivity may improve approximation while enlarging the statistical complexity of the learned policy class. This calls for a finite-sample theory that identifies the structural quantity driving expressivity and quantifies its role in the resulting approximation–estimation trade-off. 
+
+## 1.1 Our contributions 
+
+In this paper, we identify the drift Lipschitz budget K as a central quantity governing the expressivity and statistical behavior of diffusion policies. We consider diffusion policies defined by state-conditioned stochastic differential equations with parameterized drifts and given volatility, and measure the complexity of the policy class through the drift Lipschitz constant K. Our main contributions are four-fold. First, we establish the expressivity of diffusion policies through a sharp K-dependent approximation theory. We prove that diffusion policies with K-Lipschitz drifts can approximate deterministic optimal policies as 
+
+K → ∞ , with mean-squared localization error of order O(1 /K ) (Lemma 3.1). We then show that this rate is optimal and cannot be improved in general under nondegenerate diffusion noise (Proposition 3.3). We further translate these localization results into upper and lower bounds for RL value-function approximation, namely Theorem 3.2 and Theorem 3.4. Second, we show that this increased expressivity comes with a statistical cost when the drift is parameterized by ReLU neural networks. For a generic K-Lipschitz neural drift class, the learned policy error is bounded by three terms: diffusion approximation 1/K , neural-network realization error s−2/m , and statistical estimation error psK/n , where s is the network class size, n is the sample size, and m is the state dimension. Balancing these terms yields a value gap of order eO(n−2/(m+6) ) (Theorem 4.2). We further show that, if the neural drift class satisfies a one-sided dissipativity condition, the stability estimate improves and the statistical term becomes ps/n , up to logarithmic factors. This gives the sharper rate eO(n−2/(m+4) ); see Remark 4.2. In both regimes, these rates are achieved by choosing the diffusion budget K depend properly on the sample size n.Third, we derive a policy-gradient formula for continuous-time diffusion policies. Since the policy is defined implicitly as the terminal law of a diffusion process, its log-density function (also known as the score function) is generally not analytically tractable. We show that the score function can be substituted with a pathwise quantity derived from the diffusion process via Girsanov’s theorem. This yields a tractable policy-gradient expression in terms of the drift sensitivity (Proposition 5.2), and provides the training identity used in our numerical experiments. Fourth, we validate the two statistical regimes through numerical experiments. The first experiment trains a generic neural drift using our policy-gradient estimator in a nonlinear multi-step MDP setting. It illustrates the generic sample-dependent scaling K ≍ n2/(m+6) . The second experiment uses a mean-reverting, hence dissipative, diffusion-policy class in a controlled contextual bandit setting. It isolates the approximation and 2estimation terms and illustrates the sharper scaling K ≍ (n/ log n)2/(m+4) . Together, the experiments provide empirical evidence for the sample-dependent role of K, and suggest a practical implementation principle: choose the diffusion budget K according to the available sample size and then a K-Lipschitz neural drift class. 
+
+## 1.2 Related literature 
+
+Our work is connected to several strands of literature on diffusion models, RL, and continuous-time stochastic analysis. The most closely related line studies diffusion models as flexible policy parameterizations for continuous-action RL. We also discuss diffusion-based planning and imitation learning, theory of score-based generative models, and the approximation, statistical learning, and PDE/SDE tools used in our analysis. 
+
+Diffusion policy in RL. One line of work directly represents the policy by a conditional diffusion model and trains or optimizes the parameters of the diffusion model [ 14 , 18 , 41 , 46 , 47 , 63 , 64 , 65 ]. Recent extensions further develop likelihood-based on-policy diffusion policy optimization, continuous-time Q-score matching, and maximum-entropy diffusion-policy training via adjoint matching [ 15 , 26 , 60 ]. A second line uses diffusion models primarily as samplers, generating actions from a given intermediate policy while training a classical RL algorithm [ 7, 8, 11 , 22 , 39 , 42 ]. Both lines of work are largely empirical, but they consistently demonstrate the strong expressive power of diffusion policies on large-scale RL tasks. In contrast, we provide theoretical foundations for this empirical observation by studying how the diffusion Lipschitz budget controls both expressivity and finite-sample statistical error in diffusion policy learning. To the best of our knowledge, this is among the first theoretical results of this kind in the literature. 
+
+Diffusion planning, trajectory diffusion, and diffusion imitation learning. Diffusion models have also been used as trajectory-level planners and sequence/action generators for offline decision making and robot imitation learning [ 28 , 1 , 38 , 12 , 33 , 49 , 27 , 3]. These works provide important empirical evidence that diffusion parameterizations can capture multimodal, high-dimensional, and temporally correlated behavior distributions. Our setting differs in that we study Markov diffusion policies through their one-step state-conditioned action laws and prove explicit expressivity and statistical trade-offs. 
+
+Theory of diffusion and score-based generative models. Our analysis is also related to the theory of diffusion and score-based generative models [ 54 , 55 , 24 , 56 , 61 , 13 , 37 , 10 , 9]. Existing theory in this area primarily studies sampling, score estimation, and distribution recovery. In contrast, we connect the diffusion drift budget to RL performance by showing that K-Lipschitz diffusion policies achieve, and in general cannot improve upon, a 1/K value-approximation rate near deterministic optima. 
+
+Neural-network approximation, statistical learning, and PDE/SDE tools. Finally, the finite-sample part of our work builds on neural-network approximation and statistical learning theory for ReLU networks [ 66 , 45 , 50 , 4, 44 ], while the continuous-time analysis uses tools from stochastic calculus, stochastic control, and parabolic PDE theory, including Girsanov transformations, Fokker–Planck smoothing, and density/lower-estimate arguments for uniformly elliptic diffusions [57, 30, 43, 36, 5, 2, 32, 6, 21]. 
+
+Flow-based policy parameterizations. A closely related recent direction replaces stochastic diffusion sampling by ODE or flow-based generative policies, motivated in part by faster sampling and more direct pathwise or likelihood-ratio training. This includes online flow policies, Q-guided flow optimization, offline-to-online flow matching, reversible likelihood-ratio methods, MeanFlow and rectified-flow policies, and reparameterization-gradient training [ 40 , 17 , 53 , 25 , 16 , 35 , 68 , 67 ]. These methods are complementary to ours: pathwise training typically relies on a differentiable critic or action-value gradient, while likelihood-ratio training for generic flow policies requires inversion and Jacobian control, or special reversible constructions. In contrast, our analysis focuses on SDE terminal-law diffusion policies and proves a K-dependent approximation–estimation trade-off. 
+
+## 1.3 Roadmap 
+
+The remainder of the paper is organized as follows. Section 2 introduces the RL setting, the diffusion-policy parameterization, and the assumptions used throughout. Section 3 develops the expressivity theory for diffusion 3policies with Lipschitz drifts, including the resulting upper and lower bounds for value-function approximation. Section 4 studies finite-sample learning when the drift is represented by ReLU neural networks, decomposing the error into diffusion approximation, neural-network realization, and statistical estimation terms. Section 6 presents the policy-gradient training framework and numerical experiments illustrating both finite-sample regimes: the generic n−2/(m+6) trade-off and the sharper dissipative n−2/(m+4) trade-off. Section 7 concludes with the main takeaways and limitations of the work. Throughout, ∥ · ∥ denotes the Euclidean norm on finite-dimensional vector spaces. For a map h : E → Rq ,we define ∥h∥∞ := sup x∈E ∥h(x)∥ and Lip (h) := sup x̸=x′ ∥h(x) − h(x′)∥/∥x − x′∥. We use ∥ · ∥ op and ∥ · ∥ HS for the operator and Hilbert–Schmidt norms, respectively, and ∥ · ∥ Lp for function-space Lp norms. The absolute constant C > 0 is generic and may vary line by line. 
+
+# 2 Preliminaries on MDP and diffusion policy 
+
+Markov decision process. Consider an infinite horizon Markov decision process (MDP) (X , A, P, r, γ ),where the state space X is a measurable space, the action space is A = Rd, P ∈ P (X |X × A ) is a probability transition kernel, r : X × A → R is a bounded and continuous reward function, and γ ∈ [0 , 1) is the discount factor. Let P(A|X ) be the space of Markov stochastic policies. That is, each policy π ∈ P (A|X ) assigns a probability distribution π(·| x) over actions to every state x ∈ X . Given a policy π ∈ P (A|X ), the initial state 
+
+x0 is sampled from ρ ∈ P (X ). At each time h ≥ 0, the agent observes xh, selects an action ah ∼ π(·| xh), and receives a reward r(xh, a h). The next state is then sampled as xh+1 ∼ P (·| xh, a h). We consider the following maximization problem: 
+
+sup  
+
+> π∈P (A|X )
+
+V π (ρ) , with V π (ρ) := Eπρ
+
+" ∞X
+
+> h=0
+
+γhr(xh, a h)
+
+#
+
+, (2.1) where Eπρ denotes the expectation with respect to the law of the state-action process induced by π. For each 
+
+x ∈ X , we write V π (x) = V π (δx), where δx denotes the Dirac measure at x.A deterministic Markov policy is a special case of a stochastic policy, with π(·| x) = δg(x) for some measurable map g : X → A , often referred to as an action selector. Under mild continuity conditions [ 23 , Theorem 4.2.3], optimal policies can be chosen to be deterministic. In the sequel, we assume the optimal value function 
+
+V ⋆ : X → R for the MDP (2.1) is well-defined and measurable. Define the corresponding optimal Q-function by 
+
+Q⋆(x, a ) := r(x, a ) + γ R 
+
+> X
+
+V ⋆(x′)P (d x′|x, a ). We assume that there exists a measurable function g⋆ : X → A 
+
+such that 
+
+g⋆(x) ∈ A⋆(x), with A⋆(x) := arg max 
+
+> a∈Rd
+
+Q⋆(x, a ), ∀x ∈ X . (2.2) The function g⋆ is an optimal deterministic policy, where g⋆(x) is an optimal action at state x.
+
+Diffusion policy parametrization. Although an optimal deterministic policy exists, it is useful to employ stochastic policies in RL because they regularize the objective and enable gradient-based policy optimization [20 , 51 , 52 , 59 ]. Motivated by the need for expressive stochastic policies that remain compatible with sampling and gradient-based optimization, we consider diffusion-model-based policies, which define π(·| x) as the terminal law of a diffusion process. Specifically, let T > 0 be a fixed time horizon, let (Ω , F, PB ) be a probability space supporting a d-dimensional Brownian motion, and let F be the natural filtration of B and the initial action a0.For each x ∈ X , consider the following dynamics in A = Rd:
+
+d¯axt = f (t, ¯axt , x ) dt + σ(t, ¯axt , x ) dB t, ¯ax 
+
+> 0
+
+∼ μ0. (2.3) where f : [0 , T ] × A × X → Rd and σ : [0 , T ] × A × X → Rd×d are some measurable functions such that (2.3) admits a unique weak solution ( ¯axt )t≥0. The initial distribution μ0 is assumed to be absolutely continuous w.r.t. the Lebesgue measure and have finite second moment, denoted by m2(μ0) := R ∥a∥2μ0(da ) < ∞. In practice, a Gaussian initial distribution μ0 is a common choice. Throughout we assume that 
+
+Assumption 2.1 (Volatility assumption) . There exist absolute constants 0 < κ ≤ Λ < ∞ such that 
+
+4κI d ⪯ σ(t, a, x )σ(t, a, x )⊤ ⪯ ΛId (2.4) 
+
+for all t ∈ [0 , T ], a ∈ A and x ∈ X .
+
+Define the corresponding policy by 
+
+π(· | x) := Law PB
+
+ ¯axT
+
+. (2.5) The collection of all such policies, obtained by varying f , defines the diffusion policy class, which arises as the natural continuous-time limit of the diffusion-based policies used in [ 3, 14 , 41 , 46 , 47 , 63 ]. In the sequel, we measure the complexity of a diffusion policy through the Lipschitz size of its drift in the action variable. Unless otherwise stated, K denotes a uniform Lipschitz bound in a, namely 
+
+∥f (t, a, x ) − f (t, a ′, x )∥ ≤ K∥a − a′∥, t ∈ [0 , T ], x ∈ X .
+
+We refer to K as the drift Lipschitz budget. 
+
+# 3 Expressivity of diffusion policy 
+
+We now turn to the approximation power of diffusion policies. The goal of this section is to show how the drift Lipschitz budget K controls their ability to concentrate near deterministic optimal actions, and how this translates into value-function approximation. 
+
+## 3.1 Upper bound on value function approximation with K-Lipschitz drifts 
+
+In this section, we show that diffusion policies can approximate deterministic policies arbitrarily well as the Lipschitz constant of the drift increases. This is relevant because a larger Lipschitz constant allows the drift to represent more flexible neural networks. Under Assumption 2.1 and a fixed initialization, we construct a 
+
+K-Lipschitz drift whose expressivity gap vanishes as K → ∞ . The key step is the following lemma. Although the volatility σ depends on the state ¯axt , so that the terminal law is generally not Gaussian, we can still obtain the following concentration estimate. 
+
+Lemma 3.1 (Concentration with mean-reverting drift) . Assume Assumption 2.1 holds. Fix τ > 0, K > 0,
+
+c ∈ Rd, and x ∈ X . Consider a linear drift f (s, a, x ) = K(c/ (1 − e−Kτ ) − a) in (2.3) , and the following diffusion process 
+
+d¯axs = K
+
+ c
+
+1 − e−Kτ − ¯axs
+
+
+
+ds + σ(s, ¯axs , x ) dB s, s ∈ [0 , τ ], (3.1) 
+
+where ¯ax 
+
+> 0
+
+∼ μ0 is independent of B . Then 
+
+E∥¯axτ − c∥2 ≤ e−2Kτ m2(μ0) + dΛ2K
+
+ 1 − e−2Kτ ,
+
+where m2(μ0) is the second moment of μ0.
+
+Consequently, for fixed τ > 0, c, and Λ independent of K, we have 
+
+E∥¯aτ − c∥2 ≲ 1/K, 
+
+with the omitted constant only depending on τ, d, m 2(μ0), Λ. The proof is given in Appendix A.1. This lemma shows that ¯axτ can approximate c at any time τ , as long as K is sufficiently large. By designing the drift to be 
+
+f (s, a, x ) = K(c/ (1 − e−Kτ ) − a), we can approximate the optimal action g⋆(x) arbitrarily well. An important property of f is that it is K-Lipschitz in a.We next translate this localization estimate into value-function approximation. This requires the reward and transition kernel to be continuous near the optimal action g⋆(x), as formalized below. 5Assumption 3.1 (Moduli of continuity) . For every state x, there exists Rx > 0 and moduli of continuity 
+
+ωr,x (z), ω P,x (z) ↓ 0 as z ↓ 0 such that for all actions a satisfying ∥a − g⋆(x)∥ ≤ Rx,
+
+|r(x, a ) − r(x, g ⋆(x)) | ≤ ωr,x (∥a − g⋆(x)∥)TV ( P (·| x, a ), P (·| x, g ⋆(x))) ≤ ωP,x (∥a − g⋆(x)∥)
+
+This is a mild local condition: it requires continuity only near g⋆(x), rather than global smoothness assumptions on the MDP. With this assumption, we can achieve value function convergence. 
+
+Theorem 3.2 (Value approximation by mean-reverting diffusion policies) . Assume Assumptions 2.1 and 3.1 hold. For each K ≥ 1, define 
+
+cK (x) := g⋆(x)1 − exp( −KT ) . (3.2) 
+
+Suppose that, for each K ≥ 1 and x ∈ X , the mean-reverting diffusion 
+
+d¯aK,x t = K cK (x) − ¯aK,x t
+
+ dt + σ(t, ¯aK,x t , x ) dB t, ¯aK,x  
+
+> 0
+
+∼ μ0, (3.3) 
+
+admits a weak solution on [0 , T ], where ¯aK,x  
+
+> 0
+
+is independent of B and μ0 has finite second moment. Assume moreover that the terminal laws define a measurable stochastic policy πK (· | x) := Law ( ¯aK,x T ). Then, for every initial state law ρ,
+
+lim  
+
+> K→∞
+
+|V πK (ρ) − V ⋆(ρ)| = 0 .
+
+The proof is in Appendix A.2. We remark that the same argument can yield uniform convergence of the value function when the radius and moduli of continuity are uniform over x, by replacing the pointwise convergence step in the proof with uniform convergence over states x.
+
+## 3.2 Lower bound on value function approximation for K-Lipschitz drifts 
+
+The upper-bound result shows that a K-Lipschitz mean-reverting drift can concentrate a diffusion policy near an optimal deterministic action with squared error of order 1/K . We now show that this rate is intrinsic: under nondegenerate diffusion noise, no K-Lipschitz drift can localize the terminal action around a finite set of target actions at a faster rate. 
+
+Proposition 3.3 (Matching lower bound for finite-set localization) . Let Z = {z1, . . . , z J } ⊂ Rd be a finite set and fix R > 0. Let ( ¯axt )t≥0 follow (2.3) , with ¯ax 
+
+> 0
+
+independent of B. Suppose that f (t, ·, x ) is K-Lipschitz uniformly in t, x and f (·, 0, x ) ∈ L1
+
+> loc
+
+. Additionally, assume either Assumption 2.1 or (A2) (State-independent volatility) σ(t, a, x ) ≡ σ(t) is deterministic and locally square-integrable, and σ(t)σ(t)⊤ ⪰
+
+κI d for almost all t ≥ 0, where κ > 0 is independent of K.Then there exist cR > 0 and KR < ∞, depending on J, d, κ, μ 0, R , and additionally on Λ in the state-dependent case, such that, for every K ≥ KR,
+
+inf   
+
+> f,σ,x,T ≥0
+
+E dist (¯ axT , Z)2 ∧ R2 ≥ cR
+
+K .
+
+Here dist (a, Z) := inf z∈Z ∥a − z∥. The constant cR does not depend on the locations of the points in Z, nor on the minimum distance between distinct points of Z.
+
+The proofs are given in Appendix A.4 for Assumption A2, and Appendix A.8 for Assumption 2.1. The key observation, which appears to be new, is to split at the intrinsic time K−1. On time scales shorter than K−1,a K-Lipschitz drift cannot move an absolutely continuous initial law into arbitrarily small neighborhoods of finitely many target points. On longer horizons, one can look only at the final window of length K−1. After rescaling this window by 
+
+¯aT −1/K +ℓ/K = ϕℓ + K−1/2Yℓ, 0 ≤ ℓ ≤ 1,
+
+the residual process Yℓ has O(1) -Lipschitz drift and uniformly nondegenerate volatility. As a result, Y1 has a nondegenerate density uniformly in K, hence having distance at least c from any finite set with constant probability. Scaling back, ¯aT is at distance at least cK −1/2 from Z with constant probability, yielding the c/K 
+
+lower bound after squaring. 6Remark 3.1. We give a few remarks about Proposition 3.3. (i) Role of bounded volatility. For state-independent volatility, uniform ellipticity is enough. For state-dependent volatility, the upper bound in Assumption 2.1 is essential: Proposition A.5 shows that, if this upper bound is removed, the 1/K lower bound can fail even when the volatility remains uniformly elliptic from below. (ii) Sharpness. The lower bound matches the O(1 /K ) upper bound from the mean-reverting construction in Lemma 3.1. Indeed, with finite second moment initialization and uniformly bounded volatility, a linear mean-reverting drift can achieve E∥¯aT − z∥2 ≲ K−1 for any fixed z ∈ Rd, and hence also 
+
+E[dist ( ¯aT , Z)2] ≲ K−1 for any finite set Z. Proposition 3.3 shows that this rate cannot be improved in general. (iii) Relevance for RL. In RL, Z should be viewed as the Bellman-optimal action set A⋆(x). Although the upper bound only needs one selector g⋆(x) ∈ A⋆(x), the lower bound covers the case where A⋆(x) contains several isolated optimal actions. Thus, near deterministic optima, the drift Lipschitz budget K is the expressivity bottleneck for diffusion policies. 
+
+Proposition 3.3 immediately yields a value-function lower bound. The only additional assumption is that the Bellman gap grows at least quadratically locally near the finite set of optimal actions. 
+
+Theorem 3.4 (Finite-well diffusion lower bound) . For each K ≥ 1 and T > 0, let πK,T be the Markov policy whose action law at state x is the terminal law at time T of (2.3) . Assume that the conditions in Proposition 3.3 hold. Fix M ≥ 1 and R > 0. Suppose that, for every x ∈ X , |A⋆(x)| ≤ M , and that there exists a constant 
+
+λM,R > 0, independent of x, such that for all (x, a ) ∈ X × A ,
+
+V ⋆(x) − Q⋆(x, a ) ≥ λM,R 
+
+ dist (a, A ⋆(x)) 2 ∧ R2 . (3.4) 
+
+Then there exist constants cM,R > 0 and K0 < ∞, depending only on M, R, d, κ, Λ, μ 0, such that 
+
+inf  
+
+> T > 0
+
+(V ⋆(ρ) − V πK,T (ρ)) ≥ cM,R λM,R 
+
+K , ∀K ≥ K0.
+
+The proof is given in Appendix A.5, which applies Proposition 3.3 with Z = A⋆(x).
+
+Remark 3.2 (Bellman gap assumption in (3.4) ). Condition (3.4) is a mild finite-well condition on the Bellman gap. The clipping makes the assumption local in nature: near A⋆(x), it requires the Bellman gap to grow at least quadratically with the distance to the optimal action set, while away from A⋆(x), it only requires a positive suboptimality margin. It does not require concavity, uniqueness of the optimizer, or growth at infinity. The quadratic exponent is chosen to match the squared-distance lower bound in Proposition 3.3. More generally, a clipped p-th order gap would yield the corresponding K−p/ 2 rate; for example, quadratic wells give K−1, while quartic wells give K−2.
+
+Remark 3.3 (A note on policy initialization) . We note that the lower bound over all t > 0 in Theorem 3.4 cannot hold under arbitrary action initialization μ0. A counterexample is given in Appendix A.6. However, if we allow for burn-in time t0 ≳ 1/K , the conclusion of Theorem 3.4 would still hold regardless of initialization. We state this extension in Corollary A.3 at Appendix A.6. 
+
+# 4 Approximation–estimation trade-off in K
+
+Section 3 shows that a K-Lipschitz diffusion policy can approximate a deterministic optimal selector with value error of order K−1. We now develop the finite-sample theory of learning such policies from data when the drift is represented by K-Lipschitz ReLU networks. For the sake of exposition, we take the state space X = [0 , 1] m, and impose the following technical assumptions on the MDPs. 7Assumption 4.1 (Bounded and Lipschitz optimal deterministic policy) . The optimal selector g⋆, defined in 
+
+(2.2) , satisfies ∥g⋆∥∞ ≤ R0 and Lip( g⋆) ≤ Lg⋆ .
+
+Assumption 4.2 (MDP environment and diffusion policy volatility) . There exist constants Lxr , L ar < ∞ such that, for all x, x ′ ∈ X and a, a ′ ∈ Rd,
+
+|r(x, a ) − r(x′, a ′)| ≤ Lxr ∥x − x′∥ + Lar ∥a − a′∥.
+
+The state transition is given by a Lipschitz generative model, i.e., there exists a measurable map ΦP : X × A × 
+
+[0 , 1] 7 → X such that for U ∼ Unif [0 , 1] and every (x, a ) ∈ X × A , ΦP (x, a, U ) ∼ P (· | x, a ), and there exist constants LxP , L aP < ∞ such that 
+
+
+
+EU
+
+h
+
+∥ΦP (x, a, U ) − ΦP (x′, a ′, U )∥2i 1/2
+
+≤ LxP ∥x − x′∥ + LaP ∥a − a′∥. (4.1) 
+
+Moreover, the diffusion volatility σ is Lipschitz in (x, a ): there exists Lσ < ∞ such that 
+
+∥σ(t, a, x ) − σ(t, a ′, x ′)∥HS ≤ Lσ
+
+ ∥x − x′∥ + ∥a − a′∥, (4.2) 
+
+where ∥ · ∥ HS is the Hilbert–Schmidt norm. 
+
+Assumption 4.2 is stated before the empirical construction because the variables below use the fixed transition generator ΦP . The map ΦP gives the synchronous L2 coupling used in the stability proof. 
+
+ReLU drift classes. We first introduce some constants that will be used to construct the policy class. Fix a sufficiently large constant C0 ≥ 2, independent of (n, K, s, m, d, T, δ ). Choose constants ℓ1, ℓ 2 < ∞,independent of (K, s ), satisfying 
+
+ℓ1 ≥√d R 0
+
+1 − e−T , ℓ2 ≥ Cm
+
+> 0
+
+√d L g⋆
+
+1 − e−T , (4.3) where R0 is given in Assumption 4.1. For each s ≥ 1, define 
+
+ps, 1 := Cm 
+
+> 0
+
+d(m + d + 1) s log( es ), (4.4) 
+
+ps, 2 := Cm 
+
+> 0
+
+log( es ), (4.5) 
+
+ps, 3 := Cm 
+
+> 0
+
+d(m + d + 1) s, (4.6) 
+
+ps, 4 := Cm 
+
+> 0
+
+{1 + √d(R0 + Lg⋆ )}(1 + s)Cm 
+
+> 0
+
+(1 − e−T )−1. (4.7) Let Ns be the set of vector-valued multi-layer ReLU networks Ψθ : [0 , T ] × Rd × [0 , 1] m → Rd satisfying the following conditions: Ψθ has at most ps, 1 nonzero scalar parameters, depth at most ps, 2, width at most ps, 3,and parameter bound |θi| ≤ ps, 4. For every affine region S intersecting [0 , T ] × Rd × [0 , 1] m,
+
+Ψθ (t, a, x ) = M 1 
+
+> θ,S
+
+t + M 2 
+
+> θ,S
+
+a + M 3 
+
+> θ,S
+
+x + bθ,S , (4.8) for some M 2 
+
+> θ,S
+
+∈ Rd×d and M 3 
+
+> θ,S
+
+∈ Rd×m satisfying 
+
+∥M 2 
+
+> θ,S
+
+∥op ≤ 1, ∥M 3 
+
+> θ,S
+
+∥op ≤ ℓ2,
+
+and 
+
+sup  
+
+> t∈[0 ,T ], x ∈[0 ,1] m
+
+∥Ψθ (t, 0, x )∥ ≤ ℓ1.
+
+Define the drift class 
+
+FK,s := 
+
+n
+
+fθ (t, a, x ) = KΨθ (t, a, x ) : Ψ θ ∈ N s
+
+o
+
+. (4.9) The architecture bounds, especially Cm 
+
+> 0
+
+, in the definition of FK,s are chosen so that the class contains the mean-reverting drift of the form (3.3). Specifically, Lemma 4.1 shows that for all K ≥ 1, FK,s contains 
+
+fK,s (t, a, x ) = K
+
+ hs(x)1 − e−KT − a
+
+
+
+, (4.10) where hs is a suitable ReLU network of size s approximating the optimal selector g⋆. Thus the finite-sample analysis can use the approximation property from Section 3 for mean-reverting drifts. 8Lemma 4.1 (ReLU approximation and mean-reverting drift) . Under Assumption 4.1, there exists a constant 
+
+C0 ≥ 0 such that for every s ≥ 1 there is a vector-valued ReLU network hs : [0 , 1] m → Rd satisfying 
+
+sup 
+
+> x∈[0 ,1] m
+
+∥hs(x) − g⋆(x)∥2 ≤ Cm 
+
+> 0
+
+mdL 2 
+
+> g⋆
+
+s−2/m , (4.11) 
+
+sup 
+
+> x∈[0 ,1] m
+
+∥hs(x)∥ ≤ √d R 0, (4.12) 
+
+Lip( hs) ≤ Cm
+
+> 0
+
+√d L g⋆ . (4.13) 
+
+Moreover, hs has at most (i) Cm 
+
+> 0
+
+ds log (es ) nonzero scalar parameters, (ii) depth at most Cm 
+
+> 0
+
+log (es ), (iii) width at most Cm 
+
+> 0
+
+ds , and (iv)weights bounded by Cm 
+
+> 0
+
+(1 + R0 + Lg⋆ )(1 + s)Cm 
+
+> 0
+
+.It holds that fK,s ∈ F K,s , where fK,s is defined in (4.10) .
+
+The proof is given in Appendix B.1. 
+
+Induced diffusion policies and statistical samples. For a drift f ∈ F K,s , let πf (· | x) denote the terminal law at time T of the following SDE: for each fixed x, write ¯ax for the solution of 
+
+d¯axt = f (t, ¯axt , x ) dt + σ(t, ¯axt , x ) dB t, ¯ax 
+
+> 0
+
+∼ μ0.
+
+The dependence on f is only through the displayed drift. Write V (f ) := V πf (ρ). For the empirical value function, fix i.i.d. random variables 
+
+ξi :=  Xi, 0, {ζi,j , B i,j , U i,j }j≥0
+
+, i = 1 , . . . , n, 
+
+where Xi, 0 ∼ ρ, ζi,j ∼ μ0, the Bi,j ’s are independent Brownian motions on [0 , T ], and Ui,j ∼ Unif [0 , 1] , all mutually independent. Given f , set Xfi, 0 := Xi, 0. Recursively, given Xfi,j , let ¯ai,j solve 
+
+d¯ai,j,t = f (t, ¯ai,j,t , X fi,j ) dt + σ(t, ¯ai,j,t , X fi,j ) dB i,j,t , ¯ai,j, 0 = ζi,j ,
+
+and define 
+
+Afi,j := ¯ ai,j,T , Xfi,j +1 := Φ P
+
+ Xfi,j , A fi,j , U i,j 
+
+.
+
+Then, for each fixed f , {(Xfi,j , A fi,j )}j≥0 follows the MDP trajectory law induced by πf . Finally, define the empirical value function: 
+
+bVn(f ) := 1
+
+n
+
+> n
+
+X
+
+> i=1
+> ∞
+
+X
+
+> j=0
+
+γj r(Xfi,j , A fi,j ). (4.14) For each fixed f , bVn(f ) is an unbiased estimator of V (f ). Using the same fixed exogenous variables ξ1, . . . , ξ n
+
+for all f ∈ F K,s makes f 7 → bVn(f ) a well-defined random function, which is used in the proof to control the uniform deviation over f ∈ F K,s .Let bfn,K,s ∈ arg max  
+
+> f∈F K,s
+
+bVn(f ). (4.15) If an exact maximizer does not exist, take any measurable n−1/2-maximizer; this changes the final bound only by an absorbed O(n−1/2) term. Define rmax := ∥r∥∞, set Hn = 1 if γ = 0 , and Hn := max 
+
+n
+
+1,
+
+l log(8 √n)log(1 /γ )
+
+mo 
+
+if 0 < γ < 1. Define the logarithmic factor 
+
+Γn(K, s, m, d, T ) := log 
+
+
+
+1 + 2 n2n
+
+1 + T + √m + rmax 
+
+1 − γ
+
+pHn
+
+ m2(μ0) + K2ℓ21T 2 + dΛT 1/2 eC3KT o
+
+× (ps, 1ps, 4)ps, 2+2 C3Hn
+
+n
+
+C3
+
+1 + (1 + ℓ2)√KT e C3KT oHn 
+
+, (4.16) where C3 ≥ 1 is a sufficiently large constant depending only on (Lσ , L xr , L ar , L xP , L aP , γ ). Then we have the following main result. 9Theorem 4.2 (Finite-sample oracle inequality for Lipschitz drifts) . Assume Assumptions 2.1, 4.1, and 4.2 hold. Suppose also that the Bellman gap has the quadratic upper bound 
+
+0 ≤ V ⋆(x) − Q⋆(x, a ) ≤ LQ∥a − g⋆(x)∥2, x ∈ [0 , 1] m, a ∈ Rd. (4.17) 
+
+Then there exists a constant C1 < ∞, independent of (n, K, s, m, d, T, δ ), such that, for all K ≥ 1, s ≥ 1, and 
+
+δ ∈ (0 , 1) , with probability at least 1 − δ,
+
+V ⋆(ρ) − V ( bfn,K,s ) ≤ C1
+
+"
+
+e−2KT m2(μ0) + dΛ
+
+K + Cm 
+
+> 0
+
+mdL 2 
+
+> g⋆
+
+s−2/m 
+
++ rmax 
+
+1 − γ
+
+r ps, 1Γn(K, s, m, d, T ) + log(2 /δ )
+
+n
+
++ rmax 
+
+1 − γps, 1Γn(K, s, m, d, T ) + log(2 /δ )
+
+n
+
+#
+
+. (4.18) 
+
+The constant C1 depends only on (LQ, L σ , L xr , L ar , L xP , L aP , Λ, γ ) and numerical constants. 
+
+The proof combines localization, covering-number estimates, and a finite-horizon uniform-convergence argument. The details are deferred to Appendix B.2. Note that the dependence on d and m through 
+
+Γn(K, s, m, d, T ) does not affect the leading-order terms in (4.18). 
+
+Remark 4.1 (Balancing the leading terms) . Assume m2(μ0) ≤ C2d and treat all problem parameters other than (m, d, K, s, n ) as fixed. Since ps, 1 = eO(Cm 
+
+> 0
+
+d(m + d + 1) s) and Γn(K, s, m, d, T ) = eO(KT ), the leading terms in (4.18) , after suppressing logarithmic and fixed problem-dependent factors, are 
+
+dK , Cm 
+
+> 0
+
+md s −2/m ,
+
+r Cm 
+
+> 0
+
+d(m + d + 1) sK n .
+
+Balancing the first two terms gives s ≍ (Cm 
+
+> 0
+
+mK )m/ 2. Substituting this choice into the statistical term and balancing with d/K yields K ≍
+
+ dn Cm  
+
+> 0(m+d+1)( Cm
+> 0m)m/ 2
+
+2/(m+6) 
+
+and 
+
+(4.18) = eO d(m+4) /(m+6) 
+
+ Cm 
+
+> 0
+
+(m + d + 1)( Cm 
+
+> 0
+
+m)m/ 2
+
+n
+
+2/(m+6) !
+
+. (4.19) 
+
+In particular, the exponent of n is −2/(m + 6) .
+
+Remark 4.2 (Dissipative drift classes and better rate) . Imposing a one-sided dissipativity condition on the drift class FK,s can improve the error bound (4.19) . Specifically, assume that for all f ∈ F K,s ,
+
+a − a′, f (t, a, x ) − f (t, a ′, x ) ≤ − λK ∥a − a′∥2, (4.20) 
+
+for some λ > 0 independent of (K, s ). This condition is satisfied by the mean-reverting drift fK,s defined in 
+
+(4.10) , for which λ = 1 .In this case, the approximation error terms in (4.18) are unchanged, but the statistical error term reduces to 
+
+q Cm  
+
+> 0d(m+d+1) sn
+
+, compared with 
+
+q Cm  
+
+> 0d(m+d+1) sK n
+
+in the generic K-Lipschitz case. Thus the leading term in 
+
+(4.18) becomes 
+
+dK + Cm 
+
+> 0
+
+mds −2/m +
+
+r Cm 
+
+> 0
+
+d(m + d + 1) sn .
+
+Since the last two terms do not depend on K, balancing them gives s ≍
+
+ Cm 
+
+> 0m2dn m+d+1
+
+m/ (m+4) 
+
+. For this choice, it suffices to take 
+
+K ≳
+
+ dn Cm 
+
+> 0
+
+(m + d + 1)( Cm 
+
+> 0
+
+m)m/ 2
+
+2/(m+4) 
+
+,
+
+10 so that d/K is no larger than the other two terms. Thus, up to logarithmic factors and fixed problem constants, the exponent of n improves from −2/(m + 6) to −2/(m + 4) . Here, the displayed order of K is a minimum sufficient scale rather than an optimizer: any larger K achieves the same leading rate. This sharper rate comes from the stronger condition (4.20) ; without it, Theorem 4.2 applies to the larger generic ReLU drift class, but retains the extra K-dependence in the statistical term. 
+
+# 5 Policy gradient 
+
+Sections 3 and 4 have characterized how the drift Lipschitz budget K governs the expressivity and finite-sample behavior of diffusion policies. We now address the complementary algorithmic question: 
+
+• Given a selected diffusion-policy class, can it be trained using a tractable policy-gradient formula? Let the drift in (2.3) be parameterized by fθ (t, ¯axt , x ), where θ ∈ Rk may represent a generic differentiable functional class, and denote the corresponding policy by πθ .This inquiry is nontrivial because πθ (·| x) is defined implicitly as the terminal law of an SDE. Unlike Gaussian or exponential-family policies, the terminal density of ¯axT , and consequently the standard score , 
+
+∇θ log πθ (a|x), is generally unavailable. The primary contribution of this section is demonstrating that the missing score can be replaced by a pathwise likelihood-ratio term derived via Girsanov’s theorem. Accordingly, the main result state in Proposition 5.2 provides a policy-gradient formula expressed in terms of the drift sensitivity ∇θ fθ = ( ∂θ1 fθ , · · · , ∂ θk fθ )⊤. To establish this result, we introduce the following assumptions: 
+
+Assumption 5.1. Assume that f is continuously differentiable in θ and 
+
+sup 
+
+> s,θ,x
+
+∥f (s, 0, θ, x )∥ + ∥∇ θ f (s, 0, θ, x )∥ < ∞.
+
+Moreover, f and ∇θ f are α-Hölder continuous in a; that is, there exists a constant C > 0 and α ∈ (0 , 1] such that for all s ∈ [0 , T ], x ∈ X , θ ∈ Rk and a, a ′ ∈ Rd,
+
+∥f (s, a, θ, x ) − f (s, a ′, θ, x )∥ + ∥∇ θ f (s, a, θ, x ) − ∇ θ f (s, a ′, θ, x )∥ ≤ C (∥a − a′∥α ∨ ∥ a − a′∥) .
+
+Furthermore, we impose an additional condition on the initial distribution μ0:
+
+Eμ0
+
+exp  ca 2 < ∞, where a ∼ μ0, (5.1) 
+
+for some sufficiently small constant c > 0.
+
+By Assumption 5.1, and holding a′ = 0 fixed, there exists constant C > 0 such that 
+
+∥f (s, a, θ, x )∥ + ∥∇ θ f (s, a, θ, x )∥ ≤ C(∥a∥ + 1) .
+
+This growth bound is used to verify the martingale and differentiability conditions required by the Girsanov-based argument. To achieve our primary objective of identifying the gradient of the value function ∇θ V πθ (ρ), we begin with characterizing the derivative of EPθ
+
+φ(¯ aT ) with a bounded continuous function φ.
+
+Lemma 5.1. Suppose Assumption 5.1, (2.4) and (4.2) hold. Let φ : Rd → R be a bounded measurable function, and define U φθ (x) = EPθ
+
+φ(¯ axT ). Then, 
+
+∇θ U φθ (x) = EPθ
+
+ Z T
+
+> 0
+
+∇θ fθ (t, ¯at, x ) σ⊤(t, ¯at, x )−1dBt
+
+
+
+φ(¯ aT )
+
+
+
+.
+
+Hence, despite the unavailability of the terminal density of πθ (·| x), the likelihood-ratio derivative admits a representation via the martingale score 
+
+Sθ (x) := 
+
+Z T
+
+> 0
+
+∇θ fθ (t, ¯axt , x ) σ⊤(t, ¯axt , x )−1 dB t.
+
+Second, applying the preceding identity with ϕ(a) = Qπθ (x, a ) inside the discounted performance-difference identity yields the following main result. 11 Proposition 5.2 (Policy gradient theorem) . Suppose Assumption 5.1, (2.4) and (4.2) hold. Then the gradient of the value function with respect to the parameter θ has the following representation 
+
+∇θ V πθ (ρ) = 11 − γ
+
+Z
+
+> X
+
+E
+
+ Z T
+
+> 0
+
+∇θ fθ (t, ¯axt , x ) σ⊤(t, ¯axt , x )−1dBt
+
+
+
+Qπθ (x, ¯axT )
+
+
+
+dπθ 
+
+> ρ
+
+(d x), (5.2) 
+
+where we define 
+
+Qπ (x, a ) := r(x, a ) + γ
+
+Z
+
+> X
+
+V π (x′)P (d x′|x, a ),
+
+and 
+
+dπρ (d x) := 
+
+Z
+
+> X
+
+dπ (d x|x′)ρ(d x′), and dπ (d x|x′) := (1 − γ)
+
+> ∞
+
+X
+
+> n=0
+
+γnP nπ (d x|x′),
+
+with P nπ being the n-times product of the kernel Pπ under policy π with P 0 
+
+> π
+
+(d x′|x) := δx′ (d x).
+
+This identity is in the same spirit as the classical policy-gradient theorem in RL [ 59 ] and related policy-gradient formulas for discrete-time diffusion policies with Gaussian transition kernels [ 46 ]. In the discrete-time setting, the internal denoising trajectory has an explicit product density, so the policy score decomposes into a sum of transition-kernel scores. In contrast, our policy is defined as the terminal law of a continuous-time SDE with a general drift and state-dependent volatility. The terminal action density is generally unavailable, and the corresponding pathwise likelihood ratio must be represented through a Girsanov change of measure. This replaces the discrete sum of internal scores by the stochastic integral R T 
+
+> 0
+
+∇θ fθ (t, ¯axt , x )σ(t, ¯axt , x )−1 dB t, which accounts for the additional technical work in Appendix C. At the same time, the continuous-time expression gives a discretization-independent training identity, applies directly to general SDE-based diffusion policies, and separates the role of the drift sensitivity ∇θ fθ from the sampling discretization used in implementation. This gives a compact training formula for SDE-based diffusion policies and supports the implementation of the diffusion-policy classes studied above. 
+
+# 6 Numerical experiments 
+
+Using the policy-gradient expression specified in Proposition 5.2, we provide two numerical studies illustrating the two finite-sample regimes identified in Section 4. The first experiment uses a generic neural drift class in a nonlinear multi-step MDP. This corresponds to Theorem 4.2, where the leading statistical term contains the extra K-factor and the optimal diffusion budget scales as K ≍ n2/(m+6) . The second experiment uses a mean-reverting, one-sided dissipative diffusion class. This corresponds to Remark 4.2, where we first choose 
+
+s = s(n) ≍ (n/ log n)m/ (m+4) and then study the effect of varying K.
+
+## 6.1 Experiment with generic drifts 
+
+This experiment is designed to test the generic neural-drift regime of Theorem 4.2. The drift is represented by a generic neural network and is trained directly by policy gradient, without imposing a one-sided dissipativity structure. Therefore the relevant guide for the sample-dependent diffusion budget is K(n) ≍ n2/(m+6) .
+
+Setup. We consider a two-dimensional stochastic MDP with state Xh = ( X(1)  
+
+> h
+
+, X (2)  
+
+> h
+
+) ∈ R2 and scalar bounded action Ah ∈ [−Ra, R a]. The reward is the negative stage cost, 
+
+r(x, a ) = −
+
+
+
+ca(a − gref (x)) 2 + cx
+
+ (x(1) )2 + 0 .8( x(2) )2 + cs sin 2(κsx(1) ) + cua2
+
+.
+
+Here gref is a smooth saturated nonlinear feedback map. It is used to define a nontrivial reward landscape and to compute the reference cost. The state transition is nonlinear and action-dependent: 
+
+X(1)  
+
+> h+1
+
+= α11 X(1)  
+
+> h
+
++ α12 X(2)  
+
+> h
+
++ β1 tanh( Ah) + δ1 sin( ω1X(2)  
+
+> h
+
+) + ε(1)  
+
+> h
+
+,X(2)  
+
+> h+1
+
+= α22 X(2)  
+
+> h
+
+− α21 sin( X(1)  
+
+> h
+
+) + β2 tanh( ωaAh) + δ2 sin( ω2X(1)  
+
+> h
+
+X(2)  
+
+> h
+
+) + ε(2)  
+
+> h
+
+.
+
+12 In the experiment, we set Ra = 2 .4, X 0 ∼ Unif([ −2.2, 2.2] 2), and define 
+
+gref (x) = Ra tanh 
+
+
+
+1.15 1.55 sin(2 .25 x(1) + 0 .85 x(2) ) + 0 .90 cos(1 .65 x(1) − 2.15 x(2) )+ 0 .55 sin(3 .2x(1) x(2) ) − 0.35 x(1) + 0 .25 x(2) 
+
+.
+
+The cost parameters are specified as ca = 2 .0, c x = 0 .055 , c s = 0 .030 , c u = 0 .010 , and κs = 1 .4. The transition parameters are α11 = 0 .78 , α 12 = 0 .27 , α 22 = 0 .70 , α 21 = 0 .22 , β 1 = 0 .26 , β 2 = 0 .20 , δ 1 = 0 .08 , δ 2 = 0 .06 , ω 1 =1.6, ω 2 = 2 , and ωa = 1 .2. The noise satisfies (ε(1)  
+
+> h
+
+, ε (2)  
+
+> h
+
+) ∼ N (0 , 0.03 2I2), and the next state is clipped to 
+
+[−3, 3] 2. We use horizon H = 10 and discount factor γ = 0 .95 .
+
+Implementation details. At each MDP step, the policy samples the action from the terminal value of the internal action diffusion 
+
+d¯at = fθ,K (t, ¯at, X h) dt + σ dB t,
+
+where T = 1 , σ = 0 .70 , and ¯a0 ∼ N (0 , 1.10 2). The drift is represented by a two-hidden-layer ReLU network, 
+
+fθ,K (t, a, x ) = K tanh(MLP θ (t, a, x )) ,
+
+with the network width chosen as w(K) = min {256 , max {16 , round (16 + 2 K)}} , so the width grows approxi-mately as Km/ 2 on the main part of the grid. We train the actor using the path-likelihood score estimator from the Euler-discretized action SDE, together with a learned critic baseline evaluated at the pre-action state Xh. We use Adam with actor learning rate 
+
+2.5 × 10 −3, critic learning rate 5 × 10 −3, gradient clipping at 8, weight clipping at 4, and 50 policy-gradient updates. We evaluate K ∈ { 2, 4, 8, 12 , 16 , 24 , 32 , 48 , 64 , 96 , 128 , 256 , 512 }, use n ∈ { 64 , 256 , 2048 } trajectories per policy-gradient update, average over 50 independent seeds, and evaluate each trained policy using 1024 
+
+held-out episodes. We report held-out discounted cost relative to the deterministic reference feedback gref . The reference feedback is used only for constructing the cost and for evaluation, not for actor training.               
+
+> (a) Decomposition under n= 512 .(b) Value difference V∗(ρ)−V(fbθ,K )
+> as a function of K, for different n.
+> (c) Empirical optimal K(n)versus n.
+
+Figure 1: Empirical approximation–estimation trade-off in K. Panel (a) fixes n = 256 trajectories per policy-gradient update and shows a U-shaped dependence on the diffusion Lipschitz budget K. Panel (b) compares different values of n, showing that larger policy-gradient batches tolerate larger values of K. Panel (c) reports the best grid value of K, together with the generic guide K(n) ≍ n2/(m+6) for m = 2 . Markers show averages over 50 independent seeds and error bars indicate 95% confidence intervals. 
+
+Results. Figure 1(a) shows the fixed-sample trade-off at n = 256 . The reference cost difference decreases from about 71 .06 at K = 2 to 37 .14 at K = 48 . It then increases for larger budgets, reaching 89 .36 at K = 256 
+
+and 129 .36 at K = 512 . Thus, increasing K is initially beneficial, but overly large K makes policy-gradient learning unstable under a fixed sample budget. Figure 1(b) shows that increasing the number of trajectories per update shifts the stable range of K to the right. With n = 64 , the best grid value is K = 32 , with mean reference cost difference 44 .24 . With n = 256 , the best grid value is K = 48 , with mean reference cost difference 37 .14 . With n = 2048 , the best grid value is K = 64 , with mean reference cost difference 16 .42 . The best-K summary in Figure 1(c) gives an increasing sequence K = 32 , 48 , 64 over n = 64 , 256 , 2048 . Since K is 13 selected from a coarse grid, the empirical curve is stepwise, but it follows the predicted monotone growth of the sample-dependent diffusion budget. Overall, this MDP experiment supports the generic finite-sample trade-off in Theorem 4.2. Increasing K
+
+improves the expressive power of the neural diffusion policy in the low-to-moderate K regime, but a generic neural drift also leads to larger policy-gradient variability and stronger optimization instability at large K.The empirically selected diffusion budget increases with n and is consistent with the guide K(n) ≍ n2/(m+6) .
+
+## 6.2 Experiment with dissipative drifts 
+
+In this section, we consider a simpler setting of one-step contextual bandit and parameterie the drift in the dissipative regime described in Remark 4.2. Here the policy uses a mean-reverting diffusion around a learned center, so the drift is one-sided dissipative in the action variable. We first choose s(n) ≍  n/ log nm/ (m+4) and hold this center-class size fixed while varying K. Consequently, there is no U-shaped trade-off in K: increasing 
+
+K reduces the diffusion error until the policy regret reaches the sample-dependent center estimation error. 
+
+Setup. We consider a simpler setting of one-step contextual bandit with X ∼ Unif ([0 , 1] m), action space 
+
+A = Rd, and reward r(x, a ) = −∥ a − g⋆(x)∥2, where g⋆ is a bounded Lipschitz selector generated from random Fourier features. The optimal value is zero, so the value gap is exactly the mean-squared distance from the sampled action to g⋆(X).
+
+Implementation details. We use m = 4 , d = 2 , T = 1 , and simulate the action diffusion with 24 time steps. The initial action has scale 1, and the volatility takes values in [0 .10 , 1.00] . We construct the oracle selector g⋆ using 2048 random Fourier features and choose its output scale so that the target actions have magnitude at most R0 = 1 .5.For each sample size n, we parameterize the center by 
+
+hW (x) = Φ s(n)(x)⊤W, Φs(x) = (1 , ϕ 1(x), . . . , ϕ s(x)) ,
+
+where s(n) = ⌊16 
+
+ n 
+
+> log n
+
+m/ (m+4) 
+
+⌋. Given noisy samples Yi = g⋆(Xi) + ξi, with ξi ∼ N (0 , 0.10 2Id), we fit 
+
+W by ridge regression with regularization λ = 10 −6 max 
+
+n
+
+1, s(n)+1 
+
+> n
+
+o
+
+. Note that for each sample size n, we choose s = s(n), fit the center bhn, and keep it fixed while varying K. Thus, changing K affects the diffusion approximation error but not the center estimation error. We evaluate K ∈ { 1, 2, 4, 6, 8, 12 , 16 , 24 , 32 , 48 , 64 , 96 , 128 , 192 , 256 , 512 } and n ∈ { 128 , 256 , 512 , 1024 , 2048 },using five independent training seeds. Evaluation uses 1024 contexts and four terminal-action samples per context. We report (i) the policy regret Rn(K) := E ¯abhn,X T − g⋆(X) 2, (ii) the diffusion error around the fitted center E ¯abhn,X T − bhn(X) 2, and (iii) the direct center MSE E bhn(X) − g⋆(X) 2. We mark K as the smallest value of K for which the diffusion error is comparable to the center estimation error. Beyond this point, increasing K gives little further improvement in policy regret. 
+
+Results. Figure 2(a) shows that, for each fixed sample size, the learned policy gap decreases monotonically with K and approaches the corresponding direct center-MSE plateau. The plateaus decrease as n increases because a larger sample size supports a more accurate fitted center. In particular, unlike the generic neural-drift experiment, there is no U-shaped dependence on K in this dissipative experiment. Figure 2(b) shows that the direct center MSE decreases consistently with the theoretical guide (n/ log n)−2/(m+4) . This is the approximation–estimation trade-off that determines s(n), and it is independent of K. Figure 2(c) shows the behavior at n = 512 . The diffusion error around the fitted center decreases with K, while the direct center MSE remains constant because the same center bhn is used for every K. Consequently, the policy regret decreases toward the center-estimation floor. The marked K is the smallest diffusion scale for which the diffusion term is comparable to this floor; taking a larger K does not improve the leading statistical rate. 14 (a) Policy regret for different n. (b) Direct center MSE versus n. (c) Error components at n = 512 .
+
+Figure 2: Dissipative regime with s = s(n) fixed across K. Panel (a) shows that the learned gaps decrease with K toward the sample-dependent direct center-MSE plateaus, indicated by the dotted lines. Panel (b) compares the direct center MSE with the scaled rate (n/ log n)−2/(m+4) . Panel (c) compares the policy regret, diffusion error around the fitted center, and direct center MSE at n = 512 ; the dashed line marks K, the smallest diffusion scale at which the diffusion error becomes comparable to the center MSE. (Markers show averages over five independent repetitions, and error bars indicate standard errors.) Overall, the two experiments illustrate distinct roles of K. In the generic neural-drift regime, increasing K
+
+improves expressivity but also increases statistical and optimization difficulty, producing a U-shaped trade-off. In the dissipative regime, the additional mean-reverting structure stabilizes the policy class: once s = s(n) is fixed, increasing K mainly reduces the diffusion error until the policy regret reaches the center-estimation floor. Thus K ≍ (n/ log n)2/(m+4) is a minimum sufficient scale under this additional structure, not an optimizer for a generic drift class. In general neural implementations, such dissipativity would need to be enforced through projection of the parameters which may be computationally expensive; in the toy numerical example of Section 6.2, it holds by construction. 
+
+# 7 Conclusion 
+
+We develop a theoretical framework for understanding the expressivity and finite-sample behavior of diffusion policies in reinforcement learning. Our results show that the drift Lipschitz budget K controls a fundamental approximation–estimation trade-off: larger K improves diffusion approximation, but also increases the statistical complexity of learning. For ReLU drift classes, this yields an explicit finite-sample oracle inequality and a sample-dependent choice of K, supported qualitatively by our numerical experiments. This work opens several directions for further study. One interesting question is whether the finite-sample bound in Section 4 can be sharpened using Bernstein-type concentration, under stronger variance or stability assumptions. It would also be valuable to incorporate optimization error from practical policy-gradient training. 
+
+Acknowledgment. The authors would like to thank Hao Liu (Stanford MS&E) for helpful comments on an earlier version. R.X. is partially supported by an NSF CAREER Award DMS-2614933 and a gift fund from Point72. Y.Z. is partially supported by the Imperial Global Connect Fund. J.Z. is partially supported by the Hong Kong RGC Early Career Scheme (ECS) under grant no. 24203525. 
+
+# References 
+
+[1] Anurag Ajay, Yilun Du, Abhi Gupta, Joshua B. Tenenbaum, Tommi S. Jaakkola, and Pulkit Agrawal. Is conditional generative modeling all you need for decision-making? In International Conference on Learning Representations , 2023. [2] Donald G. Aronson. Bounds for the fundamental solution of a parabolic equation. Bulletin of the American Mathematical Society , 73(6):890–896, 1967. [3] Haldun Balim, Na Li, and Yilun Du. Model-based diffusion sampling for predictive control in offline decision making. arXiv preprint arXiv:2512.08280 , 2025. 15 [4] Peter L. Bartlett, Nick Harvey, Christopher Liaw, and Abbas Mehrabian. Nearly-tight VC-dimension and pseudodimension bounds for piecewise linear neural networks. Journal of Machine Learning Research ,20(63):1–17, 2019. [5] Vladimir I. Bogachev, Nicolai V. Krylov, Michael Röckner, and Stanislav V. Shaposhnikov. Fokker–Planck– Kolmogorov Equations , volume 207 of Mathematical Surveys and Monographs . American Mathematical Society, 2015. [6] René Carmona. Lectures on BSDEs, stochastic control, and stochastic differential games with financial applications . SIAM, 2016. [7] Huayu Chen, Cheng Lu, Zhengyi Wang, Hang Su, and Jun Zhu. Score regularized policy optimization through diffusion behavior. In International Conference on Learning Representations , 2024. [8] Huayu Chen, Cheng Lu, Chengyang Ying, Hang Su, and Jun Zhu. Offline reinforcement learning via high-fidelity generative behavior modeling. In International Conference on Learning Representations , 2023. [9] Minshuo Chen, Kaixuan Huang, Tuo Zhao, and Mengdi Wang. Score approximation, estimation and distribution recovery of diffusion models on low-dimensional data. In Proceedings of the 40th International Conference on Machine Learning , volume 202 of Proceedings of Machine Learning Research , pages 4672– 4712. PMLR, 2023. [10] Sitan Chen, Sinho Chewi, Jerry Li, Yuanzhi Li, Adil Salim, and Anru R. Zhang. Sampling is as easy as learning the score: Theory for diffusion models with minimal data assumptions. In International Conference on Learning Representations , 2023. [11] Tianyu Chen, Zhendong Wang, and Mingyuan Zhou. Diffusion policies creating a trust region for offline reinforcement learning. In Advances in Neural Information Processing Systems , 2024. [12] Cheng Chi, Zhenjia Xu, Siyuan Feng, Eric Cousineau, Yilun Du, Benjamin Burchfiel, Russ Tedrake, and Shuran Song. Diffusion policy: Visuomotor policy learning via action diffusion. The International Journal of Robotics Research , 44(10-11):1684–1704, 2025. [13] Valentin De Bortoli. Convergence of denoising diffusion models under the manifold hypothesis. Transactions on Machine Learning Research , 2022. [14] Shutong Ding, Ke Hu, Zhenhao Zhang, Kan Ren, Weinan Zhang, Jingyi Yu, Jingya Wang, and Ye Shi. Diffusion-based reinforcement learning via q-weighted variational policy optimization. In Advances in Neural Information Processing Systems , 2024. [15] Shutong Ding, Ke Hu, Shan Zhong, Haoyang Luo, Weinan Zhang, Jingya Wang, Jun Wang, and Ye Shi. GenPO: Generative diffusion models meet on-policy reinforcement learning. In Advances in Neural Information Processing Systems , volume 38, 2025. [16] Xiaoyi Dong, Xi Sheryl Zhang, and Jian Cheng. Mean flow policy optimization. In Proceedings of the 43rd International Conference on Machine Learning , volume 306 of Proceedings of Machine Learning Research .PMLR, 2026. [17] JaeHyeok Doo, Byeongguk Jeon, Seonghyeon Ye, Kimin Lee, and Minjoon Seo. Q-Flow: Stable and expressive reinforcement learning with flow-based policy. In Proceedings of the 43rd International Conference on Machine Learning , volume 306 of Proceedings of Machine Learning Research . PMLR, 2026. [18] Linjiajie Fang, Ruoxue Liu, Jing Zhang, Wenjia Wang, and Bing-Yi Jing. Diffusion actor-critic: Formulating constrained policy iteration as diffusion noise regression for offline reinforcement learning. In International Conference on Learning Representations , 2025. [19] Bronius Grigelionis and Vigirdas Mackevičius. The finiteness of moments of a stochastic exponential. 
+
+Statistics & probability letters , 64(3):243–248, 2003. 16 [20] Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine. Soft actor-critic: Off-policy maximum entropy deep reinforcement learning with a stochastic actor. In International conference on machine learning , pages 1861–1870. Pmlr, 2018. [21] Bruce Hajek. Mean stochastic comparison of diffusions. Zeitschrift für Wahrscheinlichkeitstheorie und verwandte Gebiete , 68(3):315–329, 1985. [22] Philippe Hansen-Estruch, Ilya Kostrikov, Michael Janner, Jakub Grudzien Kuba, and Sergey Levine. Idql: Implicit q-learning as an actor-critic method with diffusion policies. arXiv preprint arXiv:2304.10573 ,2023. [23] Onésimo Hernández-Lerma and Jean B Lasserre. Discrete-time Markov control processes: basic optimality criteria , volume 30. Springer Science & Business Media, 2012. [24] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising diffusion probabilistic models. Advances in neural information processing systems , 33:6840–6851, 2020. [25] Ke Hu, Shutong Ding, Panxin Tao, Jingya Wang, and Ye Shi. GenPO++: Generative policy optimization with jacobian-free likelihood ratios. arXiv preprint arXiv:2606.06967 , 2026. [26] Chengxiu Hua, Jiawen Gu, and Yushun Tang. Continuous Q-score matching: Diffusion guided reinforcement learning for continuous-time control. In Advances in Neural Information Processing Systems , volume 38, 2025. [27] Xiaoyu Huang, Yufeng Chi, Ruofeng Wang, Zhongyu Li, Xue Bin Peng, Sophia Shao, Borivoje Nikolic, and Koushil Sreenath. Diffuseloco: Real-time legged locomotion control with diffusion from offline datasets. 
+
+arXiv preprint arXiv:2404.19264 , 2024. [28] Michael Janner, Yilun Du, Joshua B. Tenenbaum, and Sergey Levine. Planning with diffusion for flexible behavior synthesis. In Proceedings of the 39th International Conference on Machine Learning , volume 162 of Proceedings of Machine Learning Research , pages 9902–9915. PMLR, 2022. [29] Sham M Kakade. A natural policy gradient. Advances in neural information processing systems , 14, 2001. [30] Ioannis Karatzas and Steven Shreve. Brownian motion and stochastic calculus , volume 113. Springer Science & Business Media, 1991. [31] Ioannis Karatzas and Steven E. Shreve. Brownian Motion and Stochastic Calculus , volume 113 of Graduate Texts in Mathematics . Springer, 1991. [32] Norihiko Kazamaki. Continuous exponential martingales and BMO . Springer, 2006. [33] Tsung-Wei Ke, Nikolaos Gkanatsios, and Katerina Fragkiadaki. 3d diffuser actor: Policy diffusion with 3d scene representations. arXiv preprint arXiv:2402.10885 , 2024. [34] Bekzhan Kerimkulov, James-Michael Leahy, David Siska, Lukasz Szpruch, and Yufei Zhang. A fisher–rao gradient flow for entropy-regularised markov decision processes in polish spaces: B. kerimkulov et al. 
+
+Foundations of Computational Mathematics , pages 1–75, 2025. [35] Kyungyoon Kim, Donghyeon Ki, Hee-Jun Ahn, and Byung-Jun Lee. Score-based one-step MeanFlow policy optimization. arXiv preprint arXiv:2605.23365 , 2026. [36] N. V. Krylov. On diffusion processes with drift in Ld+1 . arXiv preprint arXiv:2102.11465 , 2021. [37] Holden Lee, Jianfeng Lu, and Yixin Tan. Convergence for score-based generative modeling with polynomial complexity. In Advances in Neural Information Processing Systems , volume 35, pages 22870–22882, 2022. [38] Wenhao Li, Xiangfeng Wang, Bo Jin, and Hongyuan Zha. Hierarchical diffusion for offline decision making. In Proceedings of the 40th International Conference on Machine Learning , volume 202 of Proceedings of Machine Learning Research , pages 20035–20064. PMLR, 2023. 17 [39] Cheng Lu, Huayu Chen, Jianfei Chen, Hang Su, Chongxuan Li, and Jun Zhu. Contrastive energy prediction for exact energy-guided diffusion sampling in offline reinforcement learning. In International Conference on Machine Learning , 2023. [40] Lei Lyu, Yunfei Li, Yu Luo, Fuchun Sun, Tao Kong, Jiafeng Xu, and Xiao Ma. Flow-based policy for online reinforcement learning. In Advances in Neural Information Processing Systems , volume 38, 2025. [41] Haitong Ma, Tianyi Chen, Kai Wang, Na Li, and Bo Dai. Efficient online reinforcement learning for diffusion policy. arXiv preprint arXiv:2502.00361 , 2025. [42] Liyuan Mao, Haoran Xu, Xianyuan Zhan, Weinan Zhang, and Amy Zhang. Diffusion-dice: In-sample diffusion guidance for offline reinforcement learning. In Advances in Neural Information Processing Systems ,2024. [43] Bernt Øksendal. Stochastic Differential Equations: An Introduction with Applications . Universitext. Springer, Berlin, 6 edition, 2003. [44] Weigutian Ou and Helmut Bölcskei. Covering numbers for deep ReLU networks with applications to function approximation and nonparametric regression. arXiv preprint arXiv:2410.06378 , 2024. [45] Philipp Petersen and Felix Voigtlaender. Optimal approximation of piecewise smooth functions using deep relu neural networks. Neural Networks , 108:296–330, 2018. [46] Michael Psenka, Alejandro Escontrela, Pieter Abbeel, and Yi Ma. Learning a diffusion model policy from rewards via q-score matching. In International Conference on Machine Learning , 2024. [47] Allen Z. Ren, Justin Lidard, Lars Lien Ankile, Anthony Simeonov, Pulkit Agrawal, Anirudha Majumdar, Benjamin Burchfiel, Hongkai Dai, and Max Simchowitz. Diffusion policy policy optimization. In The Thirteenth International Conference on Learning Representations , 2025. [48] L. C. G. Rogers and David Williams. Diffusions, Markov Processes and Martingales. Volume 2: Itô Calculus . Cambridge University Press, 2 edition, 2000. [49] Paul Maria Scheikl, Nicolas Schreiber, Christoph Haas, Niklas Freymuth, Gerhard Neumann, Rudolf Li-outikov, and Franziska Mathis-Ullrich. Movement primitive diffusion: Learning gentle robotic manipulation of deformable objects. IEEE Robotics and Automation Letters , 9(6):5338–5345, 2024. [50] Johannes Schmidt-Hieber. Nonparametric regression using deep neural networks with relu activation function. The Annals of Statistics , 48(4):1875–1897, 2020. [51] John Schulman, Sergey Levine, Pieter Abbeel, Michael Jordan, and Philipp Moritz. Trust region policy optimization. In International conference on machine learning , pages 1889–1897. PMLR, 2015. [52] John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. Proximal policy optimization algorithms. arXiv preprint arXiv:1707.06347 , 2017. [53] Yongjae Shin, Jongseong Chae, Jongeui Park, and Youngchul Sung. Flow matching with injected noise for offline-to-online reinforcement learning. In International Conference on Learning Representations , 2026. [54] Jascha Sohl-Dickstein, Eric Weiss, Niru Maheswaranathan, and Surya Ganguli. Deep unsupervised learning using nonequilibrium thermodynamics. In International conference on machine learning , pages 2256–2265. pmlr, 2015. [55] Yang Song and Stefano Ermon. Generative modeling by estimating gradients of the data distribution. 
+
+Advances in neural information processing systems , 32, 2019. [56] Yang Song, Jascha Sohl-Dickstein, Diederik P. Kingma, Abhishek Kumar, Stefano Ermon, and Ben Poole. Score-based generative modeling through stochastic differential equations. In International Conference on Learning Representations , 2021. 18 [57] Daniel W. Stroock and S. R. S. Varadhan. Multidimensional Diffusion Processes , volume 233 of Grundlehren der Mathematischen Wissenschaften . Springer, Berlin, 1979. [58] Richard S Sutton, Andrew G Barto, et al. Reinforcement learning: An introduction , volume 1. MIT press Cambridge, 1998. [59] Richard S Sutton, David McAllester, Satinder Singh, and Yishay Mansour. Policy gradient methods for reinforcement learning with function approximation. Advances in neural information processing systems ,12, 1999. [60] Serge Thilges, Onur Celik, Denis Blessing, Emiliyan Gospodinov, and Gerhard Neumann. Scalable maximum entropy reinforcement learning for diffusion policies via adjoint matching. arXiv preprint arXiv:2606.22630 , 2026. [61] Belinda Tzen and Maxim Raginsky. Theoretical guarantees for sampling and inference in generative models with latent diffusions. In Proceedings of the Thirty-Second Conference on Learning Theory , volume 99 of 
+
+Proceedings of Machine Learning Research , pages 3084–3114. PMLR, 2019. [62] Martin J. Wainwright. High-Dimensional Statistics: A Non-Asymptotic Viewpoint . Cambridge University Press, 2019. [63] Yinuo Wang, Likun Wang, Yuxuan Jiang, Wenjun Zou, Tong Liu, Xujie Song, Wenxuan Wang, Liming Xiao, Jiang Wu, Jingliang Duan, et al. Diffusion actor-critic with entropy regulator. Advances in Neural Information Processing Systems , 37:54183–54204, 2024. [64] Zhendong Wang, Jonathan J. Hunt, and Mingyuan Zhou. Diffusion policies as an expressive policy class for offline reinforcement learning. In International Conference on Learning Representations , 2023. [65] Long Yang, Zhixiong Huang, Fenghao Lei, Yucun Zhong, Yiming Yang, Cong Fang, Shiting Wen, Binbin Zhou, and Zhouchen Lin. Policy representation via diffusion probability model for reinforcement learning. 
+
+arXiv preprint arXiv:2305.13122 , 2023. [66] Dmitry Yarotsky. Error bounds for approximations with deep ReLU networks. Neural Networks , 94:103–114, 2017. [67] Hai Zhong, Zhuoran Li, Xun Wang, and Longbo Huang. Reparameterization flow policy optimization. 
+
+arXiv preprint arXiv:2602.03501 , 2026. [68] Xubin Zhou, Yipeng Yang, and Zhan Li. Truncated rectified flow policy for reinforcement learning with one-step sampling. arXiv preprint arXiv:2604.09159 , 2026. 19 A Proofs for Section 3 
+
+This appendix contains the proofs for the expressivity results in Section 3. We first prove the constructive upper bound showing that mean-reverting diffusion policies concentrate near deterministic selectors, then prove the matching lower bound showing that the resulting K−1 rate is intrinsic under nondegenerate diffusion noise. 
+
+## A.1 Proof of Lemma 3.1 
+
+Let c ∈ Rd denote the target action and define, as shorthand, 
+
+zK := zK (c, τ ) = c
+
+1 − e−Kτ .
+
+as c, τ do not change in this proof. Consider 
+
+d¯axs = K(zK − ¯axs ) ds + σ(s, ¯axs , x ) dB s, ¯ax 
+
+> 0
+
+∼ μ0.
+
+Define the moving center 
+
+ms := (1 − e−Ks )zK , 0 ≤ s ≤ τ. 
+
+Then m0 = 0 , mτ = c, and ˙ms = K(zK − ms). Set Ys := ¯ axs − ms, so that 
+
+dY s = d¯axs − ˙ms ds 
+
+= K(zK − ¯axs ) ds − K(zK − ms) ds + σ(s, ¯axs , x ) dB s
+
+= −K(¯ axs − ms) ds + σ(s, ¯axs , x ) dB s
+
+= −KY s ds + σ(s, ¯axs , x ) dB s.
+
+Moreover, Y0 = ¯ ax 
+
+> 0
+
+and Yτ = ¯ axτ − c. By Itô’s formula, 
+
+d∥Ys∥2 =  −2K∥Ys∥2 + tr  σ(s, ¯axs , x )σ(s, ¯axs , x )⊤ ds + 2 ⟨Ys, σ (s, ¯axs , x ) dB s⟩.
+
+Under Assumption 2.1, 
+
+tr  σ(s, ¯axs , x )σ(s, ¯axs , x )⊤ ≤ dΛ.
+
+Taking expectations gives dds E∥Ys∥2 ≤ − 2KE∥Ys∥2 + dΛ.
+
+Gronwall’s inequality yields 
+
+E∥Yτ ∥2 ≤ e−2Kτ E∥Y0∥2 + dΛ
+
+Z τ
+
+> 0
+
+e−2K(τ −r) dr 
+
+= e−2Kτ m2(μ0) + dΛ2K
+
+ 1 − e−2Kτ .
+
+Since Yτ = ¯ axτ − c, we obtain 
+
+E∥¯axτ − c∥2 ≤ e−2Kτ m2(μ0) + dΛ2K
+
+ 1 − e−2Kτ .
+
+This proves the claim. 
+
+## A.2 Proof of Theorem 3.2 
+
+We now prove the value-approximation theorem stated in Theorem 3.2. The proof lifts the terminal-action concentration from Lemma 3.1 to convergence of the induced one-step reward and transition kernel, and then propagates this convergence through the discounted Bellman recursion. 20 Proof. Below, we allow the volatility to depend on K and write it as σK ; if the volatility is fixed, simply read 
+
+σK = σ. We prove the result by converting the controlled MDP into a Markov reward process. The main point is that, when the volatility is state-dependent, the terminal noise is no longer independent of x. We therefore use only the concentration of the terminal action around g⋆(x).From Lemma 3.1, we have 
+
+E∥¯aK,x T − g⋆(x)∥2 ≤ e−2KT m2(μ0) + dΛ2K
+
+ 1 − e−2KT  =: εK .
+
+Since εK → 0, we have, for every fixed x,
+
+∆K (x) := ∥¯aK,x T − g⋆(x)∥ −→ 0 in L2 and hence in probability. Define the averaged reward and transition kernel induced by the diffusion policy: 
+
+rK (x) := E
+
+h
+
+r(x, ¯aK,x T )
+
+i
+
+,
+
+and 
+
+PK (A | x) := E
+
+h
+
+P (A | x, ¯aK,x T )
+
+i
+
+, A ∈ B (X ).
+
+For the deterministic policy π⋆(· | x) = δg⋆(x), define 
+
+r⋆(x) := r(x, g ⋆(x)) , P ⋆(A | x) := P (A | x, g ⋆(x)) .
+
+We first show pointwise convergence of the one-step reward and transition kernel. Fix x ∈ X , and let 
+
+AK,x := {∆K (x) ≤ Rx},
+
+where Rx is the radius from Assumption 3.1. Recall rmax := sup x,a |r(x, a )| < ∞. On AK,x , Assumption 3.1 gives 
+
+|r(x, ¯aK,x T ) − r(x, g ⋆(x)) | ≤ ωr,x (∆ K (x)) .
+
+On AcK,x , we use the trivial bound |r(x, ¯aK,x T ) − r(x, g ⋆(x)) | ≤ 2rmax . Hence 
+
+|rK (x) − r⋆(x)| ≤ Eωr,x (∆ K (x)) 1AK,x 
+
+ + 2 rmax P(AcK,x ).
+
+Since ∆K (x) → 0 in probability, P(AcK,x ) = P(∆ K (x) > R x) → 0. Moreover, taking the modulus to be nondecreasing, for any 0 < η < R x,
+
+Eωr,x (∆ K (x)) 1AK,x 
+
+ ≤ ωr,x (η) + ωr,x (Rx)P(∆ K (x) > η ).
+
+Letting K → ∞ and then η ↓ 0 gives rK (x) → r⋆(x).
+
+Similarly, by convexity of total variation under mixtures, 
+
+TV( PK (· | x), P ⋆(· | x)) ≤ E
+
+h
+
+TV 
+
+
+
+P (· | x, ¯aK,x T ), P (· | x, g ⋆(x)) 
+
+i 
+
+≤ EωP,x (∆ K (x)) 1AK,x 
+
+ + 2 P(AcK,x ).
+
+The same argument as above yields 
+
+TV( PK (· | x), P ⋆(· | x)) → 0.
+
+Now define the finite-horizon value functions for the two Markov reward processes. Set V K 
+
+> 0
+
+= V ⋆ 
+
+> 0
+
+= 0 , and recursively define 
+
+V Kn+1 (x) = rK (x) + γ
+
+Z
+
+> X
+
+V Kn (y)PK (dy | x),
+
+and 
+
+V ⋆n+1 (x) = r⋆(x) + γ
+
+Z
+
+> X
+
+V ⋆n (y)P ⋆(dy | x).
+
+21 We prove by induction that, for every fixed n ≥ 0 and every fixed x ∈ X ,
+
+V Kn (x) → V ⋆n (x).
+
+The case n = 0 is immediate. Suppose the claim holds for n. Since rewards are bounded, 
+
+sup 
+
+> K
+
+∥V Kn ∥∞ ∨ ∥ V ⋆n ∥∞ ≤ rmax 
+
+1 − γ .
+
+For fixed x,
+
+Z
+
+V Kn (y)PK (dy | x) −
+
+Z
+
+V ⋆n (y)P ⋆(dy | x)
+
+≤
+
+Z  V Kn (y) − V ⋆n (y)P ⋆(dy | x) + 2 ∥V Kn ∥∞ TV( PK (· | x), P ⋆(· | x)) .
+
+The first term goes to zero by dominated convergence under the fixed measure P ⋆(· | x). The second term goes to zero by the total-variation convergence shown above. Together with rK (x) → r⋆(x), this gives 
+
+V Kn+1 (x) → V ⋆n+1 (x).
+
+The induction is complete. It remains to pass from finite horizon to infinite horizon. Let V K := V πK and V ⋆ := V π⋆
+
+. For every n ≥ 0,
+
+∥V K − V Kn ∥∞ ∨ ∥ V ⋆ − V ⋆n ∥∞ ≤ γnrmax 
+
+1 − γ .
+
+Therefore, for every fixed x,
+
+lim sup 
+
+> K→∞
+
+|V K (x) − V ⋆(x)| ≤ 2γnrmax 
+
+1 − γ + lim sup 
+
+> K→∞
+
+|V Kn (x) − V ⋆n (x)|
+
+= 2γnrmax 
+
+1 − γ .
+
+Letting n → ∞ yields 
+
+V K (x) → V ⋆(x) for every x ∈ X .
+
+Finally, 
+
+|V K (x) − V ⋆(x)| ≤ 2rmax 
+
+1 − γ ,
+
+so dominated convergence with respect to the initial state law ρ gives 
+
+V πK (ρ) = 
+
+Z
+
+> X
+
+V K (x)ρ(dx ) −→ 
+
+Z
+
+> X
+
+V ⋆(x)ρ(dx ) = V π⋆
+
+(ρ).
+
+Since π⋆(· | x) = δg⋆(x) is an optimal deterministic policy, V π⋆
+
+(ρ) = V ⋆(ρ). This proves the theorem. 
+
+## A.3 Smoothing and anti-concentration for state-independent volatility 
+
+This subsection proves the smoothing estimate needed for the final-window lower-bound argument in Proposition 3.3. The goal is to show that, after rescaling the last time interval of length K−1, the residual diffusion has an endpoint density uniformly bounded from above. This prevents the terminal action from concentrating too much near any finite set of target actions. We proceed in two steps. Lemma A.1 first gives an a priori L2 estimate for solutions of the Fokker-Planck equation. Lemma A.2 then combines this estimate with Nash’s inequality and a duality argument to obtain a uniform L∞ bound on the density at the terminal time. This L∞ bound implies the anti-concentration estimate used in Appendix A.4. 22 Lemma A.1 (A priori L2 finiteness for SDE marginal density under state-independent volatility) . Fix 
+
+0 ≤ r < t ≤ 1. Let 
+
+Γ( s) := σ(s)σ(s)⊤, Γij (s) = [Γ( s)] ij .
+
+Assume that β(s, ·) is smooth and 1-Lipschitz uniformly in s, that β(·, 0) ∈ L1([ r, t ]) , and that Γ( s) is deterministic, positive semidefinite, and bounded on [r, t ]. Let ps be a nonnegative probability density solving 
+
+∂sps(x) = −
+
+> d
+
+X
+
+> i=1
+
+∂i
+
+ βi(s, x )ps(x) + 12
+
+> d
+
+X
+
+> i,j =1
+
+Γij (s)∂ij ps(x), pr = ϕ, 
+
+where ϕ ∈ L1(Rd) ∩ L2(Rd) is a probability density. Then, for every u ∈ [r, t ], it holds that 
+
+∥pu∥22 ≤ ed(u−r)∥ϕ∥22.
+
+In particular, pu ∈ L2(Rd) for every u ∈ [r, t ].Proof. For M > 0, define the truncated quadratic function 
+
+ΨM (z) = 
+
+(
+
+z2, 0 ≤ z ≤ M, 
+
+2M z − M 2, z > M. 
+
+Then ΨM is convex, C1, and satisfies 0 ≤ ΨM (z) ≤ 2M z , ΨM (z) ≤ z2, and ΨM (z) ↑ z2 as M → ∞ .Also define 
+
+HM (z) := zΨ′ 
+
+> M
+
+(z) − ΨM (z).
+
+A direct computation gives 
+
+HM (z) = z2 ∧ M 2, 0 ≤ HM (z) ≤ ΨM (z).
+
+Let χR ∈ C∞ 
+
+> c
+
+(Rd) be a standard cutoff such that 
+
+0 ≤ χR ≤ 1, χR = 1 on BR, supp χR ⊂ B2R,
+
+and 
+
+|∇ χR| ≤ CR , |D2χR| ≤ CR2 .
+
+Set 
+
+FM,R (s) := 
+
+Z
+
+> Rd
+
+ΨM (ps(x)) χR(x) dx. 
+
+This quantity is finite because ΨM (ps) ≤ 2M p s and ps has total mass one. We differentiate FM,R (s) and use the Fokker–Planck equation: 
+
+dds FM,R (s) = 
+
+Z
+
+Ψ′ 
+
+> M
+
+(ps)χR ∂sps.
+
+For the drift term, 
+
+−
+
+Z
+
+Ψ′ 
+
+> M
+
+(ps)χRdX
+
+> i=1
+
+∂i(βips) = −
+
+Z
+
+(∇ · βs)HM (ps)χR +
+
+Z
+
+ΨM (ps)βs · ∇ χR.
+
+For the diffusion term, since Γij (s) does not depend on x,
+
+12
+
+Z
+
+Ψ′ 
+
+> M
+
+(ps)χRdX
+
+> i,j =1
+
+Γij (s)∂ij ps = − 12
+
+Z
+
+Ψ′′  
+
+> M
+
+(ps)χRdX
+
+> i,j =1
+
+Γij (s)∂ips ∂j ps + 12
+
+Z
+
+ΨM (ps)
+
+> d
+
+X
+
+> i,j =1
+
+Γij (s)∂ij χR.
+
+The first diffusion term is nonpositive because ΨM is convex and Γ( s) is positive semidefinite. Since βs is 
+
+1-Lipschitz, 
+
+−∇ · βs ≤ d. 
+
+23 Therefore, dds FM,R (s) ≤ dF M,R (s) + EM,R (s),
+
+where 
+
+EM,R (s) := 
+
+Z
+
+ΨM (ps)βs · ∇ χR + 12
+
+Z
+
+ΨM (ps)
+
+> d
+
+X
+
+> i,j =1
+
+Γij (s)∂ij χR.
+
+We now send R → ∞ . Let 
+
+AR := {x ∈ Rd : R ≤ | x| ≤ 2R}.
+
+The support of ∇χR and D2χR is contained in AR. Since βs is 1-Lipschitz, 
+
+|β(s, x )| ≤ | β(s, 0) | + |x|.
+
+Using ΨM (ps) ≤ 2M p s, the cutoff bounds, and boundedness of Γ( s), we get 
+
+|EM,R (s)| ≤ CM  1 + |β(s, 0) | + ∥Γ( s)∥op 
+
+ Z
+
+> AR
+
+ps(x) dx. 
+
+For each fixed s, R 
+
+> AR
+
+ps(x) dx → 0 as R → ∞ , because ps is a probability density. The right-hand side is dominated by an integrable function of s on [r, t ]. Hence, by dominated convergence, 
+
+Z ur
+
+|EM,R (s)| ds → 0 as R → ∞ .
+
+Integrating the differential inequality from r to u gives 
+
+FM,R (u) ≤ FM,R (r) + d
+
+Z ur
+
+FM,R (s) ds +
+
+Z ur
+
+EM,R (s) ds. 
+
+Letting R → ∞ yields 
+
+FM (u) ≤ FM (r) + d
+
+Z ur
+
+FM (s) ds, 
+
+where 
+
+FM (s) := 
+
+Z
+
+> Rd
+
+ΨM (ps(x)) dx. 
+
+By Gronwall’s inequality, 
+
+FM (u) ≤ ed(u−r)FM (r).
+
+At the initial time, pr = ϕ, and ΨM (ϕ) ≤ ϕ2. Therefore, 
+
+FM (u) ≤ ed(u−r)∥ϕ∥22.
+
+Finally, since ΨM (z) ↑ z2, monotone convergence gives 
+
+Z
+
+> Rd
+
+pu(x)2 dx = lim  
+
+> M→∞
+
+Z
+
+> Rd
+
+ΨM (pu(x)) dx ≤ ed(u−r)∥ϕ∥22.
+
+This proves the claim. The computation with ΨM can be made fully classical by first replacing ΨM by smooth convex approximations with the same bounds and then letting the approximation parameter tend to zero. 
+
+Lemma A.2. Let (Yt)0≤t≤1 solve 
+
+dY t = β(t, Y t) dt + σ(t) dW t, Y0 = y ∈ Rd.
+
+Assume that β(t, ·) is 1-Lipschitz uniformly in t, β(·, 0) ∈ L1([0 , 1]) , and that σ(t) is deterministic, state-independent, and square-integrable on [0 , 1] . Assume also that there is κ > 0 such that 
+
+σ(t)σ(t)⊤ ⪰ κI d
+
+24 for a.e. t ∈ [0 , 1] .Then the law of Y1 has a density py 
+
+> 1
+
+with respect to Lebesgue measure, and there is a constant Cd,κ < ∞,depending only on d and κ, such that 
+
+sup 
+
+> y∈Rd
+
+∥py 
+
+> 1
+
+∥∞ ≤ Cd,κ .
+
+Consequently, for any z1, . . . , z m ∈ Rd and any ρ > 0,
+
+Py
+
+Y1 ∈
+
+> m
+
+[
+
+> j=1
+
+B(zj , ρ )
+
+ ≤ Cd,κ mv dρd,
+
+where vd = λd(B(0 , 1)) , with λd the Lebesgue measure in Rd.Proof. We first prove the result under the additional assumptions that β is smooth in the spatial variable, 
+
+σ is bounded, and the initial law has a smooth probability density. We then remove these assumptions by approximation. All the integration by parts in Steps 1-2 can be justified by inserting standard cut-offs χR as in Lemma A.1 and then let R → ∞ .
+
+Step 1: forward L1 → L2 smoothing for smooth probability densities. 
+
+Fix 0 ≤ r < t ≤ 1. Suppose the law of Yr has smooth (compactly supported) probability density φ. Let pt
+
+be the density of Yt. We write 
+
+pt = P ∗
+
+> r,t
+
+φ, 
+
+where P ∗ 
+
+> r,t
+
+denotes the forward Fokker–Planck evolution of densities. Since φ is a probability density, pt is also a probability density: 
+
+pt ≥ 0,
+
+Z
+
+> Rd
+
+pt(x) dx = 1 .
+
+Furthermore, Lemma A.1 ensures that pt ∈ L2(Rd) for t > r . The Fokker–Planck equation is 
+
+∂tpt = −∇ · (βtpt) + 12
+
+> d
+
+X
+
+> i,j =1
+
+[σ(t)σ(t)⊤]ij ∂ij pt,
+
+where βt(x) = β(t, x ).We compute the evolution of 
+
+∥pt∥22 =
+
+Z
+
+> Rd
+
+pt(x)2 dx. 
+
+Multiplying the Fokker–Planck equation by 2pt and integrating gives 
+
+ddt ∥pt∥22 = −2
+
+Z
+
+pt∇ · (βtpt) + 
+
+Z
+
+ptdX
+
+> i,j =1
+
+[σ(t)σ(t)⊤]ij ∂ij pt.
+
+For the drift term, use 
+
+∇ · (βtpt) = ( ∇ · βt)pt + βt · ∇ pt.
+
+Then 
+
+−2
+
+Z
+
+pt∇ · (βtpt) = −2
+
+Z
+
+(∇ · βt)p2 
+
+> t
+
+− 2
+
+Z
+
+ptβt · ∇ pt.
+
+Since 2ptβt · ∇ pt = βt · ∇ (p2 
+
+> t
+
+), integration by parts gives 
+
+−2
+
+Z
+
+ptβt · ∇ pt = −
+
+Z
+
+βt · ∇ (p2 
+
+> t
+
+) = 
+
+Z
+
+(∇ · βt)p2 
+
+> t
+
+.
+
+Therefore 
+
+−2
+
+Z
+
+pt∇ · (βtpt) = −
+
+Z
+
+(∇ · βt)p2 
+
+> t
+
+.
+
+25 For the diffusion term, σ(t)σ(t)⊤ is independent of x, so integration by parts gives 
+
+Z
+
+ptdX
+
+> i,j =1
+
+[σ(t)σ(t)⊤]ij ∂ij pt = −
+
+Z
+
+∇p⊤ 
+
+> t
+
+σ(t)σ(t)⊤∇pt.
+
+Combining the two identities, 
+
+ddt ∥pt∥22 = −
+
+Z
+
+(∇ · βt)p2 
+
+> t
+
+−
+
+Z
+
+∇p⊤ 
+
+> t
+
+σ(t)σ(t)⊤∇pt.
+
+Since βt is 1-Lipschitz, we have −∇ · βt ≤ d. And since σ(t)σ(t)⊤ ⪰ κI d, we have 
+
+∇p⊤ 
+
+> t
+
+σ(t)σ(t)⊤∇pt ≥ κ∥∇ pt∥2.
+
+Hence ddt ∥pt∥22 ≤ d∥pt∥22 − κ∥∇ pt∥22.
+
+Define qt := e−d(t−r)/2pt. Then ∥qt∥22 = e−d(t−r)∥pt∥22. Differentiating it gives 
+
+ddt ∥qt∥22 = −de −d(t−r)∥pt∥22 + e−d(t−r) ddt ∥pt∥22.
+
+Using the preceding inequality, 
+
+ddt ∥qt∥22 ≤ − de −d(t−r)∥pt∥22 + e−d(t−r)  d∥pt∥22 − κ∥∇ pt∥22
+
+ .
+
+The two terms involving d∥pt∥22 cancel, so 
+
+ddt ∥qt∥22 ≤ − κe −d(t−r)∥∇ pt∥22.
+
+Because qt = e−d(t−r)/2pt and the exponential factor is independent of x, we have ∇qt = e−d(t−r)/2∇pt, and therefore 
+
+∥∇ qt∥22 = e−d(t−r)∥∇ pt∥22.
+
+Thus ddt ∥qt∥22 ≤ − κ∥∇ qt∥22.
+
+Since pt is a probability density, 
+
+∥qt∥1 = e−d(t−r)/2∥pt∥1 = e−d(t−r)/2 ≤ 1.
+
+We now apply Nash’s inequality on Rd: there exists Nd < ∞, depending only on d, such that for every 
+
+u ∈ L1(Rd) ∩ H1(Rd),
+
+∥u∥2+4 /d  
+
+> 2
+
+≤ Nd∥∇ u∥22∥u∥4/d  
+
+> 1
+
+.
+
+Applying this to u = qt gives 
+
+∥qt∥2+4 /d  
+
+> 2
+
+≤ Nd∥∇ qt∥22∥qt∥4/d  
+
+> 1
+
+≤ Nd∥∇ qt∥22.
+
+Therefore 
+
+∥∇ qt∥22 ≥ 1
+
+Nd
+
+∥qt∥2+4 /d  
+
+> 2
+
+.
+
+Combining with the energy inequality, 
+
+ddt ∥qt∥22 ≤ − κNd
+
+∥qt∥2+4 /d  
+
+> 2
+
+.
+
+26 Set F (t) := ∥qt∥22. Then ∥qt∥2+4 /d  
+
+> 2
+
+= F (t)1+2 /d . Thus 
+
+F ′(t) ≤ − κNd
+
+F (t)1+2 /d .
+
+Let θ = 2 /d and cd,κ = κ/N d, where Nd is the coefficient in Nash’s inequality. Then 
+
+F ′(t) ≤ − cd,κ F (t)1+ θ .
+
+If F (t) = 0 , the desired bound is trivial. Otherwise, 
+
+ddt F (t)−θ = −θF (t)−θ−1F ′(t) ≥ θc d,κ .
+
+Integrating from r to t gives 
+
+F (t)−θ − F (r)−θ ≥ θc d,κ (t − r).
+
+Since F (r)−θ ≥ 0, we have F (t)−θ ≥ θc d,κ (t − r). Therefore 
+
+F (t) ≤ (θc d,κ (t − r)) −1/θ .
+
+Substituting θ = 2 /d and cd,κ = κ/N d, we have F (t) ≤
+
+ 2κd N d (t − r)
+
+−d/ 2
+
+. Hence 
+
+∥qt∥2 ≤
+
+ d N d
+
+2κ
+
+d/ 4
+
+(t − r)−d/ 4.
+
+Since pt = ed(t−r)/2qt and t − r ≤ 1,
+
+∥pt∥2 ≤ Cd,κ (t − r)−d/ 4.
+
+This proves the forward smoothing estimate. 
+
+Step 2: a backward estimate and the L∞ bound. 
+
+We now obtain an L2 → L∞ estimate for the forward evolution. Let Pr,t denote the backward Markov semigroup: 
+
+(Pr,t g)( x) = E[g(Yt) | Yr = x].
+
+For this step, g is a test function. It need not be a density. Fix 0 ≤ r < t ≤ 1 and first take g ≥ 0. Define 
+
+ws(x) = Pt−s,t g(x), 0 ≤ s ≤ t − r. 
+
+Then w0 = g, and ws satisfies the backward equation, written forward in the variable s:
+
+∂sws = β(t − s, x ) · ∇ ws + 12
+
+> d
+
+X
+
+> i,j =1
+
+[σ(t − s)σ(t − s)⊤]ij ∂ij ws.
+
+Here 
+
+β(t − s, x ) · ∇ ws(x) = 
+
+> d
+
+X
+
+> i=1
+
+βi(t − s, x )∂xi ws(x).
+
+Repeating the same L2 integration by parts as in Step 1 gives 
+
+dds ∥ws∥22 ≤ d∥ws∥22 − κ∥∇ ws∥22.
+
+We also need an L1 bound on ws. Since g ≥ 0 and Pt−s,t preserves nonnegativity, we have ws ≥ 0. Hence 
+
+∥ws∥1 = R ws. Integrating the backward equation in x gives 
+
+dds ∥ws∥1 =
+
+Z
+
+β(t − s, x ) · ∇ ws(x) dx. 
+
+27 The second-order term integrates to zero. By integration by parts, 
+
+Z
+
+β(t − s, x ) · ∇ ws(x) dx = −
+
+Z
+
+(∇ · β)( t − s, x )ws(x) dx. 
+
+Since −∇ · β ≤ d and ws ≥ 0, dds ∥ws∥1 ≤ d∥ws∥1.
+
+By Gronwall’s inequality, 
+
+∥ws∥1 ≤ eds ∥w0∥1 = eds ∥g∥1.
+
+Define vs = e−ds/ 2ws. Exactly as in Step 1, 
+
+dds ∥vs∥22 ≤ − κ∥∇ vs∥22.
+
+Moreover, 
+
+∥vs∥1 = e−ds/ 2∥ws∥1 ≤ e−ds/ 2eds ∥g∥1 = eds/ 2∥g∥1 ≤ ed/ 2∥g∥1.
+
+Applying Nash’s inequality to vs gives 
+
+∥vs∥2+4 /d  
+
+> 2
+
+≤ Nd∥∇ vs∥22∥vs∥4/d  
+
+> 1
+
+≤ Nde2∥∇ vs∥22∥g∥4/d  
+
+> 1
+
+.
+
+Therefore, 
+
+∥∇ vs∥22 ≥ 1
+
+Nde2∥g∥4/d 
+
+> 1
+
+∥vs∥2+4 /d  
+
+> 2
+
+.
+
+Repeating the differential inequality argument from Step 1 yields 
+
+∥vs∥2 ≤ Cd,κ s−d/ 4∥g∥1.
+
+Since ws = eds/ 2vs and s ≤ 1,
+
+∥ws∥2 ≤ Cd,κ s−d/ 4∥g∥1.
+
+Taking s = t − r gives 
+
+∥Pr,t g∥2 ≤ Cd,κ (t − r)−d/ 4∥g∥1.
+
+For signed g, apply this estimate to g+ and g− and use linearity. Thus the same estimate holds for all g ∈ L1.Now use duality. For h ∈ L2(Rd) and g ∈ C∞ 
+
+> c
+
+(Rd) with ∥g∥1 ≤ 1, adjointness gives 
+
+Z
+
+> Rd
+
+P ∗
+
+> r,t
+
+h(x)g(x) dx =
+
+Z
+
+> Rd
+
+h(x)Pr,t g(x) dx .
+
+Hence, by Cauchy–Schwarz and the backward estimate, 
+
+Z
+
+P ∗
+
+> r,t
+
+h g ≤ ∥ h∥2∥Pr,t g∥2 ≤ Cd,κ (t − r)−d/ 4∥h∥2∥g∥1.
+
+Taking the supremum over ∥g∥1 ≤ 1 gives 
+
+∥P ∗
+
+> r,t
+
+h∥∞ ≤ Cd,κ (t − r)−d/ 4∥h∥2.
+
+Apply this over two half intervals. If the initial law at time 0 has smooth probability density φ, then 
+
+p1 = P ∗
+
+> 1/2,1
+
+P ∗
+
+> 0,1/2
+
+φ. 
+
+By Step 1, 
+
+∥P ∗
+
+> 0,1/2
+
+φ∥2 ≤ Cd,κ .
+
+By the L2 → L∞ estimate, 
+
+∥p1∥∞ = ∥P ∗
+
+> 1/2,1
+
+(P ∗
+
+> 0,1/2
+
+φ)∥∞ ≤ Cd,κ ∥P ∗
+
+> 0,1/2
+
+φ∥2 ≤ Cd,κ .
+
+28 Step 3: point-mass initial condition. 
+
+We now keep the smooth drift and bounded volatility assumptions, but start from Y0 = y.Let η ∈ C∞ 
+
+> c
+
+(Rd) be such that η ≥ 0 and R η = 1 . Define 
+
+φn(x) = ndη(n(x − y)) .
+
+Then each φn is a smooth probability density and φn(x) dx ⇒ δy weakly. Let Xn have density φn. We may write Xn = y + Z/n , where Z has density η, so Xn → y almost surely. Let Y Xn 
+
+> t
+
+and Y yt be solutions driven by the same Brownian motion, started from Xn and y. Because the volatility is state-independent, 
+
+d(Y Xn 
+
+> t
+
+− Y yt ) = 
+
+h
+
+β(t, Y Xn 
+
+> t
+
+) − β(t, Y yt )
+
+i
+
+dt. 
+
+Since β(t, ·) is 1-Lipschitz, 
+
+|Y Xn 
+
+> 1
+
+− Y y 
+
+> 1
+
+| ≤ e|Xn − y|.
+
+Hence Y Xn 
+
+> 1
+
+→ Y y 
+
+> 1
+
+almost surely, and therefore in distribution. For each n, Step 2 gives 
+
+P(Y Xn 
+
+> 1
+
+∈ E) ≤ Cd,κ λd(E)
+
+for every Borel set E. Let O be open. By the portmanteau theorem, 
+
+P(Y y 
+
+> 1
+
+∈ O) ≤ lim inf  
+
+> n→∞
+
+P(Y Xn 
+
+> 1
+
+∈ O) ≤ Cd,κ λd(O).
+
+For a Borel set E, choose open O ⊃ E with λd(O) ≤ λd(E) + ε. Then 
+
+P(Y y 
+
+> 1
+
+∈ E) ≤ P(Y y 
+
+> 1
+
+∈ O) ≤ Cd,κ (λd(E) + ε).
+
+Letting ε ↓ 0 gives 
+
+P(Y y 
+
+> 1
+
+∈ E) ≤ Cd,κ λd(E).
+
+Thus the law of Y y 
+
+> 1
+
+has density bounded by Cd,κ .
+
+Step 4: remove smoothness of β and boundedness of σ.
+
+We now remove the two auxiliary assumptions used in Steps 1–3. The final statement only assumes that 
+
+β(t, ·) is 1-Lipschitz and that σ(t)σ(t)⊤ ⪰ κI d.
+
+Step 4 (a): remove smoothness of β, keeping σ bounded. 
+
+Let η ∈ C∞ 
+
+> c
+
+(Rd) be a standard mollifier: η ≥ 0, R 
+
+> Rd
+
+η(z) dz = 1 , and supp η ⊂ B(0 , 1) . Define 
+
+ηn(z) = ndη(nz ).
+
+For each n, define the spatial mollification of β by 
+
+βn(t, x ) = ( ηn ∗x β(t, ·))( x) = 
+
+Z
+
+> Rd
+
+ηn(z)β(t, x − z) dz. 
+
+The convolution is only in the spatial variable x, not in time. For each fixed t, the function βn(t, ·) is smooth. Moreover, βn(t, ·) is still 1-Lipschitz. Indeed, for x, x ′ ∈ Rd,
+
+|βn(t, x ) − βn(t, x ′)| =
+
+Z
+
+> Rd
+
+ηn(z) [ β(t, x − z) − β(t, x ′ − z)] dz 
+
+≤
+
+Z
+
+> Rd
+
+ηn(z)|β(t, x − z) − β(t, x ′ − z)| dz 
+
+≤
+
+Z
+
+> Rd
+
+ηn(z)|x − x′| dz 
+
+= |x − x′|.
+
+29 Thus the Lipschitz constant is not enlarged by mollification. Also, βn converges uniformly to β. Since β(t, ·) is 1-Lipschitz uniformly in t,
+
+|βn(t, x ) − β(t, x )| =
+
+Z
+
+> Rd
+
+ηn(z) [ β(t, x − z) − β(t, x )] dz 
+
+≤
+
+Z
+
+> Rd
+
+ηn(z)|z| dz. 
+
+Changing variables u = nz gives Z
+
+> Rd
+
+ηn(z)|z| dz = 1
+
+n
+
+Z
+
+> Rd
+
+η(u)|u| du. 
+
+Hence, with 
+
+Cη := 
+
+Z
+
+> Rd
+
+η(u)|u| du, 
+
+we have 
+
+sup 
+
+> t∈[0 ,1]
+
+sup 
+
+> x∈Rd
+
+|βn(t, x ) − β(t, x )| ≤ Cη
+
+n .
+
+Let Y (n) solve 
+
+dY (n) 
+
+> t
+
+= βn(t, Y (n) 
+
+> t
+
+) dt + σ(t) dW t, Y (n)0 = y, 
+
+and let Y solve 
+
+dY t = β(t, Y t) dt + σ(t) dW t, Y0 = y. 
+
+Drive both equations by the same Brownian motion. Since the volatility is the same and is state-independent, 
+
+Y (n) 
+
+> t
+
+− Yt =
+
+Z t
+
+> 0
+
+h
+
+βn(s, Y (n) 
+
+> s
+
+) − β(s, Y s)
+
+i
+
+ds. 
+
+Therefore 
+
+|Y (n) 
+
+> t
+
+− Yt| ≤ 
+
+Z t
+
+> 0
+
+|βn(s, Y (n) 
+
+> s
+
+) − βn(s, Y s)| ds +
+
+Z t
+
+> 0
+
+|βn(s, Y s) − β(s, Y s)| ds 
+
+≤
+
+Z t
+
+> 0
+
+|Y (n) 
+
+> s
+
+− Ys| ds + Cη tn .
+
+By Gronwall’s inequality, 
+
+sup 
+
+> 0≤t≤1
+
+|Y (n) 
+
+> t
+
+− Yt| ≤ Cη en .
+
+In particular, Y (n)1 → Y1 almost surely, hence also in distribution. By Steps 1–3, applied to the smooth drift βn, the endpoint law of Y (n)1 satisfies 
+
+P(Y (n)1 ∈ E) ≤ Cd,κ λd(E)
+
+for every Borel set E, with the same constant Cd,κ for all n. Let O ⊂ Rd be open. Since Y (n)1 ⇒ Y1, the portmanteau theorem gives 
+
+P(Y1 ∈ O) ≤ lim inf  
+
+> n→∞
+
+P(Y (n)1 ∈ O) ≤ Cd,κ λd(O).
+
+For a Borel set E, choose open O ⊃ E with λd(O) ≤ λd(E) + ε. Then 
+
+P(Y1 ∈ E) ≤ P(Y1 ∈ O) ≤ Cd,κ (λd(E) + ε).
+
+Letting ε ↓ 0 yields 
+
+P(Y1 ∈ E) ≤ Cd,κ λd(E).
+
+Thus the density bound holds for Lipschitz β, as long as σ is bounded. 30 Step 4 (b): remove boundedness of σ.
+
+Now assume only that σ is square-integrable on [0 , 1] and σ(t)σ(t)⊤ ⪰ κI d for a.e. t ∈ [0 , 1] .Set 
+
+Γ( t) := σ(t)σ(t)⊤.
+
+Then Γ( t) is symmetric positive definite for a.e. t, and Γ( t) ⪰ κI d. Define 
+
+O(t) := Γ( t)−1/2σ(t).
+
+Then O(t)O(t)⊤ = Γ( t)−1/2σ(t)σ(t)⊤Γ( t)−1/2 = Id, so O(t) is orthogonal for a.e. t.For N ≥ κ, define ΓN (t) by truncating the eigenvalues of Γ( t) above at N . More explicitly, if 
+
+Γ( t) = U (t) diag( λ1(t), . . . , λ d(t)) U (t)⊤,
+
+then 
+
+ΓN (t) = U (t) diag( λ1(t) ∧ N, . . . , λ d(t) ∧ N )U (t)⊤.
+
+Because each λi(t) ≥ κ, we have ΓN (t) ⪰ κI d. Define 
+
+σN (t) := Γ N (t)1/2O(t).
+
+Then σN (t)σN (t)⊤ = Γ N (t)1/2O(t)O(t)⊤ΓN (t)1/2 = Γ N (t). Therefore 
+
+σN (t)σN (t)⊤ ⪰ κI d.
+
+Also, σN is bounded, since all eigenvalues of ΓN (t) are at most N .We next show that σN → σ in L2([0 , 1]) . Since σ(t) = Γ( t)1/2O(t) and σN (t) = Γ N (t)1/2O(t), orthogonality of O(t) gives 
+
+∥σN (t) − σ(t)∥HS = ∥ΓN (t)1/2 − Γ( t)1/2∥HS .
+
+If λ1(t), . . . , λ d(t) are the eigenvalues of Γ( t), then 
+
+∥ΓN (t)1/2 − Γ( t)1/2∥2HS =
+
+> d
+
+X
+
+> i=1
+
+p λi(t) ∧ N − pλi(t)
+
+2
+
+.
+
+For each fixed t, this converges to 0 as N → ∞ . Moreover, 
+
+p λi(t) ∧ N − pλi(t)
+
+2
+
+≤ λi(t).
+
+Hence 
+
+∥ΓN (t)1/2 − Γ( t)1/2∥2HS ≤
+
+> d
+
+X
+
+> i=1
+
+λi(t) = tr(Γ( t)) = ∥σ(t)∥2HS .
+
+Since σ is square-integrable on [0 , 1] , dominated convergence gives 
+
+Z 10
+
+∥σN (t) − σ(t)∥2HS dt → 0.
+
+Let Y (N ) solve 
+
+dY (N ) 
+
+> t
+
+= β(t, Y (N ) 
+
+> t
+
+) dt + σN (t) dW t, Y (N )0 = y, 
+
+and let Y solve the original equation 
+
+dY t = β(t, Y t) dt + σ(t) dW t, Y0 = y. 
+
+Drive both equations by the same Brownian motion. Define 
+
+M (N ) 
+
+> t
+
+:= 
+
+Z t
+
+> 0
+
+(σN (s) − σ(s)) dW s.
+
+31 Then 
+
+Y (N ) 
+
+> t
+
+− Yt =
+
+Z t
+
+> 0
+
+h
+
+β(s, Y (N ) 
+
+> s
+
+) − β(s, Y s)
+
+i
+
+ds + M (N ) 
+
+> t
+
+.
+
+Using that β(t, ·) is 1-Lipschitz, 
+
+|Y (N ) 
+
+> t
+
+− Yt| ≤ 
+
+Z t
+
+> 0
+
+|Y (N ) 
+
+> s
+
+− Ys| ds + sup 
+
+> 0≤u≤t
+
+|M (N ) 
+
+> u
+
+|.
+
+By Gronwall’s inequality, 
+
+sup 
+
+> 0≤t≤1
+
+|Y (N ) 
+
+> t
+
+− Yt| ≤ e sup 
+
+> 0≤t≤1
+
+|M (N ) 
+
+> t
+
+|.
+
+By the Burkholder–Davis–Gundy inequality, or by Doob’s inequality and Itô’s isometry, 
+
+E
+
+
+
+sup 
+
+> 0≤t≤1
+
+|M (N ) 
+
+> t
+
+|2
+
+
+
+≤ C
+
+Z 10
+
+∥σN (t) − σ(t)∥2HS dt → 0.
+
+Therefore Y (N )1 → Y1 in probability, hence in distribution. By Step 4a, applied to the bounded volatility σN , the endpoint law of Y (N )1 satisfies 
+
+P(Y (N )1 ∈ E) ≤ Cd,κ λd(E)
+
+for every Borel set E, with a constant independent of N . Passing to the weak limit exactly as above gives 
+
+P(Y1 ∈ E) ≤ Cd,κ λd(E)
+
+for every Borel set E. Thus the endpoint law of Y1 has a density bounded by Cd,κ . This completes the removal of the auxiliary assumptions. 
+
+## A.4 Proof of Proposition 3.3, Assumption (A2): state-independent volatility 
+
+We first prove the matching localization lower bound in the simpler case where the volatility is state-independent. The proof separates two regimes: short horizon, where the K-Lipschitz drift cannot concentrate an absolutely continuous initialization too quickly, and longer horizons, where the final K−1-length time window yields an inevitable K−1/2-scale fluctuation. 
+
+Proof. All constants below may depend on m, d, κ, μ 0, R , but not on K, f, σ, T , nor on the locations or pairwise separations of the points in Z.
+
+Notational note. Throughout this proof, we will suppress the state argument in the drift f (t, a, x ), so that it becomes f (t, a ). This is because we do not use the state x in our analysis. Therefore, we clarify any indication of variables x, z, · · · ∈ Rd in this section are actions, not states ( d is the action dimension). 
+
+Step 1: the case T ≤ K−1.
+
+Under (A2), subtracting the additive noise Mt := R t 
+
+> 0
+
+σ(s) dB s reduces the SDE to a random ODE with globally K-Lipschitz drift; hence the SDE admits a pathwise unique strong realization, and for each deterministic initial action x we may write ¯at,x for the solution driven by the same Brownian path. For two initial actions 
+
+x, z , state-independence of σ(t) gives 
+
+d(¯ at,x − ¯at,z ) = [ f (t, ¯at,x ) − f (t, ¯at,z )] dt. 
+
+Thus t 7 → ¯at,x − ¯at,z is absolutely continuous, and for a.e. t,
+
+ddt |¯at,x − ¯at,z |2 = 2 ⟨¯at,x − ¯at,z , f (t, ¯at,x ) − f (t, ¯at,z )⟩ .
+
+Since f (t, ·) is K-Lipschitz, 
+
+ddt |¯at,x − ¯at,z |2 ≥ − 2K|¯at,x − ¯at,z |2.
+
+32 By Gronwall’s inequality, |¯aT,x − ¯aT,z | ≥ e−KT |x − z|. Therefore, conditional on the Brownian path, the map 
+
+x 7 → ¯aT,x is injective, and its inverse on its image is eKT -Lipschitz. Hence, for every Borel set E ⊂ Rd,
+
+λd ({x : ¯ aT,x ∈ E}) ≤ edKT λd(E).
+
+If T ≤ K−1, then edKT ≤ ed, and therefore λd ({x : ¯ aT,x ∈ E}) ≤ edλd(E). Since μ0 ≪ λd, there exists α > 0
+
+such that 
+
+λd(E) ≤ α =⇒ μ0(E) ≤ 12 .
+
+For δ > 0, define 
+
+Uδ =
+
+> J
+
+[
+
+> j=1
+
+B(zj , δ ).
+
+Since λd(Uδ ) ≤ Jv dδd, choose δ > 0, depending only on J, d, μ 0, such that edJv dδd ≤ α. Then, conditional on the Brownian path, λd ({x : ¯ aT,x ∈ Uδ }) ≤ edλd(Uδ ) ≤ α. Therefore 
+
+μ0 ({x : ¯ aT,x ∈ Uδ }) ≤ 12 .
+
+Since ¯a0 ∼ μ0 is independent of B, P( ¯aT ∈ Uδ | B) ≤ 1/2. Taking expectations, P( ¯aT /∈ Uδ ) ≥ 1/2. On the event {¯aT /∈ Uδ }, we have dist (¯ aT , Z) ≥ δ, and hence 
+
+dist (¯ aT , Z)2 ∧ R2 ≥ δ2 ∧ R2.
+
+Consequently, as K ≥ 1,
+
+E dist (¯ aT , Z)2 ∧ R2 ≥ δ2 ∧ R2
+
+2 ≥ δ2 ∧ R2
+
+2K .
+
+Step 2: the case T > K −1.
+
+Assume T > K −1 and set s = T − 1/K. Condition on Fs, and write y = ¯as. Let ϕt, for t ∈ [s, T ], solve the deterministic equation ddt ϕt = f (t, ϕ t), ϕs = y. 
+
+The existence of (ϕt) follows from the condition that f (·, 0) ∈ L1loc . For 0 ≤ t ≤ 1, define 
+
+Yt = √K  ¯as+t/K − ϕs+t/K 
+
+ ,
+
+and 
+
+Wt = √K  Bs+t/K − Bs
+
+ .
+
+Conditionally on Fs, W is a standard Brownian motion. We compute the equation for Yt. First, 
+
+¯as+t/K = y +
+
+Z s+t/K s
+
+f (r, ¯ar ) dr +
+
+Z s+t/K s
+
+σ(r) dB r ,
+
+while 
+
+ϕs+t/K = y +
+
+Z s+t/K s
+
+f (r, ϕ r ) dr. 
+
+Subtracting and multiplying by √K gives 
+
+Yt = √K
+
+Z s+t/K s
+
+[f (r, ¯ar ) − f (r, ϕ r )] dr + √K
+
+Z s+t/K s
+
+σ(r) dB r .
+
+Using the change of variables r = s + u/K and the identity 
+
+¯as+u/K = ϕs+u/K + Yu
+
+√K ,
+
+33 we obtain 
+
+dY t = βK (t, Y t) dt + σ(s + t/K ) dW t, Y0 = 0 ,
+
+where 
+
+βK (t, u ) = f (s + t/K, ϕ s+t/K + u/ √K) − f (s + t/K, ϕ s+t/K )
+
+√K .
+
+The drift βK is 1-Lipschitz in u. Indeed, 
+
+∥βK (t, u ) − βK (t, v )∥ ≤ 1
+
+√K K u − v
+
+√K = ∥u − v∥.
+
+Moreover, σ(s + t/K )σ(s + t/K )⊤ ⪰ κI d. By Lemma A.2, conditionally on Fs, the random variable Y1 has density bounded by Cd,κ . Therefore, for arbitrary y1, . . . , y J ∈ Rd and any ρ > 0,
+
+P
+
+Y1 ∈
+
+> J
+
+[
+
+> j=1
+
+B(yj , ρ ) Fs
+
+ ≤ Cd,κ Jv dρd.
+
+Choose ρ0 = (2 Cd,κ Jv d)−1/d ∧ 1. Then Cd,κ Jv dρd 
+
+> 0
+
+≤ 1/2. Now set yj = √K(zj − ϕT ) for j = 1 , . . . , J . Since 
+
+¯aT = ϕT + Y1/√K, we have 
+
+dist (¯ aT , Z) ≤ ρ0
+
+√K ⇐⇒ Y1 ∈
+
+> J
+
+[
+
+> j=1
+
+B(yj , ρ 0).
+
+Therefore 
+
+P
+
+
+
+dist (¯ aT , Z) ≤ ρ0
+
+√K Fs
+
+
+
+≤ 12 ,
+
+or equivalently 
+
+P
+
+
+
+dist (¯ aT , Z) > ρ0
+
+√K Fs
+
+
+
+≥ 12 .
+
+If K ≥ ρ20/R 2, then ρ0/√K ≤ R. On the event dist (¯ aT , Z) > ρ 0/√K, we have 
+
+dist (¯ aT , Z)2 ∧ R2 ≥ ρ20
+
+K .
+
+Thus 
+
+E dist (¯ aT , Z)2 ∧ R2 Fs
+
+ ≥ ρ20
+
+K P
+
+
+
+dist (¯ aT , Z) > ρ0
+
+√K Fs
+
+
+
+≥ ρ20
+
+2K .
+
+Taking expectations gives 
+
+E dist (¯ aT , Z)2 ∧ R2 ≥ ρ20
+
+2K .
+
+Step 3: combine the two regimes. 
+
+Let 
+
+KR = 1 ∨ ρ20
+
+R2 ,
+
+and define 
+
+cR = 12 min δ2 ∧ R2, ρ 20 .
+
+If K ≥ KR and T ≤ K−1, Step 1 gives 
+
+E dist (¯ aT , Z)2 ∧ R2 ≥ δ2 ∧ R2
+
+2K ≥ cR
+
+K .
+
+34 If K ≥ KR and T > K −1, Step 2 gives 
+
+E dist (¯ aT , Z)2 ∧ R2 ≥ ρ20
+
+2K ≥ cR
+
+K .
+
+Thus, for every T ≥ 0,
+
+E dist (¯ aT , Z)2 ∧ R2 ≥ cR
+
+K .
+
+Taking the infimum over all admissible f, σ, T proves 
+
+inf   
+
+> f,σ,T ≥0
+
+E dist (¯ aT , Z)2 ∧ R2 ≥ cR
+
+K .
+
+The proof is complete. 
+
+## A.5 Proof of Theorem 3.4 
+
+We next translate the finite-set localization lower bound into an RL value lower bound. The only additional ingredient is the quadratic finite-well Bellman-gap condition, which converts squared distance from optimal action set into loss in value. 
+
+Proof. By Proposition 3.3, applied for each cardinality J = 1 , . . . , M , there exist constants cJ,R > 0 and 
+
+KJ,R < ∞ such that the clipped finite-set localization lower bound holds for every finite set A ⊂ Rd with 
+
+|A| = m. Set 
+
+cM,R := min  
+
+> 1≤m≤M
+
+cm,R , K0 := max  
+
+> 1≤m≤M
+
+Km,R .
+
+Then, for every finite set A ⊂ Rd with 1 ≤ | A| ≤ M , every admissible K-Lipschitz drift, every admissible volatility satisfying the ellipticity bounds, and every terminal time T > 0,
+
+E dist(¯ aT , A )2 ∧ R2 ≥ cM,R 
+
+K , K ≥ K0. (A.1) The constants cM,R and K0 depend only on (M, R, d, κ, Λ, μ 0), and not on the locations or pairwise separations of the points in A.Fix K ≥ K0 and T > 0, and write π = πK,T . For each state x,
+
+V ⋆(x) − V π (x) = V ⋆(x) −
+
+Z
+
+> Rd
+
+
+
+r(x, a ) + γ
+
+Z
+
+> X
+
+V π (y)P (dy | x, a )
+
+
+
+π(da | x)=
+
+Z
+
+> Rd
+
+[V ⋆(x) − Q⋆(x, a )] π(da | x)+ γ
+
+Z
+
+> Rd
+
+Z
+
+> X
+
+[V ⋆(y) − V π (y)] P (dy | x, a )π(da | x).
+
+Since V ⋆ ≥ V π , the second term is nonnegative. Hence 
+
+V ⋆(x) − V π (x) ≥
+
+Z
+
+> Rd
+
+[V ⋆(x) − Q⋆(x, a )] π(da | x). (A.2) Integrating over x ∼ ρ gives 
+
+V ⋆(ρ) − V π (ρ) ≥
+
+Z
+
+> X
+
+Z
+
+> Rd
+
+[V ⋆(x) − Q⋆(x, a )] π(da | x)ρ(dx ).
+
+By the finite-well Bellman gap assumption in Theorem 3.4, for all (x, a ),
+
+V ⋆(x) − Q⋆(x, a ) ≥ λM,R 
+
+ dist( a, A ⋆(x)) 2 ∧ R2 .
+
+Therefore, 
+
+V ⋆(ρ) − V π (ρ) ≥ λM,R 
+
+Z
+
+> X
+
+Z
+
+> Rd
+
+ dist( a, A ⋆(x)) 2 ∧ R2 π(da | x)ρ(dx ). (A.3) 35 For each x, the set A⋆(x) is nonempty and satisfies |A⋆(x)| ≤ M . Moreover, under πK,T , the action at state 
+
+x is the terminal value of the state-conditioned diffusion. Thus, by (A.1) applied with A = A⋆(x),
+
+Z
+
+> Rd
+
+ dist( a, A ⋆(x)) 2 ∧ R2 πK,T (da | x) = E dist(¯ axT , A ⋆(x)) 2 ∧ R2 ≥ cM,R 
+
+K ,
+
+uniformly in x and T > 0. Substituting this into (A.3) yields 
+
+V ⋆(ρ) − V πK,T (ρ) ≥ λM,R 
+
+Z
+
+> X
+
+cM,R 
+
+K ρ(dx ) = cM,R λM,R 
+
+K .
+
+The bound is uniform over T > 0. Hence 
+
+inf  
+
+> T > 0
+
+(V ⋆(ρ) − V πK,T (ρ)) ≥ cM,R λM,R 
+
+K ,
+
+which proves the claim. 
+
+## A.6 Analog of Theorem 3.4 with arbitrary initialization 
+
+The previous lower bound uses the absolute continuity of the initial distribution to control very short horizons. This subsection explains why the statement fails for arbitrary, possibly discrete, initialization. And then we show that the lower bound is restored once a burn-in time of order K−1 is imposed. 
+
+A.6.1 Counterexample with discrete initialization 
+
+Indeed, consider a diffusion from source ¯a0 = 0 to the target distribution δ1 (point mass at 1). Let f (t, a, x ) = M
+
+constant for all a, t and x, so that 
+
+¯at = M t + Bt
+
+At time t = 1 /M , we have ¯at ∼ N (1 , 1/M ), and hence E|¯at − 1|2 = 1 /M → 0. The drift is constant in a, hence 
+
+K-Lipschitz for every K. Thus no lower bound uniform over all t > 0 can hold for arbitrary initialization. The obstruction is that the time horizon can be arbitrarily small, so the accumulated diffusion variance vanishes, while the drift magnitude is not controlled by the Lipschitz budget. 
+
+A.6.2 Arbitrary action initialization after burn-in Corollary A.3 (Arbitrary action initialization after burn-in) . For each K ≥ 1 and T > 0, let πK,T be the Markov policy whose action law at state x is the terminal law at time T of Eq. (2.3) , with ¯ax 
+
+> 0
+
+∼ Px, where Px
+
+is an arbitrary probability law on Rd, possibly depending on x, and ¯ax 
+
+> 0
+
+is independent of the Brownian motion. Assume that, apart from the initialization law, the conditions in Proposition 3.3 hold for every x, with (κ, Λ) 
+
+independent of (t, x ).Fix M ≥ 1 and R > 0. Suppose that, for every x ∈ X , |A⋆(x)| ≤ M. Suppose moreover that there exists a constant λM,R > 0, independent of x, such that 
+
+V ⋆(x) − Q⋆(x, a ) ≥ λM,R 
+
+ dist (a, A ⋆(x)) 2 ∧ R2
+
+for all (x, a ). Then there exist constants cM,R > 0 and K0 < ∞, depending only on M, R, d, κ, Λ, such that for every K ≥ K0,
+
+inf   
+
+> T≥K−1
+
+(V ⋆(ρ) − V πK,T (ρ)) ≥ cM,R λM,R 
+
+K .
+
+Consequently, for every burn-in sequence t0(K) satisfying t0(K) ≥ K−1 for all sufficiently large K,
+
+inf   
+
+> T≥t0(K)
+
+(V ⋆(ρ) − V πK,T (ρ)) ≥ cM,R λM,R 
+
+K .
+
+36 Proof. The only difference from Theorem 3.4 is that the action diffusion may start from an arbitrary law Px,so the short-time part of Proposition 3.3 cannot be used. Instead, we use only the final-window part of the proof of Proposition 3.3. We first record the resulting burn-in localization bound. There exist constants cM,R > 0 and K0 < ∞,depending only on M, R, d, κ, Λ, such that the following holds. For every finite set A ⊂ Rd with 1 ≤ | A| ≤ M ,every admissible K-Lipschitz drift, every admissible volatility satisfying the ellipticity bounds, every initial law, and every terminal time T ≥ K−1,
+
+E dist (¯ aT , A )2 ∧ R2 ≥ cM,R 
+
+K .
+
+Indeed, if T ≥ K−1, set s = T − K−1 and condition on Fs. The rescaling argument in the final window 
+
+[s, s + K−1] gives, uniformly over the random value ¯as and hence uniformly over the initial law, a probability bounded below of being at distance at least order K−1/2 from any M -point target set. This is exactly the conditional argument in the final-window step of Proposition 3.3. The pigeonhole/Krylov step supplies a constant probability c0 > 0 uniformly over the target locations. Enlarging K0 so that r0/√K ≤ R gives the clipped lower bound. Fix K ≥ K0 and T ≥ K−1. Write π = πK,T . For every state x,
+
+V ⋆(x) − V π (x) = V ⋆(x) −
+
+Z
+
+> Rd
+
+
+
+r(x, a ) + γ
+
+Z
+
+> X
+
+V π (y)P (dy | x, a )
+
+
+
+π(da | x)=
+
+Z
+
+> Rd
+
+[V ⋆(x) − Q⋆(x, a )] π(da | x)+ γ
+
+Z
+
+> Rd
+
+Z
+
+> X
+
+[V ⋆(y) − V π (y)] P (dy | x, a )π(da | x).
+
+Since V ⋆ ≥ V π , the second term is nonnegative. Hence 
+
+V ⋆(x) − V π (x) ≥
+
+Z
+
+> Rd
+
+[V ⋆(x) − Q⋆(x, a )] π(da | x).
+
+Integrating over x ∼ ρ gives 
+
+V ⋆(ρ) − V π (ρ) ≥
+
+Z
+
+> X
+
+Z
+
+> Rd
+
+[V ⋆(x) − Q⋆(x, a )] π(da | x)ρ(dx ).
+
+By the clipped quadratic-gap assumption, there exists λM,R > 0, independent of x, such that 
+
+V ⋆(x) − Q⋆(x, a ) ≥ λM,R 
+
+ dist (a, A ⋆(x)) 2 ∧ R2
+
+for all (x, a ). Therefore, 
+
+V ⋆(ρ) − V π (ρ) ≥ λM,R 
+
+Z
+
+> X
+
+Z
+
+> Rd
+
+ dist (a, A ⋆(x)) 2 ∧ R2 π(da | x)ρ(dx ).
+
+For every x, the set A⋆(x) is nonempty and satisfies |A⋆(x)| ≤ M . Moreover, the action law π(· | x) is the terminal law at time T ≥ K−1 of an admissible diffusion started from the arbitrary law Px. Therefore the burn-in localization bound gives 
+
+Z
+
+> Rd
+
+ dist (a, A ⋆(x)) 2 ∧ R2 π(da | x) ≥ cM,R 
+
+K
+
+uniformly in x. Substituting, 
+
+V ⋆(ρ) − V π (ρ) ≥ λM,R 
+
+Z
+
+> X
+
+cM,R 
+
+K ρ(dx ) = cM,R λM,R 
+
+K .
+
+The bound is uniform over T ≥ K−1, so 
+
+inf  
+
+> T≥K−1
+
+(V ⋆(ρ) − V πK,T (ρ)) ≥ cM,R λM,R 
+
+K .
+
+37 Consequently, if t0(K) ≥ K−1 for all sufficiently large K, then for all sufficiently large K,
+
+inf   
+
+> T≥t0(K)
+
+(V ⋆(ρ) − V πK,T (ρ)) ≥ cM,R λM,R 
+
+K ,
+
+which proves the claim. 
+
+## A.7 Lower bound with state-dependent volatility 
+
+We now prepare the lower-bound proof for state-dependent volatility. Since the density argument used in the state-independent case no longer applies here directly, we replace it with a local Krylov estimate that gives a uniform probability of reaching small balls while remaining in a controlled region. 
+
+Lemma A.4 (Local Krylov lower estimate) . Let d ≥ 2 and fix 0 < λ ≤ Λ < ∞. Let 
+
+Xu =
+
+Z u
+
+> 0
+
+αr dW r +
+
+Z u
+
+> 0
+
+βr dr, 0 ≤ u ≤ 1,
+
+where X0 = 0 , the coefficients are progressively measurable, and 
+
+λI d ⪯ αr α⊤ 
+
+> r
+
+⪯ ΛId, 0 ≤ r ≤ 1.
+
+Define the finite-horizon exit time τ X 
+
+> 2
+
+:= inf {u ∈ [0 , 1] : Xu /∈ B2}, with inf ∅ := ∞, and the no-exit event 
+
+EX 
+
+> 2
+
+:= {Xu ∈ B2 for all 0 ≤ u ≤ 1} = {τ X 
+
+> 2
+
+> 1}.
+
+Assume that ∥βr ∥ ≤ 2 for 0 ≤ r ≤ 1 on {r < τ X 
+
+> 2
+
+}. Then there exist constants N < ∞ and ν > 0, depending only on d, λ, Λ, such that for every q ∈ B1(0) and every 0 < ρ ≤ 1,
+
+P X1 ∈ B2ρ(q), EX
+
+> 2
+
+ ≥ N −1ρν .
+
+Proof. We reduce the claim to Theorem 2.1 of Krylov [ 36 ]. First define an auxiliary process on [0 , ∞) by stopping and modifying the coefficients after exit from B2 and after time 1. Set 
+
+bβr := 
+
+(
+
+βr 1{r<τ X 
+
+> 2}
+
+, 0 ≤ r ≤ 1,
+
+0, r > 1,
+
+and 
+
+bαr := 
+
+(
+
+αr , 0 ≤ r ≤ 1 and r < τ X 
+
+> 2
+
+,
+
+√λ I d, otherwise .
+
+Define 
+
+bXu := 
+
+Z u
+
+> 0
+
+bαr dW r +
+
+Z u
+
+> 0
+
+bβr dr, u ≥ 0.
+
+Then bX agrees with X up to the first exit of X from B2 on the time interval [0 , 1] . If 
+
+bτ2 := inf {u ≥ 0 : bXu /∈ B2},
+
+then, for every Borel set A ⊆ Rd, { bX1 ∈ A, bτ2 > 1} = {X1 ∈ A, EX 
+
+> 2
+
+}. Moreover, λI d ⪯ bαr bα⊤ 
+
+> r
+
+⪯ ΛId, r ≥ 0,
+
+and ∥ bβr ∥ ≤ 2 1{0≤r≤1}1{ bXr ∈B2}.
+
+Next reduce to symmetric volatility. Set ar := bαr bα⊤ 
+
+> r
+
+and Sr := a1/2 
+
+> r
+
+. Then Sr satisfies δ0Id ⪯ Sr ⪯ δ−10 Id
+
+with δ0 := min {√λ, Λ−1/2, 1/2}. Furthermore, the process 
+
+fWu := 
+
+Z u
+
+> 0
+
+S−1 
+
+> r
+
+bαr dW r
+
+is a Brownian motion. By associativity of Ito integrals, bX is thus in Krylov’s diffusion-type form with symmetric volatility with eigenvalues in [δ0, δ −10 ].38 It remains to verify Krylov’s drift domination condition for the particular function 
+
+h(t, z ) := 2 1{0≤t≤1}1{z∈B2}.
+
+We choose the admissible exponents p0 = q0 = d + 1 , so that Krylov’s mixed norm Lp0,q 0 coincides with the usual space-time Ld+1 norm. Then ∥ bβt∥ ≤ h(t, bXt). For a parabolic cylinder Cℓ(t0, z 0) := [ t0, t 0 + ℓ2) × Bℓ(z0),
+
+we have 
+
+∥h∥d+1  
+
+> Ld+1 (Cℓ(t0,z 0))
+
+=
+
+Z
+
+> Cℓ(t0,z 0)
+
+2d+1 1{0≤t≤1}1{z∈B2} dz dt 
+
+= 2 d+1 [t0, t 0 + ℓ2) ∩ [0 , 1] |Bℓ(z0) ∩ B2|≤ 2d+1 vd(ℓ2 ∧ 1)( ℓd ∧ 2d).
+
+where vd := λd(B1(0)) = πd/ 2/Γ( d/ 2 + 1) denotes the Lebesgue volume of the unit ball in Rd. If 0 < ℓ ≤ 1,this is bounded by Cdℓd+2 ; if ℓ ≥ 1, it is bounded by Cd ≤ Cdℓ. Hence, for all ℓ > 0,
+
+∥h∥d+1  
+
+> Ld+1 (Cℓ(t0,z 0))
+
+≤ Cd(ℓd+1 ∧ 1) ℓ. 
+
+Thus Krylov’s Assumption 2.1 holds with ¯bℓ := Cd(ℓd+1 ∧ 1) . The function ¯bℓ is bounded, nondecreasing, and satisfies ¯bℓ ↓ 0 as ℓ ↓ 0. Therefore Krylov’s Assumption 2.2 holds at some sufficiently small scale R∗ > 0 such that ¯N ¯bR∗ < 1. depending only on d and δ0. In Krylov’s notation, fix R = 2 .Now apply Krylov’s Theorem 2.1 with application radius R = 2 , κ = 12 , η = 14 , and t = 1 . The time condition is ηR2 = 1 ≤ t = 1 ≤ η−1R2 = 16 . Since 0, q ∈ B1(0) with κR = 1 , Krylov’s estimate gives 
+
+P  bX1 ∈ BρR(q), bτ2 > 1 ≥ N −1ρν .
+
+Because ρR = 2 ρ and { bX1 ∈ B2ρ(q), bτ2 > 1} = {X1 ∈ B2ρ(q), EX 
+
+> 2
+
+}, we obtain 
+
+P X1 ∈ B2ρ(q), EX
+
+> 2
+
+ ≥ N −1ρν .
+
+All constants depend only on d, λ, Λ. Hence we are done. 
+
+## A.8 Proof of Proposition 3.3, assumption (a): state-dependent volatility 
+
+We now complete the proof of Proposition 3.3 under the full state-dependent volatility assumption. The proof follows the same short-time vs. final-window decomposition as in the state-independent case, but the final concentration step is obtained from the local Krylov of Lemma A.4. 
+
+Proof. All constants below may depend on m, d, κ, Λ, μ 0, R , but not on K, f, σ, t , nor on the locations or pairwise separations of the points in Z.
+
+Notational note. Throughout this proof, we will suppress the state argument in the drift f (t, a, x ) and 
+
+σ(t, a, x ), so that they become f (t, a ) and σ(t, a ), respectively. This is because we do not use the state x in our analysis. Therefore, we clarify any indication of variables x, z, · · · ∈ Rd in this section are actions, not states ( d
+
+is the action dimension). 
+
+Step 1: the case t ≤ K−1. For δ > 0, define 
+
+Uδ := 
+
+> m
+
+[
+
+> j=1
+
+B(zj , δ ).
+
+Let ϕt(x) be the deterministic flow generated by f :
+
+ddt ϕt(x) = f (t, ϕ t(x)) , ϕ0(x) = x. 
+
+39 Since f (t, ·) is K-Lipschitz, for any x, z ∈ Rd,
+
+ddt |ϕt(x) − ϕt(z)|2 ≥ − 2K|ϕt(x) − ϕt(z)|2.
+
+Therefore 
+
+|ϕt(x) − ϕt(z)| ≥ e−Kt |x − z|.
+
+Thus ϕt is injective, and ϕ−1 
+
+> t
+
+is eKt -Lipschitz on ϕt(Rd). Hence, for every Borel set E ⊂ Rd and every t ≤ K−1,
+
+λd(ϕ−1 
+
+> t
+
+(E)) ≤ edKt λd(E) ≤ edλd(E).
+
+Because μ0 ≪ λd, there exists α > 0 such that 
+
+λd(E) ≤ α =⇒ μ0(E) ≤ 14 .
+
+Choose δ > 0, depending only on m, d, μ 0, such that edλd(U2δ ) ≤ α. This is possible because 
+
+λd(U2δ ) ≤ mv d(2 δ)d.
+
+Then, for every t ≤ K−1,
+
+P{ϕt(¯ a0) ∈ U2δ } = μ0(ϕ−1 
+
+> t
+
+(U2δ )) ≤ 14 .
+
+Couple the diffusion and deterministic flow from the same initial point and set 
+
+Dt := ¯ at − ϕt(¯ a0).
+
+Then 
+
+dD t = {f (t, ¯at) − f (t, ϕ t(¯ a0)) } dt + σ(t, ¯at) dB t.
+
+By Itô’s formula, the Lipschitz bound on f , and the upper volatility bound, 
+
+ddt E∥Dt∥2 ≤ 2KE∥Dt∥2 + dΛ.
+
+Since D0 = 0 , Gronwall’s inequality gives, for t ≤ K−1,
+
+E∥Dt∥2 ≤ dΛ2K (e2Kt − 1) ≤ dΛ2K (e2 − 1) .
+
+Thus, for all sufficiently large K,
+
+P{∥ Dt∥ ≥ δ} ≤ E∥Dt∥2
+
+δ2 ≤ 14 .
+
+If ¯at ∈ Uδ and ∥Dt∥ < δ , then ϕt(¯ a0) ∈ U2δ . Hence P{¯at ∈ Uδ } ≤ 1/4 + 1 /4 = 1 /2. On U cδ , we have 
+
+dist (x, Z)2 ∧ R2 ≥ δ2 ∧ R2.
+
+Therefore, for every t ≤ K−1 and all sufficiently large K,
+
+E dist (¯ at, Z)2 ∧ R2 ≥ (δ2 ∧ R2) P{¯at /∈ Uδ } ≥ δ2 ∧ R2
+
+2 .
+
+In particular, for K ≥ 1,
+
+E dist (¯ at, Z)2 ∧ R2 ≥ δ2 ∧ R2
+
+2K .
+
+Step 2: the case t > K −1. Fix t > K −1 and set s := t − 1/K. We prove a lower bound conditionally on 
+
+Fs. Set y := ¯ as. Let ϕu solve ddu ϕu = f (u, ϕ u), ϕs = y. 
+
+40 For 0 ≤ ℓ ≤ 1, define Yℓ := √K  ¯as+ℓ/K − ϕs+ℓ/K 
+
+ and Wℓ := √K  Bs+ℓ/K − Bs
+
+. Conditionally on Fs, W is a standard Brownian motion. The process Y satisfies 
+
+dY ℓ = βK (ℓ, Y ℓ) dℓ + eσK (ℓ, Y ℓ) dW ℓ, Y0 = 0 ,
+
+where 
+
+βK (ℓ, u ) = f (s + ℓ/K, ϕ s+ℓ/K + u/ √K) − f (s + ℓ/K, ϕ s+ℓ/K )
+
+√K
+
+and 
+
+eσK (ℓ, u ) = σ(s + ℓ/K, ϕ s+ℓ/K + u/ √K).
+
+The K-Lipschitz property gives 
+
+∥βK (ℓ, u ) − βK (ℓ, v )∥ ≤ ∥ u − v∥.
+
+Also βK (ℓ, 0) = 0 . Hence, on B2, ∥βK (ℓ, u )∥ ≤ 2. The rescaled covariance matrix satisfies, by Assumption 2.1, 
+
+κI d ⪯ eσK (ℓ, u )eσK (ℓ, u )⊤ ⪯ ΛId.
+
+We first treat d ≥ 2. Let 
+
+EY 
+
+> 2
+
+:= {Yu ∈ B2 for all 0 ≤ u ≤ 1}
+
+Construct a concatenated process bY as follows. Up to time τ2, set bYℓ = Yℓ. After τ2, continue with drift zero and covariance matrix κI d. Then bY agrees with Y on {τ2 > 1}, its covariance matrix remains between κI d and 
+
+ΛId, and its drift satisfies 
+
+∥ bβℓ∥ ≤ 2 1{0≤ℓ≤1}1{ bYℓ∈B2}.
+
+Thus Lemma A.4 applies conditionally on Fs, with ellipticity constants κ, Λ.Consequently, there exist constants N < ∞ and ν > 0, depending only on d, κ, Λ, such that for every q ∈ B1
+
+and every ρ ∈ (0 , 1] ,
+
+P  Y1 ∈ B2ρ(q), EY 
+
+> 2
+
+Fs
+
+ ≥ N −1ρν .
+
+Choose m + 1 fixed points q0, . . . , q m ∈ B1 with positive minimum separation ∆ := min i̸=j ∥qi − qj ∥ > 0.
+
+Set r0 := ∆8 . Since qi ∈ B1, we may choose the points so that r0 ≤ 1/4.Let y1, . . . , y m ∈ Rd be arbitrary. We claim that there exists i ∈ { 0, . . . , m } such that 
+
+dist( qi, {y1, . . . , y m}) > 2r0.
+
+If not, then each qi is within distance 2r0 of at least one zj . Since there are m + 1 points qi and only m points 
+
+yj , two distinct qi, q i′ must be within distance 2r0 of the same yj . Then 
+
+∥qi − qi′ ∥ ≤ ∥ qi − yj ∥ + ∥yj − qi′ ∥ ≤ 4r0 = ∆2 ,
+
+which contradicts the definition of ∆. Thus such an i exists. For this i,
+
+B(qi, r 0) ∩
+
+> m
+
+[
+
+> j=1
+
+B(yj , r 0) = ∅.
+
+We apply the lower estimate with q = qi, ρ = r0/2. Since r0 ≤ 1/4, ρ ∈ (0 , 1] , and 
+
+B2ρ(qi) = B(qi, r 0).
+
+Therefore 
+
+P  Y1 ∈ B(qi, r 0), EY 
+
+> 2
+
+Fs
+
+ ≥ N −1  r0
+
+2
+
+ν
+
+.
+
+Define 
+
+c0 := N −1  r0
+
+2
+
+ν
+
+> 0.
+
+41 Since B(qi, r 0) is disjoint from the target union, 
+
+P
+
+Y1 /∈
+
+> m
+
+[
+
+> j=1
+
+B(yj , r 0) Fs
+
+ ≥ c0.
+
+Now set yj := √K  zj − ϕs+1 /K 
+
+ , j = 1 , . . . , m. The event 
+
+dist (¯ as+1 /K , Z) ≤ r0
+
+√K
+
+is exactly 
+
+Y1 ∈
+
+> m
+
+[
+
+> j=1
+
+B(yj , r 0).
+
+Therefore 
+
+P
+
+
+
+dist (¯ as+1 /K , Z) > r0
+
+√K Fs
+
+
+
+≥ c0.
+
+For all K sufficiently large so that r0/√K ≤ R, we have on this event 
+
+dist (¯ as+1 /K , Z)2 ∧ R2 ≥ r20
+
+K .
+
+Consequently, 
+
+E dist (¯ as+1 /K , Z)2 ∧ R2 Fs
+
+ ≥ r20
+
+K P
+
+
+
+dist (¯ as+1 /K , Z) > r0
+
+√K Fs
+
+
+
+≥ c0r20
+
+K .
+
+Taking expectations gives, for every t > K −1 and all sufficiently large K,
+
+E dist (¯ at, Z)2 ∧ R2 ≥ c0r20
+
+K .
+
+It remains to handle the one-dimensional action case d = 1 . The local Krylov estimate above was stated for dimensions at least two, so we embed the scalar rescaled process into a two-dimensional one. Work conditionally on Fs. Enlarge the probability space, if necessary, by adding a one-dimensional Brownian motion G, independent of Fs and of the Brownian motion driving Y . Define the augmented process 
+
+bYℓ := ( Yℓ, G ℓ) ∈ R2, 0 ≤ ℓ ≤ 1.
+
+If 
+
+dY ℓ = βK (ℓ, Y ℓ)dℓ + eσK (ℓ, Y ℓ)dW ℓ,
+
+then bY satisfies 
+
+d bYℓ = bβK (ℓ, bYℓ)dℓ + bΣK (ℓ, bYℓ)dcWℓ,
+
+where cWℓ := ( Wℓ, G ℓ), bβK (ℓ, u, v ) := ( βK (ℓ, u ), 0) ,
+
+and 
+
+bΣK (ℓ, u, v ) := 
+
+eσK (ℓ, u ) 00 1
+
+
+
+.
+
+Therefore 
+
+bΣK bΣ⊤ 
+
+> K
+
+=
+
+eσK (ℓ, u )2 00 1
+
+
+
+,
+
+and Assumption 2.1 implies 
+
+(κ ∧ 1) I2 ⪯ bΣK bΣ⊤ 
+
+> K
+
+⪯ (Λ ∨ 1) I2.
+
+42 Moreover, on the two-dimensional ball B(2) 2 := {(u, v ) : u2 + v2 < 4}, we have |u| ≤ 2. Since βK (ℓ, ·) is 
+
+1-Lipschitz and βK (ℓ, 0) = 0 ,
+
+∥ bβK (ℓ, u, v )∥ = |βK (ℓ, u )| ≤ | u| ≤ 2 on B(2) 2 .
+
+Thus the two-dimensional local Krylov lower estimate applies to bY , with constants depending only on κ and Λ.We now perform the pigeonhole argument in the first coordinate. Choose m + 1 deterministic points 
+
+q0, . . . , q m ∈ (−1, 1) with pairwise distance at least ∆m > 0, and set 
+
+r0 := ∆ m/8 ∧ 1/4.
+
+Let ζ1, . . . , ζ m ∈ R be arbitrary. Similar to before, since there are only m target points but m + 1 candidate points, there exists an index i such that 
+
+|qi − ζj | ≥ 2r0 for all j = 1 , . . . , m. 
+
+Equivalently, 
+
+(qi − r0, q i + r0) ∩
+
+> m
+
+[
+
+> j=1
+
+(ζj − r0, ζ j + r0) = ∅.
+
+Apply the two-dimensional Krylov estimate to the ball in R2 centered at (qi, 0) with radius r0. Since the estimate gives a ball of radius 2ρ, take ρ = r0/2. Then, conditionally on Fs,
+
+P
+
+ bY1 ∈ B(2)  
+
+> r0
+
+(( qi, 0)) , bE2 Fs
+
+
+
+≥ N −1(r0/2) ν =: c0,
+
+where bE2 := { bYℓ ∈ B(2) 2 for all 0 ≤ ℓ ≤ 1}.
+
+Here the index i may be chosen Fs-measurably; the bound is uniform over the finitely many possible choices of 
+
+i.On the event bY1 ∈ B(2)  
+
+> r0
+
+(( qi, 0)) , the first coordinate satisfies Y1 ∈ (qi − r0, q i + r0). By the choice of qi, this interval is disjoint from m[
+
+> j=1
+
+(ζj − r0, ζ j + r0).
+
+Hence dist( Y1, {ζ1, . . . , ζ m}) ≥ r0 on this event. Therefore 
+
+P(dist( Y1, {ζ1, . . . , ζ m}) ≥ r0 | F s) ≥ c0.
+
+Finally, take ζj := √K (zj − ϕT ), j = 1 , . . . , m. Since 
+
+¯aT = ϕT + Y1
+
+√K ,
+
+we have the exact identity 
+
+dist(¯ aT , Z) = 1
+
+√K dist( Y1, {ζ1, . . . , ζ m}).
+
+Thus 
+
+P
+
+
+
+dist(¯ aT , Z) ≥ r0
+
+√K Fs
+
+
+
+≥ c0.
+
+For all sufficiently large K such that r0/√K ≤ R, it follows that 
+
+Edist(¯ aT , Z)2 ∧ R2 Fs
+
+ ≥ r20
+
+K P
+
+
+
+dist(¯ aT , Z) ≥ r0
+
+√K Fs
+
+
+
+≥ c0r20
+
+K .
+
+This proves the same clipped lower bound in dimension one. The constants depend only on m, κ, Λ, R and, when combined with the short-time case, on μ0, but not on the locations or separations of the target points. Combining the two regimes, for all sufficiently large K,
+
+E dist (¯ at, Z)2 ∧ R2 ≥ 1
+
+K min 
+
+ δ2 ∧ R2
+
+2 , c 0r20
+
+
+
+.
+
+Taking the infimum over all admissible f, σ, t proves the result. 43 A.9 Lower bound failure without upper volatility control 
+
+Finally, we show that the upper bound σ(t, x )σ(t, x )⊤ ⪯ ΛId in Assumption 2.1 is not merely technical for the lower-bound argument. Without this bound, state-dependent volatility can accelerate concentration near the target set and violate the K−1 lower bound. 
+
+Proposition A.5. The upper bound σ(t, x )σ(t, x )⊤ ⪯ ΛId in Proposition 3.3 cannot be dropped. In dimension 
+
+d = 1 , let 
+
+A = {− 1, 1}.
+
+For every K ≥ 1, there exists a conservative weak solution of 
+
+dX t = σK (Xt)dB t, X0 ∼ N (0 , 1) ,
+
+such that the drift is identically zero, hence K-Lipschitz, and 
+
+σK (x)2 ≥ 1 for all x ∈ R,
+
+but 
+
+inf  
+
+> t≥0
+
+E[d(Xt, A )2] ≲ 1
+
+K2 .
+
+Consequently, lower ellipticity alone does not imply the lower bound 
+
+inf  
+
+> t
+
+E[d(Xt, A )2] ≳ 1
+
+K .
+
+The proof follows the classical speed-measure theory for one-dimensional diffusions. We use the standard Brownian time-change construction; see [ 31 , Ch. 5, §5.5A]. We also use the fact that a regular one-dimensional diffusion in natural scale with finite speed measure has invariant probability measure given by the normalized speed measure and is ergodic; see [48, Ch. V, §§47,53]. 
+
+Proof. Let 
+
+r(x) := d(x, A ), εK := K−1,
+
+and define 
+
+qK (x) := 11 + ( r(x)/ε K )6 .
+
+Set 
+
+σK (x)2 := 1
+
+qK (x) = 1 + 
+
+ r(x)
+
+εK
+
+6
+
+.
+
+Then σK (x)2 ≥ 1 for all x, but sup x σK (x) = ∞.We construct the diffusion by a time change of Brownian motion. This is a standard one-dimensional time-change construction; see [ 31 , Ch. 5, §5.5A] for the method of time change and see [ 48 , Ch. V, §47] for the speed-measure/time-substitution formulation. Specifically, let W be a one-dimensional Brownian motion with 
+
+W0 ∼ N (0 , 1) , and define 
+
+Su := 
+
+Z u
+
+> 0
+
+qK (Ws) ds. 
+
+Since qK is strictly positive on neighborhoods of −1 and 1, and Brownian motion spends infinite occupation time in every nonempty open interval, 
+
+Su → ∞ a.s. as u → ∞ .
+
+Hence the inverse clock τt := inf {u : Su > t } is finite for every finite t. Define Xt := Wτt . Then Xt is finite for every finite t, so the process is conservative. Moreover, 
+
+d⟨X⟩t = dτ t = 1
+
+qK (Xt) dt = σK (Xt)2dt. 
+
+44 Therefore, by the martingale representation theorem, X is a weak solution of dX t = σK (Xt)dB t.Now define ZK := R 
+
+> R
+
+qK (x) dx and πK (dx ) := Z−1 
+
+> K
+
+qK (x) dx . Since qK (x) ≍ ε6 
+
+> K
+
+|x|−6 as |x| → ∞ , ZK < ∞.The time-changed process is a regular diffusion in natural scale with speed measure mK (dx ) = 2 qK (x) dx .Thus πK is the normalized speed measure. Since mK (R) < ∞, the diffusion is positive recurrent and ergodic; see Rogers–Williams [ 48 , Ch. V, §§47,53]. Let Pth(x) := Ex[h(Xt)] denote the Markov semigroup of X. By ergodicity with invariant law πK ,
+
+Pth →
+
+Z
+
+h dπ K in L2(πK ), h ∈ L2(πK ).
+
+Let γ be the N (0 , 1) law and let φ be its density. Since πK has positive density everywhere, 
+
+hK := dγ dπ K
+
+= ZK φqK
+
+.
+
+Because q−1 
+
+> K
+
+grows only polynomially while φ decays Gaussianly, we have hK ∈ L2(πK ). Also 
+
+f (x) := d(x, A )2 = r(x)2
+
+belongs to L2(πK ), since in the tails 
+
+r(x)4qK (x) ≍ ε6 
+
+> K
+
+|x|−2,
+
+which is integrable. Therefore, by symmetry and L2(πK ) ergodicity, 
+
+Eγ [f (Xt)] = ⟨hK , P tf ⟩L2(πK ) = ⟨PthK , f ⟩L2(πK ) →
+
+Z
+
+f dπ K .
+
+Thus the invariant expectation is the actual limit of finite-time expectations from the required Gaussian initialization. It remains to estimate R f dπ K . Since r(x) = d(x, A ) has level sets of uniformly bounded multiplicity on R,
+
+ZK =
+
+Z
+
+> R
+
+dx 
+
+1 + ( r(x)/ε K )6 ≍ εK ,
+
+and Z
+
+> R
+
+r(x)2qK (x) dx ≲
+
+Z ∞
+
+> 0
+
+s2
+
+1 + ( s/ε K )6 ds ≍ ε3 
+
+> K
+
+.
+
+Therefore Z
+
+d(x, A )2 πK (dx ) = 
+
+R r(x)2qK (x) dx ZK
+
+≲ ε2 
+
+> K
+
+= 1
+
+K2 .
+
+Since Eγ [d(Xt, A )2] → R d(x, A )2 πK (dx ), there exists a finite deterministic time tK such that Eγ [d(XtK , A )2] ≲ 
+
+> 1
+> K2
+
+. Hence 
+
+inf  
+
+> t≥0
+
+E[d(Xt, A )2] ≲ 1
+
+K2 ,
+
+which proves the claim. 
+
+# B Proofs for Section 4 
+
+## B.1 Auxiliary facts about ReLU network class 
+
+Here we present some elementary properties of FK,s , which will be used in the proof of Theorem 4.2. 
+
+Lemma B.1 (Properties of the ReLU drift class) . Every f ∈ F K,s satisfies, for all t ∈ [0 , T ], a, a ′ ∈ Rd and 
+
+x, x ′ ∈ [0 , 1] m,
+
+∥f (t, 0, x )∥ ≤ ℓ1K, (B.1) 
+
+∥f (t, a, x ) − f (t, a ′, x )∥ ≤ K∥a − a′∥, (B.2) 
+
+∥f (t, a, x ) − f (t, a, x ′)∥ ≤ ℓ2K∥x − x′∥. (B.3) 
+
+Consequently, ∥f (t, a, x )∥ ≤ K(ℓ1 + ∥a∥). Under Assumptions 2.1 and 4.2, the state-conditioned action SDE has a unique strong solution for every f ∈ F K,s and x ∈ [0 , 1] m.
+
+45 Proof. Note that (B.1) is part of the definition. For the action Lipschitz bound, fix t, x, a, a ′, set v = a − a′,and write ar = a′ + rv . Since Ψθ is continuous and piecewise affine, r 7 → Ψθ (t, a r , x ) is absolutely continuous and 
+
+Ψθ (t, a, x ) − Ψθ (t, a ′, x ) = 
+
+Z 10
+
+JaΨθ (t, a r , x )v dr, 
+
+where JaΨθ is the action-slope matrix on the relevant affine region for a.e. r. The bound ∥M 2 
+
+> θ,S
+
+∥op ≤ 1 gives (B.2) . The proof of (B.3) is identical along the line segment between x and x′, using ∥M 3 
+
+> θ,S
+
+∥op ≤ ℓ2. The linear-growth bound follows from (B.1) and (B.2) . Finally, the linear-growth and global Lipschitz bounds on f ,together with the boundedness and Lipschitz assumptions on σ, give the stated strong well-posedness. 
+
+Proof of Lemma 4.1. The existence and approximation properties of hs follow from the standard finite-element/ReLU approximation result for Lipschitz maps on the cube, obtained by nodal interpolation on a Kuhn triangulation and exact ReLU realization of continuous piecewise-affine finite-element functions; see [66 , 45 ]. Applying the scalar construction coordinate by coordinate and summing the squared coordinate errors gives (4.11) . The bounds (4.12) – (4.13) follow from the boundedness and Lipschitz properties of the clipped finite-element interpolant. It remains to verify that the associated mean-reverting reference drift belongs to FK,s . The map x 7 → hs(x)
+
+is a ReLU network. The affine map a 7 → − a is exactly representable by ReLUs since 
+
+−aj = ReLU( −aj ) − ReLU( aj ), j = 1 , . . . , d. 
+
+Thus (4.10) is a ReLU network in (t, a, x ), with no dependence on t. The additional action-identity branch and final affine readout increase the size, depth, width, and weight bounds by numerical factors. The factor 
+
+(1 − e−T )−1 in (4.7) covers (1 − e−KT )−1 because K ≥ 1, and the constant C0 in the architecture bounds is chosen large enough to absorb these fixed realization overheads. The action slope is −Id, so its operator norm is 1. By (4.13), 
+
+Lip 
+
+ hs
+
+1 − e−KT 
+
+
+
+≤ Cm
+
+> 0
+
+√d L g⋆
+
+1 − e−T ≤ ℓ2.
+
+Also, by (4.12), 
+
+sup 
+
+> t,x
+
+hs(x)1 − e−KT ≤√d R 0
+
+1 − e−T ≤ ℓ1.
+
+Hence fK,s ∈ F K,s .
+
+## B.2 Proof of Theorem 4.2 
+
+We organize the proof into five parts. First, we reduce empirical maximization to a comparison inequality and bound the comparison term using the mean-reverting reference drift. The next three parts establish the localization, covering, and finite-horizon stability estimates. The final part converts these estimates into a uniform-convergence bound and substitutes it into the comparison inequality. 
+
+Step 1: Empirical reduction and reference-drift approximation. For f ∈ F K,s , write 
+
+Gf (ξ) := 
+
+> ∞
+
+X
+
+> j=0
+
+γj r(Xfj , A fj ), P G f := EGf (ξ) = V (f ), PnGf := 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+Gf (ξi) = bVn(f ).
+
+For every f , |Gf | ≤ rmax /(1 − γ). Let f0 ∈ F K,s be arbitrary. Since bfn,K,s is an exact empirical maximizer, 
+
+PnG bfn,K,s ≥ PnGf0 .
+
+Therefore, 
+
+V ⋆(ρ) − V ( bfn,K,s ) ≤ V ⋆(ρ) − V (f0) + 2 sup  
+
+> f∈F K,s
+
+|(Pn − P )Gf | . (B.4) If an η-maximizer is used instead, the right-hand side gains η.46 We next record the performance identity used to control the comparison term. For every Markov policy π
+
+and every x ∈ X ,
+
+V ⋆(x) − V π (x) = Eπx
+
+> ∞
+
+X
+
+> j=0
+
+γj {V ⋆(Xj ) − Q⋆(Xj , A j )}. (B.5) Indeed, 
+
+Eπx {V ⋆(X0) − Q⋆(X0, A 0)} = V ⋆(x) − Eπx r(X0, A 0) − γEπx V ⋆(X1),
+
+and 
+
+V π (x) = Eπx r(X0, A 0) + γEπx V π (X1).
+
+Adding the two displays yields the one-step identity 
+
+V ⋆(x) − V π (x) = Eπx {V ⋆(X0) − Q⋆(X0, A 0)} + γEπx {V ⋆(X1) − V π (X1)}.
+
+Iteration for H steps gives 
+
+V ⋆(x) − V π (x) = EπxH−1X
+
+> j=0
+
+γj {V ⋆(Xj ) − Q⋆(Xj , A j )} + γH Eπx {V ⋆(XH ) − V π (XH )}.
+
+Since |V ⋆| ∨ | V π | ≤ rmax /(1 − γ), the remainder tends to zero as H → ∞ , proving (B.5). We now apply the above identity to the mean-reverting reference drift. Let hs and fK,s be as in (4.10) and Lemma 4.1, and set f0 = fK,s . By Lemma 4.1, f0 ∈ F K,s . Fix x ∈ [0 , 1] m. Let ¯axt denote the solution of the action diffusion driven by f0 at state x. Define 
+
+mt(x) := 1 − e−Kt 
+
+1 − e−KT hs(x), 0 ≤ t ≤ T, 
+
+and set Yt := ¯ axt − mt(x). Since mT (x) = hs(x), direct differentiation gives 
+
+dY t = −KY t dt + σ(t, ¯axt , x )dB t.
+
+Itô’s formula and Assumption 2.1 imply 
+
+ddt E∥Yt∥2 ≤ − 2KE∥Yt∥2 + dΛ, E∥Y0∥2 = m2(μ0).
+
+Gronwall’s inequality yields 
+
+sup 
+
+> x∈[0 ,1] m
+
+E∥¯axT − hs(x)∥2 ≤ e−2KT m2(μ0) + dΛ2K (1 − e−2KT ). (B.6) Combining (B.6) with Lemma 4.1, 
+
+sup 
+
+> x∈[0 ,1] m
+
+E∥¯axT − g⋆(x)∥2 ≤ C
+
+
+
+e−2KT m2(μ0) + dΛ
+
+K + Cm 
+
+> 0
+
+mdL 2 
+
+> g⋆
+
+s−2/m 
+
+
+
+. (B.7) By (B.5) and (4.17), 
+
+V ⋆(ρ) − V (f0) ≤ C
+
+
+
+e−2KT m2(μ0) + dΛ
+
+K + Cm 
+
+> 0
+
+mdL 2 
+
+> g⋆
+
+s−2/m 
+
+
+
+, (B.8) where C depends only on the fixed problem constants in Theorem 4.2. 
+
+Step 2: Path localization under second moments. For the localization estimates, write 
+
+DK,T :=  m2(μ0) + K2ℓ21T 2 + dΛT 1/2 .
+
+We first prove a path localization estimate. 47 Lemma B.2 (Path localization) . For every f ∈ F K,s and every x ∈ [0 , 1] m,
+
+E
+
+
+
+sup 
+
+> 0≤t≤T
+
+∥¯af,x t ∥2
+
+
+
+≤ Ce C3KT D2 
+
+> K,T
+
+. (B.9) 
+
+Consequently, for every R ≥ 1,
+
+P
+
+
+
+sup 
+
+> 0≤t≤T
+
+∥¯af,x t ∥ > R 
+
+
+
+≤ Ce C3KT D2
+
+> K,T
+
+R2 . (B.10) 
+
+Proof. Fix f ∈ F K,s and x ∈ [0 , 1] m. By Lemma B.1, 
+
+∥f (t, a, x )∥ ≤ K(ℓ1 + ∥a∥).
+
+Let 
+
+St := sup 
+
+> 0≤u≤t
+
+∥¯af,x u ∥, Mt := 
+
+Z t
+
+> 0
+
+σ(u, ¯af,x u , x )dB u.
+
+The integral form of the SDE gives 
+
+ST ≤ ∥ ¯a0∥ + Kℓ 1T + K
+
+Z T
+
+> 0
+
+Su du + sup 
+
+> 0≤u≤T
+
+∥Mu∥.
+
+By Gronwall’s inequality, 
+
+ST ≤ eKT 
+
+
+
+∥¯a0∥ + Kℓ 1T + sup 
+
+> 0≤u≤T
+
+∥Mu∥
+
+
+
+.
+
+Therefore, 
+
+ES2 
+
+> T
+
+≤ Ce C3KT 
+
+
+
+m2(μ0) + K2ℓ21T 2 + E sup 
+
+> 0≤u≤T
+
+∥Mu∥2
+
+
+
+.
+
+Doob’s L2 maximal inequality and Itô’s isometry give 
+
+E sup 
+
+> 0≤u≤T
+
+∥Mu∥2 ≤ 4E∥MT ∥2 ≤ 4dΛT. 
+
+Thus (B.9) follows from the definition of DK,T , and (B.10) follows from Markov’s inequality. 
+
+Step 3: Localized covering of the drift class. For R ≥ 1, define 
+
+ZR := [0 , T ] × BdR × [0 , 1] m, dK,R (f, g ) := sup 
+
+> z∈ZR
+
+∥f (z) − g(z)∥
+
+K ,
+
+where BdR is the Euclidean ball in Rd. Also define 
+
+ρR := 1 + T + R + √m. (B.11) 
+
+Lemma B.3 (Localized covering number) . For every R ≥ 1 and every 0 < ε ≤ 1,
+
+log N (ε, FK,s , d K,R ) ≤ ps, 1 log 
+
+
+
+1 + 2ρR(ps, 1ps, 4)ps, 2+2 
+
+ε
+
+
+
+. (B.12) 
+
+Moreover, after replacing ε by 2ε, the cover may be chosen to consist of elements of FK,s .Proof. Consider the ambient parameter box corresponding to networks with at most ps, 1 nonzero scalar parameters, depth at most ps, 2, width at most ps, 3, and parameter magnitudes bounded by ps, 4. The standard layer-by-layer telescoping estimate for ReLU networks on bounded input sets gives, for any two parameter vectors θ, θ ′ in this ambient box, 
+
+sup 
+
+> z∈ZR
+
+∥Ψθ (z) − Ψθ′ (z)∥ ≤ ρR(ps, 1ps, 4)ps, 2+1 ∥θ − θ′∥∞. (B.13) 48 This deterministic perturbation estimate is a standard ingredient in covering-number bounds for ReLU networks; see [4, 45]. Thus an ℓ∞ grid on [−ps, 4, p s, 4]ps, 1 with mesh size 
+
+η := ε{ρR(ps, 1ps, 4)ps, 2+1 }−1
+
+induces an external ε-cover of the ambient network class on ZR. Its cardinality is at most 
+
+
+
+1 + 2ps, 4
+
+η
+
+ps, 1
+
+≤
+
+
+
+1 + 2ρR(ps, 1ps, 4)ps, 2+2 
+
+ε
+
+ps, 1
+
+.
+
+Since FK,s is a subclass of this ambient class, the same upper bound holds for the external covering number of 
+
+FK,s under dK,R . Equivalently, it bounds the ε-packing number of FK,s . A maximal 2ε-separated subset of 
+
+FK,s is a 2ε-cover by elements of FK,s and has cardinality bounded by the preceding packing bound. This proves (B.12). 
+
+Step 4: Finite-horizon stability. For the stability estimates, write 
+
+LK,T := 1 + (1 + ℓ2)√KT e C3KT , MK,H,T := C3H{C3LK,T }H .
+
+For H ≥ 1, define 
+
+GH (f ) := 
+
+> H−1
+
+X
+
+> j=0
+
+γj r(Xfj , A fj ).
+
+Let ΠR : Rd → BdR denote Euclidean projection. For f ∈ F K,s define 
+
+f R(t, a, x ) := f (t, ΠR(a), x ), σR(t, a, x ) := σ(t, ΠR(a), x ).
+
+Let eGRH (f ) denote the H-step return generated by replacing, at every within-step action diffusion, (f, σ ) with 
+
+(f R, σ R).
+
+Lemma B.4 (Projected return stability) . For all f, g ∈ F K,s ,
+
+∥ eGRH (f ) − eGRH (g)∥L2(P ) ≤ MK,H,T dK,R (f, g ). (B.14) 
+
+Proof. Fix f, g ∈ F K,s and two states x, x ′ ∈ [0 , 1] m. On the same probability space, let ζ ∼ μ0 and let B be a Brownian motion. Define eaf,x and eag,x ′
+
+as the projected within-step action diffusions 
+
+deaf,x t = f R(t, eaf,x t , x ) dt + σR(t, eaf,x t , x ) dB t, eaf,x  
+
+> 0
+
+= ζ, deag,x ′ 
+
+> t
+
+= gR(t, eag,x ′ 
+
+> t
+
+, x ′) dt + σR(t, eag,x ′ 
+
+> t
+
+, x ′) dB t, eag,x ′ 
+
+> 0
+
+= ζ. 
+
+Set Zt := eaf,x t − eag,x ′ 
+
+> t
+
+. Then Z0 = 0 .Using Lemma B.1, the Lipschitz property of ΠR, the definition of dK,R , and Assumption 4.2, Itô’s formula gives ddt E∥Zt∥2 ≤ C3KE∥Zt∥2 + C3K(1 + ℓ2)2∥x − x′∥2 + C3Kd K,R (f, g )2.
+
+Since Z0 = 0 , Gronwall’s inequality gives 
+
+ E∥ZT ∥21/2 ≤ C3(1 + ℓ2)√KT e C3KT {∥ x − x′∥ + dK,R (f, g )} .
+
+Let 
+
+Dj := 
+
+
+
+E∥ eXfj − eXgj ∥21/2
+
+, Ej := 
+
+
+
+E∥ eAfj − eAgj ∥21/2
+
+.
+
+The preceding estimate implies 
+
+Ej ≤ C3LK,T {Dj + dK,R (f, g )}.
+
+By the synchronous L2 representation of the transition kernel in Assumption 4.2, 
+
+Dj+1 ≤ C3LK,T {Dj + dK,R (f, g )}.
+
+49 Since D0 = 0 , induction gives, for all 0 ≤ j ≤ H,
+
+Dj + Ej ≤ C3
+
+ C3LK,T 
+
+H dK,R (f, g ).
+
+Using the Lipschitz continuity of r and summing over j = 0 , . . . , H − 1,
+
+∥ eGRH (f ) − eGRH (g)∥L2(P ) ≤ C3H C3LK,T 
+
+H dK,R (f, g ),
+
+which is (B.14). 
+
+Lemma B.5 (Original return stability) . For all H ≥ 1, all R ≥ 1, and all f, g ∈ F K,s ,
+
+∥GH (f ) − GH (g)∥L2(P ) ≤ MK,H,T dK,R (f, g ) + C rmax 
+
+1 − γ
+
+√H D K,T eC3KT 
+
+R . (B.15) 
+
+Proof. Fix f ∈ F K,s . For one decision step, Lemma B.2 gives, uniformly over x ∈ [0 , 1] m,
+
+P
+
+
+
+sup 
+
+> 0≤t≤T
+
+∥¯af,x t ∥ > R 
+
+
+
+≤ Ce C3KT D2
+
+> K,T
+
+R2 .
+
+For an H-step trajectory, let EfR(H) be the event that at least one of the H within-step action paths exits BdR.By the union bound, 
+
+P(EfR(H)) ≤ CHe C3KT D2
+
+> K,T
+
+R2 .
+
+On the complement of EfR(H), the original trajectory and projected trajectory agree through time H. Since both GH (f ) and eGRH (f ) are bounded in absolute value by rmax /(1 − γ),
+
+∥GH (f ) − eGRH (f )∥L2(P ) ≤ C rmax 
+
+1 − γ
+
+√H D K,T eC3KT 
+
+R .
+
+The same bound holds for g. The triangle inequality and Lemma B.4 prove (B.15). 
+
+Step 5: Entropy of truncated returns and uniform convergence. Let GH := {GH (f ) : f ∈ F K,s }. Fix 
+
+0 < ε ≤ rmax /(1 − γ) and define 
+
+Rε,H := max 
+
+(
+
+1, C(rmax /(1 − γ)) √H D K,T eC3KT 
+
+ε
+
+)
+
+. (B.16) By Lemma B.5, if 
+
+dK,R ε,H (f, g ) ≤ ε
+
+2MK,H,T 
+
+,
+
+then ∥GH (f ) − GH (g)∥L2(P ) ≤ ε. Therefore, Lemma B.3 implies 
+
+log N (ε, GH , L 2(P )) ≤ ps, 1 log 
+
+
+
+1 + C{1 + T + √m + Rε,H }(ps, 1ps, 4)ps, 2+2 MK,H,T 
+
+ε
+
+
+
+. (B.17) We now take H = Hn. If γ = 0 , then Gf = GHn (f ). If 0 < γ < 1, then, by Hn = max 
+
+n
+
+1,
+
+l log(8 √n)log(1 /γ )
+
+mo 
+
+,
+
+γHn ≤ 18√n .
+
+Thus, in all cases, 
+
+sup  
+
+> f∈F K,s
+
+|Gf − GHn (f )| ≤ rmax 
+
+1 − γ
+
+18√n . (B.18) 50 For (rmax /(1 − γ)) /n ≤ ε ≤ rmax /(1 − γ), (B.17), (B.16), and (4.16) imply 
+
+log N (ε, GHn , L 2(P )) ≤ ps, 1Γn(K, s, m, d, T ) log 
+
+ er max 
+
+(1 − γ)ε
+
+
+
+. (B.19) The factor n2 in (4.16) dominates the powers of ε−1 generated by Rε,H n and by the covering radius. We use the following bounded entropy maximal inequality. If G is separable, |g| ≤ r0 for all g ∈ G , and 
+
+log N (ε, G, L 2(P )) ≤ E log( e c/ε ), r0/n ≤ ε ≤ r0,
+
+then, with probability at least 1 − δ,
+
+sup 
+
+> g∈G
+
+|(Pn − P )g| ≤ Cr 0
+
+(r E + log(2 /δ )
+
+n + E + log(2 /δ )
+
+n
+
+)
+
+. (B.20) This follows from symmetrization and Dudley’s entropy integral bound [ 62 , Theorem 5.22], together with the standard bounded-difference concentration inequality for suprema of bounded empirical processes. Applying (B.20) to GHn with r0 = rmax /(1 − γ) and E = ps, 1Γn(K, s, m, d, T ), we obtain, with probability at least 1 − δ,
+
+sup  
+
+> f∈F K,s
+
+|(Pn − P )GHn (f )| ≤ C rmax 
+
+1 − γ
+
+(r ps, 1Γn(K, s, m, d, T ) + log(2 /δ )
+
+n
+
++ ps, 1Γn(K, s, m, d, T ) + log(2 /δ )
+
+n
+
+
+
+. (B.21) By (B.18), 
+
+sup  
+
+> f∈F K,s
+
+|(Pn − P )( Gf − GHn (f )) | ≤ rmax 
+
+1 − γ
+
+14√n ,
+
+which is absorbed into the right side of (B.21) . Hence the same bound holds with Gf in place of GHn (f ), after increasing the numerical constant. Finally, combining (B.4), (B.8), and the uniform-convergence bound from Step 5 gives 
+
+V ⋆(ρ) − V ( bfn,K,s ) ≤ C1
+
+"
+
+e−2KT m2(μ0) + dΛ
+
+K + Cm 
+
+> 0
+
+mdL 2 
+
+> g⋆
+
+s−2/m 
+
++ rmax 
+
+1 − γ
+
+r ps, 1Γn(K, s, m, d, T ) + log(2 /δ )
+
+n
+
++ rmax 
+
+1 − γps, 1Γn(K, s, m, d, T ) + log(2 /δ )
+
+n
+
+#
+
+,
+
+which is (4.18). This proves Theorem 4.2. 
+
+# C Proof for Section 5 
+
+This appendix proves the policy-gradient formula used in Section 6. The argument first represents the diffusion policy through a reference driftless diffusion and a Girsanov change of measure, then differentiates expectations with respect to the drift parameter, and finally inserts this derivative into the standard performance-difference identity for discounted MDPs. 51 C.1 Constructing policy from a reference probability space using Girsanov’s theorem 
+
+Consider a reference probability space (Ω ′, F′ = ( F′ 
+
+> t
+
+)t∈[0 ,T ], Q) where {BQ 
+
+> s
+
+}s∈[0 ,T ] is a d-dimensional Q-Brownian motion and 
+
+d¯ as = σ(s, ¯as, x ) · dBQ 
+
+> s
+
+, (C.1) where the existence of the strong solution is guaranteed by the Lipschitz property of σ. For fixed θ ∈ Rk and 
+
+x ∈ X , we defined the process {Mt(θ, x )}t∈[0 ,T ] by 
+
+Mt(θ, x ) := exp 
+
+ Z t
+
+> 0
+
+f (s, ¯as, θ, x )⊤ σ⊤(s, ¯as, x )−1dBQ
+
+> s
+
+− 12
+
+Z t
+
+> 0
+
+f (s, ¯as, θ, x )⊤ (σσ ⊤)( s, ¯as, x )−1f (s, ¯as, θ, x )d s
+
+
+
+.
+
+(C.2) The following lemma verifies that the conditions of [ 30 , Corollary 5.14 in Chapter 3] hold with an even weaker assumption than Assumption 5.1. 
+
+Lemma C.1. Assume that for all x ∈ X , θ ∈ Rk, there exists a constant C such that 
+
+f (s, a, θ, x ) ≤ C(|a| + 1) .
+
+Then for any x ∈ X , θ ∈ Rk, there exists a sequence of real numbers 0 = t0 < t 1 < ... < t n = T such that 
+
+EQ
+
+
+
+exp 
+
+ Z ti+1 
+
+> ti
+
+f (s, ¯as, θ, x )⊤ (σσ ⊤)( s, ¯as, x )−1f (s, ¯as, θ, x )d s
+
+ 
+
+< ∞,
+
+for i = 0 , 1, .., n − 1, x ∈ X , θ ∈ Rd. Consequently, {Mt(θ, x )}t∈[0 ,T ] is a Q-martingale. Proof. By the linear growth condition of f , we get 
+
+Z ti+1 
+
+> ti
+
+f (s, ¯as, θ, x )⊤ (σσ ⊤)( s, ¯as, x )−1f (s, ¯as, θ, x )d s ≤ C
+
+Z ti+1 
+
+> ti
+
+f (s, ¯as, θ, x ) 2ds
+
+≤ C
+
+Z ti+1 
+
+> ti
+
+ |¯as|2 + 1 ds ≤ C(ti+1 − ti)
+
+
+
+sup 
+
+> s∈[ti,t i+1 ]
+
+|¯as|2 + 1 
+
+
+
+,
+
+where the second inequality holds since (|¯as| + 1) 2 ≤ 2( |¯as|2 + 1) and constant C may vary line by line. Then, we have 
+
+exp 
+
+ Z ti+1 
+
+> ti
+
+f (s, ¯as, θ, x )⊤ (σσ ⊤)( s, ¯as, x )−1f (s, ¯as, θ, x )d s
+
+
+
+≤ exp 
+
+
+
+C(ti+1 − ti)
+
+
+
+sup 
+
+> s∈[ti,t i+1 ]
+
+|¯as|2 + 1 
+
+
+
+= sup 
+
+> s∈[ti,t i+1 ]
+
+exp 
+
+
+
+C(ti+1 − ti) |¯as|2 + 1 
+
+.
+
+Note that d ¯at = σ(t, ¯at, x ) · dBQ 
+
+> t
+
+and σ(s, a, x ) ≺ CI d, using [ 21 , Theorem 1.3], (5.1) in Assumption 5.1 and the fact that ϕ(a) = exp  C(ti+1 − ti)( |a|2 + 1)  is a non-decreasing convex function, we know 
+
+EQh
+
+exp 
+
+
+
+C(ti+1 − ti) |¯as|2 + 1 i 
+
+≤ E exp  C(ti+1 − ti)( |Z|2 + 1)  ,
+
+where Z ∼ N (0 , CsI d). Set ti+1 − ti small enough (for instance ti+1 − ti = 14C2T ), we have 
+
+E exp  C(ti+1 − ti)( |Z|2 + 1)  < ∞.
+
+Define Ys := exp  C(ti+1 − ti)( |¯as|2 + 1) , then, again by d ¯at = σ(t, ¯at, x ) · dBQ 
+
+> t
+
+, and using the fact that 
+
+Ys = ϕ(as) with ϕ(a) = exp  C(ti+1 − ti)( |a|2 + 1)  is a nondecreasing convex function, we get that {√Ys}s∈[0 ,T ]
+
+52 is a submartingale ([ 30 , Problem 3.7 in Chapter 1]), then using Doob’s martingale inequality ([ 30 , Theorem 3.8 in Chapter 1]), we achieve 
+
+E
+
+
+
+sup 
+
+> s∈[ti,t i+1 ]
+
+exp 
+
+
+
+C(ti+1 − ti) |¯as|2 + 1 
+
+≤ E
+
+h
+
+sup  
+
+> s∈[0 ,T ]
+
+Ys
+
+i
+
+≤ 4EYT
+
+ < ∞,
+
+provided that ti+1 − ti small enough, and the final statements holds due to [ 30 , Corollary 5.14 in Chapter 3]. It is not hard to see that our Assumption 5.1 is stronger than the assumptions of Lemma C.1. Therefore, the Novikov’s condition holds, and we can apply Girsanov theorem to define a family of new probability measures 
+
+{Pθ,x }θ∈Rk ,x ∈X by 
+
+dPθ,x 
+
+dQ = Mt(θ, x ), (C.3) and get that 
+
+Bθ,x t := BQ 
+
+> t
+
+−
+
+Z t
+
+> 0
+
+σ(s, ¯as, x )−1f (s, ¯as, θ, x )d s, is a Brownian motion under Pθ,x .
+
+Therefore, 
+
+d¯ as = σ(s, ¯as, x ) · dBQ 
+
+> s
+
+= f (s, ¯as, θ, x )d s + σ(s, ¯as, x ) · dBθ,x s .
+
+Finally, for any fixed θ and x, the SDE above satisfies the standard SDE with Lipschitz drift and diffusion coefficients, the weak uniqueness holds [ 30 , Proposition 2.13 in Chapter 5], and therefore, ¯aT under Pθ,x should share same distribution of ¯aθ,x T in (2.3) . We summarize our discussion in this subsection as the following proposition. 
+
+Proposition C.2. Suppose Assumption 5.1, (2.4) and (4.2) hold, consider the SDE (2.3) posed on the probability space (Ω , F = ( Ft)t∈[0 ,T ], P) supporting the P-Brownian motion {Bs}s∈[0 ,T ] and the SDE (C.1) 
+
+posed on the reference probability space (Ω ′, F′ = ( F′ 
+
+> t
+
+)t∈[0 ,T ], Q) supporting the Q-Brownian motion {BQ 
+
+> s
+
+}s∈[0 ,T ].Then, a family of probability measure {Pθ,x }θ∈Rk ,x ∈X are well-defined by (C.3) , and 
+
+Pθ,x ◦ (¯ aT )−1 = P ◦ (¯ aθ,x T )−1.
+
+.
+
+## C.2 Derivative for EPθ,x φ( ¯aT ) when φ is a continuous bounded function indepen-dent of θ.
+
+Let φ be a continuous bounded function independent of θ and by (C.3), we have 
+
+EPθ,x φ(¯ aT ) = EQMT (θ, x )φ(¯ aT ),
+
+where Mt(θ, x ) is defined in (C.2) and further, 
+
+dMt(θ, x ) = Mt(θ, x )f (t, ¯at, θ, x )⊤σ(t, ¯at, x )−1dBQ 
+
+> t
+
+, d¯ at = σ(t, ¯at, x ) · dBQ 
+
+> t
+
+, for all t ∈ [0 , T ].We first present two technical lemmas which are crucial for the follow-up analysis. 
+
+Lemma C.3. Suppose that for every fixed M > 0 and β ∈ Rk,
+
+lim  
+
+> ε→0
+
+sup 
+
+> θ∈Rd,x ∈X
+
+EQ
+
+
+
+sup 
+
+> 0≤s≤T, 0≤t≤ε
+
+∥∇ θ f (s, ¯as, θ + tβ, x ) − ∇ θ f (s, ¯as, θ, x )∥M
+
+> op
+
+
+
+= 0 (C.4) 
+
+Then for any p ≥ 1,
+
+lim  
+
+> ϵ→0
+
+sup 
+
+> θ∈Rd,x ∈X
+
+EQ
+
+
+
+sup 
+
+> 0≤t≤T
+
+1
+
+ε
+
+ MT (θ + ϵβ, x )
+
+MT (θ, x ) − 1
+
+
+
+− YT (θ, β, x )
+
+> p
+
+
+
+= 0 . (C.5) 53 Proof. We define the following quantities: 
+
+r1(ε, s, ¯as, β ; θ, x ) = f (s, ¯as, θ + εβ, x ) − f (s, ¯as, θ, x ) − ε⟨∇ θ f (s, ¯as, θ, x ), β ⟩; (C.6) 
+
+r2(ε, s, ¯as, β ; θ, x ) = ε2⟨∇ θ f, β ⟩⊤ (σσ ⊤)( s, ¯as, x )−1⟨∇ θ f, β ⟩ + 2 ε⟨∇ θ f, β ⟩⊤ (σσ ⊤)( s, ¯as, x )−1r1(ε)+r1(ε)⊤ (σσ ⊤)( s, ¯as, x )−1r1(ε) + 2 r1(ε)⊤ (σσ ⊤)( s, ¯as, x )−1f (s, ¯as, θ, x ), (C.7) where f is shorthand for f (s, ¯as, θ, x ) and r1 is shorthand for the quantity defined in the preceding equation. The reason for defining r1 is clear: it is the error of the linear approximation of f at θ. Similarly, r2
+
+is the remainder term for approximating the quadratic term f (θ + εβ )⊤(( σσ ⊤)( s, ¯as, x )) −1f (θ + εβ ) by 
+
+f (θ)⊤ (σσ ⊤)( s, ¯as, x )−1f (θ). We have 
+
+Mt(θ + εβ, x )
+
+Mt(θ, x ) = exp 
+
+
+
+εY t(θ, β, x ) + 
+
+Z t
+
+> 0
+
+r1(ε, s, ¯as, β ; θ, x )d BQs − 12
+
+Z t
+
+> 0
+
+r2(ε, s, ¯as, β ; θ, x )d s
+
+
+
+.
+
+Now we use the following inequality: for every z ∈ R:
+
+|ez − 1 − z| ≤ z2e|z|,
+
+which gives us that 
+
+Mt(θ + εβ, x )
+
+Mt(θ, x ) − 1 −
+
+
+
+εY t(θ, β, x ) + 
+
+Z t
+
+> 0
+
+r1(ε, s, ¯as, β ; θ, x )dB Qs − 12
+
+Z t
+
+> 0
+
+r2(ε, s, ¯as, β ; θ, x )d s
+
+
+
+≤
+
+
+
+εY t(θ, β, x ) + 
+
+Z t
+
+> 0
+
+r1(ε, s, ¯as, β ; θ, x )d BQs − 12
+
+Z t
+
+> 0
+
+r2(ε, s, ¯as, β ; θ, x )d s
+
+2
+
+·≤ exp 
+
+
+
+εY t(θ, β, x ) + 
+
+Z t
+
+> 0
+
+r1(ε, s, ¯as, β ; θ, x )d BQs − 12
+
+Z t
+
+> 0
+
+r2(ε, s, ¯as, β ; θ, x )d s
+
+
+
+.
+
+We bound the M = M (p)-th moment of the rightmost term, taken supremum over 0 ≤ t ≤ T , when ε
+
+is sufficiently small ( M is constant with respect to ε). Firstly, by using AM-GM, we will bound the 3M -th moment of each exponential term. To this end, 
+
+E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp (3 M ε |Yt(θ, β, x )|)
+
+
+
+≤E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M ε 
+
+Z t
+
+> 0
+
+⟨∇ θ f, β ⟩⊤(σ⊤(s, ¯as, x )) −1dBQs
+
+ 
+
++E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M ε 
+
+Z t
+
+> 0
+
+⟨∇ θ f, β ⟩⊤ (σσ ⊤)( s, ¯as, x )−1f ds
+
+ 
+
+.
+
+For the first term, we further use the following crude bound: 
+
+E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M ε 
+
+Z t
+
+> 0
+
+⟨∇ θ f, β ⟩⊤ σ⊤(s, ¯as, x )−1dBQs
+
+ 
+
+≤ E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M ε 
+
+Z t
+
+> 0
+
+⟨∇ θ f, β ⟩⊤ σ⊤(s, ¯as, x )−1dBQs
+
+ 
+
++ E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+−3M ε 
+
+Z t
+
+> 0
+
+⟨∇ θ f, β ⟩⊤ σ⊤(s, ¯as, x )−1dBQs
+
+ 
+
+.
+
+To bound the right-hand side, we let 
+
+Y (1)  
+
+> t
+
+(θ, β, x ) = 
+
+Z t
+
+> 0
+
+⟨∇ θ f, β ⟩⊤ σ⊤(s, ¯as, x )−1dBQs ,
+
+so that {Y (1)  
+
+> t
+
+}t≥0 is a martingale. First, by L2 martingale inequality we get that 
+
+E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M ε · Y (1)  
+
+> t
+
+(θ, β, x )
+
+
+
+≤ 4E
+
+h
+
+exp 
+
+
+
+3M ε · Y (1)  
+
+> T
+
+(θ, β, x )
+
+i 
+
+.
+
+54 By Burkholder-Davis-Gundy inequality, for every p ≥ 1 we have 
+
+E
+
+h
+
+|Y (1)  
+
+> T
+
+(θ, β, x )|pi
+
+≤ (C0p)pE[⟨Y (1) (θ, β, x )⟩p/ 2 
+
+> T
+
+],
+
+for an absolute constant C0. Using linear growth on ∇θ f , we get that 
+
+⟨Y (1) (θ, β, x )⟩T ≤ C2∥β∥2T sup 
+
+> 0≤s≤T
+
+{C(∥¯as∥2 + 1) }.
+
+Taking expectations on both sides, using Lp martingale inequality on ¯as and operator norm boundedness of σ,we get that for p ≥ 2,
+
+E
+
+h
+
+|Y (1)  
+
+> T
+
+(θ, β, x )|pi
+
+≤ (C0p)p · Cp 
+
+> 1
+
+∥β∥pdpT p.
+
+Hence, by taking ε such that M ε is small enough, and noticing that our proof does not change when we have the − sign, we get from Taylor series that 
+
+sup 
+
+> θ,x
+
+E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M ε 
+
+Z t
+
+> 0
+
+⟨∇ θ f, β ⟩⊤ σ⊤(s, ¯as, x )−1dBQs
+
+ 
+
+< ∞.
+
+Next, we deal with the same term with r1 in place of Y (1)  
+
+> t
+
+(θ, β, x ). Define 
+
+Y (2)  
+
+> t
+
+(ε, θ, β, x ) = 
+
+Z t
+
+> 0
+
+r1(ε, s, ¯as, β ; θ, x )d BQs ,
+
+and (Y (2)  
+
+> t
+
+(θ, β, x )) is a martingale. Proceeding similarly as before, we use the bound 
+
+E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M · | Y (2)  
+
+> t
+
+(ε, θ, β, x )|
+
+
+
+≤ 4E
+
+h
+
+exp 
+
+
+
+3M · | Y (2)  
+
+> T
+
+(ε, θ, β, x )|
+
+i 
+
+.
+
+By Taylor series and monotone convergence, 
+
+E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M · | Y (2)  
+
+> t
+
+(ε, θ, β, x )|
+
+
+
+≤ 4
+
+> ∞
+
+X
+
+> k=0
+
+(3 M )kE[|Y (2)  
+
+> T
+
+(ε, θ, β, x )|k]
+
+k! .
+
+For k ≥ 2, we have by Burkholder-Davis-Gundy inequality that 
+
+E[|Y (2)  
+
+> T
+
+(ε, θ, β, x )|k] ≤ (C0k)kE[⟨Y (2) (ε, θ, β, x )⟩k/ 2 
+
+> T
+
+],
+
+where 
+
+⟨Y (2) (ε, θ, β, x )⟩T =
+
+Z T
+
+> 0
+
+∥r1(ε, s, ¯as, β, θ, x )∥2ds. 
+
+We bound ∥r1∥ as follows 
+
+∥r1(ε, s, ¯as, β, θ, x )∥ =
+
+Z ε
+
+> 0
+
+⟨∇ θ f (s, ¯as, θ + tβ, x ) − ∇ θ f (s, ¯as, θ, x ), β ⟩dt
+
+≤
+
+Z ε
+
+> 0
+
+∥∇ θ f (s, ¯as, θ + tβ, x ) − ∇ θ f (s, ¯as, θ, x )∥op · ∥ β∥dt
+
+≤ε · sup 
+
+> 0≤t≤ε
+
+∥∇ θ f (s, ¯as, θ + tβ, x ) − ∇ θ f (s, ¯as, θ, x )∥op · ∥ β∥≤ε∥β∥ · C(∥¯as∥ + 1) .
+
+Raising to the k-th power, we get that 
+
+⟨Y (2) (ε, θ, β, x )⟩k/ 2 
+
+> T
+
+≤ εk/ 2∥β∥k/ 2CkT k/ 2 sup 
+
+> 0≤s≤T
+
+(∥¯as∥k + 1) .
+
+55 From Lk martingale and Burkholder-Davis-Gundy inequalities, we get that 
+
+E
+
+
+
+sup 
+
+> 0≤s≤T
+
+∥¯as∥k
+
+
+
+≤ 4E ∥¯aT ∥k ≤ 4 · E
+
+h
+
+⟨¯a⟩k/ 2
+
+> T
+
+i
+
+≤ 4dkCk/ 22 T k/ 2.
+
+Consequently, 
+
+E
+
+h
+
+|Y (2)  
+
+> T
+
+(ε, θ, β, x )|ki
+
+≤ (C0k)k · εk/ 2∥β∥k/ 2CkdkCk/ 22 T k,
+
+and so 
+
+E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M · | Y (2)  
+
+> t
+
+(ε, θ, β, x )|
+
+
+
+≤ 4
+
+> ∞
+
+X
+
+> k=0
+
+(3 M )k(C0k)k · εk/ 2∥β∥k/ 2CkdkCk/ 22 T k
+
+k! ,
+
+and by making ε small enough, the series on the RHS converges. Lastly, we bound the term concerning r2. We have 
+
+E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M
+
+Z t
+
+> 0
+
+r2(ε, s, ¯as, θ, β, x )ds 
+
+ 
+
+≤ E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M
+
+Z t
+
+> 0
+
+|r2(ε, s, ¯as, θ, β, x )|ds 
+
+ 
+
+= E
+
+"
+
+exp 3M
+
+Z T
+
+> 0
+
+|r2(ε, s, ¯as, θ, β, x )|ds 
+
+!# 
+
+≤ E
+
+
+
+sup 
+
+> 0≤s≤T
+
+exp (3 M T · | r2(ε, s, ¯as, θ, β, x )|)
+
+
+
+.
+
+By triangle inequality, 
+
+|r2(ε, s, ¯as, θ, β, x )| ≤ C(ε + ε2)∥β∥2(∥¯as∥2 + 1) ≤ Cε ∥β∥2(∥¯as∥2 + 1) ,
+
+and hence 
+
+E
+
+
+
+sup 
+
+> 0≤t≤T
+
+exp 
+
+
+
+3M
+
+Z t
+
+> 0
+
+r2(ε, s, ¯as, θ, β, x )ds 
+
+ 
+
+≤ E
+
+
+
+sup 
+
+> 0≤s≤T
+
+exp  3M T · Cε ∥β∥2(∥¯as∥2 + 1) 
+
+≤ 4E exp  3M T · Cε ∥β∥2(∥¯aT ∥2 + 1)  
+
+= 4 exp(3 M T · Cε ∥β∥2)E exp  3M T · Cε ∥β∥2 · ∥ ¯aT ∥2 
+
+≤ 4 exp(3 M T · Cε ∥β∥2)E exp  3M T · Cε ∥β∥2 · ∥N (0 , C 2T I d)∥2 .
+
+By making ε small enough as a function of (M, T, β ), we get that the RHS is finite. We summarize that for each fixed M and ε = ε(M ) small enough, 
+
+sup 
+
+> θ,x
+
+E
+
+
+
+exp 
+
+
+
+M ε Yt(θ, β, x ) + 
+
+Z t
+
+> 0
+
+r1(ε, s, ¯as, β ; θ, x )d BQs − 12
+
+Z t
+
+> 0
+
+r2(ε, s, ¯as, β ; θ, x )d s
+
+ 
+
+< ∞.
+
+Next, we show that for every fixed M = M (p),
+
+lim  
+
+> ε→0
+
+sup 
+
+> θ,x
+
+E
+
+ 1
+
+ε
+
+
+
+εY t(θ, β, x ) + 
+
+Z t
+
+> 0
+
+r1(ε, s, ¯as, β ; θ, x )d BQs +
+
+Z t
+
+> 0
+
+r2(ε, s, ¯as, β ; θ, x )d s
+
+2 M  = 0 .
+
+However, this is clear from the fact that upper bounds of ∥r1∥, ∥r2∥ are linear in ε. Now it suffices to show that 
+
+lim  
+
+> ε→0
+
+sup 
+
+> θ,x
+
+E
+
+"
+
+sup 
+
+> 0≤t≤T
+
+Z t
+
+> 0
+
+1
+
+ε r1(ε, s, ¯as, θ, β, x )dB Qs +
+
+Z t
+
+> 0
+
+1
+
+ε r2(ε, s, ¯as, β, θ, x ) 
+
+> M
+
+#
+
+= 0 .
+
+56 By Lp-martingale inequality, we get that 
+
+E
+
+"
+
+sup 
+
+> 0≤t≤T
+
+Z t
+
+> 0
+
+1
+
+ε r1(ε, s, ¯as, θ, β, x )d BQs 
+
+> M
+
+#
+
+≤ 4E
+
+Z T
+
+> 0
+
+1
+
+ε r1(ε, s, ¯as, θ, β, x )d BQs 
+
+> M
+
+
+
+≤ 4C(M ) · E
+
+Z T
+
+> 0
+
+1
+
+ε2 ∥r1(ε, s, ¯as, θ, β, x )∥2ds
+
+!M/ 2 .
+
+Using the upper bound on ∥r1∥ earlier, we get 
+
+E
+
+"
+
+sup 
+
+> 0≤t≤T
+
+Z t
+
+> 0
+
+1
+
+ε r1(ε, s, ¯as, θ, β, x )d BQs 
+
+> M
+
+#
+
+≤ 4C(M ) · T M/ 2∥β∥M · E
+
+
+
+sup 
+
+> 0≤s≤T, 0≤t≤ε
+
+∥∇ θ f (s, ¯as, θ + tβ, x ) − ∇ θ f (s, ¯as, θ, x )∥M
+
+> op
+
+
+
+.
+
+Next, for r2, note that triangle inequality gives us 
+
+1
+
+ε |r2(ε, s, ¯as, θ, β, x )| ≤ Cε ∥β∥2(∥¯as∥2 + 1) + 1
+
+ε ∥r1(ε, s, ¯as, θ, β, x )∥ C(∥¯as∥ + 1) .
+
+We get 
+
+E
+
+"
+
+sup 
+
+> 0≤t≤T
+
+Z t
+
+> 0
+
+1
+
+ε r2(ε, s, ¯as, θ, β, x )d s 
+
+> M
+
+#
+
+≤ E
+
+Z T
+
+> 0
+
+1
+
+ε |r2(ε, s, ¯as, θ, β, x )|ds
+
+!M 
+
+≤ C(M ) ·
+
+(
+
+E
+
+
+
+(CT · ε∥β∥2)M sup 
+
+> 0≤s≤T
+
+(∥¯as∥2M + 1) 
+
+
+
++ E
+
+"
+
+T M sup 
+
+> 0≤s≤T
+
+ 1
+
+ε ∥r1(ε, s, ¯as, θ, β, x )∥
+
+M
+
+· C(∥¯as∥M + 1) 
+
+#) 
+
+≤ OT,β (εM ) + C(M )T M E
+
+"
+
+sup 
+
+> 0≤s≤T
+
+ 1
+
+ε ∥r1(ε, s, ¯as, θ, β, x )∥
+
+2M #1/2
+
+E
+
+
+
+sup 
+
+> 0≤s≤T
+
+C(∥¯as∥2M + 1) 
+
+1/2
+
+≤ OT,β (εM ) + C(M )T M ∥β∥M E
+
+
+
+sup 
+
+> 0≤s≤T, 0≤t≤ε
+
+∥∇ θ f (s, ¯as, θ + tβ, x ) − ∇ θ f (s, ¯as, θ, x )∥2M
+
+> op
+
+1/2
+
+.
+
+By Condition (C.4), we are done. 
+
+Lemma C.4. Suppose Assumption 5.1, (2.4) and (4.2) hold. Then there exists c = c(T ) > 0 small enough so that with p = 1 + c,
+
+sup  
+
+> θ∈Rk,x ∈X
+
+EQ
+
+
+
+sup 
+
+> 0≤t≤T
+
+Mt(θ, x )p
+
+
+
+< ∞.
+
+Proof. By the proof of Theorem 1 from [19], we get that 
+
+EQ [Mt(θ, x )p] ≤ E
+
+
+
+exp 
+
+ p(√p + √p − 1) √p − 12 ⟨M (θ, x )⟩t
+
+ 
+
+= E
+
+
+
+exp 
+
+ p(√p + √p − 1) √p − 12 ·
+
+Z t
+
+> 0
+
+f (s, ¯as, θ, x )⊤σ−2 
+
+> s
+
+f (s, ¯as, θ, x )ds
+
+ 
+
+≤ E
+
+
+
+exp 
+
+ p(√p + √p − 1) √p − 12 · sup 
+
+> 0≤s≤t
+
+C(∥¯as∥2 + 1) · t
+
+ 
+
+≤ E
+
+
+
+sup 
+
+> 0≤s≤t
+
+exp 
+
+ p(√p + √p − 1) √p − 12 · Ct · (∥¯as∥2 + 1) 
+
+ 
+
+> (a)
+
+≤ 4E
+
+
+
+exp 
+
+ p(√p + √p − 1) √p − 12 · Ct · (∥¯at∥2 + 1) 
+
+ 
+
+,
+
+57 where in (a) we use L2-martingale inequality (here it does not matter if the inequality is vacuous - i.e. the last expression is ∞). Next, noting that d¯at = σ(t, ¯at, x )dt, either by the diffusion mean-comparison theorem or Burkholder-Davis-Gundy inequality in the proof of Lemma C.3, we can choose p > 1 so that the last expression above is finite. Hence there exists c = c(T ) small enough, such that for p = 1 + c,
+
+EQ[Mt(θ, x )p] ≤ C(T ),
+
+for a constant C = C(T ). By Lp-martingale inequality, we get that 
+
+EQ
+
+
+
+sup 
+
+> 0≤t≤T
+
+Mt(θ, x )p
+
+
+
+≤
+
+ pp − 1
+
+p
+
+C(T ).
+
+Since our argument does not matter on θ, x ,
+
+sup  
+
+> θ∈Rk,x ∈X
+
+EQ
+
+
+
+sup 
+
+> 0≤t≤T
+
+Mt(θ, x )p
+
+
+
+< ∞.
+
+To compute the gradient of EPθ,x φ(¯ aT ) in θ, we would like to compute that, for any β ∈ Rk,
+
+lim 
+
+> ϵ→0
+
+1
+
+ϵ
+
+
+
+EPθ+ϵβ,x φ(¯ aT ) − EPθ,x φ(¯ aT )
+
+= lim 
+
+> ϵ→0
+
+1
+
+ϵ EQ   MT (θ + ϵβ, x ) − MT (θ, x )φ(¯ aT ) .
+
+Define Yt(θ, β, x ) by 
+
+Yt(θ, β, x ) := 
+
+Z t
+
+> 0
+
+∇θ f (s, ¯as, θ, x ), β ⊤ σ⊤(s, ¯as, x )−1dBQ
+
+> s
+
+−
+
+Z t
+
+> 0
+
+∇θ f (s, ¯as, θ, x ), β ⊤ (σσ ⊤)( s, ¯as, x )−1f (s, ¯as, θ, x )d s, 
+
+for t ≥ 0 and ⟨∇ θ f, β ⟩ =  ⟨∇ θ f1, β ⟩, .., ⟨∇ θ fd, β ⟩⊤ ∈ Rd. Recall ¯at = R t 
+
+> 0
+
+σ(s, ¯as, x ) · dBQ 
+
+> s
+
+, f, ∇θ f have linear growth on a uniformly in s, θ, x , it is not hard to see that 
+
+sup 
+
+> θ∈Rd,x ∈X
+
+EQh
+
+sup 
+
+> 0≤t≤T
+
+Yt(θ, β, x ) pi
+
+< ∞, (C.8) for any β ∈ Rk and any finite p ≥ 1. Set Vt(θ, β, x ) := Yt(θ, β, x )Mt(θ, x ), and use Itô’s formula, we have 
+
+dVt(θ, β, x ) = Mt(θ, x )d Yt(θ, β, x ) + Yt(θ, β, x )d Mt(θ, x ) + d M (θ, x ), Y (θ, β, x ) t
+
+=
+
+
+
+Mt(θ, x ) ∇θ f (t, ¯at, θ, x ), β ⊤ σ⊤(t, ¯at, x )−1 + Vt(θ, β, x )f (t, ¯at, θ, x )⊤ σ⊤(t, ¯at, x )−1
+
+
+
+dBQ 
+
+> t
+
+.
+
+Next lemma proves a similar result as in [6, Lemma 4.7]. 
+
+Lemma C.5. For any β ∈ Rk, there exists c = c(T ) > 0 independent of β such that for p = 1 + c, we have 
+
+lim  
+
+> ϵ→0
+
+sup 
+
+> θ∈Rd,x ∈X
+
+EQ
+
+
+
+sup 
+
+> 0≤t≤T
+
+Mt(θ + ϵβ, x ) − Mt(θ, x )
+
+ϵ − Vt(θ, β, x )
+
+> p
+
+
+
+= 0 
+
+Proof. We choose c1 = c1(T ) from Lemma C.4 and set c = c1/2. With p = 1 + c, we have 
+
+EQ
+
+
+
+sup 
+
+> 0≤t≤T
+
+Mt(θ + ϵβ, x ) − Mt(θ, x )
+
+ϵ − Vt(θ, β, x )
+
+> p
+
+
+
+≤EQ
+
+
+
+sup 
+
+> 0≤t≤T
+
+1
+
+ε
+
+ Mt(θ + εβ, x )
+
+Mt(θ, x ) − 1
+
+
+
+− Yt(θ, β, x )
+
+> p
+
+· sup 
+
+> 0≤t≤T
+
+Mt(θ, x )p
+
+
+
+≤EQ
+
+
+
+sup 
+
+> 0≤t≤T
+
+Mt(θ, x )1+ c1
+
+ p
+
+> 1+ c1
+
+· EQ
+
+"
+
+sup 
+
+> 0≤t≤T
+
+1
+
+ε
+
+ Mt(θ + εβ, x )
+
+Mt(θ, x ) − 1
+
+
+
+− Yt(θ, β, x )
+
+> 1+ c1
+> c
+
+# c
+
+> 1+ c1
+
+58 where the last line uses Holder’s inequality with conjugates (1 + c1)/p and (1 + c1)/c . Now, we use Lemma C.3 with (1 + c1)/c < ∞ to obtain that 
+
+lim  
+
+> ε→0
+
+sup  
+
+> θ∈Rk,x ∈X
+
+EQ
+
+"
+
+sup 
+
+> 0≤t≤T
+
+1
+
+ε
+
+ Mt(θ + εβ, x )
+
+Mt(θ, x ) − 1
+
+
+
+− Yt(θ, β, x )
+
+> 1+ c1
+> c
+
+# c
+
+> 1+ c1
+
+= 0 ,
+
+and Lemma C.4 to obtain that 
+
+sup  
+
+> θ∈Rk,x ∈X
+
+EQ
+
+
+
+sup 
+
+> 0≤t≤T
+
+Mt(θ, x )1+ c1
+
+ p
+
+> 1+ c1
+
+< ∞,
+
+which concludes the statement. Together with the boundedness of the φ, we have 
+
+lim 
+
+> ϵ→0
+
+1
+
+ϵ EQ  MT (θ + ϵβ, x ) − MT (θ, x )φ(¯ aT ) = EQVT (θ, β, x )φ(¯ aT ),
+
+Define Yt(θ, β, x ) = Vt(θ,β,x ) 
+
+> Mt(θ,x )
+
+and use Ito’s formula, we have 
+
+dYt(θ, β, x ) = dVt(θ, β, x )
+
+Mt(θ, x ) − Vt(θ, β, x )(Mt(θ, x )) 2 dMt(θ, x ) − d V (θ, β, x ), M (θ, x ) t
+
+Mt(θ, x )2
+
++ Vt(θ, β, x )(Mt(θ, x )) 3 d M (θ, x ) t(x)= ∇θ fθ (t, ¯at, x ), β (σ⊤)−1dBQ 
+
+> t
+
+− ∇θ fθ (t, ¯at, x ), β (σσ ⊤)−1fθ (t, ¯at, x )d t. 
+
+Thus, 
+
+lim 
+
+> ϵ→0
+
+1
+
+ϵ EQ   MT (θ + ϵβ, x ) − MT (θ, x )φ(¯ aT ) = EQMT (θ, x )YT (θ, β, x )φ(¯ aT )
+
+= EPθ
+
+YT (θ, β, x )φ(¯ aT )
+
+= EPθ
+
+ Z T
+
+> 0
+
+
+
+∇θ fθ (t, ¯at, x ), β (σ⊤)−1dBQ 
+
+> t
+
+− ∇θ fθ (t, ¯at, x ), β (σσ ⊤)−1fθ (t, ¯at, x )d t
+
+
+
+φ(¯ aT )
+
+
+
+= EPθ
+
+ Z T
+
+> 0
+
+∇θ fθ (t, ¯at, x ), β (σ⊤)−1dBt
+
+
+
+φ(¯ aT )
+
+
+
+.
+
+To conclude, let U φ(θ) := EPθ
+
+φ(¯ aT ), using the previous calculation, we have 
+
+∇θ U φ(θ) = EPθ
+
+ Z T
+
+> 0
+
+∇θ fθ (t, ¯at, x ) σ⊤(t, ¯at, x )−1dBt
+
+
+
+φ(¯ aT )
+
+
+
+.
+
+## C.3 Derivative for value function V πθ (ρ).
+
+Next, we proceed to the policy gradient. Recall that 
+
+V πθ (x) = Eπθ
+
+ ∞X
+
+> h=0
+
+γhr(xh, a h) x0 = x
+
+
+
+and V πθ (ρ) = 
+
+Z
+
+> S
+
+V πθ (x)ρ(d x).
+
+Using [34, Lemma 2.3] , we have 
+
+V πθ+ϵβ (ρ) − V πθ (ρ)= 11 − γ
+
+Z
+
+> X
+
+ Z 
+
+> A
+
+Qπθ (x, a )( πθ+ϵβ − πθ ) da x
+
+dπθ+ϵβ  
+
+> ρ
+
+(d x).
+
+59 Therefore, we have 
+
+1
+
+ϵ
+
+
+
+V πθ+ϵβ (ρ) − V πθ (ρ)
+
+
+
+= 11 − γ
+
+Z
+
+> X
+
+1
+
+ϵ
+
+ Z 
+
+> A
+
+Qπθ (x, a )( πθ+ϵβ − πθ ) da x
+
+dπθ+ϵβ  
+
+> ρ
+
+(d x) − dπθ 
+
+> ρ
+
+(d x)
+
+| {z }
+
+> I1,ϵ
+
++ 11 − γ
+
+Z
+
+> X
+
+1
+
+ϵ
+
+ Z 
+
+> A
+
+Qπθ (x, a )( πθ+ϵβ − πθ ) da x
+
+dπθ 
+
+> ρ
+
+(d x)
+
+| {z }
+
+> I2,ϵ
+
+.
+
+By Lemma 5.1 whose proof only requires boundedness of the test function, we have 
+
+lim  
+
+> ϵ→0
+
+sup 
+
+> x∈X
+
+1
+
+ϵ
+
+Z
+
+> A
+
+Qπθ (x, a )( πθ+ϵβ − πθ ) da x
+
+− EPθ
+
+ Z T
+
+> 0
+
+⟨∇ θ fθ (t, ¯at, x ), β ⟩ σ⊤(t, ¯at, x )−1dBt
+
+
+
+Qπθ (x, ¯aT )
+
+
+
+= 0 .
+
+Then, by Dominated Convergence theorem, we have 
+
+I2,ϵ → 11 − γ
+
+Z
+
+> X
+
+EPθ
+
+ Z T
+
+> 0
+
+∇θ fθ (t, ¯axt , x ) σ⊤(t, ¯axt , x )−1dBt
+
+
+
+Qπθ (x, ¯axT )
+
+
+
+dπθ 
+
+> ρ
+
+(d x),
+
+as ϵ → 0, and 
+
+I1,ϵ − 11 − γ
+
+Z
+
+> X
+
+EPθ
+
+ Z T
+
+> 0
+
+∇θ fθ (t, ¯axt , x ) σ⊤(t, ¯axt , x )−1dBt
+
+
+
+Qπθ (x, ¯axT )
+
+
+
+dπθ+ϵβ  
+
+> ρ
+
+(d x) − dπθ 
+
+> ρ
+
+(d x)
+
+
+
+≤ sup 
+
+> x∈X
+
+1
+
+ϵ
+
+Z
+
+> A
+
+Qπθ (x, a )( πθ+ϵβ − πθ ) da x − EPθ
+
+ Z T
+
+> 0
+
+⟨∇ θ fθ (t, ¯at, x ), β ⟩ σ⊤(t, ¯at, x )−1dBt
+
+
+
+Qπθ (x, ¯aT )
+
+
+
+· 11 − γ
+
+Z
+
+> X
+
+
+
+dπθ+ϵβ  
+
+> ρ
+
+(d x) + dπθ 
+
+> ρ
+
+(d x)
+
+
+
+→ 0, when ϵ → 0.
+
+Moreover, by Assumption (5.1), we know that 
+
+EPθ
+
+ Z T
+
+> 0
+
+∇θ fθ (t, ¯axt , x ) σ⊤(t, ¯axt , x )−1dBt
+
+
+
+Qπθ (x, ¯axT )
+
+
+
+is uniformly bounded for all x ∈ X . It suffices to show that 
+
+Z
+
+> X
+
+ψ(x) dπθ+ϵβ  
+
+> ρ
+
+(d x) − dπθ 
+
+> ρ
+
+(d x) → 0.
+
+for any bounded measurable function ψ(x). Recall the definition of dπρ (d x), we have 
+
+dπρ (d x) = 
+
+Z
+
+> X
+
+dπ (d x|x′)ρ(d x′) = (1 − γ)
+
+> ∞
+
+X
+
+> n=0
+
+γnP nπ (d x|x′)ρ(d x′)
+
+and 
+
+P 1 
+
+> π
+
+(d x|x′) = 
+
+Z
+
+> A
+
+P (d x|x′, a )π(d a|x′), P nπ (d x|x′) = 
+
+Z
+
+> X
+
+P n−1 
+
+> π
+
+(d x|x′′ )P 1 
+
+> π
+
+(d x′′ |x′).
+
+By Lemma C.5, there exist constant C, ϵ 0 > 0 depending only on ∥ψ∥∞ such that for ϵ < ϵ 0
+
+sup 
+
+> x′∈X
+
+Z
+
+> X
+
+ψ(x) P 1 
+
+> πθ+ϵβ
+
+(d x|x′) − P 1 
+
+> πθ
+
+(d x|x′)
+
+= sup 
+
+> x′∈X
+
+Z
+
+> A
+
+Z
+
+> X
+
+ψ(x)P (d x|x′, a )  πθ+ϵβ (d a|x′) − πθ (d a|x′) ≤ Cϵ, 
+
+60 Then, if we have shown sup x′∈X 
+
+R 
+
+> X
+
+ψ(x) P n−1 
+
+> πθ+ϵβ
+
+(d x|x′) − P n−1 
+
+> πθ
+
+(d x|x′) ≤ C(n − 1) ϵ, by induction, we get 
+
+sup 
+
+> x′∈X
+
+Z
+
+> X
+
+ψ(x) P nπθ+ϵβ (d x|x′) − P nπθ (d x|x′)
+
+≤ sup 
+
+> x′∈X
+
+Z
+
+> A
+
+Z
+
+> X
+
+ψ(x)P n−1 
+
+> πθ+ϵβ
+
+(d x|x′′ )  P 1 
+
+> πθ+ϵβ
+
+(d x′′ |x′) − P 1 
+
+> πθ
+
+(d x′′ |x′)
+
++ sup 
+
+> x′∈X
+
+Z
+
+> A
+
+Z
+
+> X
+
+ψ(x) P n−1 
+
+> πθ+ϵβ
+
+(d x|x′′ ) − P n−1 
+
+> πθ
+
+(d x|x′′ ) P 1 
+
+> πθ
+
+(d x′′ |x′) ≤ C(n − 1) ϵ + Cϵ = Cnϵ, 
+
+Finally, combining the estimate 
+
+sup 
+
+> x′∈X
+
+Z
+
+> X
+
+ψ(x) P nπθ+ϵβ − P nπθ
+
+(dx |x′) ≤ Cnϵ, 
+
+with the definition of the discounted occupancy measure, 
+
+dπρ (dx ) = (1 − γ)
+
+> ∞
+
+X
+
+> n=0
+
+γnP nπ (dx |x′)ρ(dx ′),
+
+we obtain 
+
+Z
+
+> X
+
+ψ(x) dπθ+ϵβ  
+
+> ρ
+
+− dπθ
+
+> ρ
+
+(dx )
+
+≤ (1 − γ)
+
+> ∞
+
+X
+
+> n=0
+
+γn sup 
+
+> x′∈X
+
+Z
+
+> X
+
+ψ(x) P nπθ+ϵβ − P nπθ
+
+(dx |x′)
+
+≤ Cϵ (1 − γ)
+
+> ∞
+
+X
+
+> n=0
+
+nγ n = Cγ 
+
+1 − γ ϵ −→ 0,
+
+as ϵ → 0. Therefore, Z
+
+> X
+
+ψ(x) dπθ+ϵβ  
+
+> ρ
+
+− dπθ
+
+> ρ
+
+(dx ) −→ 0,
+
+which completes the proof. 61

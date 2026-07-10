@@ -1,0 +1,543 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-10T21:23:23.020641+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 4,
+    "deep_cap": 6,
+    "deep_selected": 4,
+    "quick_candidates": 8,
+    "quick_skim_target": 11,
+    "quick_selected": 8
+  },
+  "deep_dive": [
+    {
+      "id": "2607.07859v1",
+      "source": "arxiv",
+      "title": "Feedback Manipulation Regularization: Enabling Offline Agent Alignment for Imitation Learning",
+      "abstract": "Reinforcement learning (RL) research has increasingly shifted focus towards alignment, ensuring agents learn behaviors adhering to human values. While human demonstrations and feedback have proven crucial for alignment, existing approaches predominantly combine these signals using multi-stage pipelines designed for the contextual bandit framing of language generation. Yet little work explores how these complementary inputs can serve as a richer, interconnected signal for single-stage offline training in fully sequential decision-making environments. We propose Feedback Manipulation Regularization (FMR), an algorithm-agnostic method that harnesses evaluative feedback as a corrective signal to improve the alignment of imitation learning policies. We adapt Safety Gymnasium environments to be a principled testbed for alignment evaluation, demonstrating improved aptitude and up to a 98\\% reduction in misalignment across a range of imitation learning algorithms. FMR remains robust in limited data regimes, even when learning from scarce aligned and uninformative noisy demonstrations.",
+      "authors": [
+        "Benjamin Poole",
+        "Minwoo Lee"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.HC",
+        "cs.LG"
+      ],
+      "published": "2026-07-08T18:47:29+00:00",
+      "link": "https://arxiv.org/pdf/2607.07859v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "feedback manipulation regularization for offline imitation learning alignment",
+      "llm_evidence_cn": "利用反馈操作正则化实现离线模仿学习对齐",
+      "llm_evidence": "利用反馈操作正则化实现离线模仿学习对齐",
+      "canonical_evidence": "利用反馈操作正则化实现离线模仿学习对齐",
+      "llm_tldr_en": "FMR uses evaluative feedback as a corrective signal to improve imitation learning alignment in offline sequential settings.",
+      "llm_tldr_cn": "现有模仿学习结合人类反馈的方法多为多阶段流程，不适用于完全序列决策。提出反馈操作正则化（FMR），一种算法无关的方法，将评估反馈作为校正信号，在离线单阶段训练中提升模仿学习策略的对齐。实验证明FMR能有效利用反馈改善策略行为，为在离线环境从演示和反馈中学习更一致的策略提供了新思路。",
+      "llm_tldr": "现有模仿学习结合人类反馈的方法多为多阶段流程，不适用于完全序列决策。提出反馈操作正则化（FMR），一种算法无关的方法，将评估反馈作为校正信号，在离线单阶段训练中提升模仿学习策略的对齐。实验证明FMR能有效利用反馈改善策略行为，为在离线环境从演示和反馈中学习更一致的策略提供了新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.08354v1",
+      "source": "arxiv",
+      "title": "SkillPlug: Unsupervised Skill Mining for Few-Shot Adaptation in Robotic Manipulation",
+      "abstract": "Learning transferable visuomotor imitation policies that generalize across diverse manipulation tasks and adapt rapidly to new tasks from only a handful of demonstrations remains challenging. Most modern policies are trained end-to-end to map observations directly to low-level actions, offering little explicit structure for reusing and recombining behaviors across tasks and making transfer data-inefficient under limited supervision. We propose SkillPlug, a plug-in framework that augments an existing visuomotor policy with a skill-conditioning module and mines a shared, transferable skill library from raw multi-task demonstrations. SkillPlug learns skills via self-supervised objectives that promote compact, reusable, and non-redundant behavior-level primitives, forming a task-shared prior for compositional control. After skill mining, we keep the learned skills fixed and specialize to unseen tasks by fine-tuning only lightweight router and action head, enabling efficient adaptation without full end-to-end retraining. We evaluate SkillPlug on two simulation benchmarks and on a real robot, and observe that the mined transferable skills consistently improve both multi-task performance and few-shot adaptation. Overall, SkillPlug offers a scalable way to mine reusable skills that improve data-efficient generalization in robotic manipulation.",
+      "authors": [
+        "Zi-han Ding",
+        "Ziwei Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-09T11:02:35+00:00",
+      "link": "https://arxiv.org/pdf/2607.08354v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "direct imitation learning method for robotic manipulation",
+      "llm_evidence_cn": "直接提出机器人操作模仿学习方法",
+      "llm_evidence": "直接提出机器人操作模仿学习方法",
+      "canonical_evidence": "直接提出机器人操作模仿学习方法",
+      "llm_tldr_en": "Proposes SkillPlug which mines reusable skills from multi-task demonstrations, enabling few-shot adaptation for visuomotor imitation policies. Unsupervised skill library improves transfer and data efficiency.",
+      "llm_tldr_cn": "当前视觉运动模仿策略难以跨任务泛化且数据效率低。本文提出SkillPlug框架，从多任务演示中无监督挖掘共享技能库，通过技能调节模块增强现有策略。该方法使用自监督目标学习紧凑、可重用技能，实现少样本适应。实验表明能有效提升面临新任务时的迁移效率和泛化性能。",
+      "llm_tldr": "当前视觉运动模仿策略难以跨任务泛化且数据效率低。本文提出SkillPlug框架，从多任务演示中无监督挖掘共享技能库，通过技能调节模块增强现有策略。该方法使用自监督目标学习紧凑、可重用技能，实现少样本适应。实验表明能有效提升面临新任务时的迁移效率和泛化性能。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.04714v1",
+      "source": "arxiv",
+      "title": "Geometry-Aware Motion Latents for Learning Robust Manipulation Policies",
+      "abstract": "Learning motion latents for robotic manipulation heavily relies on extracting motion patterns from visual sequences, yet effective action abstractions require understanding three-dimensional geometric transformations. Here, we introduce GeoMoLa (Geometry-Aware Motion Latents), which learns discrete motion latent codes by predicting how point clouds evolve during manipulation rather than reconstructing visual observations. This four-dimensional objective -- spatial geometry changing through time -- forces latent representations to encode actual physical motion rather than appearance patterns. GeoMoLa achieves state-of-the-art performance using only single-view RGB-D input, while existing methods require multi-view reconstruction, succeeding across diverse manipulation benchmarks. Our ablations reveal that geometric prediction is the key to driving performance, quantitatively validating that manipulation depends on spatial understanding. Furthermore, the learned codes exhibit effective motion abstraction: applying them to novel scenes produces physically consistent transformations regardless of visual context. Our real-world experiments also confirm this robustness capability, achieving robust manipulation with minimal demonstrations in cluttered environments where geometric reasoning determines success. Thus, we demonstrate that effective motion latents for robot control can better emerge from understanding motion through its three-dimensional effects rather than pixel-level patterns.",
+      "authors": [
+        "Yunchao Zhang",
+        "Yijia Weng",
+        "Ruizhe Liu",
+        "Ming Hu",
+        "Leonidas Guibas",
+        "Yanchao Yang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-06T06:34:14+00:00",
+      "link": "https://arxiv.org/pdf/2607.04714v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Learning motion latents by predicting point cloud evolution for manipulation",
+      "llm_evidence_cn": "通过预测点云演化学习操作运动潜码",
+      "llm_evidence": "通过预测点云演化学习操作运动潜码",
+      "canonical_evidence": "通过预测点云演化学习操作运动潜码",
+      "llm_tldr_en": "GeoMoLa learns discrete motion latent codes by predicting how point clouds evolve over time, achieving state-of-the-art robust manipulation with single-view RGB-D input.",
+      "llm_tldr_cn": "针对现有运动潜码学习依赖视觉序列重建、忽略三维几何变换的问题，GeoMoLa提出通过预测操作过程中点云的演化来学习离散运动潜码，该四维目标迫使潜在表示编码实际物理运动而非外观模式。仅使用单视角RGB-D输入，GeoMoLa达到了最先进性能，而现有方法需要多视角重建。该方法在多种操作任务中展现了鲁棒性，证明了几何感知运动潜码的有效性。",
+      "llm_tldr": "针对现有运动潜码学习依赖视觉序列重建、忽略三维几何变换的问题，GeoMoLa提出通过预测操作过程中点云的演化来学习离散运动潜码，该四维目标迫使潜在表示编码实际物理运动而非外观模式。仅使用单视角RGB-D输入，GeoMoLa达到了最先进性能，而现有方法需要多视角重建。该方法在多种操作任务中展现了鲁棒性，证明了几何感知运动潜码的有效性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.08436v1",
+      "source": "arxiv",
+      "title": "EgoWAM: World Action Models Beyond Pixels with In-the-Wild Egocentric Human Data",
+      "abstract": "Egocentric human data offers scalable supervision for robot manipulation. However, behavior cloning entangles transferable content like objects, scenes, and task semantics, with non-transferable factors like human morphology, head motion, and behavioral style. We study whether World Action Models (WAMs) provide a better training signal by requiring policies to predict not only actions, but also how the scene evolves. The central question is what world representation best enables human-to-robot transfer. We hypothesize that an effective world target should abstract appearance, capture agent-invariant physical effects, and separate camera motion from environment change. We introduce EgoWAM, a controlled human-robot co-training framework that fixes the policy backbone, action head, and data mixture while varying only the world prediction target, comparing Pixel, DINO, and 3D motion flow. Across three real-world bimanual tasks, WAM co-training scales more effectively with in-the-wild egocentric human data than behavior cloning. Pixel-based prediction transfers weakly, while DINO and 3D flow yield substantial gains: DINO improves out-of-distribution object and scene generalization by up to 4x, and 3D flow improves in-domain performance by 20-30%. More details: https://gatech-rl2.github.io/egowam.github.io",
+      "authors": [
+        "Baoyu Li",
+        "Xinchen Yin",
+        "Mengying Lin",
+        "Yixin Zhang",
+        "Danfei Xu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-08T16:11:37+00:00",
+      "link": "https://arxiv.org/pdf/2607.08436v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "human-to-robot imitation transfer using World Action Models",
+      "llm_evidence_cn": "使用世界动作模型进行人类到机器人模仿迁移",
+      "llm_evidence": "使用世界动作模型进行人类到机器人模仿迁移",
+      "canonical_evidence": "使用世界动作模型进行人类到机器人模仿迁移",
+      "llm_tldr_en": "Proposes EgoWAM which investigates world representations for human-to-robot imitation transfer, showing that predicting scene evolution improves policy learning from egocentric data.",
+      "llm_tldr_cn": "从第一人称人类数据学习机器人策略时，行为克隆会混入非迁移因素。本文提出EgoWAM框架，研究世界动作模型（WAM）如何通过要求策略预测场景演变来提升迁移效果。核心在于寻找能够抽象外观、捕捉物理效应并分离摄像头运动的表示。实验表明该方法比标准行为克隆更好地实现人类到机器人迁移，强调世界模型作为训练信号的优势。",
+      "llm_tldr": "从第一人称人类数据学习机器人策略时，行为克隆会混入非迁移因素。本文提出EgoWAM框架，研究世界动作模型（WAM）如何通过要求策略预测场景演变来提升迁移效果。核心在于寻找能够抽象外观、捕捉物理效应并分离摄像头运动的表示。实验表明该方法比标准行为克隆更好地实现人类到机器人迁移，强调世界模型作为训练信号的优势。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.03723v1",
+      "source": "arxiv",
+      "title": "OmniTacTune: Policy-Agnostic Real-World RL for Tactile Residual Adaptation of Visual Policies",
+      "abstract": "Visual policies learned from human videos, teleoperation, and robot demonstrations offer scalable motion priors, but often fail in contact-rich manipulation, where success significantly depends on local force and contact geometry. Tactile sensing provides these complementary signals, yet tactile data remain costly to collect and hard to generalize across sensors, robots, and tasks. We introduce OmniTacTune, a policy-agnostic real-world RL pipeline that adapts tactile feedback to pretrained visual policies through residual correction. OmniTacTune uses a two-stage design: it first bootstraps tactile-aware learning from autonomous base-policy rollouts, then learns a lightweight tactile residual policy through online interaction. Extensive experiments show that OmniTacTune generalizes across diverse contact-rich tasks, visual base policies, and tactile representations. Across four real-world contact-rich tasks, it improves visual base policies from 5-40% success to 85-100% within 40-80 minutes, demonstrating an efficient path for adapting tactile feedback to scalable visual robot policies. Project page: https://colinyu1.github.io/omnitactune-site/",
+      "authors": [
+        "Kelin Yu",
+        "Haode Zhang",
+        "Harish Ravichandar",
+        "Yunhai Han",
+        "Ruohan Gao"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-04T06:11:03+00:00",
+      "link": "https://arxiv.org/pdf/2607.03723v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "adapts visual policies from demonstrations with tactile feedback",
+      "llm_evidence_cn": "从演示中学习视觉策略并利用触觉反馈进行自适应",
+      "llm_evidence": "从演示中学习视觉策略并利用触觉反馈进行自适应",
+      "canonical_evidence": "从演示中学习视觉策略并利用触觉反馈进行自适应",
+      "llm_tldr_en": "OmniTacTune adapts pretrained visual policies for contact-rich manipulation using tactile residual RL, improving success on real-world tasks.",
+      "llm_tldr_cn": "该论文针对接触丰富的机器人操作任务，视觉策略往往因缺乏局部力反馈而失败。提出OmniTacTune，一种策略无关的在线RL流水线，通过触觉残差校正自适应预训练视觉策略。在多个真实世界任务上，显著提升了操作成功率，展示了触觉反馈对于从演示学习的策略在精细操作中的重要性。",
+      "llm_tldr": "该论文针对接触丰富的机器人操作任务，视觉策略往往因缺乏局部力反馈而失败。提出OmniTacTune，一种策略无关的在线RL流水线，通过触觉残差校正自适应预训练视觉策略。在多个真实世界任务上，显著提升了操作成功率，展示了触觉反馈对于从演示学习的策略在精细操作中的重要性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.08647v1",
+      "source": "arxiv",
+      "title": "Multi-Modal, Multi-Environment Machine Teaching for Robust Reward Learning",
+      "abstract": "As autonomous agents are increasingly deployed across diverse operational contexts, aligning their behavior with human intent demands reward functions that remain robust to such changes rather than overfitting to any single environment. Inverse reinforcement learning (IRL) provides a principled way to infer such objectives from human feedback. However, existing analyses of optimal teaching approaches for IRL focus on single-environment, demonstration-only settings, leaving underexplored how heterogeneous feedback modalities and environment dynamics jointly constrain reward functions that generalize across multiple environments. Because demonstrations in one MDP entangle reward information with that environments specific structure, the resulting rewards frequently fail to generalize when the agent is deployed in a new setting. We first analyze how different feedback modalities constrain rewards, showing that, in the unlimited-data regime, comparisons impose strictly stronger global constraints than other modalities. Beyond this theoretical analysis, we introduce a hierarchical machine teaching algorithm for reward learning that operates across multiple MDPs. The algorithm first greedily selects informative environments that expose complementary reward constraints, then strategically queries low-cost feedback within those environments. Empirically, our method achieves substantially lower regret and stronger generalization to held-out environments than uniform teaching baselines under identical feedback budgets, demonstrating the importance of multi-environment, multi-modal teaching for learning dynamics-robust reward functions.",
+      "authors": [
+        "Ali Larian",
+        "Qian Lin",
+        "Chang Zong Wu",
+        "Daniel S. Brown"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-07-09T16:18:16+00:00",
+      "link": "https://arxiv.org/pdf/2607.08647v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "inverse reinforcement learning from demonstrations, relevant to imitation learning methods",
+      "llm_evidence_cn": "从示范中学习奖励的逆强化学习，与模仿学习方法相关",
+      "llm_evidence": "从示范中学习奖励的逆强化学习，与模仿学习方法相关",
+      "canonical_evidence": "从示范中学习奖励的逆强化学习，与模仿学习方法相关",
+      "llm_tldr_en": "Proposes multi-modal, multi-environment machine teaching for robust reward learning via IRL, improving generalization across environments.",
+      "llm_tldr_cn": "本文针对跨环境泛化的奖励学习问题，提出多模态多环境机器教学框架。利用逆强化学习从人类反馈中推断鲁棒的奖励函数，克服单环境过拟合。通过考虑多种反馈模态和环境动态，所学习的奖励函数能更好泛化。该方法与从示范中学习（模仿学习）紧密相关，为奖励设计提供了新的教学策略。",
+      "llm_tldr": "本文针对跨环境泛化的奖励学习问题，提出多模态多环境机器教学框架。利用逆强化学习从人类反馈中推断鲁棒的奖励函数，克服单环境过拟合。通过考虑多种反馈模态和环境动态，所学习的奖励函数能更好泛化。该方法与从示范中学习（模仿学习）紧密相关，为奖励设计提供了新的教学策略。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.04927v1",
+      "source": "arxiv",
+      "title": "DSWAM: A Dual-System World Action Foundation Model for Fine-Grained Robot Manipulation",
+      "abstract": "World Action Models (WAMs) provide a promising alternative to Vision-Language-Action (VLA) policies by using video-based world modeling as dense supervision for robot action learning. Existing WAMs excel at physically grounded execution, but typically lack the explicit language-level planning interface in VLM-based VLAs for decomposing coarse instructions. Such decomposition becomes important when household tasks involve complex multi-step goals, where coarse user commands need to be converted into sequences of fine-grained executable subtasks. Meanwhile, the field still lacks a fair real-robot comparison between VLA and WAM execution capabilities, since existing systems often differ in data, robot embodiments, and task protocols. To address both the decomposition gap and the need for a controlled WAM-VLA comparison, we introduce DSWAM, a Dual-System World Action Foundation Model for fine-grained robot manipulation. DSWAM keeps a System 1 WAM executor as the default control path and optionally activates a System 2 vision-language subtask planner only when task decomposition is useful. The planner predicts executable subtasks from short-term visual history and a global task prompt, while the WAM executor performs world-aware action generation for each instruction or subtask. The executor is trained with action prediction and video co-training, but inference directly predicts action chunks without explicit future video generation. To make this execution path practical on real robots, we further integrate TensorRT acceleration, asynchronous execution, and real-time chunking (RTC) so that policy queries do not block robot control. To provide a fair real-robot comparison with VLA policies, we build and evaluate DSWAM under the DeMaVLA real-world deformable manipulation setting with matched robot platform, pretraining data, post-training data, and evaluation criteria.",
+      "authors": [
+        "Jian Zhu",
+        "Jianjun Zhang",
+        "Taiyi Su",
+        "Tianbin Liu",
+        "Zhangyuan Wang",
+        "Kai Xie",
+        "Zitai Huang",
+        "Chong Ma",
+        "Youzhang He",
+        "Tianjian Wang",
+        "Hanyang Wang",
+        "Weihao Ding",
+        "Yi Xu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-06T10:57:01+00:00",
+      "link": "https://arxiv.org/pdf/2607.04927v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "World action model as alternative to VLA for robot learning",
+      "llm_evidence_cn": "世界动作模型作为VLA的替代方案用于机器人学习",
+      "llm_evidence": "世界动作模型作为VLA的替代方案用于机器人学习",
+      "canonical_evidence": "世界动作模型作为VLA的替代方案用于机器人学习",
+      "llm_tldr_en": "DSWAM proposes a dual-system world action model that combines video-based world modeling with language-level planning for fine-grained robot manipulation.",
+      "llm_tldr_cn": "针对现有世界动作模型缺乏显式语言级规划接口的问题，DSWAM提出双系统结构，将基于视频的世界建模与语言级规划结合。一个系统负责物理推理和动作生成，另一个系统处理语言指令分解。该方法在细粒度操作任务上进行了公平的实机对比，展示了优于纯VLA或WAM的性能，弥合了语言级高级规划与物理低级执行之间的鸿沟。",
+      "llm_tldr": "针对现有世界动作模型缺乏显式语言级规划接口的问题，DSWAM提出双系统结构，将基于视频的世界建模与语言级规划结合。一个系统负责物理推理和动作生成，另一个系统处理语言指令分解。该方法在细粒度操作任务上进行了公平的实机对比，展示了优于纯VLA或WAM的性能，弥合了语言级高级规划与物理低级执行之间的鸿沟。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.04988v1",
+      "source": "arxiv",
+      "title": "InternVLA-A1.5: Unifying Understanding, Latent Foresight, and Action for Compositional Generalization",
+      "abstract": "Unified models for robot manipulation aim to equip one policy with both the semantic priors of pretrained VLMs and the physical dynamics learned through future prediction. In practice, existing designs tend to erode the semantics of the pretrained backbone, suffer interference among heterogeneous objectives, and learn future prediction from scratch in pixel space, leaving the dynamics priors of pretrained video generators unexploited. We present InternVLA-A1.5, which builds the policy on a native VLM backbone that keeps training on VQA and subtask prediction, and attaches a lightweight unified expert for continuous action generation. Future prediction is recast as a latent-querying problem, where a small set of learnable foresight tokens condenses the task-relevant future into a compact latent code under the supervision of a frozen pretrained video generation model, so the policy inherits world-model dynamics priors without ever learning pixel-level generation. The video branch is discarded at inference, keeping real-time control. Pretrained on 1.2M robot episodes and 3M multimodal samples, InternVLA-A1.5 achieves the best overall results on all six simulation benchmarks. In the real world, the preserved semantics deliver the strongest compositional generalization on held-out instruction bindings, and the two designs together sustain long-horizon execution.",
+      "authors": [
+        "Haoxiang Ma",
+        "Junhao Cai",
+        "Xiaoxu Xu",
+        "Hao Li",
+        "Yuyin Yang",
+        "Yang Tian",
+        "Jiafei Cao",
+        "Hongrui Zhu",
+        "Zherui Qiu",
+        "Zhaxizhuoma",
+        "Yuqiang Yang",
+        "Jiaqi Peng",
+        "Xueyuan Wei",
+        "Yangkun Zhu",
+        "Jiahao Jiang",
+        "Xing Gao",
+        "Hanqing Wang",
+        "Feng Yuan",
+        "Kailin Li",
+        "Xueyue Zhu",
+        "Tai Wang",
+        "Yan Ding",
+        "Jiangmiao Pang",
+        "Jia Zeng",
+        "Jingjing Zhang",
+        "Bowen Zhou",
+        "Yao Mu",
+        "Chunhua Shen",
+        "Weinan Zhang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-06T12:25:30+00:00",
+      "link": "https://arxiv.org/pdf/2607.04988v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Unified robot policy with future prediction and VLM",
+      "llm_evidence_cn": "统一机器人策略，结合未来预测和VLM",
+      "llm_evidence": "统一机器人策略，结合未来预测和VLM",
+      "canonical_evidence": "统一机器人策略，结合未来预测和VLM",
+      "llm_tldr_en": "InternVLA-A1.5 unifies VLM understanding, latent future prediction, and action generation in a single policy for compositional generalization, using a native VLM backbone and a lightweight action expert.",
+      "llm_tldr_cn": "针对现有统一模型在机器人操作中稀释预训练语义、目标间干扰等问题，InternVLA-A1.5提出在原生VLM主干上保持VQA和子任务预测训练，并附加轻量级统一专家生成连续动作。它将未来预测重铸为潜在查询问题，利用可学习标记从预训练视频生成器中提取动态先验，避免了从像素空间从头学习。实验证明该方法在组合泛化任务上取得了优异表现，为构建语义与物理统一的机器人策略提供了新范式。",
+      "llm_tldr": "针对现有统一模型在机器人操作中稀释预训练语义、目标间干扰等问题，InternVLA-A1.5提出在原生VLM主干上保持VQA和子任务预测训练，并附加轻量级统一专家生成连续动作。它将未来预测重铸为潜在查询问题，利用可学习标记从预训练视频生成器中提取动态先验，避免了从像素空间从头学习。实验证明该方法在组合泛化任务上取得了优异表现，为构建语义与物理统一的机器人策略提供了新范式。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.06018v1",
+      "source": "arxiv",
+      "title": "RoboTALES: Learning Reasoning-Guided Robot Policies via Task-Aligned Simulated Futures",
+      "abstract": "Pretrained video generative models are promising backbones for visuomotor control, but their imagined futures often drift from task intent and are not reliably action-conditional. As a result, these models can be difficult to use for planning or policy extraction. To address these limitations, we propose RoboTALES, a single-stage framework that learns task-aligned simulated futures and uses them to train robot policies. Our approach introduces two key innovations: (1) a hierarchical LLM-based planner that breaks complex tasks into a sequence of subgoals to guide the model's imagination; and (2) a VLM-based critic that evaluates these ``imagined'' futures and uses reward-based feedback to keep the model's internal representations focused on the goal. By anchoring the video generator in abstract reasoning, we produce temporally consistent rollouts and more coherent actions. We evaluate RoboTALES on diverse manipulation tasks from RoboCasa and LIBERO10, and show that our method consistently outperforms existing methods, especially in long-horizon tasks. Our code and models are publicly available at https://github.com/hananshafi/RoboTALES.",
+      "authors": [
+        "Hanan Gani",
+        "Tejal Kulkarni",
+        "Madhoolika Chodavarapu",
+        "Nicklas Hansen",
+        "Manmohan Chandraker"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-07T08:58:29+00:00",
+      "link": "https://arxiv.org/pdf/2607.06018v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Using simulated futures from video generative models to train robot policies",
+      "llm_evidence_cn": "使用视频生成模型的模拟未来训练机器人策略",
+      "llm_evidence": "使用视频生成模型的模拟未来训练机器人策略",
+      "canonical_evidence": "使用视频生成模型的模拟未来训练机器人策略",
+      "llm_tldr_en": "RoboTALES learns task-aligned simulated futures via a hierarchical LLM planner and VLM critic, using them to train robot policies that avoid task drift.",
+      "llm_tldr_cn": "针对预训练视频生成模型想象的未来容易偏离任务意图且不可靠的问题，RoboTALES提出单阶段框架，学习任务对齐的模拟未来并用于训练策略。其创新包括：(1)层次化LLM规划器将复杂任务分解为子目标引导想象；(2)VLM评论家评估想象未来并通过奖励反馈保持表示聚焦。实验表明该方法有效防止了任务漂移，生成了更可靠的行动条件未来，显著提升了策略学习效果。",
+      "llm_tldr": "针对预训练视频生成模型想象的未来容易偏离任务意图且不可靠的问题，RoboTALES提出单阶段框架，学习任务对齐的模拟未来并用于训练策略。其创新包括：(1)层次化LLM规划器将复杂任务分解为子目标引导想象；(2)VLM评论家评估想象未来并通过奖励反馈保持表示聚焦。实验表明该方法有效防止了任务漂移，生成了更可靠的行动条件未来，显著提升了策略学习效果。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.07967v1",
+      "source": "arxiv",
+      "title": "Expressivity and Statistical Trade-offs in Diffusion Policy Learning",
+      "abstract": "Diffusion-based policies have recently emerged as powerful policy parameterizations for reinforcement learning, representing state-conditioned action distributions as terminal laws of diffusion processes with parameterized drifts. This terminal-law representation has shown substantial expressive flexibility in practice, enabling diffusion policies to model complex, multimodal, and highly non-Gaussian action distributions; however, it remains unclear what mathematically drives this expressivity and how to fully exploit it when the policy is learned from finite data. In this paper, we identify the drift Lipschitz budget $K$ as a central quantity governing the expressivity and statistical behavior of diffusion policies. We quantify expressivity through approximation: diffusion policies with $K$-Lipschitz drifts can concentrate near optimal deterministic policies and achieve value approximation error of order $1/K$; moreover, we prove a matching lower bound under nondegenerate diffusion noise. This increased expressivity comes with a statistical cost. When the drift is parameterized by neural networks, increasing $K$ improves approximation but increases statistical complexity. Balancing these two terms yields a finite-sample performance gap of order $\\tilde{O}(n^{-2/(m+6)})$ for generic neural-network drifts, and a sharper rate $\\tilde{O}(n^{-2/(m+4)})$ for one-sided dissipative drift classes, where $n$ is the sample size and $m$ is the dimension of the state space. Numerical experiments provide empirical evidence for the sample-dependent trade-off in $K$, supporting both theoretical regimes. Our framework also suggests a practical implementation principle: choose the diffusion budget $K$ according to the available sample size, and then select a neural-network architecture with the corresponding fixed Lipschitz coefficient.",
+      "authors": [
+        "Viet Vu",
+        "Renyuan Xu",
+        "Jiacheng Zhang",
+        "Yufei Zhang"
+      ],
+      "primary_category": "stat.ML",
+      "categories": [
+        "stat.ML",
+        "cs.LG",
+        "math.OC"
+      ],
+      "published": "2026-07-08T22:42:29+00:00",
+      "link": "https://arxiv.org/pdf/2607.07967v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "theoretical analysis of diffusion policy expressivity and statistical trade-offs",
+      "llm_evidence_cn": "扩散策略表达力与统计权衡的理论分析",
+      "llm_evidence": "扩散策略表达力与统计权衡的理论分析",
+      "canonical_evidence": "扩散策略表达力与统计权衡的理论分析",
+      "llm_tldr_en": "Identifies drift Lipschitz budget K as central to expressivity and statistical behavior of diffusion policies, providing theoretical insights for designing more effective diffusion-based policies.",
+      "llm_tldr_cn": "针对扩散策略表达力来源不清晰的问题，论文识别漂移Lipschitz预算K是控制表达力与统计行为的关键量。通过理论分析量化表达力，并阐明有限数据下的统计折中，为设计更高效的扩散策略提供了理论基础。",
+      "llm_tldr": "针对扩散策略表达力来源不清晰的问题，论文识别漂移Lipschitz预算K是控制表达力与统计行为的关键量。通过理论分析量化表达力，并阐明有限数据下的统计折中，为设计更高效的扩散策略提供了理论基础。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.08341v1",
+      "source": "arxiv",
+      "title": "AnyDexRT: Calibration-Free Dexterous Hand Retargeting with Few-Shot Human Guidance",
+      "abstract": "Teleoperation is a key interface for controlling dexterous robotic hands and collecting demonstrations for imitation learning. Its effectiveness largely depends on kinematic retargeting, which maps operator hand motions to feasible and intuitive robot hand motions. Existing methods often require hand-crafted objectives, precise calibration, or global shape matching between human and robot hand spaces, making them sensitive to hand-specific tuning and less reliable across different dexterous hands. We propose AnyDexRT, a calibration-free retargeting method for intuitive dexterous teleoperation across human-like dexterous hands. AnyDexRT combines self-supervised fingertip correspondence learning with few-shot human guidance to anchor the mapping in task-relevant regions, and further refines pinch-related poses using a contact classifier. Experiments on diverse dexterous hands and real-world teleoperation tasks show that AnyDexRT improves retargeting quality, reduces manual tuning, and provides more intuitive and efficient control than prior retargeting methods. Project website: https://chenxi-wang.github.io/projects/anydexrt",
+      "authors": [
+        "Chenxi Wang",
+        "Ying Feng",
+        "Hongjie Fang",
+        "Shangning Xia",
+        "Lixin Yang",
+        "Chuan Wen",
+        "Cewu Lu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-09T10:29:53+00:00",
+      "link": "https://arxiv.org/pdf/2607.08341v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "teleoperation retargeting method for collecting demonstrations in imitation learning",
+      "llm_evidence_cn": "用于模仿学习示范收集的遥操作重定向方法",
+      "llm_evidence": "用于模仿学习示范收集的遥操作重定向方法",
+      "canonical_evidence": "用于模仿学习示范收集的遥操作重定向方法",
+      "llm_tldr_en": "Proposes AnyDexRT, a calibration-free retargeting method for dexterous teleoperation, enabling intuitive demonstration collection for imitation learning.",
+      "llm_tldr_cn": "本文针对灵巧手遥操作中的重定向问题，提出AnyDexRT方法。该方法结合自监督指尖对应学习和少样本人类引导，无需标定即可在不同灵巧手之间实现直观的重定向。该方法有效支持模仿学习中的示范收集，降低了对人工调参的依赖，提高了跨手的适用性。实验证明了其在多种灵巧手上的效果。",
+      "llm_tldr": "本文针对灵巧手遥操作中的重定向问题，提出AnyDexRT方法。该方法结合自监督指尖对应学习和少样本人类引导，无需标定即可在不同灵巧手之间实现直观的重定向。该方法有效支持模仿学习中的示范收集，降低了对人工调参的依赖，提高了跨手的适用性。实验证明了其在多种灵巧手上的效果。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.08639v1",
+      "source": "arxiv",
+      "title": "Native Video-Action Pretraining for Generalizable Robot Control",
+      "abstract": "The advent of video-action models offers a promising path for robot control. Nevertheless, we argue that repurposing video generative models designed for digital content creation is inherently inadequate for physical environments. To bridge this gap, we present LingBot-VA 2.0, a video-action foundation model built from the ground up for embodiment. Four core design principles showcase its evolution from LingBot-VA. (1) Departing from traditional reconstruction-focused VAEs, we introduce a semantic visual-action tokenizer, which aligns visual representations with both semantics and actions, improving instruction following and action precision in subsequent policy learning. (2) Given the strictly causal nature of temporal dynamics, we adopt a causal pretraining paradigm, training from scratch to circumvent the catastrophic forgetting that frequently occurs when adapting bidirectional architectures. (3) To meet the demands of high-frequency inference, our model employs a sparse MoE backbone, expanding model capacity without compromising efficiency. (4) Real-time closed-loop control is realized through an enhanced asynchronous inference scheme, which predicts future latents in parallel with action execution while re-grounding each rollout on the latest observation via learned forward dynamics. Real-world deployment validates LingBot-VA 2.0 as a robust foundation model, as evidenced by its few-shot generalization across complex manipulation tasks.",
+      "authors": [
+        "Qihang Zhang",
+        "Lin Li",
+        "Luyao Zhang",
+        "Shuai Yang",
+        "Yiming Luo",
+        "Shuaiting Li",
+        "Ruilin Wang",
+        "Junke Wang",
+        "Jiahao Shao",
+        "Gangwei Xu",
+        "Jiaming Zhou",
+        "Yishu Shen",
+        "Yudong Jin",
+        "Fangyi Xu",
+        "Shuailei Ma",
+        "Jiaqi Liao",
+        "Guanxing Lu",
+        "Zifan Shi",
+        "Yongkun Wen",
+        "Yujie Zhao",
+        "Weixuan Tang",
+        "Xinyang Wang",
+        "Chaojian Li",
+        "Jiapeng Zhu",
+        "Ka Leong Cheng",
+        "Nan Xue",
+        "Xing Zhu",
+        "Yujun Shen",
+        "Yinghao Xu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-09T16:15:43+00:00",
+      "link": "https://arxiv.org/pdf/2607.08639v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "video-action pretraining for generalizable robot control, relevant to imitation learning",
+      "llm_evidence_cn": "视频-动作预训练用于通用机器人控制，与模仿学习相关",
+      "llm_evidence": "视频-动作预训练用于通用机器人控制，与模仿学习相关",
+      "canonical_evidence": "视频-动作预训练用于通用机器人控制，与模仿学习相关",
+      "llm_tldr_en": "Proposes LingBot-VA 2.0, a video-action foundation model designed for embodiment, using semantic visual-action tokenizer and causal pretraining to improve robot control from video demonstrations.",
+      "llm_tldr_cn": "针对现有视频生成模型不适合物理环境的问题，提出LingBot-VA 2.0视频-动作基础模型。采用语义视觉-动作分词器对齐视觉与动作表示，并通过因果预训练提升机器人指令跟随与动作精度。实验表明该方法在多种机器人任务上取得更优性能，为从视频中学习机器人策略提供了新思路。",
+      "llm_tldr": "针对现有视频生成模型不适合物理环境的问题，提出LingBot-VA 2.0视频-动作基础模型。采用语义视觉-动作分词器对齐视觉与动作表示，并通过因果预训练提升机器人指令跟随与动作精度。实验表明该方法在多种机器人任务上取得更优性能，为从视频中学习机器人策略提供了新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

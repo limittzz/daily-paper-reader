@@ -6,77 +6,56 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-09
-- 运行时间：2026-07-09 21:52:32 UTC
+- 最新运行日期：2026-07-10
+- 运行时间：2026-07-10 21:35:04 UTC
 - 运行状态：成功
-- 本次总论文数：19
-- 精读区：8
-- 速读区：11
+- 本次总论文数：12
+- 精读区：4
+- 速读区：8
 
 ### 今日简报（AI）
-今日聚焦 Vision-Language-Action 模型，精读两篇高分论文：Q-Guided 流匹配策略与任务无关的 VLA 预训练方法。最值得关注的方向是提升 VLA 策略的推理效率与泛化能力。建议优先精读两篇 9.0 分论文，再配合速读中的加速技巧（Action Caching）与低维世界模型（KAM-WM）扩展理解。
-- 详情：[/202607/09/README](/202607/09/README)
+今日推荐12篇论文，精读聚焦模仿学习的离线智能体对齐与机器人操作的少样本技能挖掘。最值得关注的是《Feedback Manipulation Regularization》和《SkillPlug》，前者通过反馈操纵正则化实现离线对齐，后者无监督挖掘技能以适配少样本操作。建议优先精读这两篇，其方法可迁移至其他智能体学习或机器人泛化场景。
+- 详情：[/202607/10/README](/202607/10/README)
 
 ### 精读区论文标签
-1. [Guided Action Flow: Q-Guided Inference for Flow-Matching Vision-Language-Action Policies](/202607/09/2607.02092v2-guided-action-flow-q-guided-inference-for-flow-matching-vision-language-action-policies)  
+1. [Feedback Manipulation Regularization: Enabling Offline Agent Alignment for Imitation Learning](/202607/10/2607.07859v1-feedback-manipulation-regularization-enabling-offline-agent-alignment-for-imitation-learning)  
    标签：评分：9.0/10、query:imitation
-   evidence：流匹配视觉-语言-动作策略结合Q引导推理；直接针对机器人控制的扩散策略
-2. [Learning to Move Before Learning to Do: Task-Agnostic pretraining for VLAs](/202607/09/2607.02466v1-learning-to-move-before-learning-to-do-task-agnostic-pretraining-for-vlas)  
+   evidence：利用反馈操作正则化实现离线模仿学习对齐
+2. [SkillPlug: Unsupervised Skill Mining for Few-Shot Adaptation in Robotic Manipulation](/202607/10/2607.08354v1-skillplug-unsupervised-skill-mining-for-few-shot-adaptation-in-robotic-manipulation)  
    标签：评分：9.0/10、query:imitation
-   evidence：提出面向VLA模型的任务无关预训练，利用模仿数据学习运动先验
-3. [ObjRetarget: An Object-Aware Motion Retargeting Framework with Anthropomorphic Arm Constraints and Polyhedral Hand Modeling](/202607/09/2607.03828v1-objretarget-an-object-aware-motion-retargeting-framework-with-anthropomorphic-arm-constraints-and-polyhedral-hand-modeling)  
-   标签：评分：9.0/10、query:imitation
-   evidence：将人类操作重定向到机器人动作，实现从人类视频的模仿学习
-4. [Spatial Attention: Adapting Execution Horizons for Diffusion Policies via Observation Sensitivity](/202607/09/2607.04739v1-spatial-attention-adapting-execution-horizons-for-diffusion-policies-via-observation-sensitivity)  
-   标签：评分：9.0/10、query:imitation
-   evidence：针对机器人示教学习中的扩散策略自适应调整执行视野
-5. [Optimal Transport Q-Learning for Flow Policy Steering and Acceleration](/202607/09/2607.06262v1-optimal-transport-q-learning-for-flow-policy-steering-and-acceleration)  
-   标签：评分：9.0/10、query:imitation
-   evidence：微调流策略用于机器人控制；与扩散策略和从演示学习直接相关
-6. [LAMP: Latent Motion Prior-Guided Real-World Learning for Dexterous Hand Manipulation](/202607/09/2607.06323v1-lamp-latent-motion-prior-guided-real-world-learning-for-dexterous-hand-manipulation)  
-   标签：评分：9.0/10、query:imitation
-   evidence：模仿学习与强化学习结合用于灵巧手操作
-7. [SPECTRA: Context-Conditioned Spectral Movement Primitives for Robot Skill Generalization](/202607/09/2607.06978v1-spectra-context-conditioned-spectral-movement-primitives-for-robot-skill-generalization)  
-   标签：评分：9.0/10、query:imitation
-   evidence：面向机器人操作模仿学习的谱运动基元
-8. [Compositional Motion Generation from Demonstration with Object-Centric Neural Fields](/202607/09/2607.07129v1-compositional-motion-generation-from-demonstration-with-object-centric-neural-fields)  
-   标签：评分：9.0/10、query:imitation
-   evidence：生成式学习从示范中，通过组合建模用于操作
+   evidence：直接提出机器人操作模仿学习方法
+3. [Geometry-Aware Motion Latents for Learning Robust Manipulation Policies](/202607/10/2607.04714v1-geometry-aware-motion-latents-for-learning-robust-manipulation-policies)  
+   标签：评分：8.0/10、query:imitation
+   evidence：通过预测点云演化学习操作运动潜码
+4. [EgoWAM: World Action Models Beyond Pixels with In-the-Wild Egocentric Human Data](/202607/10/2607.08436v1-egowam-world-action-models-beyond-pixels-with-in-the-wild-egocentric-human-data)  
+   标签：评分：8.0/10、query:imitation
+   evidence：使用世界动作模型进行人类到机器人模仿迁移
 
 ### 速读区论文标签
-1. [High-Fidelity One-Step Generative Visuomotor Policy via Recursive Correction, Frequency Consistency, and Contrastive Flow Matching](/202607/09/2607.03865v1-high-fidelity-one-step-generative-visuomotor-policy-via-recursive-correction-frequency-consistency-and-contrastive-flow-matching)  
-   标签：评分：8.0/10、query:imitation
-   evidence：高保真一步生成式视觉运动策略，结合扩散与流匹配用于机器人控制
-2. [KAM-WM: Kinematic Affordance Maps from Latent World Models for Robot Manipulation](/202607/09/2607.04652v1-kam-wm-kinematic-affordance-maps-from-latent-world-models-for-robot-manipulation)  
-   标签：评分：8.0/10、query:imitation
-   evidence：基于世界模型提取的运动学affordance图条件扩散策略用于少样本操作
-3. [Training-Free Acceleration for Vision-Language-Action Models with Action Caching and Refinement](/202607/09/2607.06370v1-training-free-acceleration-for-vision-language-action-models-with-action-caching-and-refinement)  
-   标签：评分：8.0/10、query:imitation
-   evidence：基于流匹配的VLA模型机器人控制，动作缓存加速
-4. [WAM-TTT: Steering World-Action Models by Watching Human Play at Test Time](/202607/09/2607.06988v1-wam-ttt-steering-world-action-models-by-watching-human-play-at-test-time)  
-   标签：评分：8.0/10、query:imitation
-   evidence：从人类玩耍视频适应世界动作模型，一种模仿学习形式
-5. [FAR: Failure-Aware Retry for Test-Time Recovery and Continual Policy Improvement](/202607/09/2607.01111v1-far-failure-aware-retry-for-test-time-recovery-and-continual-policy-improvement)  
+1. [OmniTacTune: Policy-Agnostic Real-World RL for Tactile Residual Adaptation of Visual Policies](/202607/10/2607.03723v1-omnitactune-policy-agnostic-real-world-rl-for-tactile-residual-adaptation-of-visual-policies)  
    标签：评分：7.0/10、query:imitation
-   evidence：利用失败数据进行机器人策略自适应
-6. [WorldSample: Closed-loop Real-robot RL with World Modelling](/202607/09/2607.02431v1-worldsample-closed-loop-real-robot-rl-with-world-modelling)  
+   evidence：从演示中学习视觉策略并利用触觉反馈进行自适应
+2. [DSWAM: A Dual-System World Action Foundation Model for Fine-Grained Robot Manipulation](/202607/10/2607.04927v1-dswam-a-dual-system-world-action-foundation-model-for-fine-grained-robot-manipulation)  
    标签：评分：7.0/10、query:imitation
-   evidence：利用世界模型克服模仿学习限制；与机器人操作模仿学习的最新进展相关
-7. [Function-Space Diffusion for Motion Planning](/202607/09/2607.02977v1-function-space-diffusion-for-motion-planning)  
+   evidence：世界动作模型作为VLA的替代方案用于机器人学习
+3. [InternVLA-A1.5: Unifying Understanding, Latent Foresight, and Action for Compositional Generalization](/202607/10/2607.04988v1-internvla-a15-unifying-understanding-latent-foresight-and-action-for-compositional-generalization)  
    标签：评分：7.0/10、query:imitation
-   evidence：函数空间扩散用于运动规划，可应用于机器人控制
-8. [CoRE-VLA: Towards Scalable and Robust Vision-Language-Action Modeling via Conditional Routing of Experts](/202607/09/2607.03693v1-core-vla-towards-scalable-and-robust-vision-language-action-modeling-via-conditional-routing-of-experts)  
+   evidence：统一机器人策略，结合未来预测和VLM
+4. [RoboTALES: Learning Reasoning-Guided Robot Policies via Task-Aligned Simulated Futures](/202607/10/2607.06018v1-robotales-learning-reasoning-guided-robot-policies-via-task-aligned-simulated-futures)  
    标签：评分：7.0/10、query:imitation
-   evidence：面向机器人操作的VLA模型，基于模仿学习范式
-9. [Human-Centric Transferable Tactile Pre-Training for Dexterous Robotic Manipulation](/202607/09/2607.01067v1-human-centric-transferable-tactile-pre-training-for-dexterous-robotic-manipulation)  
+   evidence：使用视频生成模型的模拟未来训练机器人策略
+5. [Expressivity and Statistical Trade-offs in Diffusion Policy Learning](/202607/10/2607.07967v1-expressivity-and-statistical-trade-offs-in-diffusion-policy-learning)  
+   标签：评分：7.0/10、query:imitation
+   evidence：扩散策略表达力与统计权衡的理论分析
+6. [AnyDexRT: Calibration-Free Dexterous Hand Retargeting with Few-Shot Human Guidance](/202607/10/2607.08341v1-anydexrt-calibration-free-dexterous-hand-retargeting-with-few-shot-human-guidance)  
+   标签：评分：7.0/10、query:imitation
+   evidence：用于模仿学习示范收集的遥操作重定向方法
+7. [Native Video-Action Pretraining for Generalizable Robot Control](/202607/10/2607.08639v1-native-video-action-pretraining-for-generalizable-robot-control)  
+   标签：评分：7.0/10、query:imitation
+   evidence：视频-动作预训练用于通用机器人控制，与模仿学习相关
+8. [Multi-Modal, Multi-Environment Machine Teaching for Robust Reward Learning](/202607/10/2607.08647v1-multi-modal-multi-environment-machine-teaching-for-robust-reward-learning)  
    标签：评分：6.0/10、query:imitation
-   evidence：触觉预训练用于灵巧操作，与模仿学习相关
-10. [TACO: TActile World Model as a Self-COrrector forScalable VLA Post-Training](/202607/09/2607.02840v1-taco-tactile-world-model-as-a-self-corrector-forscalable-vla-post-training)  
-   标签：评分：6.0/10、query:imitation
-   evidence：触觉世界模型用于VLA策略后训练；改善接触丰富操作中的模仿学习
-11. [HALO-WA: Hybrid-Attention Latent-Guided Online Reinforcement Learning for World-Action Models](/202607/09/2607.04265v1-halo-wa-hybrid-attention-latent-guided-online-reinforcement-learning-for-world-action-models)  
-   标签：评分：6.0/10、query:imitation
-   evidence：用于机器人操作的世界动作模型的在线强化学习自适应
+   evidence：从示范中学习奖励的逆强化学习，与模仿学习方法相关
 
 
 <div class="dpr-home-promo-card">

@@ -1,0 +1,477 @@
+Title: SkillPlug: Unsupervised Skill Mining for Few-Shot Adaptation in Robotic Manipulation
+
+URL Source: https://arxiv.org/pdf/2607.08354v1
+
+Published Time: Fri, 10 Jul 2026 00:46:48 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+> IEEE ROBOTICS AND AUTOMATION LETTERS. PREPRINT VERSION. ACCEPTED JUNE, 2026 1
+
+# SkillPlug: Unsupervised Skill Mining for Few-Shot Adaptation in Robotic Manipulation 
+
+Zi-han Ding 1, Ziwei Wang 1∗
+
+Abstract —Learning transferable visuomotor imitation policies that generalize across diverse manipulation tasks and adapt rapidly to new tasks from only a handful of demonstrations remains challenging. Most modern policies are trained end-to-end to map observations directly to low-level actions, offering little explicit structure for reusing and recombining behaviors across tasks and making transfer data-inefficient under limited supervision. We propose SkillPlug , a plug-in framework that augments an existing visuomotor policy with a skill-conditioning module and mines a shared, transferable skill library from raw multi-task demonstrations. SkillPlug learns skills via self-supervised objectives that promote compact, reusable, and non-redundant behavior-level primitives, forming a task-shared prior for compositional control. After skill mining, we keep the learned skills fixed and specialize to unseen tasks by fine-tuning only lightweight router and action head, enabling efficient adaptation without full end-to-end retraining. We evaluate SkillPlug on two simulation benchmarks and on a real robot, and observe that the mined transferable skills consistently improve both multi-task performance and few-shot adaptation. Overall, SkillPlug offers a scalable way to mine reusable skills that improve data-efficient generalization in robotic manipulation. 
+
+Index Terms —Deep Learning in Grasping and Manipulation; AI-Enabled Robotics 
+
+I. I NTRODUCTION 
+
+Imitation-based visuomotor policies have driven rapid progress in robotic manipulation. Trained on large collections of demonstrations [1]–[3] and scaled with modern transformer backbones [4]–[10], a single policy can now solve a wide range of tasks. Despite these advances, most policies are still optimized as end-to-end mappings from observations to low-level actions, leaving reusable behavioral structure implicit. As a result, while end-to-end policies can perform well in multi-task settings, they often fail to uncover and reuse cross-task shared behavioral patterns, making it difficult to efficiently transfer to novel tasks with only a few demonstrations. A natural remedy is to introduce an explicit skill abstraction as an intermediate layer. Existing imitation-learning-based approaches to skill learning broadly fall into two categories. One line relies on human annotation or VLM-based seg-mentation to define skills or phases (e.g., approach , grasp ,
+
+Manuscript received: December 23, 2025; Revised: March 30, 2026; Accepted: May 17, 2026. This paper was recommended for publication by Editor Markus Vincze upon evaluation of the Associate Editor and Reviewers comments. This work was supported by MoE AcRF Tier 2 (MOE-T2EP50125-0004). 
+
+> 1
+
+Zi-han Ding and Ziwei Wang are with the School of Electrical and Electronic Engineering, Nanyang Technological University, Singapore. 
+
+{zihan.ding, ziwei.wang }@ntu.edu.sg 
+
+> ∗
+
+Corresponding author: Ziwei Wang. Digital Object Identifier (DOI): see top of this page. 
+
+Fig. 1. Conventional imitation-based visuomotor policies often struggle to adapt to a new task from only a handful of demonstrations. SkillPlug augments the policy with a skill interactor and router, and mines a transferable skill library from multi-task demonstrations, enabling efficient reuse and recombination of learned skills for successful few-shot transfer. 
+
+place ), and then trains hierarchical controllers conditioned on these labels [11]–[16]. While such methods offer interpretable structure, they typically require extensive manual design for segmentation, skill definition, and phase-boundary specifica-tion. A second line learns skills directly from data, e.g., via trajectory clustering, learnable skill embeddings, or mixture-of-experts routing where experts implicitly serve as skills [17]– [24]. However, without objectives that explicitly encourage reusability and separation, learned skills may collapse to similar behaviors or entangle with visual context, yielding redundant libraries. In this work, we introduce SkillPlug , an unsupervised skill-mining approach that learns transferable skills from raw multi-task demonstrations, improving both multi-task generaliza-tion and data-efficient few-shot adaptation. As illustrated in Fig. 1, SkillPlug is a plug-in, architecture-agnostic frame-work that augments existing visuomotor policies with a skill-conditioning module while preserving their original back-bones. It learns a reusable and non-redundant skills library through self-supervised objectives, making behavioral struc-ture explicit and shared across tasks. At adaptation time, we keep the learned skills fixed and specialize to a new task by fine-tuning only lightweight components, avoiding full end-to-arXiv:2607.08354v1 [cs.RO] 9 Jul 2026 2 IEEE ROBOTICS AND AUTOMATION LETTERS. PREPRINT VERSION. ACCEPTED JUNE, 2026 
+
+end retraining. Across two simulation benchmarks and real-robot eval-uations, SkillPlug yields consistent gains. On DISCOV-ERSE, ACT+SkillPlug improves multi-task and 10-demo few-shot success by +45.1% and +18.1% points; on LIBERO, OpenVLA-OFT+SkillPlug improves 5-demo cross-suite trans-fer by +38.3% points on average; and on the real robot, the average success rate increases by +28.5% points on few-shot tasks. In summary, the contributions of this paper are as follows:  
+
+> •
+
+We show that unsupervisedly mined transferable skills provide a shared behavioral prior that consistently im-proves both multi-task generalization and data-efficient few-shot adaptation.  
+
+> •
+
+We propose SkillPlug, a plug-in, architecture-agnostic framework that augments existing visuomotor poli-cies with a lightweight skill-conditioning module and mines reusable, non-redundant skills from raw multi-task demonstrations using self-supervised objectives.  
+
+> •
+
+We show consistent gains over both compact and large-scale baselines on two simulation benchmarks and real-robot evaluations, improving both multi-task performance and few-shot adaptation. II. R ELATED WORK 
+
+A. Visuomotor Imitation Learning 
+
+Imitation-based visuomotor policies have been extensively studied for multi-task and few-shot robotic manipulation, ranging from conventional imitation-learning policies to recent vision-language-action models (VLAs). A large body of work trains a single behavior-cloned [25]–[27] that solves multiple manipulation tasks or adapts from few demonstrations. In par-allel, large VLA models such as RT-1/2 [4], [5], OpenVLA [6], Octo [7], RDT-1B [28], and π0/π 0.5 [8], [9] scale transformer-based policies on massive robot datasets [1]–[3], often built on Large Vision-and-Language backbones [29]–[31]. Despite their strong multi-task performance, these policies are still trained as end-to-end mappings from observations and task descriptions to low-level actions, leaving skill-level structure implicit. As a result, they often fail to uncover cross-task shared behavioral patterns that could be reused and recom-bined, which in turn limits efficient transfer to genuinely novel tasks from only a handful of demonstrations. In contrast, our work introduces an explicit skill-level representation, aiming to preserve the benefits of multi-task imitation learning while enabling reusable, compositional behaviors and improving few-shot generalization. 
+
+B. Skill Learning in Imitation-Based Robotic Manipulation 
+
+Existing imitation-learning-based skill methods for manipu-lation largely follow two trends. A first line explicitly defines skills via human annotation [11]–[14] or VLM-based segmen-tation and labeling [15], [16], e.g., decomposing demonstra-tions into phases such as approach , grasp , and place , and then building hierarchical policies on top of these labels. While this yields interpretable skill libraries, it requires substantial man-ual trajectory segmentation and label design, and the resulting skill granularity may still not match what the policy actually needs for control. A second line learns skills directly from data, for example by clustering trajectories [17], introducing learnable skill embeddings [18]–[23], or using mixture-of-experts routers where each expert implicitly plays the role of a skill [24]. However, the learned skills are still driven primarily by low-level action supervision, with little explicit structure imposed on the skill space, and remain strongly tied to visual appearance, which limits their transfer across tasks and scenes. In contrast, SkillPlug performs fully unsupervised skill mining from raw demonstrations by learning a reusable, task-shared skill library and an internal router within an existing policy, with objectives that explicitly encourage scene-agnostic, be-haviorally distinct, and composable skills that transfer across tasks. III. M ETHODOLOGY 
+
+In this section, we first formalize our training-and-adaptation regime, then introduce the SkillPlug module that can be plugged into existing visuomotor policy as Fig. 2, and finally describe the self-supervised objectives used to mine a transferable skill library. 
+
+A. Problem Setup and Notation 
+
+We study offline multi-task visuomotor imitation learning. At each decision step t, the robot receives an observation ot ∈O and predicts a length-T action chunk 
+
+τt = ( at, 1, a t, 2, . . . , a t,T ), (1) where at,i ∈ Rda denotes the i-th action in the predicted chunk. Each training sample is associated with a task label 
+
+l ∈ L . We assume access to an offline dataset of multi-task demonstrations, from which we sample chunk-level training tuples D = {(ot, τ t, l )} over a set of training tasks. 
+
+Multi-task training. We consider a multi-task training stage where a policy is trained jointly on demonstrations from multiple tasks. The goal is to mine a set of transferable skills in a self-supervised manner, and to learn a skill-conditioned policy that can compose these skills to solve the diverse training tasks. 
+
+Few-shot adaptation. In the downstream adaptation set-ting, we consider novel tasks not seen during training, each provided with only a few demonstrations. We reuse the mined skills as a transferable prior and adapt to each new task by fine-tuning only lightweight components, enabling data-efficient specialization without full end-to-end retraining. 
+
+B. Skill-Conditioned Policy Architecture 
+
+SkillPlug treats any base policy as a composition of a scene-context encoder fenc and an action head fact :
+
+ht = fenc (ot), ˆat = fact (˜ht), (2) where ht is the hidden feature and ˜ht is the input to the action head; the original policy uses ˜ht = ht. SkillPlug instead applies a skill-conditioned transformation to ht while leaving DING et al. : SKILLPLUG: UNSUPERVISED SKILL MINING FOR FEW-SHOT ADAPTATION IN ROBOTIC MANIPULATION 3 
+
+> Fig. 2. SkillPlug architecture and training. SkillPlug augments a base visuomotor policy with a skill library, a skill interactor, and a router that composes skill-conditioned features for action prediction. During training, a Trajectory–skill posterior encoder is introduced to mine skills from raw demonstrations, and is removed at inference. SkillPlug is learned with four self-supervised objectives: a reconstruction loss for faithful imitation, a KL regularizer for compactness, a behavioral skill alignment loss to tie skills to trajectory-level behavior, and a skill disentanglement loss to reduce redundancy.
+
+fenc and fact unchanged, requiring only their input–output tensor shapes and imposing no architectural constraints. 
+
+Skill library. We maintain a shared library of K learn-able skill embeddings {sk ∈ Rds }Kk=1 , where each sk is a continuous latent vector representing a skill. Each embedding serves as a skill code that conditions the policy to execute a specific primitive behavior, providing an explicit bridge between perception and low-level actions. Crucially, the same set of skill embeddings is shared across tasks and reused in both multi-task training and few-shot adaptation. This shared skill set serves as a transferable prior, allowing us to adapt to new tasks by keeping the skills fixed and fine-tuning only lightweight components for data-efficient specialization with cross-task reuse. 
+
+Trajectory-skill posterior encoder. To bias skills toward behavioral structure rather than scene appearance, we intro-duce a VAE-style posterior encoder qϕ that takes only an action segment and skill embedding as input. Given a trajectory segment τ , we extract a trajectory feature fτ = fϕ(τ ) and combine it with the k-th skill embedding sk to form avariational posterior over a skill-specific latent 
+
+zk ∼ qϕ(zk | fτ , s k). (3) Here, fϕ is an MLP trajectory projector that maps the action chunk τt ∈ RT ×da to a chunk-level feature fτ , using only actions as input. This posterior encoder serves as an informa-tion bottleneck on the trajectory by constraining the posterior distribution and thereby limiting how much trajectory-specific detail each skill can absorb. This encourages the shared skills to capture stable, reusable trajectory-aligned behavior primitives. Importantly, the encoder is used only during multi-task training and is not designed to enforce a one-to-one corre-spondence between skills and object-aware semantic functions. Instead, scene-dependent functional disambiguation is handled at router. After training, we discard the posterior branch and act directly with the learned deterministic skill embeddings. 
+
+Skill interactor and router. Given the extracted scene feature ht and the skill library {sk}Kk=1 , SkillPlug computes a per-skill feature 
+
+ut,k = Interactor (ht, s k), k = 1 , . . . , K, (4) where ut,k lives in the same space as ht. The interactor is a lightweight skill-conditioning module that modulates the scene representation with each skill, implemented via cross-attention to produce skill-specific features. A router predicts chunk-level routing weights rτ ∈ RK over the K skills, where rτ,k denotes the contribution of skill k for the action chunk τ . This routing distribution is shared across all timesteps within the corresponding chunk. SkillPlug then aggregates the per-skill features {ut,k } into a single skill-conditioned representation ˜ht via a weighted sum. Since ˜ht
+
+matches the dimensionality of the backbone feature ht, it can be fed into the original action head without architectural changes. 
+
+Train-then-freeze for few-shot adaptation. After multi-task training, we freeze the backbone encoder and the learned skill embeddings, and adapt only router and action head for a new task, so that few-shot learning primarily amounts to learning to reuse and compose the existing skills. 
+
+C. Learning Skill Representations 
+
+To learn a transferable skill library that supports reuse and recombination, we optimize self-supervised objectives that en-courage: (i) faithful imitation, (ii) compact skill representations that mitigate overfitting to scene appearance, (iii) behavioral 4 IEEE ROBOTICS AND AUTOMATION LETTERS. PREPRINT VERSION. ACCEPTED JUNE, 2026 
+
+alignment between skills and trajectories, and (iv) separation to prevent redundant skills. 
+
+Reconstruction Loss. To encourage faithful imitation, we supervise the predicted n-step action chunk ˆat:t+n−1 from observation ot with an ℓ1 behavior cloning loss against the demonstrated actions at:t+n−1 sampled from the dataset D:
+
+Lrec = E(ot,a t:t+n−1)∼D 
+
+h n−1X
+
+> j=0
+
+∥ˆat+j − at+j ∥1
+
+i
+
+, (5) where n is the prediction horizon and ∥ · ∥ 1 denotes element-wise absolute deviation. 
+
+KL regularization. To promote compactness and bias skills toward trajectory-level behavior rather than scene appearance, we apply a KL regularizer on the trajectory–skill posterior encoder, which only conditions on trajectory features fτ and skill embeddings sk, without direct access to observations, 
+
+LKL = Eτ ∼D 
+
+h 1
+
+K
+
+> K
+
+X
+
+> k=1
+
+DKL 
+
+ qϕ(zk | fτ , s k) ∥ p(z)i
+
+. (6) This constraint limits the information capacity of each skill latent, discouraging scene-specific encoding and promoting stable structure that recurs across trajectories. Behavioral Skill Alignment. Compactness alone does not guarantee that skills capture meaningful behavior. From an information-theoretic perspective, we would like skill embed-dings to be informative about trajectory-level behavior, which can be expressed as encouraging high mutual dependence between a segment τ and the selected skill embedding s:
+
+I(τ ; s) = Ep(τ,s )
+
+
+
+log p(s | τ )
+
+p(s)
+
+
+
+. (7) In practice, we use a soft-label classification objective over the learned skill library, inspired by the contrastive classifi-cation view behind InfoNCE. In particular, Eq. (7) motivates learning a scoring function that assigns higher compatibility to trajectory–skill pairs that better match the segment-level behavior. We realize this as a softmax classification problem over the skill library, where the router assignment provides a soft target distribution over skills. We first extract a trajectory feature fτ from τ and project both trajectories and skills into a shared embedding space, 
+
+vτ = gτ (fτ ), vk = gs(sk), (8) and score how well skill k explains the segment using inner-product similarity 
+
+Tη (τ, s k) = sim( vτ , v k) = v⊤ 
+
+> τ
+
+vk. (9) We stop gradients through rτ,k so that it serves only as a fixed target for shaping the skill embeddings, avoiding circular co-adaptation during training. With stop-gradient, LBSA shapes the skill library, while the router is trained only through the action reconstruction objective via the fused representation in Eq. (5). This yields the BSA loss: 
+
+LBSA = Eτ ∼D 
+
+"
+
+−
+
+> K
+
+X
+
+> k=1
+
+sg rτ,k 
+
+ log σk(vτ )
+
+#
+
+, (10) where 
+
+σk(vτ ) = exp  Tη (τ, s k)PKk′=1 exp  Tη (τ, s k′)
+
+ . (11) Minimizing LBSA encourages the learned skill embeddings to align with trajectory-level behavioral structure, which im-proves cross-task reuse and transferability in practice. 
+
+Skill Disentanglement. Compactness and behavioral align-ment alone do not prevent redundant skills. We therefore pe-nalize similarity between skill-conditioned features produced by different skills under the same observation. We temporally average the interactor outputs 
+
+uτ,k = 1
+
+T
+
+> T
+
+X
+
+> t=1
+
+ut,k , ¯uτ,k = uτ,k 
+
+∥uτ,k ∥2
+
+, (12) form a K ×K similarity matrix Sτ [k, j ] = ¯ u⊤ 
+
+> τ,k
+
+¯uτ,j , and define 
+
+LSD = Eτ ∼D 
+
+h 1
+
+K(K − 1) 
+
+X 
+
+> k̸=j
+
+Sτ [k, j ]
+
+i
+
+. (13) Minimizing LSD discourages skill collapse by pushing differ-ent skills to produce dissimilar latent behaviors, complement-ing LBSA and yielding a better-separated skill library. Finally, we train SkillPlug by minimizing the following weighted sum of objectives: 
+
+L = Lrec + λKL LKL + λBSA LBSA + λSD LSD . (14) IV. E XPERIMENTS 
+
+Our experiments aim to answer two questions: (1) Can a shared and transferable skill library improve performance when plugged into existing policies, in both multi-task train-ing and few-shot adaptation? (2) What properties make the learned skills transferable across tasks and settings? Ac-cordingly, we organize our experiments to evaluate overall performance on two simulation benchmarks and a real robot, and to validate these properties empirically. 
+
+A. Experimental Setup 
+
+We evaluate SkillPlug on two simulation benchmarks with compact and large-scale backbones. On DISCOVERSE [32], we augment ACT [25]; on LIBERO [3], we augment OpenVLA-OFT [33]. Across both benchmarks, we use a two-stage protocol: multi-task training to learn a shared skill library, followed by few-shot adaptation that freezes the back-bone and skills and fine-tunes only the router and action head. Vanilla baselines follow the same few-shot protocol, except that only the action head is tuned. 
+
+DISCOVERSE with ACT. We train a single policy on 7 tasks with 300 demonstrations per task and no explicit lan-guage conditioning. For compact presentation, DISCOVERSE task names are abbreviated by their initials in all tables (e.g., 
+
+kiwi place as K.P.). We use action chunk size 25, train for 6000 epochs with batch size 16 and learning rate 1 × 10 −4, and set 
+
+K=4 . For few-shot adaptation, we start from the multi-task checkpoint and fine-tune a separate policy for each of 4 unseen tasks using 10 demonstrations per task. We follow the standard DING et al. : SKILLPLUG: UNSUPERVISED SKILL MINING FOR FEW-SHOT ADAPTATION IN ROBOTIC MANIPULATION 5
+
+benchmark evaluation with benchmark-defined reset sampling and 50 trials per task for both multi-task and few-shot settings. 
+
+LIBERO with OpenVLA-OFT. LIBERO contains 130 tasks across four suites. We train one policy per suite using all demonstrations, with K=8 and default OpenVLA-OFT hyper-parameters. For few-shot adaptation, we pretrain on LIBERO-Long and adapt to the other suites with 5 demonstrations per task. We follow the original OpenVLA-OFT evaluation protocol with benchmark-defined reset sampling and 500 trials per suite (50 per task). 
+
+B. Overall Performance 
+
+Multi-task performance. Table I reports the 3-seed mean performance on DISCOVERSE. Vanilla ACT is highly im-balanced across tasks: it performs well on easier pick-and-place tasks such as kiwi place (99 .3±0.7) and coffeecup place 
+
+(93 .3±4.8), but remains weak on jujube pick (6.7±1.8), stack block (15 .3±1.8), block bridge place (0.7±0.7), and drawer open (0.0 ± 0.0). Adding SkillPlug substantially improves these harder behaviors, raising them to 94 .0±3.1, 80 .7±2.4,
+
+36 .7 ± 2.4, and 100 .0 ± 0.0, respectively, while preserving strong performance on easier tasks. This suggests that the learned skill library expands the behavioral repertoire of a compact ACT backbone. Table II shows the corresponding LIBERO multi-task results. OpenVLA-OFT is already a strong baseline, achieving 92 .9 ± 1.2, 97 .6 ± 0.6, 96 .5 ± 0.9, and 
+
+96 .4 ± 0.8 on LIBERO-Long/Object/Goal/Spatial. SkillPlug remains competitive in this near-saturated regime, improving Long/Object/Goal to 93 .5±1.1, 97 .8±0.7, and 96 .7±0.9, while remaining comparable on Spatial. 
+
+Few-shot adaptation. The same tables also report few-shot adaptation. On DISCOVERSE, with only 10 demonstrations per unseen task, ACT reaches 0.7±0.7, 36 .0±6.9, 0.0±0.0,and 82 .0±3.1 on cuplid cover , block place , jujube place , and 
+
+mouse push , respectively. With SkillPlug, these improve to 
+
+18 .7 ± 6.6, 56 .0 ± 3.1, 29 .3 ± 1.8, and 87 .3 ± 2.4. Since few-shot adaptation updates only router and action head while keeping the skill library fixed, these gains indicate effective reuse of transferable skills learned during multi-task training. On LIBERO, we pretrain on LIBERO-Long and adapt to the remaining three suites using 5 demonstrations per task. Vanilla OpenVLA-OFT achieves 47 .4±2.1, 45 .4±2.2, and 42 .0±2.4
+
+on LIBERO-Object/Goal/Spatial, whereas SkillPlug improves them to 79 .6±1.6, 83 .2±1.7, and 86 .8±2.0.Overall, SkillPlug substantially improves few-shot transfer while preserving strong multi-task performance. This trend holds for both ACT and OpenVLA-OFT, suggesting that its benefit is not tied to a specific backbone scale. 
+
+C. Loss-term ablation 
+
+Table III reports a progressive loss-term ablation, where each row adds one loss during multi-task pretraining and few-shot results are obtained from the corresponding ablated checkpoint. Ablated variants are single-seed diagnostics; for the full objective, the Avg. column reports the three-seed mean 
+
+± SE. Overall, performance improves as the full objective is added in both settings. KL brings modest gains, raising the Skill 1: Open the gripper 
+
+Skill 2: Move forward 
+
+Skill 1 + Skill 2: Move forward while opening gripp 
+
+# 0. 
+
+# 0.  
+
+> Fig. 3. Scene-agnostic behavior of a single skill. The selected skill consis-tently induces an open–gripper motion. For each scene we show the camera view where this behavior is most clearly visible.
+
+average SR from 63.7 to 68.6 in multi-task and from 27.5 to 36.0 in few-shot, suggesting its role as a bottleneck regularizer. SD gives the largest improvement, increasing the averages to 83.7 and 41.0, which indicates the importance of learning distinct, non-redundant skills. BSA further improves the full objective to 86 .1±1.2 and 47 .8±1.5, consistent with its role in aligning skills with behavior-level structure for reuse. 
+
+D. Analysis of Skill Properties 
+
+Beyond aggregate success rates, we analyze what SkillPlug learns that supports the performance gains observed in multi-task training and few-shot adaptation. Specifically, we examine the mined skill library from four complementary perspec-tives: (1) scene-agnostic behavior as evidence of compact, transferable skills; (2) compositionality and interpretability of routing as a mechanism for reusing and recombining skills; (3) the trade-off between the number of skills and redundancy 
+
+to assess skill separation and redundancy; and (4) inference efficiency as an additional practical benefit at deployment. 
+
+Scene-agnostic behavior. A goal of SkillPlug is to learn scene-agnostic skills that capture reusable behavioral prim-itives rather than appearance cues, since entanglement with background, texture, or viewpoint can hurt generalization un-der visual changes. To probe scene-agnosticity, we hard-code the router to always select a fixed skill k and run the resulting policy across tasks with different scene configurations. As shown in Fig. 3, the same skill consistently induces an open-gripper motion despite substantial appearance changes. This trend holds across skills and tasks, suggesting that SkillPlug captures transferable behavior-level structure that generalizes across both tasks and visual contexts, supporting stronger multi-task coverage and data-efficient few-shot adaptation. 
+
+Compositionality and interpretable routing. Beyond scene-agnosticity, we find that the learned skills are com-positional and that routing often exhibits coherent structure, supporting adaptation through skill reuse and recombination. 6 IEEE ROBOTICS AND AUTOMATION LETTERS. PREPRINT VERSION. ACCEPTED JUNE, 2026 
+
+TABLE I DISCOVERSE MULTI -TASK AND FEW -SHOT PERFORMANCE OF ACT AND ACT+S KILL PLUG . R ESULTS ARE REPORTED OVER 3 TRAINING SEEDS .
+
+Multi-task (mean SR (%) ±SE )
+
+Policy J.P. K.P. S.B. C.P. B.B.P. D.O. L.C. 
+
+ACT 6.7±1.8 99 .3±0.7 15 .3±1.8 93 .3±4.8 0.7±0.7 0.0±0.0 72 .0±4.6
+
++SkillPlug 94 .0±3.1 99 .3±0.7 80 .7±2.4 97 .3±1.8 36 .7±2.4 100 .0±0.0 94 .7±2.4
+
+Few-shot (mean SR (%) ±SE )
+
+Policy C.C. B.P. J.P. M.P. 
+
+ACT 0.7±0.7 36 .0±6.9 0.0±0.0 82 .0±3.1
+
++SkillPlug 18 .7±6.6 56 .0±3.1 29 .3±1.8 87 .3±2.4
+
+TABLE II LIBERO MULTI -TASK AND FEW -SHOT PERFORMANCE OF 
+
+OPEN VLA-OFT AND OPEN VLA-OFT+S KILL PLUG . R ESULTS ARE REPORTED OVER 3 TRAINING SEEDS .
+
+Multi-task (mean SR (%) ±SE )
+
+Policy Long Object Goal Spatial OpenVLA-OFT 92 .9±1.2 97 .6±0.6 96 .5±0.9 96 .4±0.8
+
++SkillPlug 93 .5±1.1 97 .8±0.7 96 .7±0.9 95 .6±0.7
+
+Few-shot (mean SR (%) ±SE )
+
+Policy Object Goal Spatial OpenVLA-OFT 47 .4±2.1 45 .4±2.2 42 .0±2.4
+
++SkillPlug 79 .6±1.6 83 .2±1.7 86 .8±2.0
+
+TABLE III LOSS -TERM ABLATION OF ACT+S KILL PLUG ON DISCOVERSE. ABLATED VARIANTS ARE SINGLE -SEED DIAGNOSTICS ; FOR THE FULL OBJECTIVE , A VG . REPORTS THE THREE -SEED MEAN ± SE. 
+
+Multi-task (SR (%)) 
+
+Loss J.P. K.P. S.B. C.P. B.B.P. D.O. L.C. Avg. 
+
+Rec 32.0 96.0 28.0 90.0 12.0 100.0 88.0 63.7 +KL 48.0 100.0 34.0 92.0 16.0 100.0 90.0 68.6 +SD 88.0 100.0 78.0 100.0 24.0 100.0 96.0 83.7 +BSA 100.0 100.0 82.0 100.0 38.0 100.0 98.0 86 .1±1.2
+
+Few-shot (SR (%)) 
+
+Loss C.C. B.P. J.P. M.P. Avg. 
+
+Rec 0.0 34.0 0.0 76.0 27.5 +KL 2.0 50.0 10.0 82.0 36.0 +SD 6.0 56.0 18.0 84.0 41.0 +BSA 28.0 60.0 30.0 84.0 47 .8±1.5
+
+To test this, we manually fix the router to mix a pair of learned skills. In Fig. 4, one skill opens the gripper and another moves the end-effector forward. Selecting either skill alone triggers the corresponding primitive, while equal weighting composes them into moving forward while opening the gripper. Similar behavior is observed for other skill pairs. We next examine temporal interpretability. In Fig. 5, a kiwi place episode shows clear semantics: Skill 1 
+
+opens the gripper, Skill 2 moves the end-effector right, and 
+
+Skill 3 moves it left. The routing is phase-structured: Skill 1 
+
+and Skill 2 dominate during approach, Skill 2 drops during grasping, and Skill 3 becomes dominant during transport to the bowl. Overall, these visualizations suggest phase-structured activations over reusable motion primitives; although we do not impose explicit objective for routing interpretability, this pattern emerges in practice as the router schedules a well-structured skill library to minimize action reconstruction. 
+
+Redundancy vs. number of skills. We study how the num-Skill 1: Open the gripper 
+
+Skill 2: Move forward 
+
+Skill 1 + Skill 2: Move forward while opening gripper 
+
+0.5 
+
+0.5 
+
+Fig. 4. Compositionality via routing. We hard-code the router to select Skill 1 (top: open gripper), select Skill 2 (middle: move forward), and assign equal weights to both skills (bottom). The mixed routing produces a composed behavior that moves forward while opening the gripper, illustrating that SkillPlug skills can be meaningfully combined by adjusting routing weights. t= 0 t= 40  t= 58  t= 87  t= 120               
+
+> Skill Index
+> Skill Index
+> Skill Index
+> Skill Index Skill Index
+> 1
+> 2
+> 1
+> 2
+> 3
+> 4
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> Skill Index
+> 121234123456
+> 1.0
+> 0.8
+> 0.6
+> 0.4
+> 0.2
+> 0.0
+> -0.2
+> -0.4
+> Cosine similarity Cosine similarity Cosine similarity
+> Skill Index
+> Skill Index
+> Skill Index
+> (a)
+> (b)
+
+Fig. 5. Interpretable routing dynamics. Top: key frames of a kiwi place 
+
+episode. Bottom: routing weights for three skills. Skill 1 dominates during approach with an open gripper ( t=0 –40 ) while Skill 2 ramps up; Skill 2 then drops as the gripper closes to grasp the kiwi ( t≈40 –60 ); Skill 3 becomes dominant during transport to the bowl ( t> 60 ). 
+
+ber of skills K affects performance and redundancy. Table IV reports DISCOVERSE success for K ∈ { 2, 4, 6}. Performance improves from 76% at K=2 to 88% at K=4 , with notable gains on harder tasks such as stack block (+12%) and block bridge place (+36%), while increasing to K=6 brings only a marginal gain to 90%. Thus, most benefits are achieved at 
+
+K=4 . To explain this saturation, we analyze pairwise cosine DING et al. : SKILLPLUG: UNSUPERVISED SKILL MINING FOR FEW-SHOT ADAPTATION IN ROBOTIC MANIPULATION 7
+
+TABLE IV DISCOVERSE PER -TASK SUCCESS RATES OF ACT+S KILL PLUG FOR DIFFERENT NUMBERS OF SKILLS K ∈ { 2, 4, 6} (SINGLE SEED ). 
+
+K J.P. K.P. S.B. C.P. B.B.P. D.O. L.C. 
+
+2 98.0 100.0 70.0 70.0 2.0 100.0 92.0 4 100.0 100.0 82.0 100.0 38.0 100.0 98.0 6 100.0 100.0 86.0 100.0 46.0 100.0 100.0 t= 0 t= 40  t=58  t=87  t=120               
+
+> Skill Index
+> Skill Index
+> Skill Index
+> Skill Index Skill Index
+> 1
+> 2
+> 1
+> 2
+> 3
+> 4
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> Skill Index
+> 121234123456
+> 1.0
+> 0.8
+> 0.6
+> 0.4
+> 0.2
+> 0.0
+> -0.2
+> -0.4
+> Cosine similarity Cosine similarity Cosine similarity
+> Skill Index
+> Skill Index
+> Skill Index
+
+(a) 
+
+(b) 
+
+Fig. 6. Skill diversity and routing dynamics. (a) Cosine-similarity matrices between skill embeddings for different numbers of skills K (left: K=2 ,middle: K=4 , right: K=6 ); off-diagonal values reflect redundancy, with smaller values indicating more diverse skills. (b) Routing weights for a episode with K=4 , where Skill 1 and Skill 2 follow very similar activation patterns, consistent with their high off-diagonal similarity in (a), revealing redundancy between them, while the other skills remain more distinct. 
+
+similarities between skill embeddings. Fig. 6(a) shows that skills are well separated at K=2 , mild redundancy appears at K=4 , and redundancy increases at K=6 . Fig. 6(b) is consistent with this trend: for K=4 , Skill 1 and Skill 2 exhibit similar temporal activations, matching their higher embedding similarity. Notably, although the training suite contains 7 tasks, redundancy already emerges at K=6 , suggesting that learned skills are reusable primitives rather than one-to-one surrogates of task labels, and that overly large K mainly introduces redundant variants. 
+
+Inference efficiency. Finally, we observe that the learned skills also improve inference efficiency. For ACT-based poli-cies on DISCOVERSE, we fix the action chunk size and measure the number of model inference steps per successful episode. As shown in Table V, ACT+SkillPlug requires fewer steps on every task, with especially large reductions on harder tasks such as stack block (126 →86) and block bridge place 
+
+(181 →119). These gains come in addition to the success-rate improvements in Sec. IV-B, suggesting that the learned skills provide a stronger temporal prior that enables more efficient control. 
+
+E. Real-World Performance 
+
+Experimental setup. We further evaluate ACT+SkillPlug on a real-world tabletop manipulation platform with a Galaxea A1 6-DoF arm, a parallel gripper, a wrist-mounted RealSense D435i, and an external RealSense L515. We follow the same 
+
+TABLE V AVERAGE NUMBER OF INFERENCE STEPS PER SUCCESSFUL EPISODE ON 
+
+DISCOVERSE. L OWER IS BETTER .Policy J.P. K.P. S.B. C.P. B.B.P. D.O. L.C. 
+
+ACT 79 140 126 148 181 72 96 +SkillPlug 48 96 86 116 119 62 84 
+
+Fig. 7. Real-robot performance of ACT and ACT+SkillPlug. Left: multi-task training on 6 seen tasks. Right: few-shot fine-tuning on 3 unseen tasks with 5 demonstrations per task. Bars show the number of successes out of 20 trials; ACT+SkillPlug consistently improves over ACT on all tasks. 
+
+train-then-adapt protocol as in simulation: multi-task training uses 6 contact-rich tasks, and few-shot uses 3 unseen tasks with only 5 demonstrations each. 
+
+Performance Analysis. Fig. 7 shows that ACT+SkillPlug consistently improves both real-robot multi-task training and few-shot adaptation. On the 6 seen tasks, it improves the average success count from 9.7/20 to 15.7/20 per task. On the 3 unseen tasks, it improves the few-shot average from 6/20 to 11.7/20, with especially large gains on stand cup 
+
+(3 →12) and banana & bread → plate (4 →9). Furthermore, Fig. 8 visualizes routing weights for a real-robot episode of 
+
+pick banana and bread on the white plate . The routing shows two similar segments corresponding to the two pick-and-place phases. In both, Skill 1 dominates during arm motion and 
+
+Skill 2 around gripper state changes, while Skill 4 briefly activates near ∼90 steps, likely capturing wrist rotation for grasping the bread. V. C ONCLUSIONS 
+
+We presented SkillPlug , a plug-in, architecture-agnostic framework for unsupervised skill mining that augments exist-ing visuomotor policies with a lightweight skill-conditioning module to learn a transferable and reusable skill library from raw multi-task demonstrations. These transferable skills serve as a shared prior that improves both multi-task performance and few-shot adaptation. One limitation is that the library remains fixed after multi-task training, which may hinder adap-tation when novel tasks require new primitives. An important future direction is to make the library expandable in continual and cross-embodiment settings. REFERENCES [1] H. R. Walke, K. Black, T. Z. Zhao, Q. Vuong, C. Zheng, P. Hansen-Estruch, A. W. He, V. Myers, M. J. Kim, M. Du et al. , “Bridgedata v2: A dataset for robot learning at scale,” in Conference on Robot Learning .PMLR, 2023, pp. 1723–1736. [2] A. O’Neill, A. Rehman, A. Maddukuri, A. Gupta, A. Padalkar, A. Lee, A. Pooley, A. Gupta, A. Mandlekar, A. Jain et al. , “Open x-embodiment: Robotic learning datasets and rt-x models: Open x-embodiment collab-oration,” in ICRA , 2024. 8 IEEE ROBOTICS AND AUTOMATION LETTERS. PREPRINT VERSION. ACCEPTED JUNE, 2026 0 20  40  60  80  100  120     
+
+> 1.00
+> 0.75
+> 0.50
+> 0.25
+> 0.00
+> Skill1: Left/Right Skill2: Gripper Skill3: Fwd /Bwd Skill4: Rotation
+
+Fig. 8. Skill routing visualization on a real robot for pick banana and bread on the white plate task in the few-shot setting. The router exhibits two similar pick-and-place phases: motion-dominant segments uses Skill 1, gripper state changes uses Skill 2, and a Skill 4 is triggered near 90 steps reflects wrist rotation to align the end-effector for grasping the bread. [3] B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone, “Libero: Benchmarking knowledge transfer for lifelong robot learning,” Advances in Neural Information Processing Systems , vol. 36, pp. 44 776–44 791, 2023. [4] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn, K. Gopalakrishnan, K. Hausman, A. Herzog, J. Hsu et al. , “Rt-1: Robotics transformer for real-world control at scale,” arXiv preprint arXiv:2212.06817 , 2022. [5] B. Zitkovich, T. Yu, S. Xu, P. Xu, T. Xiao, F. Xia, J. Wu, P. Wohlhart, S. Welker, A. Wahid et al. , “Rt-2: Vision-language-action models transfer web knowledge to robotic control,” in Conference on Robot Learning . PMLR, 2023, pp. 2165–2183. [6] M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. P. Foster, P. R. Sanketi, Q. Vuong et al. , “Openvla: An open-source vision-language-action model,” in Conference on Robot Learning . PMLR, 2025, pp. 2679–2713. [7] O. Mees, D. Ghosh, K. Pertsch, K. Black, H. R. Walke, S. Dasari, J. Hejna, T. Kreiman, C. Xu, J. Luo et al. , “Octo: An open-source generalist robot policy,” in First Workshop on Vision-Language Models for Navigation and Manipulation at ICRA 2024 , 2024. [8] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman, B. Ichter et al. , “ π: A vision-language-action flow model for general robot control,” CoRR , 2024. [9] P. Intelligence, K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai et al. , “ π0. 5: A vision-language-action model with open-world generalization. arxiv 2025,” arXiv preprint arXiv:2504.16054 .[10] H. Li, S. Yang, Y. Chen, Y. Tian, X. Yang, X. Chen, H. Wang, T. Wang, F. Zhao, D. Lin et al. , “Cronusvla: Transferring latent motion across time for multi-frame prediction in manipulation,” arXiv preprint arXiv:2506.19816 , 2025. [11] Z. Xu, H. Lin, S. Liu, and D. Zhao, “Query-centric diffusion policy for generalizable robotic assembly,” arXiv preprint arXiv:2509.18686 ,2025. [12] P. Lorang, H. Lu, J. Huemer, P. Zips, and M. Scheutz, “Few-shot neuro-symbolic imitation learning for long-horizon planning and acting,” in 
+
+Conference on Robot Learning . PMLR, 2025, pp. 2501–2518. [13] Y. Fan, S. Bai, X. Tong, P. Ding, Y. Zhu, H. Lu, F. Dai, W. Zhao, Y. Liu, S. Huang et al. , “Long-vla: Unleashing long-horizon capability of vision language action model for robot manipulation,” in Conference on Robot Learning . PMLR, 2025, pp. 2018–2037. [14] H. Qi, C. Chen, and H. Yang, “Compose by focus: Scene graph-based atomic skills,” arXiv preprint arXiv:2509.16053 , 2025. [15] H. Zhao, Y. Qi, B. Hu, Y. Zhu, Z. Chen, H. Tian, X. Zhu, O. Howell, H. Huang, R. Walters et al. , “Generalizable hierarchical skill learning via object-centric representation,” arXiv preprint arXiv:2510.21121 , 2025. [16] H. Fu, P. Sharma, E. Stengel-Eskin, G. Konidaris, N. Le Roux, M.-A. Cˆ ot´ e, and X. Yuan, “Language-guided skill learning with temporal vari-ational inference,” in Proceedings of the 41st International Conference on Machine Learning , 2024, pp. 14 135–14 156. [17] Y. Wang, M. Yang, Z. Ding, Y. Zhang, W. Zeng, X. Xu, H. Jiang, and Z. Lu, “From experts to a generalist: Toward general whole-body control for humanoid robots,” arXiv preprint arXiv:2506.12779 , 2025. [18] J. Zheng, J. Li, D. Liu, Y. Zheng, Z. Wang, Z. Ou, Y. Liu, J. Liu, Y.-Q. Zhang, and X. Zhan, “Universal actions for enhanced embodied foundation models,” in Proceedings of the Computer Vision and Pattern Recognition Conference , 2025, pp. 22 508–22 519. [19] H. Jiang, J. Wang, and Z. Lu, “Discrete latent plans via semantic skill abstractions.” in ICLR , 2025. [20] T.-S. Liu, X.-H. Liu, R. Chen, L. Jin, P. Wang, Z. Zhang, and Y. Yu, “Semantic temporal abstraction via vision-language model guidance for efficient reinforcement learning,” in The Thirteenth International Conference on Learning Representations .[21] Y. Yao, S. Liu, H. Song, D. Qu, Q. Chen, Y. Ding, B. Zhao, Z. Wang, X. Li, and D. Wang, “Think small, act big: Primitive prompt learning for lifelong robot manipulation,” in Proceedings of the Computer Vision and Pattern Recognition Conference , 2025, pp. 22 573–22 583. [22] A. Mete, H. Xue, A. Wilcox, Y. Chen, and A. Garg, “Quest: Self-supervised skill abstractions for learning continuous control,” Advances in Neural Information Processing Systems , vol. 37, pp. 4062–4089, 2024. [23] J. Xu and X. Nie, “Speci: Skill prompts based hierarchical con-tinual imitation learning for robot manipulation,” arXiv preprint arXiv:2504.15561 , 2025. [24] B. Cheng, T. Liang, S. Huang, M. Shao, F. Zhang, B. Xu, Z. Xue, and H. Xu, “Moe-dp: An moe-enhanced diffusion policy for robust long-horizon robotic manipulation with skill decomposition and failure recovery,” arXiv preprint arXiv:2511.05007 , 2025. [25] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn, “Learning fine-grained bimanual manipulation with low-cost hardware,” in ICML Workshop on New Frontiers in Learning, Control, and Dynamical Systems .[26] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” The International Journal of Robotics Research , vol. 44, no. 10-11, pp. 1684–1704, 2025. [27] Z. Mandi, F. Liu, K. Lee, and P. Abbeel, “Towards more generalizable one-shot visual imitation learning,” in 2022 International conference on robotics and automation (ICRA) . IEEE, 2022, pp. 2434–2444. [28] S. Liu, L. Wu, B. Li, H. Tan, H. Chen, Z. Wang, K. Xu, H. Su, and J. Zhu, “Rdt-1b: a diffusion foundation model for bimanual ma-nipulation,” in The Thirteenth International Conference on Learning Representations .[29] H. Touvron, T. Lavril, G. Izacard, X. Martinet, M.-A. Lachaux, T. Lacroix, B. Rozi` ere, N. Goyal, E. Hambro, F. Azhar et al. ,“Llama: Open and efficient foundation language models,” arXiv preprint arXiv:2302.13971 , 2023. [30] J. Bai, S. Bai, S. Yang, S. Wang, S. Tan, P. Wang, J. Lin, C. Zhou, and J. Zhou, “Qwen-vl: A versatile vision-language model for un-derstanding, localization, text reading, and beyond,” arXiv preprint arXiv:2308.12966 , 2023. [31] L. Beyer, A. Steiner, A. S. Pinto, A. Kolesnikov, X. Wang, D. Salz, M. Neumann, I. Alabdulmohsin, M. Tschannen, E. Bugliarello et al. ,“Paligemma: A versatile 3b vlm for transfer,” CoRR , 2024. [32] Y. Jia, G. Wang, Y. Dong, J. Wu, Y. Zeng, H. Lin, Z. Wang, H. Ge, W. Gu, K. Ding et al. , “Discoverse: Efficient robot simulation in complex high-fidelity environments,” arXiv preprint arXiv:2507.21981 , 2025. [33] M. J. Kim, C. Finn, and P. Liang, “Fine-tuning vision-language-action models: Optimizing speed and success, 2025,” URL https://arxiv. org/abs/2502.19645 .
