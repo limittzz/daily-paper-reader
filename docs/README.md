@@ -6,56 +6,46 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-10
-- 运行时间：2026-07-10 21:35:04 UTC
+- 最新运行日期：2026-07-11
+- 运行时间：2026-07-11 20:37:21 UTC
 - 运行状态：成功
-- 本次总论文数：12
-- 精读区：4
-- 速读区：8
+- 本次总论文数：8
+- 精读区：3
+- 速读区：5
 
 ### 今日简报（AI）
-今日推荐12篇论文，精读聚焦模仿学习的离线智能体对齐与机器人操作的少样本技能挖掘。最值得关注的是《Feedback Manipulation Regularization》和《SkillPlug》，前者通过反馈操纵正则化实现离线对齐，后者无监督挖掘技能以适配少样本操作。建议优先精读这两篇，其方法可迁移至其他智能体学习或机器人泛化场景。
-- 详情：[/202607/10/README](/202607/10/README)
+1) 今日精选8篇机器人操控论文，聚焦人形全身控制与VLA模型落地，两篇精读高分亮眼。  
+2) 最值得关注：WristMimic用腕部引导实现全身人形操控（9.0分），以及From Foundation to Application对VLA模型从理论到实践的改进（8.0分）。  
+3) 普通读者可优先精读这两篇；速读中RoboDojo多任务基准与PRISM个性化数据生成也值得快速浏览。
+- 详情：[/202607/11/README](/202607/11/README)
 
 ### 精读区论文标签
-1. [Feedback Manipulation Regularization: Enabling Offline Agent Alignment for Imitation Learning](/202607/10/2607.07859v1-feedback-manipulation-regularization-enabling-offline-agent-alignment-for-imitation-learning)  
+1. [WristMimic: Full-Body Humanoid Control with Wrist-Guided Manipulation](/202607/11/2607.06438v1-wristmimic-full-body-humanoid-control-with-wrist-guided-manipulation)  
    标签：评分：9.0/10、query:imitation
-   evidence：利用反馈操作正则化实现离线模仿学习对齐
-2. [SkillPlug: Unsupervised Skill Mining for Few-Shot Adaptation in Robotic Manipulation](/202607/10/2607.08354v1-skillplug-unsupervised-skill-mining-for-few-shot-adaptation-in-robotic-manipulation)  
-   标签：评分：9.0/10、query:imitation
-   evidence：直接提出机器人操作模仿学习方法
-3. [Geometry-Aware Motion Latents for Learning Robust Manipulation Policies](/202607/10/2607.04714v1-geometry-aware-motion-latents-for-learning-robust-manipulation-policies)  
+   evidence：基于手腕引导的示教重定向实现机器人模仿
+2. [From Foundation to Application: Improving VLA Models in Practice](/202607/11/2607.06403v1-from-foundation-to-application-improving-vla-models-in-practice)  
    标签：评分：8.0/10、query:imitation
-   evidence：通过预测点云演化学习操作运动潜码
-4. [EgoWAM: World Action Models Beyond Pixels with In-the-Wild Egocentric Human Data](/202607/10/2607.08436v1-egowam-world-action-models-beyond-pixels-with-in-the-wild-egocentric-human-data)  
+   evidence：通过大规模机器人轨迹数据改进VLA模型用于模仿学习
+3. [Harness VLA: Steering Frozen VLAs into Reliable Manipulation Primitives via Memory-Guided Agents](/202607/11/2607.08448v1-harness-vla-steering-frozen-vlas-into-reliable-manipulation-primitives-via-memory-guided-agents)  
    标签：评分：8.0/10、query:imitation
-   evidence：使用世界动作模型进行人类到机器人模仿迁移
+   evidence：通过记忆引导代理改善用于操作的视觉-语言-动作模型
 
 ### 速读区论文标签
-1. [OmniTacTune: Policy-Agnostic Real-World RL for Tactile Residual Adaptation of Visual Policies](/202607/10/2607.03723v1-omnitactune-policy-agnostic-real-world-rl-for-tactile-residual-adaptation-of-visual-policies)  
+1. [XS-VLA: Coupling Coarse-grained Spatial Distillation with Latent Flow Matching for Lightweight Robotic Control](/202607/11/2607.04171v1-xs-vla-coupling-coarse-grained-spatial-distillation-with-latent-flow-matching-for-lightweight-robotic-control)  
    标签：评分：7.0/10、query:imitation
-   evidence：从演示中学习视觉策略并利用触觉反馈进行自适应
-2. [DSWAM: A Dual-System World Action Foundation Model for Fine-Grained Robot Manipulation](/202607/10/2607.04927v1-dswam-a-dual-system-world-action-foundation-model-for-fine-grained-robot-manipulation)  
+   evidence：提出结合潜在流匹配的轻量级VLA模型用于机器人控制
+2. [RoboDojo: A Unified Sim-and-Real Benchmark for Comprehensive Evaluation of Generalist Robot Manipulation Policies](/202607/11/2607.04434v2-robodojo-a-unified-sim-and-real-benchmark-for-comprehensive-evaluation-of-generalist-robot-manipulation-policies)  
    标签：评分：7.0/10、query:imitation
-   evidence：世界动作模型作为VLA的替代方案用于机器人学习
-3. [InternVLA-A1.5: Unifying Understanding, Latent Foresight, and Action for Compositional Generalization](/202607/10/2607.04988v1-internvla-a15-unifying-understanding-latent-foresight-and-action-for-compositional-generalization)  
+   evidence：用于评估通用机器人操作策略的基准，与模仿学习相关
+3. [PRISM: Personalized Robotic Dataset Generation via Image-based Scene and Motion Synthesis](/202607/11/2607.04880v1-prism-personalized-robotic-dataset-generation-via-image-based-scene-and-motion-synthesis)  
    标签：评分：7.0/10、query:imitation
-   evidence：统一机器人策略，结合未来预测和VLM
-4. [RoboTALES: Learning Reasoning-Guided Robot Policies via Task-Aligned Simulated Futures](/202607/10/2607.06018v1-robotales-learning-reasoning-guided-robot-policies-via-task-aligned-simulated-futures)  
+   evidence：生成个性化机器人数据集以支持策略学习
+4. [Learning to Throw Objects Safely in Multi-Obstacle Environments](/202607/11/2607.06388v1-learning-to-throw-objects-safely-in-multi-obstacle-environments)  
    标签：评分：7.0/10、query:imitation
-   evidence：使用视频生成模型的模拟未来训练机器人策略
-5. [Expressivity and Statistical Trade-offs in Diffusion Policy Learning](/202607/10/2607.07967v1-expressivity-and-statistical-trade-offs-in-diffusion-policy-learning)  
+   evidence：使用示教学习初始化策略
+5. [RynnWorld-4D: 4D Embodied World Models for Robotic Manipulation](/202607/11/2607.06559v1-rynnworld-4d-4d-embodied-world-models-for-robotic-manipulation)  
    标签：评分：7.0/10、query:imitation
-   evidence：扩散策略表达力与统计权衡的理论分析
-6. [AnyDexRT: Calibration-Free Dexterous Hand Retargeting with Few-Shot Human Guidance](/202607/10/2607.08341v1-anydexrt-calibration-free-dexterous-hand-retargeting-with-few-shot-human-guidance)  
-   标签：评分：7.0/10、query:imitation
-   evidence：用于模仿学习示范收集的遥操作重定向方法
-7. [Native Video-Action Pretraining for Generalizable Robot Control](/202607/10/2607.08639v1-native-video-action-pretraining-for-generalizable-robot-control)  
-   标签：评分：7.0/10、query:imitation
-   evidence：视频-动作预训练用于通用机器人控制，与模仿学习相关
-8. [Multi-Modal, Multi-Environment Machine Teaching for Robust Reward Learning](/202607/10/2607.08647v1-multi-modal-multi-environment-machine-teaching-for-robust-reward-learning)  
-   标签：评分：6.0/10、query:imitation
-   evidence：从示范中学习奖励的逆强化学习，与模仿学习方法相关
+   evidence：用于机器人操作的4D世界模型，缩小了与策略学习的差距
 
 
 <div class="dpr-home-promo-card">

@@ -1,0 +1,405 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-11T20:31:21.416924+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 3,
+    "deep_cap": 6,
+    "deep_selected": 3,
+    "quick_candidates": 5,
+    "quick_skim_target": 11,
+    "quick_selected": 5
+  },
+  "deep_dive": [
+    {
+      "id": "2607.06438v1",
+      "source": "arxiv",
+      "title": "WristMimic: Full-Body Humanoid Control with Wrist-Guided Manipulation",
+      "abstract": "Retargeting human object interaction demonstrations to physics based simulation requires reproducing not only body motion but also the object motion and contacts that make manipulation succeed. However, position only hand trajectories do not specify the contact forces needed to manipulate objects, and directly tracking them can overconstrain contact rich finger behavior. We introduce WristMimic, a wrist guided whole body control framework that explicitly separates contact free body motion from contact rich hand manipulation. The contact free body and wrist are guided by kinematic pose targets, whereas the fingers are not directly supervised by human hand pose. Instead, they learn grasping and manipulation behaviors from object tracking and contact outcomes. Our key insight is that the wrist is the natural gate between these two regimes. It is largely free from contact and can be tracked kinematically, yet it determines the global hand configuration and places the fingers within reachable grasp affordances. To ensure reliable wrist placement during interaction, we introduce wrist specific reset constraints and reward prioritization. Experiments show that WristMimic matches or surpasses methods using full finger pose supervision while enabling finger agnostic retargeting across diverse hand embodiments.",
+      "authors": [
+        "Wongyun Yu",
+        "Youngwoon Kim",
+        "Minsu Cho"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-07-07T16:06:43+00:00",
+      "link": "https://arxiv.org/pdf/2607.06438v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "wrist-guided retargeting of human demonstrations for imitation",
+      "llm_evidence_cn": "基于手腕引导的示教重定向实现机器人模仿",
+      "llm_evidence": "基于手腕引导的示教重定向实现机器人模仿",
+      "canonical_evidence": "基于手腕引导的示教重定向实现机器人模仿",
+      "llm_tldr_en": "Introduces WristMimic, a wrist-guided whole-body control framework for retargeting human object interaction to simulation, enabling imitation learning with contact-rich manipulation.",
+      "llm_tldr_cn": "将人类物体交互示教重定向到物理仿真面临身体运动和接触力的双重挑战。WristMimic提出手腕引导的全身控制框架，将无接触身体运动与接触丰富的手部操作分离，手指通过物体追踪和接触结果学习抓取行为。该方法有效实现了从人类示教到机器人操作的模仿学习，并支持实时接触控制。",
+      "llm_tldr": "将人类物体交互示教重定向到物理仿真面临身体运动和接触力的双重挑战。WristMimic提出手腕引导的全身控制框架，将无接触身体运动与接触丰富的手部操作分离，手指通过物体追踪和接触结果学习抓取行为。该方法有效实现了从人类示教到机器人操作的模仿学习，并支持实时接触控制。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.06403v1",
+      "source": "arxiv",
+      "title": "From Foundation to Application: Improving VLA Models in Practice",
+      "abstract": "Despite recent progress of VLA foundation models, the disparity between laboratory conditions and real-world applications continues to impede their practical implementation. To bridge this gap, we present LingBot-VLA 2.0, which advances LingBot-VLA through improvements in three functional domains. (1) Generalization across tasks and embodiments. Compared to the previous version, we revamp the data processing pipeline and curate around 60,000 hours of data for pretraining, including 50,000 hours of robot trajectories spanning 20 robot configurations and 10,000 hours of egocentric human videos. (2) Expanded action space in addition to dual-arm hardware platforms. In particular, our system accommodates degrees of freedom for the heads, waists, mobile bases, and dexterous hands, thereby empowering the robots to tackle more complex tasks in practical scenarios. (3) Predictive dynamics modeling for improved temporal reasoning. Specifically, we formulate future prediction as a proxy task, facilitated by a video representation model for semantic priors and a depth estimation model for geometric cues. Evaluations on the GM-100 benchmark, conducted in a generalist setting, validate the beneficial impact of these proposed modifications. Furthermore, benefiting from the expanded pretraining data that covers whole-body degrees of freedom, LingBot-VLA-2.0 demonstrates strong cross-embodiment long-horizon mobile manipulation capability across the two robotic platforms.",
+      "authors": [
+        "Wei Wu",
+        "Fangjing Wang",
+        "Fan Lu",
+        "He Sun",
+        "Shi Liu",
+        "Yunnan Wang",
+        "Yibin Yan",
+        "Yong Wang",
+        "Shuailei Ma",
+        "Xinyang Wang",
+        "Yibin Liu",
+        "Shuai Yang",
+        "Tianxiang Zhou",
+        "Kejia Zhang",
+        "Lei Zhou",
+        "Cheng Su",
+        "Nan Xue",
+        "Bin Tan",
+        "Han Zhang",
+        "Youchao Zhang",
+        "Fei Liao",
+        "Xing Zhu",
+        "Yujun Shen",
+        "Kecheng Zheng"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-07T15:33:12+00:00",
+      "link": "https://arxiv.org/pdf/2607.06403v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "VLA model improved with large-scale robot trajectory data for imitation learning",
+      "llm_evidence_cn": "通过大规模机器人轨迹数据改进VLA模型用于模仿学习",
+      "llm_evidence": "通过大规模机器人轨迹数据改进VLA模型用于模仿学习",
+      "canonical_evidence": "通过大规模机器人轨迹数据改进VLA模型用于模仿学习",
+      "llm_tldr_en": "LingBot-VLA 2.0 enhances VLA foundation models with 60k hours of data including robot trajectories and human videos, improving generalization across tasks and embodiments for imitation learning.",
+      "llm_tldr_cn": "本文报道了LingBot-VLA 2.0的实践改进，通过收集6万小时数据（含5万小时机器人轨迹），提升了视觉-语言-动作模型在模仿学习中的任务泛化和跨本体迁移能力，缩小了实验室与现实差距。",
+      "llm_tldr": "本文报道了LingBot-VLA 2.0的实践改进，通过收集6万小时数据（含5万小时机器人轨迹），提升了视觉-语言-动作模型在模仿学习中的任务泛化和跨本体迁移能力，缩小了实验室与现实差距。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.08448v1",
+      "source": "arxiv",
+      "title": "Harness VLA: Steering Frozen VLAs into Reliable Manipulation Primitives via Memory-Guided Agents",
+      "abstract": "Language-conditioned manipulation requires both precise contact-rich control and robust reasoning over language, scenes, and long horizons. End-to-end Vision-Language-Action (VLA) models provide strong local visuomotor skills, but they are trained on in-distribution task trajectories and often fail under deployment perturbations such as semantic retargeting, goal re-binding, spatial-layout shifts, and unstable local contacts. LLM coding agents provide complementary semantic and compositional reasoning, but purely analytic primitives struggle with irregular grasping, constrained placement, and articulated-object interaction. We present Harness VLA, a memory-augmented agentic framework that exposes a frozen VLA as a retryable contact-rich primitive and composes it with a small fixed library of analytic primitives for grounding, staging, transport, navigation, and release. Rather than expanding the skill library, the harness learns the operating range of these fixed primitives from task-specific execution traces, global success rules, and failure models. By lifting semantic re-grounding, non-contact execution, and VLA re-staging to the planner while reserving the frozen VLA for local contact-rich phases, Harness VLA extends pretrained VLAs beyond their original trajectory distribution without finetuning. Across perturbed tabletop, household kitchen, and clean-to-randomized bimanual manipulation, Harness VLA improves over the strongest relevant baselines by 38.6 and 25.4 percentage points on LIBERO-Pro and RoboCasa365, respectively, and reaches 58.4% on RoboTwin C2R.",
+      "authors": [
+        "Yixian Zhang",
+        "Huanming Zhang",
+        "Feng Gao",
+        "Xiao Li",
+        "Zhihao Liu",
+        "Chunyang Zhu",
+        "Jiaxing Qiu",
+        "Yuchen Yan",
+        "Jiyuan Liu",
+        "Wenhao Tang",
+        "Zhengru Fang",
+        "Yi Nie",
+        "Changxu Wei",
+        "Yu Wang",
+        "Wenbo Ding",
+        "Chao Yu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-09T13:08:54+00:00",
+      "link": "https://arxiv.org/pdf/2607.08448v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "improves vision-language-action models for manipulation via memory-guided agents",
+      "llm_evidence_cn": "通过记忆引导代理改善用于操作的视觉-语言-动作模型",
+      "llm_evidence": "通过记忆引导代理改善用于操作的视觉-语言-动作模型",
+      "canonical_evidence": "通过记忆引导代理改善用于操作的视觉-语言-动作模型",
+      "llm_tldr_en": "Harness VLA uses memory-augmented agents to steer frozen VLAs into reliable manipulation primitives, enhancing imitation learning robustness.",
+      "llm_tldr_cn": "该论文提出Harness VLA，一种记忆增强的代理框架，将冻结的视觉-语言-动作模型作为可重试的基元，结合LLM规划器处理语义重定向和接触不稳定等问题。该方法提升了基于模仿学习的操作策略在部署扰动下的鲁棒性，在多个困难操作任务上实现了高成功率。",
+      "llm_tldr": "该论文提出Harness VLA，一种记忆增强的代理框架，将冻结的视觉-语言-动作模型作为可重试的基元，结合LLM规划器处理语义重定向和接触不稳定等问题。该方法提升了基于模仿学习的操作策略在部署扰动下的鲁棒性，在多个困难操作任务上实现了高成功率。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.04171v1",
+      "source": "arxiv",
+      "title": "XS-VLA: Coupling Coarse-grained Spatial Distillation with Latent Flow Matching for Lightweight Robotic Control",
+      "abstract": "Large Vision-Language Models (LVLMs) have shown strong multimodal understanding and spatial grounding, but their computational cost limits real-time robotic control. In contrast, lightweight models are suitable for edge deployment but often suffer from \"spatial blindness\", namely weak native spatial prediction ability. Training Vision-Language-Action (VLA) models on mixed human demonstrations can also degrade policy performance due to highly diverse behaviors. To address these limitations, we propose XS-VLA, a two-stage framework for efficient and spatially grounded robotic manipulation. First, we distill spatial semantic knowledge from Qwen3-VL-4B into the SmolVLM2-0.25B backbone by fine-tuning on curated coarse-grained spatial descriptions, turning the lightweight model into a spatially grounded engine. Second, we use this enhanced backbone to condition a Latent Flow Matching policy. Unlike deterministic controllers, our policy combines a Conditional Variational Autoencoder (CVAE) with Flow Matching dynamics to model complex multimodal action distributions. On the LIBERO benchmark, XS-VLA achieves state-of-the-art performance among models with fewer than 0.5B parameters. It improves average success rates by up to 7.2 percent, including a 23 percent gain on LIBERO-Long, over the SmolVLA 0.25B baseline, and outperforms the larger 2.2B vanilla SmolVLA. Ablations show that spatial tuning and generative latent flow control substantially improve lightweight VLA performance, delivering a 3.2 times speedup in mission execution over the previous lightweight flow matching policy.",
+      "authors": [
+        "Lei Iok Tong",
+        "Qingchen Xie",
+        "Wei Huang",
+        "Ying Jie Yap",
+        "Yujie Zhang",
+        "Qianzhi Li",
+        "Xiaolong Liu",
+        "Zhidong Deng"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "published": "2026-07-05T08:34:39+00:00",
+      "link": "https://arxiv.org/pdf/2607.04171v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "proposes lightweight VLA model with latent flow matching for robotic control",
+      "llm_evidence_cn": "提出结合潜在流匹配的轻量级VLA模型用于机器人控制",
+      "llm_evidence": "提出结合潜在流匹配的轻量级VLA模型用于机器人控制",
+      "canonical_evidence": "提出结合潜在流匹配的轻量级VLA模型用于机器人控制",
+      "llm_tldr_en": "XS-VLA combines spatial distillation and latent flow matching to create a lightweight robotic control model, applicable to imitation learning from demonstrations.",
+      "llm_tldr_cn": "该论文提出XS-VLA，一个两阶段框架，通过粗粒度空间蒸馏和潜在流匹配实现轻量化视觉-语言-动作模型。它解决了大型模型计算成本高的问题，同时缓解了混合人类演示导致的策略退化。在机器人操作任务上，该方法在保持性能的同时大幅降低计算需求，适用于边缘设备上的模仿学习部署。",
+      "llm_tldr": "该论文提出XS-VLA，一个两阶段框架，通过粗粒度空间蒸馏和潜在流匹配实现轻量化视觉-语言-动作模型。它解决了大型模型计算成本高的问题，同时缓解了混合人类演示导致的策略退化。在机器人操作任务上，该方法在保持性能的同时大幅降低计算需求，适用于边缘设备上的模仿学习部署。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.04434v2",
+      "source": "arxiv",
+      "title": "RoboDojo: A Unified Sim-and-Real Benchmark for Comprehensive Evaluation of Generalist Robot Manipulation Policies",
+      "abstract": "Generalist robot manipulation policies have advanced rapidly, yet existing benchmarks remain limited in systematically evaluating their capabilities. Many rely on simple, short-horizon, or skill-narrow tasks with limited capability coverage, and are often conducted only in simulation or only in the real world. Simulation enables scalable feedback but misses physical deployment challenges, while real-world evaluation is costly, time-consuming, and difficult to reproduce. We introduce RoboDojo, a unified sim-and-real benchmark for comprehensive evaluation of generalist robot manipulation policies. RoboDojo includes 42 simulation tasks and 18 real-world tasks covering diverse and complementary manipulation capabilities. The simulation benchmark evaluates five dimensions: generalization, memory, precision, long-horizon execution, and open-vocabulary instruction following, while the real-world benchmark exposes policies to challenging physical-world deployment conditions. RoboDojo supports scalable evaluation through heterogeneous parallel simulation in Isaac Sim and provides RoboDojo-RealEval, a reproducible real-world evaluation system with remote cloud access, standardized hardware, scene reset, evaluation protocol, and deployment interface. Together with XPolicyLab, policies can be integrated once and evaluated across simulation and real-world settings with minimal adaptation. We integrate 30 policies into XPolicyLab and evaluate them on RoboDojo, establishing a public leaderboard and systematic analysis of current policy performance. The website is available at http://robodojo-benchmark.com/.",
+      "authors": [
+        "Tianxing Chen",
+        "Yue Chen",
+        "Zixuan Li",
+        "Junyuan Tang",
+        "Kailun Su",
+        "Haoran Lu",
+        "Weijie Wan",
+        "Baijun Chen",
+        "Songling Liu",
+        "Haowen Yan",
+        "Honghao Su",
+        "Zhiyang Dou",
+        "Kaixuan Wang",
+        "Dandan Zhang",
+        "Yunze Liu",
+        "Yan Qin",
+        "Qiwei Liang",
+        "Qiwei Wu",
+        "Zijian Lin",
+        "Wenwei Lin",
+        "Yuran Wang",
+        "Minghua He",
+        "Tianshu Wu",
+        "Ruihai Wu",
+        "Jingquan Zhou",
+        "Kai-Chong Lei",
+        "Haibao Yu",
+        "Yuanfeng Ji",
+        "Weiyang Jin",
+        "Guanyu Lin",
+        "Xiaofan Li",
+        "Qi Xiong",
+        "Renjing Xu",
+        "Zhongyu Li",
+        "Wenhao Chai",
+        "Enze Xie",
+        "Ziwei Wang",
+        "Yao Mu",
+        "Hao Dong",
+        "Wojciech Matusik",
+        "Mingyu Ding",
+        "Wenbo Ding",
+        "Ping Luo",
+        "Masayoshi Tomizuka"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-07-05T17:58:02+00:00",
+      "link": "https://arxiv.org/pdf/2607.04434v2",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "benchmark for evaluating generalist robot manipulation policies, relevant to imitation learning",
+      "llm_evidence_cn": "用于评估通用机器人操作策略的基准，与模仿学习相关",
+      "llm_evidence": "用于评估通用机器人操作策略的基准，与模仿学习相关",
+      "canonical_evidence": "用于评估通用机器人操作策略的基准，与模仿学习相关",
+      "llm_tldr_en": "RoboDojo provides a unified sim-and-real benchmark with 42 sim and 18 real tasks for comprehensive evaluation of generalist manipulation policies.",
+      "llm_tldr_cn": "该论文提出了RoboDojo，一个统一的模拟-真实基准，包含42个模拟任务和18个真实任务，覆盖多种操作能力。该基准可系统评估通用机器人操作策略（包括模仿学习策略），支持跨场景迁移评估。",
+      "llm_tldr": "该论文提出了RoboDojo，一个统一的模拟-真实基准，包含42个模拟任务和18个真实任务，覆盖多种操作能力。该基准可系统评估通用机器人操作策略（包括模仿学习策略），支持跨场景迁移评估。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.04880v1",
+      "source": "arxiv",
+      "title": "PRISM: Personalized Robotic Dataset Generation via Image-based Scene and Motion Synthesis",
+      "abstract": "Recent advances in large-scale pretrained vision-language-action models have improved robot policy learning, but directly deploying such policies in user-specific environments remains challenging due to limited generalization, which inevitably requires collecting a dataset tailored to the target environment. Teleoperation yields well-aligned data but is costly and difficult to scale, whereas simulation scales easily but struggles to resemble the target environment and generate task-specific trajectories. To meet both simultaneously, we propose PRISM, an end-to-end pipeline that generates personalized robotic datasets from a single image and a natural-language instruction. PRISM constructs digital cousin scenes that are semantically and geometrically aligned with the user environment yet diverse at the instance level, and synthesizes executable demonstrations without human teleoperation. Extensive experiments show that policies trained on PRISM-generated datasets outperform those trained on baseline-generated datasets on LIBERO and LIBERO-Plus, achieve up to 100\\% success rate on three real-world manipulation tasks, and maintain stronger performance when evaluated in environments that differ from those seen during training.",
+      "authors": [
+        "Dogyu Ko",
+        "Haneul Kim",
+        "Chanyoung Yeo",
+        "Dowoon Lee",
+        "Taeho Park",
+        "Hyoseok Hwang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-06T10:00:47+00:00",
+      "link": "https://arxiv.org/pdf/2607.04880v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "generates personalized robotic datasets for policy learning",
+      "llm_evidence_cn": "生成个性化机器人数据集以支持策略学习",
+      "llm_evidence": "生成个性化机器人数据集以支持策略学习",
+      "canonical_evidence": "生成个性化机器人数据集以支持策略学习",
+      "llm_tldr_en": "PRISM generates personalized robotic datasets from a single image and instruction, enabling efficient data collection for robot imitation learning.",
+      "llm_tldr_cn": "该论文提出PRISM，一个端到端流水线，从单张图像和自然语言指令生成个性化机器人数据集。它解决了真实环境数据收集成本高的问题，通过构建数字孪生场景生成任务轨迹。该方法可有效支撑模仿学习中的数据需求，提升策略在目标环境中的泛化能力。实验结果显示了数据集质量和对下游策略的增益。",
+      "llm_tldr": "该论文提出PRISM，一个端到端流水线，从单张图像和自然语言指令生成个性化机器人数据集。它解决了真实环境数据收集成本高的问题，通过构建数字孪生场景生成任务轨迹。该方法可有效支撑模仿学习中的数据需求，提升策略在目标环境中的泛化能力。实验结果显示了数据集质量和对下游策略的增益。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.06388v1",
+      "source": "arxiv",
+      "title": "Learning to Throw Objects Safely in Multi-Obstacle Environments",
+      "abstract": "Robotic throwing enables fast and efficient object placement beyond the robot's immediate workspace, but reliable throwing in cluttered environments remains underexplored. Existing approaches, such as TossingBot, learn throwing strategies from visual input but assume obstacle-free settings. In this paper, we address the problem of throwing objects into a target basket while avoiding obstacles placed randomly in the scene. We introduce a potential field state representation that compactly encodes both basket attraction and obstacle repulsion on a fixed-size grid, enabling reinforcement learning (RL) policies to generalize across arbitrary numbers and configurations of obstacles. The policy is initialized from kinesthetic demonstrations and optimized in simulation using three state-of-the-art RL algorithms (SAC, DDPG, TD3). Among these, SAC achieves the most consistent performance across scenarios. We compare the potential field representation against explicit state encodings and demonstrate that it achieves higher success rates and better scalability to unseen obstacle configurations. Real-robot experiments with unseen throwable objects confirm robust sim-to-real transfer, achieving up to $90\\%$ success in cluttered scenes. These results demonstrate that PFR provides a practical and robust representation for safe and efficient robotic throwing in unstructured environments. A video showcasing our experiments is available at: https://youtu.be/ZZnJf8ua2dE",
+      "authors": [
+        "Mohammadreza Kasaei",
+        "Klemen Voncina",
+        "Hamidreza Kasaei"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-07-07T15:24:12+00:00",
+      "link": "https://arxiv.org/pdf/2607.06388v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "uses kinesthetic demonstrations to initialize policy",
+      "llm_evidence_cn": "使用示教学习初始化策略",
+      "llm_evidence": "使用示教学习初始化策略",
+      "canonical_evidence": "使用示教学习初始化策略",
+      "llm_tldr_en": "Proposes a reinforcement learning method for robotic throwing that initializes policy from kinesthetic demonstrations and uses a potential field representation to handle obstacles.",
+      "llm_tldr_cn": "针对机器人在杂乱环境中安全抛掷物体的问题，提出了一种基于强化学习的方法。该方法通过势场状态表示编码目标和障碍物信息，并利用动力学示教来初始化策略，从而在仿真中学习可泛化的抛掷行为。实验表明该方法能有效避开随机障碍物并成功投掷到目标篮筐。",
+      "llm_tldr": "针对机器人在杂乱环境中安全抛掷物体的问题，提出了一种基于强化学习的方法。该方法通过势场状态表示编码目标和障碍物信息，并利用动力学示教来初始化策略，从而在仿真中学习可泛化的抛掷行为。实验表明该方法能有效避开随机障碍物并成功投掷到目标篮筐。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.06559v1",
+      "source": "arxiv",
+      "title": "RynnWorld-4D: 4D Embodied World Models for Robotic Manipulation",
+      "abstract": "Robotic manipulation in the open world requires not only recognizing what a scene looks like, but also anticipating how its 3D structure moves under interaction. We argue that synchronized RGB, depth, and optical flow, namely RGB-DF, provide a physically grounded representation that captures the underlying 4D dynamics of a scene. Compared to 2D pixel videos, this multi-modal synergy aligns visual appearance with geometric structure and temporal motion, creating a representation space significantly closer to the low-level end-effector actions demanded by robotic systems, thereby narrowing the gap between world prediction and policy learning. Building on this insight, we introduce RynnWorld-4D, a generative model that co-produces future RGB frames, depth maps, and optical flow from a single RGB-D image and a language instruction within one unified diffusion process. This 4D world model features a tri-branch architecture that integrates cross-modal attention with frame-wise 3D RoPE, ensuring that appearance, geometry, and motion evolve consistently. To supply training data at scale, we curate Rynn4DDataset 1.0, a massive dataset of over 254.4 million frames across egocentric human and robotic manipulation videos with high-quality pseudo-labels for depth and optical flow. We further propose RynnWorld-4D-Policy, an inverse dynamics head that consumes the internal 4D representations of RynnWorld-4D in a single forward pass, bypassing expensive multi-step denoising, to output robot actions in a closed-loop manner. Experiments show that RynnWorld-4D produces temporally and spatially coherent 4D predictions, and that RynnWorld-4D-Policy achieves state-of-the-art performance on real-world dexterous bimanual manipulation tasks, particularly excelling in tasks demanding spatial precision and temporal coordination.",
+      "authors": [
+        "Haoyu Zhao",
+        "Xingyue Zhao",
+        "Siteng Huang",
+        "Xin Li",
+        "Deli Zhao",
+        "Zhongyu Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-07T17:58:15+00:00",
+      "link": "https://arxiv.org/pdf/2607.06559v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "4D world model for robotic manipulation, narrows gap to policy learning",
+      "llm_evidence_cn": "用于机器人操作的4D世界模型，缩小了与策略学习的差距",
+      "llm_evidence": "用于机器人操作的4D世界模型，缩小了与策略学习的差距",
+      "canonical_evidence": "用于机器人操作的4D世界模型，缩小了与策略学习的差距",
+      "llm_tldr_en": "RynnWorld-4D uses RGB-D-optical flow to predict 4D scene dynamics, creating representations closer to robot actions and improving policy learning.",
+      "llm_tldr_cn": "本文提出RynnWorld-4D，一种4D具身世界模型，通过同步RGB、深度和光流预测场景动态，生成与机械手动作更接近的表示，从而缩小世界预测与策略学习之间的差距。实验表明该方法有效提升了机器人操作策略的学习效率。",
+      "llm_tldr": "本文提出RynnWorld-4D，一种4D具身世界模型，通过同步RGB、深度和光流预测场景动态，生成与机械手动作更接近的表示，从而缩小世界预测与策略学习之间的差距。实验表明该方法有效提升了机器人操作策略的学习效率。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
