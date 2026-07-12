@@ -1,0 +1,447 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-12T20:43:48.613761+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 9,
+    "quick_skim_target": 11,
+    "quick_selected": 9
+  },
+  "deep_dive": [
+    {
+      "id": "2607.08575v1",
+      "source": "arxiv",
+      "title": "FabriVLA: A Lightweight Vision-Language-Action Model for Precise Multi-Task Manipulation",
+      "abstract": "We present FabriVLA, a lightweight Vision-Language-Action model for Precise Multi-Task Manipulation. FabriVLA combines an InternVL3.5 vision-language backbone with a flow-matching action head featuring gated self-attention across action tokens and shallow VLM layer fusion for enriched spatial context. The model is trained via single stage joint optimization from a pretrained VLM and randomly initialized action head. On the Meta-World MT50 benchmark spanning 50 diverse manipulation tasks, FabriVLA achieves a tier-average success rate of 90.0%, demonstrating that a compact VLA built on a 1B scale VLM can achieve strong performance without relying on multi billion parameter VLA backbones.",
+      "authors": [
+        "Shiyuan Yang",
+        "Borong Zhang",
+        "Jizheng Zhang",
+        "Zhijia Tao",
+        "Junfei Guo",
+        "Donglai Ran",
+        "Xu Bian",
+        "Qingbiao Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-09T15:06:43+00:00",
+      "link": "https://arxiv.org/pdf/2607.08575v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "lightweight VLA trained via imitation learning for multi-task manipulation, achieves 90% success",
+      "llm_evidence_cn": "轻量VLA通过模仿学习训练，在多任务操作上达到90%成功率",
+      "llm_evidence": "轻量VLA通过模仿学习训练，在多任务操作上达到90%成功率",
+      "canonical_evidence": "轻量VLA通过模仿学习训练，在多任务操作上达到90%成功率",
+      "llm_tldr_en": "FabriVLA achieves 90% success on diverse manipulation tasks with a compact 1B-scale VLM and flow-matching action head, demonstrating efficient imitation learning.",
+      "llm_tldr_cn": "针对现有VLA模型参数量大、部署困难的问题，提出FabriVLA，使用InternVL3.5视觉语言主干和流匹配动作头，通过单阶段联合优化进行模仿学习。在Meta-World MT50 50个任务上达到平均90%成功率，表明紧凑模型通过有效设计也能实现精准多任务操作，为轻量级模仿学习提供了可行方案。",
+      "llm_tldr": "针对现有VLA模型参数量大、部署困难的问题，提出FabriVLA，使用InternVL3.5视觉语言主干和流匹配动作头，通过单阶段联合优化进行模仿学习。在Meta-World MT50 50个任务上达到平均90%成功率，表明紧凑模型通过有效设计也能实现精准多任务操作，为轻量级模仿学习提供了可行方案。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.07370v2",
+      "source": "arxiv",
+      "title": "Behavior Foundations for Quadruped Robots: ABot-C0 Technical Report",
+      "abstract": "The motion controller is one of the most fundamental modules in embodied intelligence systems. Driven by large-scale human motion-capture data and the motion-tracking paradigm, humanoid control has achieved remarkable progress in recent years. However, migrating this recipe to the quadrupedal setting is far less straightforward: animal motion data is scarcer and harder to capture at scale than human data, and cross-embodiment retargeting remains fragile. We present ABot-C0, a generalist motion-control system for quadruped robots that establishes three complementary behavior foundations: a scalable multi-source motion-data pipeline, robust policy learning across motion tracking, locomotion, and scene interaction, and a unified deployment stack for reliable real-world operation. Fundamentally, we construct a data pyramid through conditional video-generation synthesis, annotated motion capture, teleoperation, and human design, producing 16,074 physically feasible motion clips as the data foundation for diverse motion-learning demands. With large-scale motion data, a Flow-Matching generalist policy demonstrates, for the first time, a scaling law for quadruped motion tracking: performance improves consistently as training scales up, with zero-shot capability to track unseen motions. We then go a step further toward robust all-terrain locomotion by adopting a three-stage privileged-to-perceptive framework with temporal LiDAR memory and terrain-predictive supervision. Collectively, these components form a motion generalist that coordinates multi-policy execution, smooth behavior transitions, energy-efficient control, and safety mechanisms for real-world deployment. Extensive experiments on urban-terrain autonomous navigation and companion-style multimodal interaction demonstrate that quadruped robots can move beyond functional demos toward product-level behavioral intelligence.",
+      "authors": [
+        "Xufeng Zhao",
+        "Fuzhi Yang",
+        "Jianhui Chen",
+        "Li Gao",
+        "Zhang Meng",
+        "Jie Gao",
+        "Yao Zheng",
+        "Congyang Zhao",
+        "Tianxiong Lv",
+        "Menglin Yang",
+        "Minqi Gu",
+        "Yaru Zhao",
+        "Wenyu Liu",
+        "Honglin Han",
+        "Shihui Su",
+        "Zixiao Tang",
+        "Liu Liu",
+        "Mu Xu",
+        "Yang Cai",
+        "Wenbin Tang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.HC",
+        "cs.LG"
+      ],
+      "published": "2026-07-08T13:04:07+00:00",
+      "link": "https://arxiv.org/pdf/2607.07370v2",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "uses large-scale motion data to train quadruped robot policy, akin to imitation learning",
+      "llm_evidence_cn": "利用大规模运动数据训练四足机器人策略，类似模仿学习",
+      "llm_evidence": "利用大规模运动数据训练四足机器人策略，类似模仿学习",
+      "canonical_evidence": "利用大规模运动数据训练四足机器人策略，类似模仿学习",
+      "llm_tldr_en": "ABot-C0 establishes behavior foundations for quadruped robots with a scalable multi-source motion-data pipeline and robust policy learning, enabling generalist motion control through imitation-like learning.",
+      "llm_tldr_cn": "针对四足机器人运动控制中动物数据稀缺且跨实体重定向困难的问题，提出ABot-C0系统，构建可扩展的多源运动数据管道，结合运动跟踪、行走和场景交互进行策略学习。该系统借鉴了人形机器人中的大规模数据驱动范式，可视为跨实体模仿学习，为四足机器人通用运动控制提供了基础。",
+      "llm_tldr": "针对四足机器人运动控制中动物数据稀缺且跨实体重定向困难的问题，提出ABot-C0系统，构建可扩展的多源运动数据管道，结合运动跟踪、行走和场景交互进行策略学习。该系统借鉴了人形机器人中的大规模数据驱动范式，可视为跨实体模仿学习，为四足机器人通用运动控制提供了基础。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.04546v1",
+      "source": "arxiv",
+      "title": "Mask2Real-WM: Segmentation Masks as a Sim-to-Real Bridge for Controllable Dexterous World Models",
+      "abstract": "Action-conditioned world models allow robots to predict the future consequences of candidate actions without additional physical interaction, supporting policy evaluation, planning, and data augmentation. We present Mask2Real-WM, a two-stage action-conditioned world model for dexterous manipulation that decouples pixel prediction into a dynamics model and a rendering model. The dynamics model predicts future segmentation masks from past masks and 23-DoF action sequences. The rendering model maps the predicted masks to photorealistic RGB using a ControlNet-augmented Stable Video Diffusion backbone. The smaller sim-to-real gap in segmentation space enables the dynamics model to benefit from large-scale pretraining on over 50 h of synthetic simulation data, followed by fine-tuning on fewer than 2.5 h of real demonstrations. Experiments on a dexterous pick-and-place benchmark show that mask conditioning and simulation pretraining are both required for per-DoF action controllability across all 23 degrees of freedom. In contrast, monolithic baselines capture broad hand and end-effector trajectories but do not reliably reflect fine-grained, per-joint action effects.",
+      "authors": [
+        "Riccardo O. Feingold",
+        "Davide Liconti",
+        "Chenyu Yang",
+        "Robert K. Katzschmann"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-07-05T23:29:23+00:00",
+      "link": "https://arxiv.org/pdf/2607.04546v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "action-conditioned world model using diffusion rendering, beneficial for imitation learning data augmentation",
+      "llm_evidence_cn": "基于扩散渲染的行动条件世界模型，有益于模仿学习数据增强",
+      "llm_evidence": "基于扩散渲染的行动条件世界模型，有益于模仿学习数据增强",
+      "canonical_evidence": "基于扩散渲染的行动条件世界模型，有益于模仿学习数据增强",
+      "llm_tldr_en": "Mask2Real-WM presents a two-stage action-conditioned world model predicting segmentation masks then photorealistic RGB via diffusion, enabling scalable training and data augmentation for dexterous manipulation imitation.",
+      "llm_tldr_cn": "针对灵巧操作中世界模型训练困难且sim-to-real差距大的问题，提出两阶段行动条件世界模型：先预测未来分割掩码，再用ControlNet增强的稳定视频扩散模型渲染为真实RGB。分割空间缩小了虚实差距，使动力学模型可从50小时大规模数据预训练获益。该方法为模仿学习中的世界模型提供高效数据生成途径。",
+      "llm_tldr": "针对灵巧操作中世界模型训练困难且sim-to-real差距大的问题，提出两阶段行动条件世界模型：先预测未来分割掩码，再用ControlNet增强的稳定视频扩散模型渲染为真实RGB。分割空间缩小了虚实差距，使动力学模型可从50小时大规模数据预训练获益。该方法为模仿学习中的世界模型提供高效数据生成途径。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.08742v1",
+      "source": "arxiv",
+      "title": "ContactMimic: Humanoid Object Interaction via Contact Control",
+      "abstract": "Keypoint tracking alone is insufficient for object interaction tasks such as sitting on a chair, wiping a board, or pushing furniture, where the robot can reach the correct pose without making meaningful physical contact with the object. We present CONTACTMIMIC, a learning framework that tracks explicit partlevel binary contact commands alongside keypoint trajectories. CONTACTMIMIC is made possible through the use of contact-following rewards and a trajectory augmentation scheme aimed at breaking the correlations between keypoint trajectories and contact labels. The resulting policy successfully decouples contact behavior from keypoint geometry, and achieves precise physical contact as well as contact-controllability (produce or suppress contact during deployment as desired). Simulation experiments across 10 diverse human-object interaction motions confirm that CONTACTMIMIC exhibits contact controllability that enables it to complete manipulation tasks without task-specific rewards, while also outperforming keypoint-only trackers on contact-relevant tasks. Ablations confirm the necessity of the proposed trajectory augmentation scheme and sim2real deployment validates contact controllability in the real world across 5 different motions. Video results are available on https://lixinyao11.github.io/contactmimic-page/.",
+      "authors": [
+        "Xinyao Li",
+        "Xialin He",
+        "Runpei Dong",
+        "Saurabh Gupta"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-09T17:42:15+00:00",
+      "link": "https://arxiv.org/pdf/2607.08742v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "contact imitation framework for humanoid object interaction",
+      "llm_evidence_cn": "用于人形物体交互的接触模仿框架",
+      "llm_evidence": "用于人形物体交互的接触模仿框架",
+      "canonical_evidence": "用于人形物体交互的接触模仿框架",
+      "llm_tldr_en": "ContactMimic tracks part-level binary contact commands alongside keypoints to achieve precise physical contact and contact-controllability for humanoid object interaction tasks.",
+      "llm_tldr_cn": "ContactMimic提出一个学习框架，在跟踪关键点轨迹的同时显式跟踪部件级二值接触指令，通过接触奖励和轨迹增强解耦接触行为与关键点几何，实现精确物理接触和接触可控性，为人形机器人交互提供了模仿学习新思路。",
+      "llm_tldr": "ContactMimic提出一个学习框架，在跟踪关键点轨迹的同时显式跟踪部件级二值接触指令，通过接触奖励和轨迹增强解耦接触行为与关键点几何，实现精确物理接触和接触可控性，为人形机器人交互提供了模仿学习新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.05064v1",
+      "source": "arxiv",
+      "title": "Diffusion-Guided Uncertainty-Aware Delayed Policy Optimization",
+      "abstract": "Reinforcement learning in real world environments often suffers from severe performance degradation due to delayed feedback. Existing approaches typically mitigate performance degradation caused by observation delays by constructing augmented states or predicting the true states. However, these methods often overlook the inherent discrepancy between delayed state and true states induced by stochastic MDP. We theoretically prove the existence of such a discrepancy and show that it leads to the degradation of the optimal policy. To address this challenge, we propose Diffusion Guided Uncertainty Aware Delayed Policy Optimization (DUPO). Our method explicitly models the relationship between delayed state message and the current state using a diffusion model, and leverages the resulting discrepancy estimates to weight delayed policies. Extensive experiments on continuous robotic control tasks with multiple stochastic delays demonstrate that DUPO consistently outperforms existing methods and remains effective even under long and random delay scenarios.",
+      "authors": [
+        "Junqi Tu",
+        "Zejiao Liu",
+        "Fangfei Li",
+        "Yang Tang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-06T13:33:17+00:00",
+      "link": "https://arxiv.org/pdf/2607.05064v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "uses diffusion model for policy optimization in RL",
+      "llm_evidence_cn": "在强化学习中使用扩散模型进行策略优化",
+      "llm_evidence": "在强化学习中使用扩散模型进行策略优化",
+      "canonical_evidence": "在强化学习中使用扩散模型进行策略优化",
+      "llm_tldr_en": "Proposes DUPO, a diffusion-guided RL algorithm that models delayed state transitions using a diffusion model to mitigate performance degradation in environments with delayed feedback.",
+      "llm_tldr_cn": "真实环境中的延迟反馈会严重降低强化学习性能。本文提出DUPO，利用扩散模型显式建模延迟状态与当前状态的关系，并引入不确定性感知机制。在延迟环境实验中，DUPO优于现有方法，恢复策略性能。",
+      "llm_tldr": "真实环境中的延迟反馈会严重降低强化学习性能。本文提出DUPO，利用扩散模型显式建模延迟状态与当前状态的关系，并引入不确定性感知机制。在延迟环境实验中，DUPO优于现有方法，恢复策略性能。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.05377v1",
+      "source": "arxiv",
+      "title": "Cortex: A Bidirectionally Aligned Embodied Agent Framework for Long-horizon Manipulation",
+      "abstract": "While recent Vision-Language-Action (VLA) models show promise toward generalist manipulation policies, they struggle with long-horizon tasks due to their Markovian nature-relying solely on current observations. Hierarchical dual-system methods address this but suffer from a gap between high-level planning semantics and low-level execution kinematics. We introduce Cortex, a bidirectionally aligned embodied agent framework with a customized planning interface that conveys executable and tractable subtask plans from high-level VLM to low-level VLA. Specifically, we standardize manipulation subtasks into 32 canonical skill primitives and inject tractability principles, such as representative object attributes and improved trajectory reachability, into the data generation pipeline. This enables automatic annotation of over 4k hours of open-source video data and generation of 30 hours of simulation data. We further devise an event-balanced sampling strategy to construct training data for fine-tuning the framework to better handle planning ambiguity during subtask transitions, enhanced by carefully designed harness engineering from task contexts to skill constraints during inference. Both open-loop VLM and closed-loop system evaluations demonstrate Cortex's efficacy, e.g., it outperforms monolithic baselines by 3.1% on Libero-long and 4.1% on RoboTwin. Notably, Cortex's generalist VLM enables zero-shot completion of unseen real-world long-horizon tasks, such as multi-stage chemistry experiments, by simply combining with a fine-tuned VLA-a capability infeasible through VLA fine-tuning alone.",
+      "authors": [
+        "Jiaqi Peng",
+        "Xiqian Yu",
+        "Delin Feng",
+        "Yuqiang Yang",
+        "Wenzhe Cai",
+        "Jing Xiong",
+        "Ganlin Yang",
+        "Jinliang Zheng",
+        "Jiafei Cao",
+        "Xueyuan Wei",
+        "Jiangmiao Pang",
+        "Yuan Shen",
+        "Tai Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-07-06T17:55:05+00:00",
+      "link": "https://arxiv.org/pdf/2607.05377v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "embodied agent framework for long-horizon manipulation with hierarchical VLA",
+      "llm_evidence_cn": "用于长程操作的分层VLA具身代理框架",
+      "llm_evidence": "用于长程操作的分层VLA具身代理框架",
+      "canonical_evidence": "用于长程操作的分层VLA具身代理框架",
+      "llm_tldr_en": "Introduces Cortex, a bidirectionally aligned framework that bridges high-level planning with low-level VLA execution via 32 canonical skill primitives, enabling long-horizon manipulation.",
+      "llm_tldr_cn": "现有VLA模型在长程任务中因马尔可夫性而受限，层次双系统方法又存在语义与执行之间的鸿沟。该论文提出Cortex框架，通过标准化32种技能原语并设计可执行规划接口，实现高层视觉语言模型到低层VLA的双向对齐。Cortex使高层计划能够传达可执行的子任务，同时低层执行反馈可优化高层决策。实验表明，Cortex在多种长程操作任务中显著提升了成功率和泛化能力。",
+      "llm_tldr": "现有VLA模型在长程任务中因马尔可夫性而受限，层次双系统方法又存在语义与执行之间的鸿沟。该论文提出Cortex框架，通过标准化32种技能原语并设计可执行规划接口，实现高层视觉语言模型到低层VLA的双向对齐。Cortex使高层计划能够传达可执行的子任务，同时低层执行反馈可优化高层决策。实验表明，Cortex在多种长程操作任务中显著提升了成功率和泛化能力。",
+      "llm_tags": [
+        "query:imitation:composite"
+      ],
+      "matched_query_tag": "query:imitation:composite",
+      "matched_query_text": "Papers central to 搜索机器人模仿学习、JEPA、diffusion policy相关论文, especially work that connects or combines: imitation learning in robotics; robot imitation learning methods and algorithms; JEPA joint embedding predictive architecture; diffusion policy for robot control; recent advances in imitation learning for robotic manipulation; What are recent advances in robot imitation learning using JEPA?; How is diffusion policy applied to robot learning from demonstration?.",
+      "matched_requirement_id": "req-composite-imitation",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.05396v1",
+      "source": "arxiv",
+      "title": "From Fixed to Free Cameras: Calibration-Free View-Robust Vision-Language-Action Model",
+      "abstract": "Real-world robot deployment rarely maintains the training-stage camera setup, where cameras often experience repositioning or remounting depending on actual scenarios. Existing view-robust Vision-Language-Action (VLA) policies tolerate such camera variations only when the camera extrinsics are explicitly provided, making them fragile and hard to use especially when view robustness is critical. We argue that the policy should not be told where the camera is, but rather figure it out by itself. To this end, we introduce Camera-Centric VLA (CamVLA), a new VLA model that decouples manipulation controls from camera geometry by predicting (i) a camera-centric end-effector action expressed in the local camera frame, and (ii) a 6-DoF hand-eye matrix relating cameras to the robot base. A deterministic geometric transformation composes the two predictions into a robot base-frame action. This disentangles how I should move in pose-independent camera-centric action generation from where I am looking from in camera-perspective geometric grounding. The resulting policy is calibration-free, depth-free, and single-view, requiring only a single monocular RGB image as the visual observation and task instruction at deployment. Evaluations in both simulation and real-world robot data show that CamVLA consistently improves success rates across diverse unseen viewpoints. Project page: https://alibaba-damo-academy.github.io/CamVLA/.",
+      "authors": [
+        "Wenhao Li",
+        "Xueying Jiang",
+        "Quanhao Qian",
+        "Deli Zhao",
+        "Shijian Lu",
+        "Gongjie Zhang",
+        "Ran Xu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.LG",
+        "cs.RO"
+      ],
+      "published": "2026-07-06T17:59:59+00:00",
+      "link": "https://arxiv.org/pdf/2607.05396v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "view-robust VLA model for robot manipulation",
+      "llm_evidence_cn": "视角鲁棒的VLA模型用于机器人操作",
+      "llm_evidence": "视角鲁棒的VLA模型用于机器人操作",
+      "canonical_evidence": "视角鲁棒的VLA模型用于机器人操作",
+      "llm_tldr_en": "Proposes CamVLA, a VLA model that decouples manipulation from camera geometry by predicting camera-centric actions and hand-eye calibration, achieving calibration-free view robustness.",
+      "llm_tldr_cn": "现实机器人部署中相机位置经常变化，现有VLA策略需要显式外参才能适应视角变化。该论文提出CamVLA，将操作控制与相机几何解耦：网络预测相机坐标系下的末端执行器动作和手眼标定，无需事先知道相机位置。这使得策略能自行推理视角变化，在训练后直接适应不同相机设置。实验证明CamVLA在零样本视角变化场景下保持高性能，显著提升了VLA的实用性和鲁棒性。",
+      "llm_tldr": "现实机器人部署中相机位置经常变化，现有VLA策略需要显式外参才能适应视角变化。该论文提出CamVLA，将操作控制与相机几何解耦：网络预测相机坐标系下的末端执行器动作和手眼标定，无需事先知道相机位置。这使得策略能自行推理视角变化，在训练后直接适应不同相机设置。实验证明CamVLA在零样本视角变化场景下保持高性能，显著提升了VLA的实用性和鲁棒性。",
+      "llm_tags": [
+        "query:imitation:composite"
+      ],
+      "matched_query_tag": "query:imitation:composite",
+      "matched_query_text": "Papers central to 搜索机器人模仿学习、JEPA、diffusion policy相关论文, especially work that connects or combines: imitation learning in robotics; robot imitation learning methods and algorithms; JEPA joint embedding predictive architecture; diffusion policy for robot control; recent advances in imitation learning for robotic manipulation; What are recent advances in robot imitation learning using JEPA?; How is diffusion policy applied to robot learning from demonstration?.",
+      "matched_requirement_id": "req-composite-imitation",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.05468v1",
+      "source": "arxiv",
+      "title": "Learning 4D Geometric Priors for Inference-Efficient World Action Models",
+      "abstract": "World Action Models (WAMs) have shown strong potential for robotic manipulation by jointly modeling visual future dynamics and executable action sequences. However, existing video-action co-training methods primarily optimize appearance-oriented video latents, which may insufficiently capture the temporally evolving geometry required for precise manipulation. We propose MECo-WAM, a Multi-Expert Co-Training World Action Model that injects action-relevant 4D geometric priors into video-action representations while preserving the original lightweight inference graph. During training, MECo-WAM combines video and action experts with a lightweight 4D expert supervised by relational targets from a frozen VGGT encoder. Asymmetric expert visibility prevents non-causal shortcuts from auxiliary geometry to action generation. To transfer geometric knowledge into the deployed video-action pathway, we introduce decayed 4D read-mask attention, which provides restricted current-frame geometric guidance early in training and progressively removes this dependency. We further propose action-aware temporal geometric distillation, which aligns within-frame geometric relations and their temporal evolution while emphasizing visual regions most relevant to robot actions. At deployment, all auxiliary 4D components are removed. Experiments on LIBERO (98.2%), RoboTwin 2.0 (92.6%), and challenging real-world manipulation tasks show that MECo-WAM improves manipulation performance without increasing inference cost.",
+      "authors": [
+        "Jianjun Zhang",
+        "Jian Zhu",
+        "Taiyi Su",
+        "Chong Ma",
+        "Zitai Huang",
+        "Yi Xu",
+        "Hanli Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-06T07:10:22+00:00",
+      "link": "https://arxiv.org/pdf/2607.05468v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "world action model with 4D geometric priors for manipulation, applicable to imitation learning",
+      "llm_evidence_cn": "注入4D几何先验的世界行动模型，可应用于模仿学习",
+      "llm_evidence": "注入4D几何先验的世界行动模型，可应用于模仿学习",
+      "canonical_evidence": "注入4D几何先验的世界行动模型，可应用于模仿学习",
+      "llm_tldr_en": "MECo-WAM enhances world action models by injecting 4D geometric priors through multi-expert co-training, improving action-relevant representations for manipulation without extra inference cost.",
+      "llm_tldr_cn": "针对世界行动模型对动作相关几何信息捕获不足的问题，提出多专家共训框架MECo-WAM。在训练时引入4D几何先验，保持推断轻量。该方法增强了视频-行动表征中的几何信息，提升了操作预测精度，可服务于模仿学习中的世界模型以获得更好的动作表征。",
+      "llm_tldr": "针对世界行动模型对动作相关几何信息捕获不足的问题，提出多专家共训框架MECo-WAM。在训练时引入4D几何先验，保持推断轻量。该方法增强了视频-行动表征中的几何信息，提升了操作预测精度，可服务于模仿学习中的世界模型以获得更好的动作表征。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.08283v1",
+      "source": "arxiv",
+      "title": "TFP: Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning",
+      "abstract": "Vision--Language--Action (VLA) policies such as $π_{0.5}$ and OpenVLA perform well on many manipulation tasks, but they are often reactive: the next action is predicted from the current observation, instruction, and proprioceptive state. This assumption breaks down in stage-dependent manipulation, where visually similar states may require different actions depending on latent task progress and previous interaction outcomes. We argue that such tasks require not only memory, but dynamics-aware belief updates: the policy should preserve task progress during stable or occluded phases and revise its belief near contact, release, or subgoal transitions. We introduce Temporally Conditioned Memory-Fusion Policies (TFP), a lightweight memory-action framework for VLA backbones. TFP maintains an episode-local task-progress belief with Liquid Time-Constant dynamics and injects the updated belief directly into the flow-matching action decoder through adaptive modulation. This lets temporally accumulated context shape the generated action chunk, rather than serving only as passive history context. With a 3.3B-parameter model, TFP improves the average success rate from \\(96.9\\%\\) to \\(98.75\\%\\) on LIBERO and from \\(91.4\\%\\) to \\(93.77\\%\\) on LIBERO-plus. On the memory-focused MIKASA ShellGameTouch diagnostic, TFP achieves success up to \\(75.0\\%\\). Mechanistic analyses show that write-gain changes near manipulation events are about \\(6\\times\\) larger than far non-event phases, and hidden-state interventions show that the belief causally modulates generated action chunks. These results suggest that compact, event-sensitive memory dynamics can improve VLA policies under occlusion, visual perturbation, and stage-dependent task structure.",
+      "authors": [
+        "Yushen Liang",
+        "Yue Peng",
+        "Baosheng Jin",
+        "Tianluo Zhang",
+        "Xinyu Zhang",
+        "Shuyi Zhou",
+        "Zhuoran Chen",
+        "Xinqi Liu",
+        "Shenji Wan"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-09T09:24:30+00:00",
+      "link": "https://arxiv.org/pdf/2607.08283v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "improves VLA policies for stage-dependent manipulation, relevant to recent imitation advances",
+      "llm_evidence_cn": "改进了VLA策略用于阶段相关操作，与近期模仿学习进展相关",
+      "llm_evidence": "改进了VLA策略用于阶段相关操作，与近期模仿学习进展相关",
+      "canonical_evidence": "改进了VLA策略用于阶段相关操作，与近期模仿学习进展相关",
+      "llm_tldr_en": "TFP introduces temporally conditioned memory-fusion for VLA policies to handle stage-dependent manipulation tasks.",
+      "llm_tldr_cn": "现有的视觉-语言-动作（VLA）策略在阶段相关操作中表现不佳，因为视觉相似状态需要不同动作。TFP提出了一种轻量级记忆-动作框架，通过动态感知信念更新来保留任务进度，并在接触、释放等子目标转换时修正信念。实验证明，TFP在需要记忆和状态感知的操纵任务上显著优于现有VLA基线。",
+      "llm_tldr": "现有的视觉-语言-动作（VLA）策略在阶段相关操作中表现不佳，因为视觉相似状态需要不同动作。TFP提出了一种轻量级记忆-动作框架，通过动态感知信念更新来保留任务进度，并在接触、释放等子目标转换时修正信念。实验证明，TFP在需要记忆和状态感知的操纵任务上显著优于现有VLA基线。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.08465v1",
+      "source": "arxiv",
+      "title": "Applying JEPA-Style Predictive Learning to JA4-Derived Network Fingerprints",
+      "abstract": "I-JEPA and V-JEPA learn by matching latent predictions to target encoder outputs rather than regenerating the original input, and this has worked well for images and video. We explore whether the same objective works for compact network fingerprints. We built JA4-JEPA, a Transformer-based model trained on JA4, JA4H, JA4S, and JA4X subfields drawn from JA4DB and CIC-IDS- 2017. The training data combines roughly 397K samples from both sources, though no single sample contains all four view families. We evaluated the learned representations with a frozen kNN probe on protocol-family classification across TLS, DNS, and SSH. On 39,416 heldout samples the model achieved a cosine similarity of 0.9899 and a kNN accuracy of 0.9220. These results indicate that JEPA-style predictive learning can produce useful embeddings from JA4-derived fingerprints, even with incomplete view overlap across sources.   Keywords: JA4, network fingerprinting, JEPA, predictive representation learning, self-supervised learning",
+      "authors": [
+        "Javier Izquierdo",
+        "Aygul Zagidullina"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-09T13:22:58+00:00",
+      "link": "https://arxiv.org/pdf/2607.08465v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "uses JEPA-style predictive learning objective",
+      "llm_evidence_cn": "使用JEPA风格预测学习目标",
+      "llm_evidence": "使用JEPA风格预测学习目标",
+      "canonical_evidence": "使用JEPA风格预测学习目标",
+      "llm_tldr_en": "Applies JEPA-style latent prediction to network fingerprints, achieving high cosine similarity and kNN accuracy, demonstrating the objective's transferability beyond vision.",
+      "llm_tldr_cn": "JEPA在视觉任务成功应用后，本文探索其在网络指纹领域的有效性。构建JA4-JEPA模型，在JA4数据集上训练，通过冻结kNN探针评估，获得0.9899余弦相似度和0.9220准确率。结果表明JEPA目标适用于紧凑网络表示，但领域偏离机器人学。",
+      "llm_tldr": "JEPA在视觉任务成功应用后，本文探索其在网络指纹领域的有效性。构建JA4-JEPA模型，在JA4数据集上训练，通过冻结kNN探针评估，获得0.9899余弦相似度和0.9220准确率。结果表明JEPA目标适用于紧凑网络表示，但领域偏离机器人学。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
