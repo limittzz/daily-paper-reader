@@ -1,0 +1,385 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-13T20:17:35.849958+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 3,
+    "deep_cap": 6,
+    "deep_selected": 3,
+    "quick_candidates": 6,
+    "quick_skim_target": 11,
+    "quick_selected": 6
+  },
+  "deep_dive": [
+    {
+      "id": "2607.08857v1",
+      "source": "arxiv",
+      "title": "AgenticFocus: Object-Preserving Mixed Reality Synthesis from Human FPV Video for Dexterous Humanoid Learning",
+      "abstract": "Human egocentric video is a scalable supervision source for humanoid policy learning, but current pipelines struggle with hand-object occlusion, oversimplified motion, or specialized capture hardware. We introduce AgenticFocus, a Mixed Reality synthesis pipeline that converts ordinary first-person-view human videos into robot-trainable demonstrations by restoring occluded object geometry, reconstructing full-hand motion, and retargeting it to a humanoid embodiment through camera-relative alignment and layered compositing. The resulting dataset pairs focused visual observations with synchronized robot actions and states. AgenticFocus achieves lower trajectory error and smoother wrist motion than cross-embodiment baselines, with SPARC scores of -5.18 versus -5.56 and -6.05.",
+      "authors": [
+        "Iaroslav Kolomiets",
+        "Miguel Altamirano Cabrera",
+        "Artem Lykov",
+        "Jeffrin Sam",
+        "Dmitrii Iarchuk",
+        "Yara Mahmoud",
+        "Daniia Zinniatullina",
+        "Mikhail Konenkov",
+        "Dzmitry Tsetserukou"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-09T18:27:41+00:00",
+      "link": "https://arxiv.org/pdf/2607.08857v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "human FPV to robot demonstrations for dexterous learning",
+      "llm_evidence_cn": "从人类第一人称视频生成机器人演示用于灵巧操作学习",
+      "llm_evidence": "从人类第一人称视频生成机器人演示用于灵巧操作学习",
+      "canonical_evidence": "从人类第一人称视频生成机器人演示用于灵巧操作学习",
+      "llm_tldr_en": "AgenticFocus converts ordinary human FPV video into robot-trainable demonstrations by restoring occluded object geometry and full-hand motion, outperforming cross-embodiment baselines in trajectory error.",
+      "llm_tldr_cn": "当前从人类视频学习机器人策略面临手-物遮挡、简化的运动等问题。本文提出AgenticFocus混合现实合成流程，通过重建被遮挡物体几何、重构全手运动并重定位到人形机器人，生成聚焦的视觉观察与同步动作数据。在灵巧操作任务上，该方法比跨本体基线实现了更低的轨迹误差和更平滑的腕部运动。",
+      "llm_tldr": "当前从人类视频学习机器人策略面临手-物遮挡、简化的运动等问题。本文提出AgenticFocus混合现实合成流程，通过重建被遮挡物体几何、重构全手运动并重定位到人形机器人，生成聚焦的视觉观察与同步动作数据。在灵巧操作任务上，该方法比跨本体基线实现了更低的轨迹误差和更平滑的腕部运动。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.09515v1",
+      "source": "arxiv",
+      "title": "One-Shot Multimodal Learning from Demonstration with Force-Constrained Elastic Maps",
+      "abstract": "Robotic manipulation tasks often require simultaneous reasoning over motion and contact forces, yet most Learning from Demonstration (LfD) methods model only spatial trajectories and neglect force interactions with the environment. This limitation reduces robustness and can lead to unsafe or inconsistent task reproduction in force-constrained settings. We propose a novel one-shot multimodal LfD framework for the segmentation, encoding, and reproduction of force-inclusive demonstrations. First, we introduce a multimodal probabilistic segmentation method that adaptively weighs spatial and force modalities over time, enabling the automatic extraction of force-aware motion primitives. Second, we extend the elastic maps representation to incorporate external force constraints during skill encoding and formulate a convex optimization procedure for learning force-consistent trajectory models. The resulting skills reproduce both motion and contact characteristics from a single demonstration while promoting safer execution by accounting for demonstrated force profiles. We validate our approach on five real-world manipulation tasks across two distinct force-sensing configurations: wrist force sensing on a UR5e with a Robotiq 2f-85 gripper and finger force sensing on a Kinova Gen3 with an Openhand Model O gripper. Experimental results demonstrate robust multimodal segmentation, accurate force-aware reproduction, and cross-platform generality.",
+      "authors": [
+        "Brendan Hertel",
+        "Jonathan Spanos",
+        "Navya Garg",
+        "Reza Azadeh"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-10T15:27:50+00:00",
+      "link": "https://arxiv.org/pdf/2607.09515v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "One-shot learning from demonstration with force-constrained elastic maps",
+      "llm_evidence_cn": "基于力约束弹性映射的单次示教学习",
+      "llm_evidence": "基于力约束弹性映射的单次示教学习",
+      "canonical_evidence": "基于力约束弹性映射的单次示教学习",
+      "llm_tldr_en": "Proposes a one-shot multimodal LfD framework for force-inclusive demonstrations, using adaptive segmentation and elastic map encoding.",
+      "llm_tldr_cn": "针对机器人操作中力和运动联合推理的需求，提出一种单次多模态示教学习框架，通过自适应权重的概率分割方法提取力感知运动基元，并扩展弹性映射表示编码力和空间轨迹。实验证明该方法在力约束任务中比传统LfD更鲁棒且一致。",
+      "llm_tldr": "针对机器人操作中力和运动联合推理的需求，提出一种单次多模态示教学习框架，通过自适应权重的概率分割方法提取力感知运动基元，并扩展弹性映射表示编码力和空间轨迹。实验证明该方法在力约束任务中比传统LfD更鲁棒且一致。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.08877v1",
+      "source": "arxiv",
+      "title": "FlowDAgger: Human-in-the-Loop Adaptation of Generative Robot Policies in Latent Space",
+      "abstract": "Pretrained generative robot policies based on flow matching and diffusion have achieved impressive results across a wide range of manipulation tasks. Yet real-world deployments routinely expose failure modes outside the pretraining distribution. Closing these gaps typically requires large-scale data collection or online reinforcement learning on physical hardware, which is impractical for rapid and safe adaptation. We present FlowDAgger, a sample- and compute-efficient method for adapting frozen generative robot policies from human interventions in latent space. Our key idea is action inversion: each human expert action is mapped to the noise that would have produced it under the frozen base policy, using reverse-time integration followed by local refinement. The resulting inverted noise provides supervision for a lightweight latent policy that steers the base model at deployment time, enabling rapid skill acquisition while preserving its behavioral priors. We evaluate FlowDAgger in simulation and on real-world bimanual and single-arm manipulation, adapting both action-head VLAs and world-action models from a handful of interventions. FlowDAgger outperforms supervised fine-tuning and latent-space RL baselines and preserves pretrained skills on held-out tasks, offering a practical path for adapting robot foundation models in the real world. Website: https://microsoft.github.io/FlowDAgger",
+      "authors": [
+        "Michael Murray",
+        "Daphne Chen",
+        "Simran Bagaria",
+        "Dean Fortier",
+        "Tess Hellebrekers",
+        "Galen Mullins",
+        "Harshavardhan Gajarla",
+        "Oier Mees",
+        "Maya Cakmak",
+        "Andrey Kolobov"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "published": "2026-07-09T19:07:33+00:00",
+      "link": "https://arxiv.org/pdf/2607.08877v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "human-in-the-loop adaptation of diffusion/flow policies via action inversion",
+      "llm_evidence_cn": "通过动作反转进行扩散/流策略的人机联合适应",
+      "llm_evidence": "通过动作反转进行扩散/流策略的人机联合适应",
+      "canonical_evidence": "通过动作反转进行扩散/流策略的人机联合适应",
+      "llm_tldr_en": "FlowDAgger adapts frozen diffusion/flow policies from human interventions by inverting actions to noise in latent space, achieving efficient learning from demonstration.",
+      "llm_tldr_cn": "预训练的扩散/流策略在真实环境部署中常失效，而大规模数据收集或在线强化学习代价高昂。本文提出FlowDAgger，通过动作反转将人类专家干预映射为潜在噪声，以极少的样本高效适应冻结的生成策略。实验证明该方法在多种操作任务中快速提升了策略鲁棒性。",
+      "llm_tldr": "预训练的扩散/流策略在真实环境部署中常失效，而大规模数据收集或在线强化学习代价高昂。本文提出FlowDAgger，通过动作反转将人类专家干预映射为潜在噪声，以极少的样本高效适应冻结的生成策略。实验证明该方法在多种操作任务中快速提升了策略鲁棒性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "How is diffusion policy applied to robot learning from demonstration?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.04816v1",
+      "source": "arxiv",
+      "title": "CAC-VLA: Context-Gated Action Conditioning for Vision-Language-Action Models",
+      "abstract": "Vision-Language-Action (VLA) models have become a promising paradigm for generalist robot manipulation, where visual-language representations are used to condition continuous action generation. However, these representations are not explicitly optimized for action conditioning, leaving the action expert to bridge the gap between multimodal understanding and precise motor control. Recent action-reasoning methods introduce additional modules to generate explicit action plans or action-space reasoning signals, demonstrating the benefit of action-level guidance but often requiring separate action-generation frameworks. We propose CAC-VLA, a Context-Gated Action Conditioning framework that learns a lightweight latent-action interface directly within the VLM. Instead of generating executable trajectories, CAC-VLA trains the VLM to predict coarse-to-fine latent actions, which are structured representations encoded from future action segments, and adaptively leverages them to condition the action expert via a context gate. This enables VLM-native action conditioning while calibrating the influence of latent-action guidance on expert action generation. Experiments on LIBERO and LIBERO-Plus demonstrate the effectiveness of CAC-VLA, achieving 98.3% average success rate on LIBERO and 89.5% LIBERO-Plus, suggesting that context-gated latent-action conditioning is an effective interface for continuous expert control.",
+      "authors": [
+        "Yifu Xiong",
+        "Wenhao Yu",
+        "Jiaxuan Lin",
+        "Bojun Zou",
+        "Jiahao Li",
+        "Lu Zhang",
+        "Yanyong Zhang",
+        "Jianmin Ji"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-06T08:50:05+00:00",
+      "link": "https://arxiv.org/pdf/2607.04816v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "action conditioning for robot manipulation",
+      "llm_evidence_cn": "机器人操作中的动作条件化",
+      "llm_evidence": "机器人操作中的动作条件化",
+      "canonical_evidence": "机器人操作中的动作条件化",
+      "llm_tldr_en": "CAC-VLA proposes a context-gated action conditioning framework for Vision-Language-Action models, learning a latent action interface to improve robot manipulation without explicit imitation learning.",
+      "llm_tldr_cn": "现有VLA模型未专门优化动作条件化，导致动作专家需自行弥合多模态理解与精细控制之间的鸿沟。本文提出CAC-VLA，通过上下文门控的动作条件化框架学习轻量级潜在动作接口，直接嵌入到VLA模型中，从而增强动作生成能力。实验表明该方法在多个机器人操作任务上提升了成功率，为通用机器人操控提供了新思路。",
+      "llm_tldr": "现有VLA模型未专门优化动作条件化，导致动作专家需自行弥合多模态理解与精细控制之间的鸿沟。本文提出CAC-VLA，通过上下文门控的动作条件化框架学习轻量级潜在动作接口，直接嵌入到VLA模型中，从而增强动作生成能力。实验表明该方法在多个机器人操作任务上提升了成功率，为通用机器人操控提供了新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.07608v1",
+      "source": "arxiv",
+      "title": "Dual Latent Memory in Vision-Language-Action Models for Robotic Manipulation",
+      "abstract": "Mainstream Vision-Language-Action (VLA) models predict actions primarily from the current observation under a Markovian assumption, thus struggling with long-horizon, temporally dependent tasks. Existing memory-augmented VLAs either expand the observation window or retrieve history from the memory bank as auxiliary policy-side context. However, they leave memory outside the native latent embedding space of VLA reasoning, preventing historical experience from being fluidly interleaved with multimodal reasoning and action formation. To this end, we introduce LaMem-VLA, a latent-memory-native framework that reconstructs historical experience into latent memory tokens and directly interweaves them with VLA reasoning. At its core, LaMem-VLA introduces four coordinated components: (i) a curator that organizes historical experience into two complementary short-term and long-term memory vaults; (ii) a seeker that queries both vaults using the multimodal cognition to retrieve context-relevant evidence; (iii) a condenser that reconstructs the retrieved evidence into compact short-term and long-term latent memory tokens; and (iv) a weaver that injects these memory tokens with the current observation and instruction into one continuous embedding sequence. By representing, retrieving, and consuming historical experience entirely in the same continuous latent space, LaMem-VLA enables memory to directly participate in VLA reasoning and guide action generation under a bounded context. Extensive experiments on SimplerEnv and LIBERO demonstrate the superiority of our LaMem-VLA.",
+      "authors": [
+        "Hongyu Qu",
+        "Jianzhe Gao",
+        "Xiaobin Hu",
+        "Shaohuan Yang",
+        "Xinlei Yu",
+        "Rui Yan",
+        "Wenguan Wang",
+        "Xiangbo Shu",
+        "Shuicheng Yan"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-08T16:26:06+00:00",
+      "link": "https://arxiv.org/pdf/2607.07608v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "latent memory augmentation for VLA policies improves long-horizon manipulation",
+      "llm_evidence_cn": "潜在记忆增强VLA策略以改进长时域操作",
+      "llm_evidence": "潜在记忆增强VLA策略以改进长时域操作",
+      "canonical_evidence": "潜在记忆增强VLA策略以改进长时域操作",
+      "llm_tldr_en": "LaMem-VLA integrates latent memory tokens into the VLA reasoning space, enabling fluid interweaving of history with multimodal processing for better long-horizon imitation learning.",
+      "llm_tldr_cn": "主流VLA模型假设马尔可夫性，难以处理长时依赖。现有记忆增强方法将记忆置于推理空间外。本文提出LaMem-VLA，将历史经验重构为潜在记忆令牌并直接融入VLA推理，实现多模态推理与历史信息的无缝交织。实验表明该方法在长时域机器人操作任务上显著提升了模仿学习性能。",
+      "llm_tldr": "主流VLA模型假设马尔可夫性，难以处理长时依赖。现有记忆增强方法将记忆置于推理空间外。本文提出LaMem-VLA，将历史经验重构为潜在记忆令牌并直接融入VLA推理，实现多模态推理与历史信息的无缝交织。实验表明该方法在长时域机器人操作任务上显著提升了模仿学习性能。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.09234v1",
+      "source": "arxiv",
+      "title": "Implicit-Behavior Coordination from Unlabeled Sub-Task Demonstrations for Rearrangement Tasks",
+      "abstract": "Long-horizon robotic rearrangement tasks are often treated as skill sequencing problems, requiring predefined skills, skill labels, or boundaries, and task-specific switching logic. Although effective, such explicit skill abstractions can become difficult to scale as the number of behaviors and the task horizon increase. We instead formulate rearrangement as implicit-behavior coordination from unlabeled sub-task demonstrations, where skill-like behaviors are learned directly from mixed behavior data and coordinated through value-guided action selection. Experiments in Habitat rearrangement tasks support this formulation in three ways. First, our method outperforms task-specific imitation baselines on more complex rearrangement tasks and approaches an oracle-planner baseline with behavior-cloned skills, while using no oracle task plan or skill-labeled full-task demonstrations. Second, ablations show that reliable critic-guided candidate selection is essential for coordinating multi-modal behaviors. Third, scaling experiments show that the method handles larger behavior repertoires and maintains stronger performance than task-specific imitation baselines as chained targets extend the horizon. These results suggest that explicit skill abstraction is not a prerequisite for long-horizon rearrangement, and that implicit-behavior coordination offers a promising data-driven alternative to explicit skill-based pipelines.",
+      "authors": [
+        "Ahmed Shokry",
+        "Usama Ahmed Siddiquie",
+        "Sicong Pan",
+        "Maren Bennewitz"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-10T09:26:38+00:00",
+      "link": "https://arxiv.org/pdf/2607.09234v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "imitation learning from unlabeled sub-task demonstrations for robotic rearrangement",
+      "llm_evidence_cn": "从无标注子任务演示中学习机器人排序任务",
+      "llm_evidence": "从无标注子任务演示中学习机器人排序任务",
+      "canonical_evidence": "从无标注子任务演示中学习机器人排序任务",
+      "llm_tldr_en": "Implicit-behavior coordination learns skill-like behaviors from unlabeled demonstrations using value-guided selection, outperforming task-specific imitation baselines.",
+      "llm_tldr_cn": "长时域机器人排序任务常依赖预定义技能和标签，扩展性差。本文提出隐式行为协调方法，从混合行为数据中直接学习类技能行为，并通过价值引导的动作选择实现协调。在Habitat环境中，该方法在复杂排序任务上超越了任务特定的模仿学习基线，展示了从无标注演示中学习复杂行为规划的潜力。",
+      "llm_tldr": "长时域机器人排序任务常依赖预定义技能和标签，扩展性差。本文提出隐式行为协调方法，从混合行为数据中直接学习类技能行为，并通过价值引导的动作选择实现协调。在Habitat环境中，该方法在复杂排序任务上超越了任务特定的模仿学习基线，展示了从无标注演示中学习复杂行为规划的潜力。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.09191v1",
+      "source": "arxiv",
+      "title": "GenVid2Robot: From Video Generation to Robot Manipulation via Rigid-Geometric Consistency",
+      "abstract": "Generated videos provide useful visual motion priors for robot manipulation, but their visual plausibility does not imply physical executability. A generated video usually lacks metric geometry, grasp grounding, robot kinematic feasibility, and execution-time feedback, which makes direct trajectory replay unreliable in real-world manipulation. This paper presents GenVid2Robot, a rigid-geometric consistency framework that converts generated video motion into executable real-robot manipulation trajectories. Given an initial RGB-D observation and a task instruction, GenVid2Robot samples task-relevant semantic anchors from the real first frame, tracks these anchors through generated video candidates, and verifies whether the resulting 2D motion can be explained by first-frame RGB-D anchors under a sparse relative $SE(3)$ model. In this way, generated videos are treated as uncertain visual motion hypotheses rather than direct robot demonstrations. Only geometrically consistent motion is transferred to the robot. The accepted relative motion is then applied to the real grasp-time TCP pose selected by mask-constrained grasping, producing a grasp-conditioned execution trajectory that is consistent with both the visual motion prior and the physical grasp configuration. To reduce execution mismatch caused by RGB-D noise, calibration residuals, and small contact-induced displacement, a bounded depth-compensation module corrects local depth-direction errors without assuming full online replanning. Real-robot experiments demonstrate that GenVid2Robot improves the reliability of generated-video-guided manipulation by grounding visual motion priors with sparse metric geometry, grasp constraints, robot feasibility checking, and bounded execution feedback.",
+      "authors": [
+        "Haohui Huang",
+        "Xi Yuan",
+        "Panpan Liao",
+        "Tao Teng",
+        "Chenguang Yang",
+        "Jing Guo",
+        "Yi Guo"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "published": "2026-07-10T08:32:47+00:00",
+      "link": "https://arxiv.org/pdf/2607.09191v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "converts generated video motion into robot manipulation trajectories, enabling imitation from videos",
+      "llm_evidence_cn": "将生成视频的运动转化为机器人操作轨迹，实现视频模仿学习",
+      "llm_evidence": "将生成视频的运动转化为机器人操作轨迹，实现视频模仿学习",
+      "canonical_evidence": "将生成视频的运动转化为机器人操作轨迹，实现视频模仿学习",
+      "llm_tldr_en": "GenVid2Robot converts generated video motion into executable robot manipulation trajectories by tracking semantic anchors across frames and verifying rigid-geometric consistency.",
+      "llm_tldr_cn": "GenVid2Robot提出了一种刚体几何一致性框架，将从生成视频中得到的运动转化为可执行的机器人操作轨迹。该方法利用初始RGB-D观测和任务指令，提取语义锚点并在生成视频中追踪，经过一致性验证后生成可执行的轨迹。实验表明，该方法能在真实机器人上完成多种操作任务，弥合了视频生成与物理执行之间的差距。",
+      "llm_tldr": "GenVid2Robot提出了一种刚体几何一致性框架，将从生成视频中得到的运动转化为可执行的机器人操作轨迹。该方法利用初始RGB-D观测和任务指令，提取语义锚点并在生成视频中追踪，经过一致性验证后生成可执行的轨迹。实验表明，该方法能在真实机器人上完成多种操作任务，弥合了视频生成与物理执行之间的差距。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.09590v1",
+      "source": "arxiv",
+      "title": "PAC-ACT: Post-training Actor-Critic for Action Chunking Transformers",
+      "abstract": "Precision industrial contact manipulation requires reliable robot policies under pose perturbations and contact-force constraints. Vision-language-action models offer broad generalization but often introduce high inference latency and GPU-memory cost, while vision-action chunking policies are more suitable for real-time industrial control. However, these policies are usually trained by behavior cloning and suffer from distribution shift in contact-rich tasks. This paper proposes PAC-ACT, a reinforcement-learning post-training framework for pretrained Action Chunking Transformer policies. PAC-ACT reformulates policy optimization at the chunk level, constructs an ACT-transferred actor-critic architecture, and introduces a hybrid behavior-prior constraint to preserve the pretrained action distribution during online fine-tuning. Experiments on industrial precision-contact benchmarks show that PAC-ACT improves task success, contact stability, and force safety while retaining low latency and low GPU-memory usage. On the Contour task, PAC-ACT significantly reduces peak contact force and decreases the proportion of force readings above 60 N by 46 times. Sparse-reward ablations further show that the proposed behavior-prior constraint enables effective exploration under randomized initial poses.",
+      "authors": [
+        "Yujie Pang",
+        "Zudong Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-10T16:42:17+00:00",
+      "link": "https://arxiv.org/pdf/2607.09590v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "reinforcement learning post-training for action chunking transformers trained by behavior cloning",
+      "llm_evidence_cn": "行为克隆训练的动作分块Transformer的强化学习后训练",
+      "llm_evidence": "行为克隆训练的动作分块Transformer的强化学习后训练",
+      "canonical_evidence": "行为克隆训练的动作分块Transformer的强化学习后训练",
+      "llm_tldr_en": "PAC-ACT uses reinforcement learning to post-train Action Chunking Transformer policies, addressing distribution shift in contact-rich tasks.",
+      "llm_tldr_cn": "PAC-ACT提出了一种强化学习后训练框架，用于优化预训练的动作分块Transformer策略。针对接触密集任务中的分布偏移问题，该方法将策略优化重新定义为块级别，构建ACT迁移的演员-评论家架构，并引入混合行为先验约束。实验表明，PAC-ACT在工业级精密接触任务上显著提升了策略的鲁棒性和成功率。",
+      "llm_tldr": "PAC-ACT提出了一种强化学习后训练框架，用于优化预训练的动作分块Transformer策略。针对接触密集任务中的分布偏移问题，该方法将策略优化重新定义为块级别，构建ACT迁移的演员-评论家架构，并引入混合行为先验约束。实验表明，PAC-ACT在工业级精密接触任务上显著提升了策略的鲁棒性和成功率。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.09648v1",
+      "source": "arxiv",
+      "title": "B-spline Policy: Accelerating Manipulation Policies via B-spline Action Representations",
+      "abstract": "In this work, we present B-spline Policy (BSP), an action representation designed for accelerating robot manipulation policies. Rather than predicting discrete-time action chunks, BSP parameterizes actions as continuous B-spline curves defined by a set of knots and control points. This representation yields smooth, time-continuous trajectories that can be temporally scaled and executed by low-level controllers at higher frequencies and speeds. We show that B-spline-parameterized actions can be seamlessly integrated into standard policy learning pipelines by directly predicting B-spline parameters. Experiments on simulated and real-world tasks demonstrate that BSP significantly reduces task completion time, achieving substantial improvements over baseline methods while maintaining strong success rates. More results: https://b-spline-policy.github.io",
+      "authors": [
+        "Xiaoshen Han",
+        "Haoyu Xiong",
+        "Haonan Chen",
+        "Chaoqi Liu",
+        "Antonio Torralba",
+        "Yuke Zhu",
+        "Yilun Du"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-10T17:46:32+00:00",
+      "link": "https://arxiv.org/pdf/2607.09648v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "action representation for accelerating manipulation policies, applicable to imitation learning",
+      "llm_evidence_cn": "连续动作表示加速操作策略，可应用于模仿学习",
+      "llm_evidence": "连续动作表示加速操作策略，可应用于模仿学习",
+      "canonical_evidence": "连续动作表示加速操作策略，可应用于模仿学习",
+      "llm_tldr_en": "Presents B-spline Policy (BSP) that parameterizes robot actions as continuous B-spline curves, enabling smooth, time-continuous trajectories that can be integrated into standard policy learning pipelines, reducing task completion time.",
+      "llm_tldr_cn": "该论文针对离散时间动作块预测导致执行效率低下的问题，提出B样条策略(BSP)，将动作参数化为连续B样条曲线，提供平滑、时间连续的轨迹。BSP可直接集成到标准策略学习流程（包括模仿学习）中，并在模拟和实际任务上显著缩短了任务完成时间，提高了执行频率。",
+      "llm_tldr": "该论文针对离散时间动作块预测导致执行效率低下的问题，提出B样条策略(BSP)，将动作参数化为连续B样条曲线，提供平滑、时间连续的轨迹。BSP可直接集成到标准策略学习流程（包括模仿学习）中，并在模拟和实际任务上显著缩短了任务完成时间，提高了执行频率。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

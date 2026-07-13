@@ -1,0 +1,288 @@
+Title: B-spline Policy: Accelerating Manipulation Policies via B-spline Action Representations
+
+URL Source: https://arxiv.org/pdf/2607.09648v1
+
+Published Time: Mon, 13 Jul 2026 01:20:30 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# B-spline Policy: Accelerating Manipulation Policies via B-spline Action Representations 
+
+Xiaoshen Han 1∗ Haoyu Xiong 2∗
+
+Haonan Chen 1 Chaoqi Liu 1 Antonio Torralba 2 Yuke Zhu 3 Yilun Du 11Harvard 2MIT 3UT Austin 
+
+Abstract: In this work, we present B-spline Policy (BSP), an action represen-tation designed for accelerating robot manipulation policies. Rather than pre-dicting discrete-time action chunks, BSP parameterizes actions as continuous B-spline curves defined by a set of knots and control points. This representation yields smooth, time-continuous trajectories that can be temporally scaled and ex-ecuted by low-level controllers at higher frequencies and speeds. We show that B-spline–parameterized actions can be seamlessly integrated into standard pol-icy learning pipelines by directly predicting B-spline parameters. Experiments on simulated and real-world tasks demonstrate that BSP significantly reduces task completion time, achieving substantial improvements over baseline methods while maintaining strong success rates. More results: B-spline-policy.github.io 
+
+Keywords: Fast manipulation; Visuomotor policy speedup; Action representation 
+
+## 1 Introduction Discrete actions   
+
+> Action Chunk Policy
+> B-spline Policy
+> B-spline parameters
+> 3.76X faster
+
+Figure 1: B-spline policy. Rather than predicting a chunk of discrete-time actions, B-spline policy pa-rameterizes actions as continuous B-spline [2] curves. This continuous representation enables temporal rescaling at execution time, allowing the policy to ex-ecute faster and more smoothly. 
+
+Robotic manipulation via visuomotor policy learning has made remarkable progress in re-cent years [1, 2, 3, 4]. Yet, despite these ad-vances, task execution speed remains a major bot-tleneck. In everyday manipulation tasks such as folding a T-shirt, humans typically complete the task in roughly 10 seconds, whereas even state-of-the-art robotic systems often require close to a minute [5, 1, 6]. This gap exposes a fundamental and largely unresolved challenge in visuomotor policy learning— efficiency : how can robots exe-cute complex manipulation tasks quickly, rather than merely complete them successfully? A key source of inefficiency in modern visuomotor policies lies in the design of action chunk-ing [4, 3]. Most existing approaches parameterize actions as fixed-length chunks sampled uniformly over time. While such chunking can stabilize long-horizon prediction and improve learning perfor-mance [7], it also introduces inherent limitations: • Uniform temporal resolution. Fixed-length chunks assume that every phase of a task requires identical control granularity. In practice, manipulation tasks exhibit strongly non-uniform tempo-ral structure: fast motions such as reaching can be executed rapidly with coarse actions, whereas contact-rich phases such as grasping, alignment, and insertion demand fine-grained precision. Uniform chunking fundamentally misallocates representational capacity across time. 
+
+> ∗
+
+Equal contribution. 
+
+> [2]
+
+A B-spline defines a smooth curve by a set of knots and control points. Instead of drawing straight lines between waypoints, a B-spline creates a smooth path that follows their overall trend. Think of it like bending a flexible ruler near waypoints instead of connecting them with sharp corners. arXiv:2607.09648v1 [cs.RO] 10 Jul 2026 • Chunk discontinuities. Stitching together independently predicted action chunks at inference time can introduce discontinuities at chunk boundaries. While such boundary mismatches may be tolerable in low-speed or quasi-static settings, they become highly problematic during high-speed execution, where even small errors can lead to tracking failures or complete task failure. These limitations motivate a paradigm shift: representing robot actions as continuous curves 
+
+rather than discrete waypoint chunks. Such a representation is used in classical motion plan-ning [8, 9, 10, 11] and computer graphics [12, 13], where spline-based representations are widely favored for being smooth, compact, and mathematically tractable. Among spline families, B-splines are especially attractive for visuomotor control: they are smooth by construction, provide compact parameterizations [14, 15, 16], and can approximate continuous functions arbitrarily well given suf-ficient knots [17, 14]. In this work, we propose B-spline policy, a visuomotor policy that directly outputs continuous action curves . As illustrated in Fig. 1, rather than predicting discrete-time action chunks, B-spline policy outputs B-spline parameters that define an action curve in continuous-time. This shift from discrete action chunks to continuous action curves provides several key advantages: • Acceleration via temporal rescaling. Each predicted B-spline segment can be sampled at arbitrary control frequencies and retimed dynamically by scaling the temporal mapping. This allows the robot to execute the identical trajectory at significantly higher speeds without sacrificing fidelity. • Inference-time segment alignment. To ensure stable accelerated execution over the duration of a task, we introduce an inference-time segment alignment mechanism that enforces smooth transi-tions between the predicted B-spline segments. • Plug-and-play integration. B-spline policy requires minimal modifications to existing imitation learning methods, serving as a drop-in replacement for standard action chunk prediction. We evaluate B-spline policy across both simulated and real-world manipulation environments. Our real-world setup includes three tasks spanning distinct robotic challenges: precise object manipu-lation, long-horizon tabletop rearrangement, and bimanual, contact-rich interaction. Integrated into both Diffusion Policy and ACT-style backbones, B-spline policy consistently reduces task com-pletion time while maintaining or improving success rates. Our results demonstrate that B-spline policy yields substantially smoother executions, and that our alignment mechanism is critical for stable, high-speed control. Our contributions are threefold: (1) we introduce a B-spline–based action representation with adap-tive temporal resolution for visuomotor imitation learning; (2) we propose segment alignment to enable smooth transitions during accelerated policy execution; and (3) We demonstrate across di-verse real-world and simulated tasks that B-spline policy substantially reduces task completion times compared to standard action chunking baselines while preserving task success. 
+
+## 2 Related work 
+
+Visuomotor Policy Acceleration. High-speed manipulation has been extensively studied in classi-cal robotics, especially in motion planning and trajectory optimization [18]. However, these tech-niques are not directly applicable to visuomotor policy learning, where actions must be predicted end-to-end from high-dimensional sensory observations. In policy learning, robot manipulation poli-cies often remain slow, yet performance is still primarily evaluated by success rate [1, 19, 20, 4, 21], with comparatively less attention to task completion time. Recent works [22, 23, 24] have begun to address this gap. For example, DemoSpeedup [23] accelerates imitation policies by using action en-tropy to identify which parts of demonstrations can be safely downsampled, while SAIL [24] frames this problem as a full-stack engineering involving policy consistency, robot dynamics, and latency-aware scheduling. In contrast, our work identifies action chunking as a key algorithmic bottleneck for fast visuomotor control. We therefore introduce B-spline Policy (BSP), which replaces fixed discrete action chunks with continuous B-spline curves, enabling smooth and fast manipulation. 
+
+B-spline Action Representations. Discrete-time action chunking is widely used in visuomotor policy learning [3, 4, 19, 20, 25, 1, 26]. While fixed-length action chunking has been shown to 2stabilize long-horizon visuomotor learning [27, 7], it imposes a uniform temporal resolution that fails to capture the inherently non-uniform structure of manipulation tasks. In classical motion planning, actions are often parameterized as continuous-time curves, such as B’ezier curves [28] and splines [9, 10, 11]. These representations provide intrinsic smoothness and analytic deriva-tives [29, 30]. Motivated by these properties, we adopt B-splines as a continuous action repre-sentation for accelerating learned visuomotor policies. Closely related to our work, BEAST [31] proposes a B-spline encoded action tokenizer for efficient action sequence modeling and decoding in VLA policies. DMPs [32] represent robot motions as stable, temporally scalable dynamical sys-tems with learnable forcing terms. In contrast, BSP uses B-splines not as a trajectory encoding or motion primitive, but as a control-oriented continuous action representation and execution pipeline for accelerating end-to-end visuomotor policies. 
+
+## 3 B-spline Action Representations 
+
+In this section, we formulate the B-spline action representation, which shifts visuomotor control from discrete-time action chunk prediction to continuous and smooth B-spline trajectory generation. Discrete actions   
+
+> B-spline
+> Knots
+> Control points
+> Figure 2: Adaptive B-spline fitting for demonstra-tion trajectories. Given a discrete-time demonstra-tion trajectory, we convert it into a continuous B-spline representation by adaptively selecting knots and estimating control points under a bounded recon-struction error.
+
+Discrete Action Chunking. We focus on learn-ing a robot policy π(a | o) from demonstra-tion datasets. The policy maps proprioceptive and visual observations ot to an action chunk 
+
+at = [ at, at+1 , . . . , at+Ta ], where Ta denotes the prediction horizon. This action chunking paradigm is widely adopted in modern robot poli-cies [4, 3, 6], where actions typically correspond to joint positions or end-effector poses. While predicting action chunks stablizes long-horizon consistency [4, 27, 33], it also introduces two key limitations for fast manipulation. First, fixed-length chunks impose a uniform temporal resolution across the entire task. Second, inde-pendently predicted chunks must be stitched to-gether at inference time, which can create bound-ary discontinuities that become especially prob-lematic during high-speed execution. 
+
+Continuous Action Curves. To address these limitations, we parameterize the action space as a continuous B-spline trajectory, rather than a discrete sequence of waypoints. Formally, a B-spline trajectory is defined by a knot vector U and a set of control points C =
+
+{c0, . . . , c N }. The continuous action at normalized time u is given by 
+
+a(u) = 
+
+> N
+
+X
+
+> i=0
+
+Ni,p (u) · ci. (1) where Ni,p (u) is the i-th B-spline basis function of degree p. In our experiments, we use cubic B-splines, which provide smooth trajectories with continuous velocity and acceleration profiles. This formulation turns the policy output from a fixed list of discrete waypoints into the parameters of a continuous trajectory. The predicted curve can be sampled at any desired control frequency and executed by the low-level controller as a dense stream of commands. B-splines provide several properties that are particularly useful for fast robot manipulation: 
+
+1) Temporal flexibility . Because the action trajectory is defined continuously, the same curve can be sampled at a higher control frequency without changing the policy. This allows the robot to receive dense low-level commands even when the policy runs at a lower inference rate. 3Observations       
+
+> 10Hz
+> B-spline P olicy
+> B-spline parameters Robot controller
+> Policy inference
+> Sample
+> 100Hz
+> Low -level control
+> Temporal scaling
+> Segment align
+> Prior segment Figure 3: B-spline policy inference overview. At each inference step, the policy takes images and propriocep-tion as the input and outputs future B-spline segment parameters. At the low-level control stage, we align each successive B-spline segment with the prior one. The predicted B-spline segment can be temporally scaled to adjust execution speed. Actions are then sampled at a higher frequency and sent to the robot controller.
+
+2) Temporal rescaling . Given a predicted trajectory a(u), we can execute it faster by scaling the mapping between real time and the curve parameter. For a speedup factor n, the robot follows the same action trajectory while traversing the curve more quickly: aexec (t) = a(nt ). This provides a mechanism for accelerating a learned policy without retraining it for each target execution speed. 
+
+3) Intrinsic smoothness . B-splines are smooth by construction. Unlike discrete action chunks, which may contain sharp changes between adjacent predictions, a B-spline trajectory produces smooth interpolated actions. This smoothness is especially important under high-speed execution, where abrupt changes in commanded poses can lead to controller tracking errors, overshoot, or task failure. 
+
+4) Local error isolation . each control point only affects a limited portion of the trajectory. This locality makes the representation stable and compact. Errors in one control point do not globally distort the entire predicted action sequence. B-splines offer a natural continuous representation for robot actions, however, using them in a visuo-motor policy requires several design choices. In particular, we need to convert discrete demonstra-tions into B-spline targets, represent non-uniform knots with a fixed-size policy output, and execute consecutive spline segments smoothly. We describe these components in the next section. 
+
+## 4 B-spline Policy 
+
+In this section, we describe how to build a visuomotor policy with B-spline actions and convert discrete demonstrations into fixed-size B-spline targets. 
+
+Adaptive B-spline Fitting from Demonstrations. To train B-spline policy, we first convert discrete demonstration trajectories into continuous B-spline trajectories. Given a sequence of demonstration actions, we fit a degree-p B-spline that approximates the original trajectory within an error tolerance. We use an adaptive fitting procedure based on the classical FITPACK strategy [16, 34, 35], which iteratively inserts knots into trajectory regions with the largest reconstruction error. As shown in Fig. 2, this adaptive knot placement allocates representation capacity where it is needed most: fewer knots are allocated to smooth regions, while density increases in high-curvature seg-ments. As a result, the fitted B-spline provides a compact continuous representation of the demon-stration trajectory while maintaining bounded approximation error, as summarized in Algorithm 1. 
+
+Algorithm 1 Adaptive B-spline Curve Fitting                                        
+
+> Input: samples {(ti,ai)}Ni=1 , tolerance ε, max knots |U|max
+> 1. Initialize U← { t1, t N}.2. while |U|<|U|max :(a) Fit degree-pB-spline a(·)with knots U.(b) E←max i∥a(ti)−ai∥.(c) if E≤ε,break .(d) Insert one knot via FITPACK criterion. 3. return U,a(·).
+> Output: knot vector U, fitted trajectory a(·)
+
+Fixing the Policy Output Size. After fit-ting B-splines to the demonstrations, we train a policy to predict B-spline parame-ters from observations. Directly predicting a full-trajectory spline is inefficient, so the policy outputs the next B-spline segment at each step. Because B-splines have local support, any trajectory segment can be represented by a fixed number of nearby control points and knots. Unlike discrete action chunks, how-4ever, a fixed number of control points does not imply a fixed time horizon because knot intervals may vary. The policy therefore predicts both the control points and knot values, outputting a fixed-size vector of local B-spline parameters, [U ; C], that can be used with standard imitation learning architectures with minimal modification. In practice, evaluating a degree-p B-spline segment requires neighboring control points and knots for boundary support. We append future control points when available and repeat the final control point near the end of a trajectory, producing fixed-size training targets while preserving valid B-spline evaluation. 
+
+High-frequency Execution and Temporal Rescaling. During inference, we decouple the pol-icy inference rate from the low-level control rate. The visuomotor policy runs at a relatively low frequency and predicts a future B-spline segment. The low-level controller then samples this con-tinuous segment at a much higher frequency to generate dense robot commands. This design is important for fast manipulation. When executing a policy faster than the demonstra-tion, discrete action chunks may become too sparse or discontinuous for reliable tracking. In con-trast, a B-spline segment can be sampled densely after temporal rescaling, allowing the controller to receive smooth high-frequency commands even when the policy itself runs at a lower rate. Because the predicted trajectory is continuous, we can directly adjust its execution speed by chang-ing the mapping between real time and the spline parameter. Given a predicted trajectory a(u) and a target speedup factor n, the executed action is aexec (t) = a(nt ). This preserves the geometric shape of the predicted action trajectory while traversing it faster in real time. 
+
+Pipelined Execution with Segment Alignment. For long-horizon tasks, the policy repeatedly pre-dicts new B-spline segments while the robot is executing the previous one. A naive pipelined imple-mentation assumes that the beginning of the newly predicted segment aligns with the unexecuted tail of the previous segment. In practice, this assumption is often violated due to policy prediction noise, inference latency, and controller tracking error. As a result, directly switching to the new segment can introduce discontinuities at segment boundaries. To address this issue, we introduce an inference-time segment alignment mechanism. Let alast denote the most recently executed action, and let Snew( t) denote the newly predicted B-spline segment evaluated at relative time t. Instead of starting the new segment at a fixed time determined only by inference latency, we search for the point on the new segment that best matches the current executed action: 
+
+t⋆ = arg min 
+
+> 0≤t≤λT inf
+
+MSE  Snew (t), a last 
+
+, (2) where T inf is the measured inference latency and λ > 1 slightly enlarges the search window for robustness. The controller then begins executing the new segment from t⋆.This alignment step reduces boundary mismatch between consecutive B-spline segments and pre-vents small discontinuities from accumulating over time. As shown in our experiments, this be-comes especially important under high-speed execution, where even small jumps in commanded actions can lead to tracking errors or task failure. 
+
+## 5 Experiments 
+
+We integrate B-spline policy with two imitation-learning backbones: (i) Diffusion Policy [4], de-noted as Diff.+BSP, and (ii) Action Chunking with Transformers (ACT) [3], denoted as Reg.+BSP. We evaluate B-spline policy along two main metrics: (1) success rate , measured across a diverse set of tasks, and (2) average completion time , measured by the mean task completion time across successful rollouts. To this end, we evaluate our method against baseline policies on three real-world tasks that span diverse manipulation challenges: Cube Picking, which requires precise object manip-ulation; Table Cleaning, which involves long-horizon tabletop rearrangement; and Speed Stacking, which emphasizes bimanual, contact-rich interaction. We also benchmark B-spline policy in simu-lation environments on Push-T [36, 4], RoboMimic [37] and RoboCasa [38]. 525cm   
+
+> 25cm
+> Cube Picking
+> 60cm
+> 50cm
+> Table Cleaning
+> 10cm
+> 20cm
+> Speed Stacking
+
+Figure 4: Overview of the real-world tasks. Task setups and corresponding object initialization distributions and workspace sizes for Cube Picking, Table Cleaning, and Speed Stacking. These tasks vary in precision requirements, horizon length, and object interactions, highlighting the challenges of fast manipulation due to tight precision requirements, long task horizons, and complex object interactions.                       
+
+> Task Metric Diffusion Policy Regression Policy DemoSpeedUp Comparison
+> 1X 2X 4X 1X 2X 4X DemoSpeedUp Diff. + BSP 4X Reg. + BSP 4X Diff. Diff. + BSP Diff. Diff. + BSP Diff. Diff. + BSP Reg. Reg. + BSP Reg. Reg. + BSP Reg. Reg. + BSP Cube Picking
+> Success rate Avg. time
+> 19/20 6.48s 20/20 6.31s 20/20 4.58s 20/20 3.43s 20/20 3.52s 20/20 2.45s 18/20 9.84s 19/20 7.92s 15/20 5.55s 19/20 3.36s 19/20 3.74s 19/20 2.08s 18/20 6.66s 20/20 2.45s 19/20 2.08s Table Cleaning
+> Success rate Avg. time
+> 11/20 41.40s 15/20 36.97s 15/20 28.87s 14/20 20.81s 12/20 23.31s 11/20 18.05s 13/20 49.70s 18/20 38.47s 13/20 34.48s 18/20 19.11s 13/20 23.57s 14/20 11.80s 3/20 49.47s 11/20 18.05s 14/20 11.80s Speed Stacking
+> Success rate Avg. time
+> 14/20 20.47s 14/20 18.13s 15/20 13.66s 15/20 11.45s 9/20 10.49s 7/20 9.62s 8/20 19.75s 16/20 17.61s 4/20 13.49s 13/20 10.98s 8/20 10.42s 0/20 NA 3/20 18.57s 7/20 9.62s 0/20 NA
+
+Table 1: Real-world quantitative results. We report each method’s success rate and average completion time on the real-world tasks. Completion time is averaged over successful rollouts. We highlight the results with higher success rates and shorter completion times in each comparison. 
+
+5.1 Real-world Experiments Task setup. In real-world experiments, we evaluate B-spline policy in the real world on three chal-lenging tasks, as illustrated in Fig. 4. 1) Cube Picking . The robot is required to pick a cube and place it into a box on the table. We collect 200 demonstrations using cubes of four different colors. During both training and evaluation, only a single cube is present in the scene. The cube has a side length of 3 cm , requiring precise grasping and placement. 2) Table Cleaning . This long-horizon manipulation task presents a significant challenge: the robot must clear a table by sequentially com-pleting two subtasks: (i) picking two beverage cans and placing them into a designated plastic tray, and (ii) picking two empty bowls and placing them into a second tray, stacking the second bowl on top of the first. We collect 300 demonstrations for this task. 3) Speed Stacking . The robot must first construct a cup pyramid (2–1) from identical cups and then collapse it into a single nested stack using two arms. Cups are randomly initialized within a clutter-free workspace. We collect 200 demonstrations and evaluate performance across diverse initial configurations. All experiments use 6-DoF ARX5 robot arms. For Cube Picking and Table Cleaning, we use a single third-person camera. For Speed Stacking, we employ two wrist-mounted cameras in addition to a fixed third-person camera placed between the two arms. 
+
+Baselines and Evaluation protocol. We compare B-spline policy against three classes of baselines: 
+
+(1) Diffusion policy [4] and Regression policy [3], which executes them at the original demonstration or control frequency. (2) Diffusion policy-nX and Regression policy-nX, which naively increase the execution frequency by a factor of n. This represents the most direct baseline for accelerating task execution. (3) DemoSpeedup [23], which accelerates execution by temporally downsampling demonstration trajectories. For each real-world task, we evaluate all methods on 20 rollouts with distinct object layouts. To ensure fair comparisons, we first record a fixed set of test configurations using the camera system; for subsequent evaluations, the environment is reset by matching object placements to these recorded configurations. The distribution of all test configurations is shown in Fig. 4. For grasping actions in Cube Picking and Table Cleaning, we allow up to three grasp attempts as recovery. We report the average completion time, measured from the start at the home pose to the final gripper opening that marks task completion, averaged over all successful rollouts. 62.14x faster 
+
+> Diffusion +
+> B-spline
+> Smooth trajectory
+> 9.6s
+> 20.5s
+> Diffusion
+> Jerky trajectory
+
+Figure 5: Real-world qualitative results. We visualize key frames from the rollouts of B-spline policy and a diffusion policy on the speed stacking task, with the robot gripper tip trajectories overlaid on the frame, illustrating that B-spline policy achieves faster and smoother task execution. 
+
+5.2 Real-world Results 
+
+Table 1 reports the overall success rates and average completion times. We organize our analysis around the following key findings. 
+
+Finding 1: BSP consistently shortens task completion time. As highlighted in Tab. 1, across all configurations, integrating BSP consistently reduces Avg. time , regardless of whether it is paired with a Diffusion or Regression policy. The efficiency of BSP acceleration is particularly pronounced in the long-horizon Table Cleaning task. Specifically, at a 4X speedup, integrating BSP with the Regression policy compresses the average completion time from 23 .57 s to 11 .80 s ( 50% reduction in duration), while simultaneously preserving task success rate ( 13 /20 vs. 14 /20 ). 
+
+Finding 2: BSP preserves task success, but aggressive speedup can exceed controller limits. 
+
+BSP achieves faster execution while generally maintaining task success. Across diffusion and re-gression comparisons, BSP matches or improves success rate in 14 out of 18 settings. This trend is particularly clear for the regression backbone: BSP improves the long-horizon Table Cleaning success from 13/20 to 18/20 at both 1× and 2× speedup, and improves Speed Stacking from 8/20 to 16/20 at 1× speedup and from 4/20 to 13/20 at 2× speedup. At the same time, the results reveal a natural trade-off between execution speed and task robustness. For example, on Speed Stacking, Regression+BSP outperforms the baselines at 1× and 2× speedup, but fails at 4×, achieving zero success because the aggressive BSP temporal scaling pushes the robot beyond the tracking limits of its low-level controller. 
+
+Finding 3: BSP produces smoother trajectories. During the experiments, we observed that B-spline policy produces substantially smoother executions than the baselines. We provide qualitative comparisons between B-spline policy and Diffusion Policy on the Speed Stacking task in Fig. 5, where we overlay the executed trajectories on video frames. B-spline policy yields smoother and faster motions, while the action chunks produced by Diffusion Policy often result in jerky executions due to discontinuities between consecutive chunks. Please visit our website for video results. 0    
+
+> 1
+> 2
+> Achieved Speedup
+> 1.0X
+> 1.1X
+> 1.3X
+> 1.8X
+> 1.7X
+> 2.2X
+> without align with align
+> 1X 2X 4X
+> Target Speedup
+> 0
+> 50
+> 100
+> Success Rate (%)
+> 35
+> 50
+> 15
+> 70 75
+> 35
+
+Figure 6: Ablation study on inference-time seg-ment alignment. Aligning adjacent segments im-proves trajectory continuity, which becomes criti-cal at high speeds, leading to higher success rates and more consistent realized speedups. 
+
+Finding 4: Inference-time segment alignment is critical for BSP. Consistent with the smoother tra-jectories observed in Finding 3, we further find that trajectory continuity across consecutive spline segments is critical for stable high-speed execu-tion. To better understand this, we conduct an abla-tion study on inference-time segment alignment on Speed Stacking task. As shown in Fig. 6, segment alignment becomes increasingly important at higher execution speeds: when continuity is not enforced, success becomes highly sensitive to execution speed. From the policy perspective, such discontinuities ef-fectively induce out-of-distribution (OOD) inputs, forcing the policy to spend additional steps replan-ning to return to the in-distribution regime, or caus-ing outright task failure. 7Configuration PushT Lift Turn off sink faucet Coffee press button Turn off microwave Close door Diff. 1X Base 72% 100% 79% 93% 77% 27% Diff. 1X +BSP 75% 100% 85% 94% 89% 46% Reg. 1X Base 63% 99% 84% 89% 93% 40% Reg. 1X +BSP 66% 91% 94% 93% 97% 60% 
+
+(a) Sim results.         
+
+> Metric Diffusion Policy
+> 1X 2X 4X Diff. Diff. + BSP Diff. Diff. + BSP Diff. Diff. + BSP
+> Avg. score Avg. time
+> 0.47 12.24s 0.65 7.20s 0.57 9.22s 0.71 4.89s 0.59 7.19s 0.73 2.87s
+
+(b) PushT-speedup results. 
+
+Table 2: Simulation results. In Table (a), we report average score on pushT and average success rate across other simulation benchmarks. In Table (b), we report the average score and average time for the PushT speedup. 
+
+5.3 Simulation Benchmarks 
+
+For reproducibility, we also evaluate B-spline policy on simulated manipulation tasks to assess whether continuous B-spline action representations achieve performance comparable to standard action-chunking imitation learning methods on Push-T [36, 4], RoboMimic [37] and RoboCasa [38]. 
+
+Quantitative performance. As shown in Table 2a, B-spline policy matches or outperforms the corresponding base policies across all evaluated tasks, except the RoboMimic Lift task. On the more challenging RoboCasa tasks, B-spline policy consistently outperforms the baseline methods, demonstrating improved robustness in long-horizon manipulation scenarios. Overall, these results indicate that representing actions as B-spline trajectories does not compromise imitation learning performance and can yield consistent gains over discrete-time action-chunking representations. 
+
+Acceleration in simulation. Accelerating policies in simulation requires modifying the environ-ment and low-level controllers to support the high-frequency execution required by BSP, which then requires re-collecting datasets, making it difficult to directly measure policy acceleration in each simulation benchmark. Therefore, we conduct this study on Push-T, a representative task that is easy to modify. We collect 100 demonstrations in the PushT-speedup environment at 200 Hz. BSP is trained directly on the 200 Hz trajectories, while the diffusion policy baseline is trained on 10 Hz trajectories downsampled from the same data. For each checkpoint, we evaluate 50 rollouts and report the average score. We define a rollout as successful if its score exceeds 0.9, which indicates near-complete coverage. For each successful rollout, we record the first time step at which the score exceeds 0.9, and report the average of this time across successful rollouts. For each setting, we evaluate the best three checkpoints and report the mean of these metrics. As shown in Table 2b, BSP consistently improves both the average score and completion time across all target speedups. The gains become pronounced at higher speedups: at 4×, Diff.+BSP achieves a higher average score ( 0.73 vs. 0.59 ) while reducing completion time by more than half ( 7.19 s to 
+
+2.87 s). This is because faster execution enables the Push-T agent to perform more corrective pushes within the maximum rollout time, leading to higher final coverage scores. 
+
+## 6 Limitations 
+
+Hardware Constraints and Policy Acceleration Limits. As detailed in Section 5.2, aggressively accelerating the policy introduces a drop in robustness; specifically, the Speed Stacking task drops to a 0% success rate under a 4x speedup. This failure is primarily driven by the physical constraints of the low-cost robotic arms used in our experiments, whose low-level controllers lack the stiffness and accuracy required to track rapid action commands. We believe that integrating improved low-level controllers would significantly improve tracking robustness at extreme speeds, which we plan to explore in future work. 
+
+## 7 Conclusion 
+
+We propose B-spline policy, a novel action representation that parameterizes the actions as continu-ous curves using B-splines. B-spline policy improves trajectory smoothness and enables faster task completion with robust success rate. To ensure stability during high-speed execution, we propose an inference-time segment alignment mechanism that effectively mitigates boundary discontinuities between successive spline segments. Extensive empirical evaluations across diverse simulated and real-world manipulation tasks demonstrate that BSP significantly reduces task completion times, while consistently preserving or enhancing success rates over standard baselines. 8References 
+
+[1] P. Intelligence, K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, et al. π0.5: A vision-language-action model with open-world generalization. 
+
+arXiv preprint arXiv:2504.16054 , 2025. [2] H. Wu, Y. Jing, C. Cheang, G. Chen, J. Xu, X. Li, M. Liu, H. Li, and T. Kong. Unleash-ing large-scale video generative pre-training for visual robot manipulation. arXiv preprint arXiv:2312.13139 , 2023. [3] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn. Learning fine-grained bimanual manipulation with low-cost hardware. arXiv preprint arXiv:2304.13705 , 2023. [4] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song. Diffusion policy: Visuomotor policy learning via action diffusion. The International Journal of Robotics Research , 44(10-11):1684–1704, 2025. [5] Q. Chen, J. Yu, M. Schwager, P. Abbeel, F. Shentu, and P. Wu. Sarm: Stage-aware reward modeling for long horizon robot manipulation, 2025. URL https://arxiv.org/abs/ 2509.25358 .[6] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Haus-man, B. Ichter, S. Jakubczak, T. Jones, L. Ke, S. Levine, A. Li-Bell, M. Mothukuri, S. Nair, K. Pertsch, L. X. Shi, J. Tanner, Q. Vuong, A. Walling, H. Wang, and U. Zhilinsky. π0: A vision-language-action flow model for general robot control, 2024. URL https://arxiv. org/abs/2410.24164 .[7] Z. Fu, T. Z. Zhao, and C. Finn. Mobile aloha: Learning bimanual mobile manipulation with low-cost whole-body teleoperation. In Conference on Robot Learning (CoRL) , 2024. [8] Y. Li, T. Huang, and D. G. Chetwynd. An approach for smooth trajectory planning of high-speed pick-and-place parallel robots using quintic b-splines. Mechanism and Machine Theory ,126:479–490, 2018. [9] C. Wang, T. Xu, and M. Tomizuka. Continuous trajectory optimization via b-splines for multi-jointed robotic systems. arXiv preprint arXiv:2212.10500 , 2022. [10] G. Wu. NURBS Curve Based Trajectory Design , pages 221–244. Springer Nature Singapore, Singapore, 2025. ISBN 978-981-96-0443-2. doi:10.1007/978-981-96-0443-2 11. URL 
+
+https://doi.org/10.1007/978-981-96-0443-2_11 .[11] R. Natarajan, C. Liu, H. Choset, and M. Likhachev. Implicit graph search for planning on graphs of convex sets, 2024. URL https://arxiv.org/abs/2410.08909 .[12] E. Cohen, T. Lyche, and R. Riesenfeld. Discrete b-splines and subdivision techniques in computer-aided geometric design and computer graphics. Computer graphics and image pro-cessing , 14(2):87–111, 1980. [13] R. H. Bartels, J. C. Beatty, and B. A. Barsky. An introduction to splines for use in computer graphics and geometric modeling . Morgan Kaufmann, 1995. [14] C. De Boor and C. De Boor. A practical guide to splines , volume 27. springer New York, 1978. [15] C. De Boor. On calculating with b-splines. Journal of Approximation theory , 6(1):50–62, 1972. [16] P. Dierckx. An algorithm for smoothing, differentiation and integration of experimental data using spline functions. Journal of Computational and Applied Mathematics , 1(3):165–184, 1975. 9[17] C. De Boor. On uniform approximation by splines. J. Approx. Theory , 1(1):219–235, 1968. [18] J. Ichnowski, Y. Avigal, Y. Liu, and K. Goldberg. Gomp-fit: Grasp-optimized motion planning for fast inertial transport. In 2022 international conference on robotics and automation (ICRA) ,pages 5255–5261. IEEE, 2022. [19] K. Shaw, Y. Li, J. Yang, M. K. Srirama, R. Liu, H. Xiong, R. Mendonca, and D. Pathak. Bimanual dexterity for complex tasks. In 8th Annual Conference on Robot Learning , 2024. [20] H. Xiong, X. Xu, J. Wu, Y. Hou, J. Bohg, and S. Song. Vision in action: Learning active perception from human demonstrations. arXiv preprint arXiv:2506.15666 , 2025. [21] M. Liu, Z. Zhu, X. Han, P. Hu, H. Lin, X. Li, J. Chen, J. Xu, Y. Yang, Y. Lin, et al. Ma-nipulation as in simulation: Enabling accurate geometry perception in robots. arXiv preprint arXiv:2509.02530 , 2025. [22] K. Black, M. Galliker, and S. Levine. Real-time execution of action chunking flow policies. 
+
+Advances in Neural Information Processing Systems , 38:33383–33407, 2026. [23] L. Guo, Z. Xue, Z. Xu, and H. Xu. Demospeedup: Accelerating visuomotor policies via entropy-guided demonstration acceleration. arXiv preprint arXiv:2506.05064 , 2025. [24] N. R. Arachchige, Z. Chen, W. Jung, W. C. Shin, R. Bansal, P. Barroso, Y. H. He, Y. C. Lin, B. Joffe, S. Kousik, et al. Sail: Faster-than-demonstration execution of imitation learning policies. arXiv preprint arXiv:2506.11948 , 2025. [25] C. Liu, H. Chen, S. H. Høeg, S. Yao, Y. Li, K. Hauser, and Y. Du. Flexible multitask learning with factorized diffusion policy, 2025. URL https://arxiv.org/abs/2512.21898 .[26] X. Han, M. Liu, Y. Chen, J. Yu, X. Lyu, Y. Tian, B. Wang, W. Zhang, and J. Pang. Re 3sim: Generating high-fidelity simulation data via 3d-photorealistic real-to-sim for robotic manipu-lation. arXiv preprint arXiv:2502.08645 , 2025. [27] A. Block, A. Jadbabaie, D. Pfrommer, M. Simchowitz, and R. Tedrake. Provable guarantees for generative behavior cloning: Bridging low-level stability and high-level behavior. In A. Oh, T. Naumann, A. Globerson, K. Saenko, M. Hardt, and S. Levine, editors, Advances in Neural Information Processing Systems , volume 36, pages 48534–48547. Curran Associates, Inc., 2023. URL https://proceedings.neurips.cc/paper_files/paper/2023/ file/97c903fbf21a7d863af2015d8803ca8f-Paper-Conference.pdf .[28] A. Malik, T. Henderson, and R. J. Prazenica. Trajectory generation for a multibody robotic system using the product of exponentials formulation. In AIAA Scitech 2021 Forum , page 2016, 2021. [29] M. Grotjahn and B. Heimann. Model-based feedforward control in industrial robotics. The International Journal of Robotics Research , 21(1):45–60, 2002. [30] C. An, C. Atkeson, J. Griffiths, and J. Hollerbach. Experimental evaluation of feedforward and computed torque control. In Proceedings. 1987 IEEE International Conference on Robotics and Automation , volume 4, pages 165–168. IEEE, 1987. [31] H. Zhou, W. Liao, X. Huang, Y. Tang, F. Otto, X. Jia, X. Jiang, S. Hilber, G. Li, Q. Wang, et al. Beast: Efficient tokenization of b-splines encoded action sequences for imitation learning. 
+
+arXiv preprint arXiv:2506.06072 , 2025. [32] A. J. Ijspeert, J. Nakanishi, H. Hoffmann, P. Pastor, and S. Schaal. Dynamical movement primitives: learning attractor models for motor behaviors. Neural computation , 25(2):328– 373, 2013. 10 [33] T. T. Zhang, D. Pfrommer, C. Pan, N. Matni, and M. Simchowitz. Action chunking and ex-ploratory data collection yield exponential improvements in behavior cloning for continuous control, 2025. URL https://arxiv.org/abs/2507.09061 .[34] P. Dierckx. Curve and surface fitting with splines . Oxford University Press, 1995. [35] P. Dierckx. Algorithms for smoothing data with periodic and parametric splines. Computer Graphics and Image Processing , 20(2):171–184, 1982. [36] P. Florence, C. Lynch, A. Zeng, O. A. Ramirez, A. Wahid, L. Downs, A. Wong, J. Lee, I. Mor-datch, and J. Tompson. Implicit behavioral cloning. In Conference on robot learning , pages 158–168. PMLR, 2022. [37] A. Mandlekar, D. Xu, J. Wong, S. Nasiriany, C. Wang, R. Kulkarni, L. Fei-Fei, S. Savarese, Y. Zhu, and R. Mart´ ın-Mart´ ın. What matters in learning from offline human demonstrations for robot manipulation. In arXiv preprint arXiv:2108.03298 , 2021. [38] S. Nasiriany, A. Maddukuri, L. Zhang, A. Parikh, A. Lo, A. Joshi, A. Mandlekar, and Y. Zhu. Robocasa: Large-scale simulation of everyday tasks for generalist robots. arXiv preprint arXiv:2406.02523 , 2024. 11 A Appendix 
+
+A.1 Implement Details B-spline action representation. We represent action trajectories using cubic B-splines with degree 
+
+k = 3 . In simulation, we follow standard benchmark settings and use a delta end-effector action space. In real-world experiments, we use absolute joint-position actions. 
+
+Adaptive b-spline fitting from demonstrations. We fit a B-spline to each demonstration trajectory using the adaptive knot insertion procedure in Alg. 1. For most tasks, we use a small fitting tolerance 
+
+ε = 0 .002 to preserve high-precision behaviors. For Push-T, we use ε = 1 because the action magnitude is substantially larger than in the other benchmarks, with values ranging roughly from 0
+
+to 512 .
+
+Model training of B-spline policy. We train B-spline policy model to predict a fixed-size parame-ter segment consisting of 16 knots and their corresponding control points, including six boundary-support knots. Because observations are not aligned to knot or control-point indices, at each obser-vation step, the model predicts the nearest future segment containing the next 16 knots and control points. In simulation, all models use the RoboMimic visual encoder. In real-world experiments, diffusion uses the same visual encoder, whereas the regression uses a DINOv2 visual encoder. 
+
+Model training of action-chunk policies. For a fair comparison, all action-chunk baseline policies (Diffusion/Regression) are also trained to predict 16 future actions. Each baseline is trained for the same number of epochs as its B-spline counterpart. The visual encoder is the same as B-spline policy. 
+
+DemoSpeedup. We implement the DemoSpeedup based on the diffusion policy. The method uses two key hyperparameters, which are the downsampling rates for the precision and non-precision phases. We found that downsampling the precision phase by a factor ≥ 2 prevents the policy from completing the task reliably. We therefore set the precision-phase downsampling rate to 1. For the non-precision phase, we use a downsampling rate of 4 for Cube Picking and Table Cleaning. We use 2 for Speed Stacking because it requires higher accuracy. 
+
+Controller. In simulation, actions are delta end-effector commands. We sample B-spline actions at 100 Hz, but we do not apply segment alignment because it does not have a clear physical interpre-tation for delta actions. In real-world experiments, actions are absolute joint positions. We sample actions from each predicted B-spline segment at 100 Hz. For phase alignment, we set the search window to [0 , λT inf ] with λT inf = umax (S)/2, where umax (S) denotes the segment horizon in the spline parameter domain. 
+
+Knot validity projection. A valid B-spline requires a nondecreasing knot vector, which standard imitation-learning regressors do not enforce. In practice predicted knots are almost always mono-tonic; for any knot ui that violates the constraint we apply ui ← max( ui, u i−1 + δ) with a small constant δ > 0, restoring validity with minimal perturbation. 
+
+Inference techniques. During inference, pipelined execution with segmentment alignment is ap-plied. Here we detailed the complete procedure in Algorithm 2. Push-T Score Compression Ratio 
+
+ε=0 .5 0.52 1.12 
+
+ε=1 0.65 1.34 
+
+ε=2 0.62 1.73 
+
+ε=4 0.63 2.36 
+
+ε=8 0.65 3.34    
+
+> Table 3: Ablation on fitting error tolerance. We report the success rate and the compression ratio under different maximum fitting errors ε.
+
+12 Algorithm 2 Inference pipeline 
+
+Input: policy π, speedup factor m, inference budget δbudget 
+
+State: current B-spline segment S, segment start time t0, in-flight inference flag in flight 1. Initialize: S ← π(orecent ), t0 ← now () , in flight ← false. 2. Loop (control at high rate): 
+
+(a) treal ← now () − t0, u ← m · treal (Speedup )(b) Execute a ← S(u) (Sample )(c) If (umax (S) − u) < δ budget and in flight = false: i. Launch asynchronous inference to obtain a new segment Snew ← π(orecent )
+
+ii. Set in flight ← true (d) On inference completion: let T inf be the measured inference latency. i. Compute alignment time t⋆ by Eq. (2) (using Snew and alast )ii. Swap S ← Snew 
+
+iii. Update t0 ← now () − t⋆ 
+
+> m
+
+(Segment align )iv. Set in flight ← false 
+
+A.2 Additional experiments results Ablation on fitting error tolerance. Representing actions with B-splines introduces a fitting tol-erance ε. This typically yields fewer knot and control point pairs than the original demonstrations. Tab. 3 reports success rate and compression ratio under different tolerances. We define the com-pression ratio as the number of original actions divided by the number of knot–control-point pairs. As ε increases, the compression ratio increases substantially while success rate remains relatively stable. This suggests that performance is not highly sensitive to ε within a reasonable range, and a moderately larger tolerance can reduce computational cost. 13

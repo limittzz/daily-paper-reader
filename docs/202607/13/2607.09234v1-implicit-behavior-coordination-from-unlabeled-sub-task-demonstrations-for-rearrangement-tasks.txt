@@ -1,0 +1,202 @@
+Title: Implicit-Behavior Coordination from Unlabeled Sub-Task Demonstrations for Rearrangement Tasks
+
+URL Source: https://arxiv.org/pdf/2607.09234v1
+
+Published Time: Mon, 13 Jul 2026 01:11:33 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Implicit-Behavior Coordination from Unlabeled Sub-Task Demonstrations for Rearrangement Tasks 
+
+Ahmed Shokry 1,2 Usama Ahmed Siddiquie 1 Sicong Pan 1,2 Maren Bennewitz 1,2 
+
+> 1
+
+Humanoid Robots Lab and Center for Robotics, University of Bonn, Germany 
+
+> 2
+
+Lamarr Institute for Machine Learning and Artificial Intelligence, Bonn, Germany 
+
+Abstract: 
+
+Long-horizon robotic rearrangement tasks are often treated as skill sequencing problems, requiring predefined skills, skill labels, or boundaries, and task-specific switching logic. Although effective, such explicit skill abstractions can become difficult to scale as the number of behaviors and the task horizon increase. We in-stead formulate rearrangement as implicit-behavior coordination from unlabeled sub-task demonstrations, where skill-like behaviors are learned directly from mixed behavior data and coordinated through value-guided action selection. Ex-periments in Habitat rearrangement tasks support this formulation in three ways. First, our method outperforms task-specific imitation baselines on more complex rearrangement tasks and approaches an oracle-planner baseline with behavior-cloned skills, while using no oracle task plan or skill-labeled full-task demon-strations. Second, ablations show that reliable critic-guided candidate selection is essential for coordinating multi-modal behaviors. Third, scaling experiments show that the method handles larger behavior repertoires and maintains stronger performance than task-specific imitation baselines as chained targets extend the horizon. These results suggest that explicit skill abstraction is not a prerequisite for long-horizon rearrangement, and that implicit-behavior coordination offers a promising data-driven alternative to explicit skill-based pipelines. 
+
+Keywords: Imitation Learning 
+
+## 1 Introduction 
+
+Long-horizon robotic rearrangement is often formulated as a skill sequencing problem [1, 2]. Arobot is assumed to possess a set of predefined skills, such as navigation, object interaction, picking, and placing, and the main challenge is to decide which skill to execute at each stage of the task. This formulation has led to effective systems based on modular skill libraries, task planners, high-level skill policies, or language-conditioned coordinators [3, 4, 5]. However, it also introduces a substantial engineering burden: skills must be manually defined, demonstrations must often be annotated with skill labels or boundaries, interfaces between skills must be specified, and switching logic must be designed or learned for each task family. As the number of skills grows or the task horizon becomes longer, maintaining this explicit coordination layer becomes increasingly difficult. In this work, we investigate whether explicit skill abstraction is a prerequisite for long-horizon rear-rangement. Rather than defining a skill library and learning a coordinator over discrete skill identi-ties, we formulate rearrangement as implicit-behavior coordination from unlabeled sub-task demon-strations. The demonstrations contain skill-like behaviors, but these behaviors are not exposed to the learning algorithm as explicit skill labels, skill-specific policies, or hand-designed transition rules. Our goal is to learn directly from this mixed unlabeled behavior data and coordinate the learned behaviors according to the current state and the desired final state. arXiv:2607.09234v1 [cs.RO] 10 Jul 2026 Figure 1: Overview of implicit-behavior coordination. The Flow Matching policy samples multiple candidate action chunks from a learned multi-modal distribution conditioned on the current observa-tion context. These candidates may correspond to different skill-like behaviors, but no skill identity or behavior label is provided. The critic scores each candidate according to the task objective and the action chunk with the highest expected return is chosen for execution in the environment. Repeating this procedure across task execution enables our framework to adaptively choose different skill-like behaviors depending on the current observation and task objective. Our contributions are threefold: (i) We introduce an implicit-behavior coordination formulation for learning long-horizon behavior coordination from unlabeled sub-task demonstrations, replacing ex-plicit skill sequencing with coordination over learned action candidates. (ii) We instantiate this for-mulation with a generative behavior model and value-guided action selection, as illustrated in Fig. 1, enabling coordination without complete-task trajectories, skill labels, or oracle task plans. (iii) We apply the framework to long-horizon robotic rearrangement as a testbed for studying whether explicit skill definitions and labels are necessary for behavior coordination. Through baseline comparisons, ablations, behavior-repertoire scaling, and chained-target horizon scaling, we show that implicit be-haviors learned from unlabeled sub-task demonstrations can be coordinated to solve complex tasks, scale to larger behavior repertoires, and remain effective over longer horizons. 
+
+## 2 Related Work 
+
+Explicit skill coordination for long-horizon rearrangement : A common approach to long-horizon rearrangement is to decompose the task into individual skills and coordinate them using either a task planner [1] or a learned high-level policy, such as Skill Transformer [6] and ASCS [4]. More recently, VLMs and LLMs have also been used for high-level coordination: WildLMa [5] and SayCan [2] apply an LLM to plan over a library of pretrained skills, DeCo [7] uses a VLM at test time to retrieve and schedule learned atomic skills for novel long-horizon tasks, and FALCON [8] proposes a foundation-model-based coordinator over decoupled locomotion and manipulation policies. These methods still rely on explicit skill abstractions and a separate coordination layer. 
+
+Generative policies for manipulation and rearrangement tasks : Recent generative policies for manipulation and rearrangement are mostly diffusion-based. Diffusion Policy [9] models vi-suomotor control with conditional action diffusion, while AC-DiT [10], M2Diffuser [11], and M4Diffuser [12] extend this idea to mobile manipulation and rearrangement. Flow-matching poli-cies such as PointFlowMatch [13] and [14] have also been used for manipulation tasks. However, these methods typically learn task-specific policies from complete-task or task-level demonstrations. In contrast, our method learns from sub-task trajectories and coordinates the resulting implicit be-haviors for long-horizon rearrangement. 
+
+Value-guided selection over generated actions : Recent work has shown that learned value func-tions can improve action selection from expressive policy models. V-GPS [15] uses a learned value function to re-rank sampled actions at test time, but evaluates candidates within the same task-level behavior. SfBC [16] combines a generative behavior model with in-sample planning for offline decision making. In contrast, our method extends this idea to long-horizon rearrangement with high-dimensional observations, action chunks, and mixed unlabeled sub-task demonstrations, where the critic must both coordinate implicit behaviors and propagate sparse reward across overlapping demonstrations. 23 Problem Formulation 
+
+We consider long-horizon robotic rearrangement in a partially observed setting. The initial object position and desired target position are provided, but the object may not be directly accessible, e.g., enclosed inside a receptacle, and no environment map or obstacle locations are given. Task objective is defined by placing the object at the target location. At each time step, the robot observes the relative positions of the object and target, arm joint positions, a binary gripper-holding indicator, and depth images from sensors mounted on the robot’s head and end effector. The action consists of base linear and angular velocities, incremental arm joint commands, and a binary gripper command. Unlike prior work that assumes complete task trajectories or explicit skills and coordination rules, we consider a more restrictive learning setting where the agent is given only unlabeled demonstrations of individual sub-tasks, such as navigation, receptacle opening, picking, and placing, together with the task objective. Each demonstration is a sequence of observations and actions, without sub-task labels, skill boundaries, or full-task ordering annotations. The goal is to learn a policy that maps current observations to robot actions and adaptively coordinates the behaviors present in the demonstration data according to the task objective. Because the training data contains only sub-task demonstrations rather than complete task executions, the main challenge is to learn not only the individual behaviors but also how to coordinate them toward the sparse rearrangement objective. 
+
+## 4 Our Approach 
+
+We propose a framework that combines a multi-modal generative policy with a learned critic for adaptive coordination, as illustrated in Fig. 1. Unlabeled demonstrations from different sub-tasks contain overlapping observations with different corresponding actions. To model this multi-modality, we use a conditional Flow Matching policy [17], which generates multiple candidate ac-tions corresponding to different plausible behaviors. The critic evaluates these candidates under the task objective and selects the one with the highest value. Repeating this process allows the robot to coordinate different behaviors without complete task trajectories or hand-crafted coordination rules. 
+
+4.1 Multi-Modal Flow Matching Policy 
+
+We train a conditional Flow Matching policy with a transformer backbone on the mixed sub-task demonstrations. Each demonstration trajectory is converted into context–chunk samples (sn, a n),where sn denotes a context of the previous C observations and an the corresponding chunk of H
+
+future actions; construction details are provided in the appendix. Using action chunks improves temporal consistency and avoids querying the generative policy at every control step. For each training sample, let an denote the expert action chunk and let x0 ∼ N (0 , I ) be Gaussian noise of the same shape. We construct the interpolated input 
+
+xτ = (1 − τ )x0 + τ a n, τ ∼ U (0 , 1) , (1) with target velocity 
+
+v⋆ = an − x0. (2) The observation context sn is encoded into condition tokens using visual encoders for the depth images and a linear projection for the non-visual observations. Conditioned on these tokens, the policy predicts the velocity field from xτ and τ , and is trained by minimizing 
+
+LFM = E(sn,a n)∼D , x 0,τ 
+
+h
+
+∥fθ (xτ , τ, s n) − v⋆∥22
+
+i
+
+. (3) At inference, we initialize K action chunks from Gaussian noise and denoise them with the context-conditioned policy. The generated chunks are then evaluated by the critic, and the chunk with the highest predicted value is selected for execution. Additional architecture details are provided in the appendix. 3(a) Placing-like behav-ior.    
+
+> (b) Navigation-like be-havior.
+> (c) Returns without in-sample planning.
+> (d) Returns with in-sample planning.
+
+Figure 2: The placing-like demonstration directly accesses the sparse reward and receives non-zero returns (a). The navigation-like demonstration with no access to the sparse reward has zero return values (b). With in-sample planning, overlapped contexts allow the Flow Matching policy to gener-ate high-value placing actions within the navigation context, inducing non-zero returns that are then propagated backward through the navigation trajectory (d). Repeating this process over training it-erations gradually spreads value information across reachable chains of overlapped demonstrations. 
+
+4.2 Critic Network for Adaptive Behavior Selection and Coordination 
+
+The critic Q(sn, a n) estimates the expected return, that is, the discounted sum of future rewards, of executing an action chunk an at observation context sn with respect to the task objective. Training the critic requires return targets for context–chunk pairs in the dataset. However, reward is sparse and only available at the final target state, so only demonstrations that directly reach this state receive non-zero return targets. To propagate reward information across different demonstrations, we adopt the in-sample planning method proposed in [16] and modified it to our context–chunk settings. The return target of each context–chunk sample is updated as 
+
+R(i) 
+
+> n
+
+= rn + γ max 
+
+
+
+R(i) 
+
+> n+
+
+, V (i−1) 
+
+> n+
+
+
+
+, V (i−1)  
+
+> n+
+
+:= Ea∼π(·| sn+ )Qϕ(sn+ , a ), (4) and the critic is trained by minimizing the squared error between the predicted value Qϕ(sn, a n)
+
+and the updated return target Rn. Here, Rn is the updated return target for the current context– chunk sample, rn is the immediate reward, Rn+ is the return of the next applicable context–chunk sample in the same trajectory, Vn+ is the value of the next context observation sn+ , and i denotes the in-sample planning iteration. More information about the index n+ is provided in the appendix. This update rule propagates high return values in two ways. First, reward information is propagated backward through the same demonstration trajectory via Rn+ . Second, at overlapped contexts, the multimodal policy can generate high-value actions aligned with other demonstrations, producing a large next context value Vn+ . This allows reward information to propagate across demonstrations and then back to earlier samples. A concrete rearrangement example is illustrated in Fig. 2. The placing-like demonstration directly accesses the sparse reward and therefore has non-zero returns, whereas the navigation-like demon-stration has zero return values under standard return propagation. Brighter color represents a rela-tively higher return value. At overlapped observation contexts, the Flow Matching policy generates both placing-like and navigation-like actions, implicitly stitching the demonstrations together. With in-sample planning, the high return placing-like actions induce a high next context value for the navigation-like demonstration, which is then propagated backward to earlier steps and produces non-zero returns. Repeating this procedure over in-sample planning iterations gradually propagates sparse reward information through reachable chains of overlapped demonstration trajectories. 4We also modified the computation of the next context value Vn+ . Instead of the softmax-weighted aggregation used in [16], we use an uncertainty-weighted average over the K candidate action chunks generated by the Flow Matching policy at the next observation context s+ 
+
+> n
+
+. For each candi-date ai, the critic is evaluated multiple times using Monte Carlo dropout to obtain the variance σ2 
+
+> i
+
+.The weight of each candidate and the value of the next context are computed as follows: 
+
+wi = (σ2 
+
+> i
+
+)−1
+
+PKj=1 (σ2 
+
+> j
+
+)−1 , Vn+ =
+
+> K
+
+X
+
+> i=1
+
+wi Qϕ(s+ 
+
+> n
+
+, a i) (5) This reduces the influence of anomalous high-value action chunks that are not supported by the demonstrations, such as early placing actions generated away from the target position, and leads to more reliable return propagation. At the same time, it assigns larger next return values to observation contexts for which the policy generates a greater number of reliable high-value actions. 
+
+## 5 Experiments 
+
+The goal of our experiments is to evaluate whether implicit-behavior coordination can serve as a scalable alternative to explicit skill-based coordination for long-horizon rearrangement. We orga-nize the evaluation around three questions. First, can the proposed method coordinate behaviors from unlabeled sub-task demonstrations and outperform learning-based baselines that rely on skill-labeled complete-task demonstrations? Second, does the method remain effective as the behavior repertoire grows, without adding skill labels or task-specific coordination logic? Third, can the same framework scale to longer horizons with chained rearrangement objectives that require repeated be-havior coordination? 
+
+5.1 Experimental Setup Tasks and evaluation. We use Habitat 2.0 with the ReplicaCAD dataset and the Fetch robot in home-like environments [18]. We evaluate three rearrangement tasks with increasing coordination complexity: Nav-Place , where the robot already holds the object and must navigate to the target and place it; Nav-Pick-Nav-Place , where the robot must navigate to the object, pick it, navigate to the target, and place it; and Nav-Open-Pick-Nav-Place , where the robot must navigate to a drawer, open it, pick the object from inside, navigate to the target, and place it. We use the M3 [1] train-ing split for data collection and the validation split for evaluation. The validation split contains 100 episodes from the same training scenes but with different object locations. All methods are evaluated on the same validation episodes with three random seeds, a 5,000-step episode limit (sim-ilar to [6]), and task success rate as the main metric, where success means placing the object at the target position. 
+
+Baselines. We compare against baselines with different levels of skill supervision and privileged coordination. Skill Transformer (ST) [6] is trained by behavior cloning on skill-labeled complete-task demonstrations and predicts both a high-level skill and a low-level action. Oracle Planner + RL Skills corresponds to the M3 oracle system [1], which uses privileged environment information to compute the correct high-level skill sequence and executes each skill with a separately trained reinforcement-learning policy; we report it as an upper-bound reference rather than a fair imitation-learning baseline. Oracle Planner + BC Skills uses the same oracle skill sequence but replaces the RL skills with behavior-cloned skill policies, isolating the effect of privileged skill sequencing from the low-level policy-learning algorithm. This baseline still assumes explicit skill decomposition and access to the correct skill sequence at test time. 
+
+Training data. For our method, we collect successful sub-task demonstrations using the pretrained M3 skill policies. The demonstration pool contains six behavior modes: navigation to the pick position, navigation to the place position, picking, drawer opening, picking from a drawer, and placing. We collect 6,400 successful demonstrations from the training split for each behavior mode and mix them together to train the Flow Matching policy without skill labels. Skill identities are 5Table 1: Success rate (%, mean ± std) on rearrangement tasks with increasing coordination com-plexity. Oracle-planner baselines use privileged task plans and explicit skill decomposition. Skill Transformer is trained separately for each task type using skill-labeled complete-task demonstra-tions. Our method shows strong coordination using unlabeled sub-task demonstrations.                             
+
+> Method Coordination / Supervision Nav-Place Nav-Pick-Nav-Place Nav-Open-Pick-Nav-Place
+> Privileged explicit-skill systems
+> Oracle Planner + RL Skills Oracle plan + RL skill policies 100 ±0.0 95.7 ±0.5 93.0 ±2.2 Oracle Planner + BC Skills Oracle plan + BC skill policies 97.0 ±0.8 80.3 ±1.2 70.0 ±4.5
+> Task-specific full-task imitation
+> ST Nav-Place Skill-labeled full-task demos 91.0 ±1.0 ––ST Nav-Pick-Nav-Place Skill-labeled full-task demos –65.6 ±1.2 –ST Nav-Open-Pick-Nav-Place Skill-labeled full-task demos ––58.5 ±2.0
+> Implicit behavior coordination
+> Ours Unlabeled sub-task demos 89.3 ±2.0 75.3 ±2.5 68.5 ±2.4
+
+used only for data collection and for training explicit-skill baselines; they are not provided to our method. The critic is trained using a sparse task reward defined by whether the object is placed at the target location. The same sub-task demonstrations are used to train the low-level policies for Oracle Planner + BC Skills , while Skill Transformer is trained following its original procedure using 10,000 successful skill-labeled complete-task demonstrations collected with the Oracle Planner + RL Skills system. 
+
+5.2 Comparison to Baselines 
+
+Table 1 reports the success rates on the three rearrangement tasks. Compared with the task-specific Skill Transformer baselines, our method achieves comparable performance on Nav-Place and sub-stantially higher success rates on the more complex Nav-Pick-Nav-Place and Nav-Open-Pick-Nav-Place tasks. This suggests that implicit behavior coordination is particularly beneficial when the task requires multiple behavior transitions. A closer inspection shows that many Skill Transformer fail-ures occur during picking and placing. We attribute this partly to its deterministic action prediction, which cannot effectively represent the multimodal action distributions that arise both across differ-ent behaviors and within the same behavior mode. In contrast, our Flow Matching policy generates multiple plausible action chunks, and the critic selects among them according to the task objective. The privileged explicit-skill baselines provide useful references for interpreting these results. Oracle Planner + RL Skills achieves the highest success rate because it has access to privileged environ-ment information, the correct skill sequence, and reinforcement-learning skill policies. Replacing the RL skills with behavior-cloned skills leads to a clear drop in performance for Oracle Planner + BC Skills , which is consistent with prior observations in Skill Transformer [6]. Although Oracle Planner + BC Skills still outperforms our method on simpler tasks, it relies on an oracle task plan and explicit per-skill policies. On the most complex Nav-Open-Pick-Nav-Place task, our method approaches its performance without access to the oracle plan, explicit skill decomposition, or skill labels. We attribute this to the adaptive behavior selection capability of our method, which allows it to select alternative action chunks after intermediate failures, whereas the oracle-BC baseline fol-lows a fixed predefined plan and can fail when any individual skill execution fails. 
+
+5.3 Ablation Study 
+
+Table 2 reports ablations on the most challenging Nav-Open-Pick-Nav-Place task. Using a single generated action without critic-based selection achieves only 61.5% success, and randomly select-ing among multiple generated candidates provides little improvement. This indicates that action diversity alone is insufficient for reliable coordination. Replacing random selection with a critic trained using softmax aggregation also performs poorly, suggesting that critic training is sensitive to both rarely occurred and unsupported high-value candidates in this sparse-reward setting. Our uncertainty-weighted critic achieves the best performance, improving success to 68.5%, demon-strating the importance of value-guided action selection with reliable return propagation. 6Table 2: Ablation on Nav-Open-Pick-Nav-Place . We evaluate the role of multi-candidate genera-tion, critic-based action selection, and the proposed uncertainty-weighted critic. Results show that implicit coordination requires reliable value-guided selection.      
+
+> Variant Success Rate (%)
+> Single candidate, no critic 61.5 ±2.4 Multiple candidates, random selection 62.0 ±2.6 Multiple candidates + softmax critic 61.3 ±1.7 Multiple candidates + uncertainty-weighted critic (Ours) 68.5 ±2.3
+
+Table 3: Behavior repertoire scaling. Task-specific agents are trained only on the behavior modes required by each task, while the full-repertoire agent is trained on the five behavior modes required for the most complex task, Nav-Open-Pick-Nav-Place . Similar performance indicates that the proposed framework can absorb additional behavior modes without substantial degradation.             
+
+> Task Required Behavior Modes Task-Specific Agent Full-Repertoire Agent
+> Nav-Place 287.5 ±2.1 89.3 ±2.0 Nav-Pick-Nav-Place 478.5 ±2.1 76.3 ±1.5 Nav-Open-Pick-Nav-Place 569.5 ±0.7 68.5 ±2.3
+
+5.4 Behavior Repertoire Scaling 
+
+To evaluate whether the proposed framework can scale as the behavior repertoire grows, we com-pare task-specific agents with a full-repertoire agent. Each task-specific agent is trained only on demonstrations from the behavior modes required for that task. The full-repertoire agent is trained on demonstrations from all six available behavior modes, and is evaluated on all three tasks. Table 3 shows that the full-repertoire agent achieves performance close to the corresponding task-specific agents across all tasks. This suggests that adding additional unlabeled behavior demonstra-tions does not substantially degrade coordination performance, and that the proposed method can select task-relevant behaviors from a larger mixed demonstration pool without adding skill labels or task-specific coordination logic. 
+
+5.5 Task-Horizon Scaling with Chained Targets 
+
+The previous experiments evaluate single-target rearrangement tasks, where each episode terminates after the object is placed at one target location. To study whether the proposed framework remains effective over longer horizons, we construct chained-target tasks in which the robot must complete multiple rearrangement objectives sequentially within a single episode. After the object is success-fully placed at the current target, a new target is issued and the robot continues execution without resetting the environment. This setting increases the number of required behavior transitions and introduces stronger error accumulation than single-target rearrangement. We build this evaluation on the Nav-Pick-Nav-Place task because it naturally supports multiple object-target goals and follows the tidy-house-style sequential rearrangement setting used in M3. In contrast, the Nav-Open-Pick-Nav-Place task contains only a small number of articulated receptacle targets, making it less suitable for evaluating longer chained target sequences. Table 4 reports the success rate of completing the sequence up to each chained target. Success decreases for all methods as the number of chained targets increases, reflecting the longer horizon and accumulated execution errors. The privileged Oracle Planner + RL Skills baseline remains the strongest method, as expected, because it uses oracle task plans and RL-trained skills. 
+
+Oracle Planner + BC Skills also benefits from the oracle skill sequence, but its performance drops as the chain length increases. Skill Transformer degrades sharply, dropping from 66% for one target to 1% for five targets. In contrast, our method maintains 35% success at five targets without oracle task plans, explicit skill decomposition, or skill-labeled full-task demonstrations. These re-sults suggest that value-guided implicit-behavior coordination is more robust to repeated behavior transitions and accumulated execution errors than task-specific full-task imitation. 7Table 4: Task-horizon scaling on chained-target Nav-Pick-Nav-Place tasks. Each episode requires the robot to complete multiple object-target rearrangement goals sequentially without resetting the environment. We report the success rate (%) of completing the sequence up to each target. Our implicit-behavior coordination remains more robust as chained targets accumulate errors.                          
+
+> Method 1 Target 2 Targets 3 Targets 4 Targets 5 Targets
+> Privileged explicit-skill systems
+> Oracle Planner + RL Skills 95.6 ±0.5 88.0 ±1.7 78.0 ±3.6 68.6 ±2.8 62.0 ±1.7 Oracle Planner + BC Skills 80.5 ±0.7 69.5 ±0.7 61.0 ±1.4 49.0 ±4.2 42.0 ±5.0
+> Task-specific full-task imitation
+> ST Nav-Pick-Nav-Place 65.0 ±1.4 23.5 ±2.1 8.0 ±2.8 2.0 ±1.4 0.5 ±0.7
+> Implicit-behavior coordination
+> Ours 76.0 ±2.8 62.5 ±4.9 50.5 ±0.7 43.5 ±3.5 32.0 ±4.2
+
+5.6 Real-world Validation 
+
+We additionally collect real-world data on a UR3e tabletop platform to examine whether the pro-posed framework can be instantiated beyond the simulated mobile-manipulation benchmark. The dataset contains mixed demonstrations of basic manipulation behaviors, including opening the drawer, picking an object with a suction gripper, and placing the object inside the drawer. This setup differs from simulation in robot embodiment, sensing configuration, action space, and behav-ior repertoire, and is intended as an applicability check rather than a full benchmark comparison. Results provide preliminary evidence that the learned policy can execute the behavior sequence un-der real-world sensing and control noise. Implementation details, qualitative rollouts, and videos are provided in the appendix and supplementary material. 
+
+## 6 Limitation 
+
+Our method depends on sufficient coverage and overlap among sub-task demonstrations; sparse or poorly connected data can limit value propagation and behavior stitching. Our current experiments also cover a limited behavior repertoire, and larger sets of articulated-object interactions, recovery behaviors, and diverse environments remain to be tested. Finally, in the real-world setup, we do not have information about the target position and it is not included in the observations as in simulation. The target position can be only inferred through the sparse reward. That is why placing the object at different position, requires training a new critic with the new sparse reward. However, there is no need to collect more demonstrations or retrain the Flow Matching policy. 
+
+## 7 Conclusion and Outlook 
+
+We presented implicit-behavior coordination, a formulation for learning long-horizon behavior co-ordination from unlabeled sub-task demonstrations. Our experiments suggest that long-horizon rear-rangement does not necessarily require an explicit skill sequencing interface: trained only on mixed unlabeled sub-task demonstrations, the proposed framework allows efficient behavior transitions to emerge through value-guided selection over generated action candidates. The results also highlight a practical gap between two common alternatives. Privileged oracle-planner systems provide strong performance, but they rely on information that is difficult to obtain in realistic settings. Task-specific full-task imitation avoids oracle planning at test time, but scales poorly as the task horizon increases and requires skill-labeled complete-task demonstrations for each task family. Implicit-behavior coordination offers a middle ground: it avoids oracle task plans and skill-labeled full-task data while maintaining stronger performance over larger behavior repertoires and longer chained-target horizons. These findings point toward data-driven implicit coordination as a complementary alternative to explicit skill-based systems. Future progress will require broader behavior datasets, stronger value grounding under sparse objectives, and robust object and target grounding for real-world rearrangement. 8References 
+
+[1] J. Gu, D. S. Chaplot, H. Su, and J. Malik. Multi-skill mobile manipulation for object rear-rangement. In Proc. of the Intl. Conf. on Learning Representations , 2023. [2] M. Ahn, A. Brohan, N. Brown, Y. Chebotar, O. Cortes, B. David, C. Finn, K. Gopalakrishnan, K. Hausman, A. Herzog, D. Ho, J. Hsu, J. Ibarz, B. Ichter, A. Irpan, E. Jang, R. M. J. Ru-ano, K. Jeffrey, S. Jesmonth, N. J. Joshi, R. C. Julian, D. Kalashnikov, Y. Kuang, K.-H. Lee, S. Levine, Y. Lu, L. Luu, C. Parada, P. Pastor, J. Quiambao, K. Rao, J. Rettinghouse, D. M. Reyes, P. Sermanet, N. Sievers, C. Tan, A. Toshev, V. Vanhoucke, F. Xia, T. Xiao, P. Xu, S. Xu, and M. Yan. Do as i can, not as i say: Grounding language in robotic affordances. In Proc. of Conf. on Robot Learning (CoRL) , 2022. [3] Z. Li, Y. Niu, Y. Su, H. Liu, and Z. Jiao. Dynamic planning for sequential whole-body mo-bile manipulation. In 2024 IEEE 19th Conference on Industrial Electronics and Applications (ICIEA) , 2024. [4] N. Yokoyama, A. Clegg, J. Truong, E. Undersander, T.-Y. Yang, S. Arnaud, S. Ha, D. Batra, and A. Rai. Asc: Adaptive skill coordination for robotic mobile manipulation. IEEE Robotics and Automation Letters (RA-L) , 2024. [5] R.-Z. Qiu, Y. Song, X. Peng, S. A. Suryadevara, G. Yang, M. Liu, M. Ji, C. Jia, R. Yang, X. Zou, et al. Wildlma: Long horizon loco-manipulation in the wild. In Proc. of the IEEE Intl. Conf. on Robotics & Automation (ICRA) , 2025. [6] X. Huang, D. Batra, A. Rai, and A. Szot. Skill transformer: A monolithic policy for mobile manipulation. In Proc. of the IEEE Intl. Conf. on Computer Vision (ICCV) , 2023. [7] Z. Chen, J. Yin, Y. Chen, J. Huo, P. Tian, J. Shi, Y. Hou, Y. Li, and Y. Gao. Deco: Task decom-position and skill composition for zero-shot generalization in long-horizon 3d manipulation. 
+
+IEEE Robotics and Automation Letters (RA-L) , 2026. [8] C. He, G. Sun, Y. Bai, J. Lu, J. Zhao, and G. Sartoretti. Falcon: Actively decoupled visuomotor policies for loco-manipulation with foundation-model-based coordination, 2025. URL https: //arxiv.org/abs/2512.04381 .[9] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song. Diffusion policy: Visuomotor policy learning via action diffusion. Intl. Journal of Robotics Research (IJRR) , 2025. [10] S. Chen, J. Liu, S. Qian, H. Jiang, Z. Liu, C. Gu, X. Li, C. Hou, P. Wang, Z. Wang, et al. Ac-dit: Adaptive coordination diffusion transformer for mobile manipulation. Advances in Neural Information Processing Systems , 38:64008–64036, 2026. [11] S. Yan, Z. Zhang, M. Han, Z. Wang, Q. Xie, Z. Li, Z. Li, H. Liu, X. Wang, and S.-C. Zhu. M 2 diffuser: Diffusion-based trajectory optimization for mobile manipulation in 3d scenes. IEEE Trans. on Pattern Analalysis and Machine Intelligence (TPAMI) , 2025. [12] J. Dong, L. Zhang, L. Zhang, Y. Ling, Y. Fu, K. Bai, Z.-C. M´ arton, Z. Bing, Z. Chen, A. C. Knoll, et al. M4diffuser: Multi-view diffusion policy with manipulability-aware control for robust mobile manipulation. arXiv preprint arXiv:2509.14980 , 2025. [13] E. Chisari, N. Heppert, M. Argus, T. Welschehold, T. Brox, and A. Valada. Learning robotic manipulation policies from point clouds with conditional flow matching. Proc. of Conf. on Robot Learning (CoRL) , 2024. [14] D. Soleymanzadeh, X. Liang, and M. Zheng. Flow motion policy: Manipulator motion plan-ning with flow matching models. arXiv preprint arXiv:2604.07084 , 2026. 9[15] M. Nakamoto, O. Mees, A. Kumar, and S. Levine. Steering your generalists: Improving robotic foundation models via value guidance. In Proc. of Conf. on Robot Learning (CoRL) , 2024. [16] H. Chen, C. Lu, C. Ying, H. Su, and J. Zhu. Offline reinforcement learning via high-fidelity generative behavior modeling. Proc. of the Intl. Conf. on Learning Representations , 2023. [17] Y. Lipman, R. T. Q. Chen, H. Ben-Hamu, M. Nickel, and M. Le. Flow matching for generative modeling. In Proc. of the Intl. Conf. on Learning Representations , 2023. [18] A. Szot, A. Clegg, E. Undersander, E. Wijmans, Y. Zhao, J. Turner, N. Maestre, M. Mukadam, D. Chaplot, O. Maksymets, A. Gokaslan, V. Vondrus, S. Dharur, F. Meier, W. Galuba, A. Chang, Z. Kira, V. Koltun, J. Malik, M. Savva, and D. Batra. Habitat 2.0: training home assistants to rearrange their habitat. In Proc. of the Conf. on Neural Information Processing Systems (NIPS) , 2021. 10

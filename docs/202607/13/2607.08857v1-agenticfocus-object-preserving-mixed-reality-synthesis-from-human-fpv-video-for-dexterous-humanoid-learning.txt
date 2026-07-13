@@ -1,0 +1,169 @@
+Title: AgenticFocus: Object-Preserving Mixed Reality Synthesis from Human FPV Video for Dexterous Humanoid Learning
+
+URL Source: https://arxiv.org/pdf/2607.08857v1
+
+Published Time: Mon, 13 Jul 2026 00:08:04 GMT
+
+Number of Pages: 4
+
+Markdown Content:
+# AgenticFocus: Object-Preserving Mixed Reality Synthesis from Human FPV Video for Dexterous Humanoid Learning 
+
+Iaroslav Kolomiets 1,2* Miguel Altamirano Cabrera 1,2† Artem Lykov 1,2‡ Jeffrin Sam 1§ 
+
+Dmitrii Iarchuk 1,2¶ Yara Mahmoud 1|| Daniia Zinniatullina 1,2** Mikhail Konenkov 1,2†† 
+
+Dzmitry Tsetserukou 1‡‡ 
+
+> 1
+
+Intelligent Space Robotics Lab, Skolkovo Institute of Science and Technology, Moscow, Russian Federation 
+
+> 2
+
+R&D Center, MWS, Moscow, Russian Federation 
+
+Figure 1: AgenticFocus converts human FPV videos into robot-trainable mixed-reality demonstrations by restoring occluded objects, retargeting full-hand motion, and producing synchronized visual-action data. 
+
+ABSTRACT 
+
+Human egocentric video is a scalable supervision source for hu-manoid policy learning, but current pipelines struggle with hand-object occlusion, oversimplified motion, or specialized capture hardware. We introduce AgenticFocus , a Mixed Reality synthe-sis pipeline that converts ordinary first-person-view human videos into robot-trainable demonstrations by restoring occluded object geometry, reconstructing full-hand motion, and retargeting it to a humanoid embodiment through camera-relative alignment and lay-ered compositing. The resulting dataset pairs focused visual ob-servations with synchronized robot actions and states. AgenticFo-cus achieves lower trajectory error and smoother wrist motion than cross-embodiment baselines, with SPARC scores of −5.18 versus 
+
+−5.56 and −6.05. 
+
+Index Terms: Mixed Reality, Diminished Reality, Human-to-Robot Demonstration, Dexterous Manipulation, Humanoid Robots, Cross-Embodiment Retargeting. 
+
+1 INTRODUCTION 
+
+Recent progress in Physical AI has made one limitation increas-ingly clear: the next frontier is not only better models but also bet-
+
+> *
+
+e-mail: iaroslav.kolomiets@skoltech.ru 
+
+> †
+
+e-mail: m.altamirano@skoltech.ru 
+
+> ‡
+
+e-mail: Artem.Lykov@skoltech.ru 
+
+> §
+
+e-mail: jeffrin.sam@skoltech.ru 
+
+> ¶
+
+e-mail: Dmitrii.Iarchuk@skoltech.ru 
+
+> ||
+
+e-mail: Yara.Mahmoud@skoltech.ru 
+
+> **
+
+e-mail: daniia.zinniatulina@skoltech.ru 
+
+> ††
+
+e-mail: mikhail.konenkov@skoltech.ru 
+
+> ‡‡
+
+e-mail: d.tsetserukou@skoltech.ru 
+
+ter supervision. Across Vision-Language-Action (VLA) policies, world-action models, and related visuomotor architectures, perfor-mance ultimately depends on access to large amounts of robot-usable visual and action data [3, 8, 23]. Yet for dexterous hu-manoids, such data remains exceptionally difficult to obtain. Tele-operation is costly, wearable capture systems are cumbersome, and embodiment-specific data collection does not scale across plat-forms [16, 22, 6]. By contrast, human egocentric video is already abundant: it captures diverse object interactions in natural environ-ments, often at internet scale, and therefore represents one of the most promising untapped supervision sources for humanoid ma-nipulation [4, 6, 9]. The challenge is that human video is not robot data. Con-verting a first-person human demonstration into a training signal for a humanoid policy requires bridging three coupled gaps. The first is a viewpoint gap : human demonstrations are captured from head- or chest-mounted cameras, whereas humanoid observations are defined in robot-centered frames [9, 12, 6]. The second is an 
+
+interaction-region gap : during dexterous manipulation, the hand frequently occludes the manipulated object, precisely at the con-tact regions where geometry, boundaries, and local depth rela-tionships are most important for control. Conventional actor re-moval, inpainting, or generative editing often fail at exactly these regions, corrupting the visual evidence that downstream policies most need [9, 12, 17, 11]. The third is an action grounding gap :even when robot-like observations can be synthesized, they are of-ten not paired with embodiment-consistent actions and states suit-able for policy learning [12, 17, 22]. A growing body of work has begun to address portions of this pipeline. DexCap demonstrates that high-quality dexterous su-pervision can be collected with specialized motion-capture hard-ware [22]. EgoDex and EgoEngine show the value of richer ego-centric sensing setups for humanoid learning [6, 12]. M asquerade, EgoEngine, and related cross-embodiment video editing methods arXiv:2607.08857v1 [cs.RO] 9 Jul 2026 further establish that human demonstrations can be transformed into robot-like observations [9, 12, 17, 11]. However, these ap-proaches still leave open a critical regime: ordinary monocular FPV video for dexterous humanoid learning. Some methods rely on dedicated capture hardware, stereo sensing, or scene-specific reconstruction [22, 6, 12]. Others simplify human interaction to gripper-level abstractions, or degrade object geometry under heavy hand-object occlusion [9]. As a result, existing systems do not yet provide a robust path from ordinary human video to the focused visual-action supervision required by multi-fingered hu-manoid policies [12, 17, 6]. This gap is especially consequential in modern agentic robot systems, where high-level reasoning and low-level control are of-ten separated. A deliberative module identifies goals, relevant ob-jects, and task context, while a reactive policy executes fine-grained motion [1, 7, 5]. In this setting, the controller does not require a complete reconstruction of the full scene; it requires a focused representation of task-relevant objects, local contact geometry, and embodiment-consistent motion. We therefore formulate human-to-humanoid transfer as Mixed Reality synthesis: preserve the physi-cal interaction structure, replace the embodiment, and produce su-pervision in the form required by reactive control [13, 15, 14, 10]. In this paper, we present AgenticFocus , a structured Mixed Re-ality pipeline for converting ordinary human FPV video into robot-trainable demonstrations for dexterous humanoids. The central idea is to decouple scene semantics from embodiment. We first identify and track task-relevant objects across the sequence. Because visi-ble masks alone are incomplete under hand occlusion, we restore stable object templates after human removal, preserving full ob-ject geometry rather than only the visible fragments. In parallel, we reconstruct full-hand human motion and retarget it through a camera-relative formulation that aligns the demonstration with the robot’s virtual viewpoint. Finally, we compose the restored scene and retargeted robot through layered rendering, yielding visually stable interactions with plausible depth ordering between manipu-lated objects and robot fingers near contact. The result is not merely an edited video, but a synchronized representation that couples focused visual observations with robot actions and camera-relative states. This makes ordinary FPV hu-man video a practical supervision source for humanoid visuomo-tor learning, while avoiding the capture burden of motion-capture gloves, stereo rigs, and scene-specific digital twins [22, 6, 12]. Al-though the experiments in this paper focus on reactive humanoid control, the broader implication is more general: AgenticFocus ad-dresses a central data-conversion bottleneck in Physical AI by trans-forming abundant human video into embodiment-consistent visual-action supervision [9, 12, 17, 16, 8]. Our contributions are threefold. First, we introduce a focused Mixed Reality synthesis pipeline that converts ordinary human FPV video into robot-trainable demonstrations by combining task-relevant object selection, object restoration under occlusion, and humanoid mixed-reality compositing. Second, we propose full-hand cross-embodiment retargeting for dexterous humanoids, re-constructing and transferring full-hand human motion to a multi-fingered embodiment through camera-relative alignment, rather than collapsing demonstrations to simplified gripper-level interac-tions. Third, we design a layered, object-preserving compositing strategy for contact-rich manipulation that preserves manipulated object geometry and near-contact depth relationships, producing synchronized visual and action/state data suitable for training re-active humanoid visuomotor policies. 
+
+2 METHOD 
+
+2.1 Overview 
+
+AgenticFocus converts ordinary human FPV manipulation videos into synchronized humanoid training demonstrations consisting of (i) focused visual observations in which human hands are replaced 
+
+Figure 2: Human-to-humanoid dataset conversion in AgenticFo-cus: human FPV manipulation, object-centric representation, and humanoid mixed-reality rendering. by dexterous robot hands while task-relevant objects are preserved, and (ii) the corresponding robot action and state trajectories. The pipeline is guided by a simple principle: preserve scene semantics at the object level while transferring embodiment at the manipulator level, as illustrated in Fig. 2. Given an input egocentric video, the method first identifies the task-relevant interaction object and tracks it across the sequence. It then removes the human actor while preserving object geometry un-der occlusion, reconstructs full-hand human motion, retargets it to a humanoid embodiment in a camera-relative frame, and synthesizes the final output through layered mixed-reality compositing. This decomposition avoids end-to-end generative translation and instead produces deterministic, robot-trainable visual-action pairs. 
+
+2.2 Object-Centric Restoration 
+
+The first stage isolates the manipulated object from the full hu-man video. A vision-language model selects the task-relevant ob-ject from the scene, after which a SAM-style segmentation model tracks the object mask across frames. This produces per-frame ob-ject masks, RGBA object crops, and debugging videos for mask verification. In practice, visible object masks alone are insufficient: when the human hand occludes the object, the observed mask con-tains only the visible fragments of the object rather than its full geometry. To preserve the manipulated object during human removal, we build an object-preserving inpainting mask instead of directly eras-ing the full foreground. Let Mhand (t) denote the human hand or arm mask at frame t, and let Mobj (t) denote the target-object mask. We define the inpainting region as 
+
+Minpaint (t) = Mhand (t) ∩ ¬ Mobj (t), (1) so that only actor pixels outside the protected object region are re-moved. We implement object and arm tracking with SAM2 [20], and feed the resulting inpainting masks to E2FGVI-HQ [10] to re-construct the background after actor removal. Background inpainting alone is not sufficient for stable contact-rich synthesis. Even after the actor is removed, residual hand arti-facts, partial object remnants, or boundary flicker may remain near the interaction region. We therefore restore a stable object tem-plate from a clean frame and reinsert it during final compositing. The template provides object appearance and geometry, while the per-frame object masks are used to track its spatial placement over time. This separation reduces ghosting, suppresses hand-induced boundary artifacts, and preserves full object geometry even when the source object is heavily occluded. 
+
+2.3 Full-Hand Humanoid Retargeting 
+
+In parallel, the method reconstructs human hand motion and trans-fers it to a dexterous humanoid embodiment. Human hand pose is estimated frame-by-frame using a 3D hand reconstruction model; in our implementation, finger and wrist motion are recovered using WiLoR/HaMeR-style modules [19, 18]. The recovered hand topol-ogy is then mapped to the Unitree G1 arms and BrainCo dexterous hands through inverse kinematics in MuJoCo [21]. A key challenge is that human egocentric motion is defined in the camera frame of the demonstrator, whereas the target robot must execute motion relative to its own embodiment and viewpoint. To bridge this gap, retargeting is formulated in a camera-relative coor-dinate system. Let Phuman denote a 3D point in the human camera frame. We map it into the robot’s virtual camera frame through 
+
+Probot = β Rcam Phuman + Toffset , (2) where Rcam is the camera-axis transformation, β is the workspace scaling factor, and Toffset is the position of the virtual robot camera relative to the torso frame. This formulation decouples the demon-stration from its original recording geometry and allows retargeting to be solved in an embodiment-consistent frame. The resulting wrist and finger trajectories are smoothed before and during IK solving to improve temporal stability. For the robot joint configuration qt , we apply an exponential moving average 
+
+qt = α ˆqt + ( 1 − α)qt−1, (3) where ˆ qt is the raw IK estimate and α is the smoothing coeffi-cient. Fixed wrist-orientation corrections are additionally applied to account for the mounting geometry of the robot hands relative to the recovered human palm orientation. The output of this stage is a synchronized action-state representation containing arm trajecto-ries, finger commands, and camera-relative robot states. 
+
+2.4 Layered Mixed-Reality Compositing 
+
+The final stage synthesizes the robot demonstration by composit-ing the retargeted humanoid over the cleaned scene. A naive 2D overlay is insufficient for dexterous interaction: if the robot hand is rendered entirely in front of the object, contact looks implausible; if rendered entirely behind it, grasp structure is lost. This is especially problematic when fingers wrap around small manipulated objects. To preserve local depth cues at the interaction region, we sep-arate robot rendering into a full articulated-hand pass and a near-contact thumb pass. The restored object template is then compos-ited around these renders so that the object can occlude the appro-priate finger regions while preserving visible thumb contact where required by the grasp. This layered compositing strategy produces more plausible interaction structure than a single foreground over-lay, particularly for small objects and wrap-around grasps. In our implementation, rendering is performed in a headless Mu-JoCo environment using the Unitree G1 and BrainCo hand meshes derived from the robot description. Because the robot geometry is rendered from an explicit articulated model rather than generated by image synthesis, the final observation is visually stable and free of diffusion-style hallucination artifacts. The final output of AgenticFocus is a paired dataset: a focused visual sequence in which human manipulators are replaced by hu-manoid hands while preserving the real task objects, together with synchronized robot actions and states suitable for downstream pol-icy learning. 
+
+3 EXPERIMENTS 
+
+We evaluate AgenticFocus along two complementary dimensions of human-to-humanoid motion retargeting: spatial accuracy with respect to ground-truth trajectories and temporal smoothness of the retargeted humanoid wrist motion. 
+
+3.1 Experimental Setup 
+
+We construct evaluation sequences from egocentric human videos, including clips from EPIC-KITCHENS [4] and internally processed demonstrations. All videos are standardized to 30 FPS. For each clip, the pipeline produces two synchronized outputs: (i) a rendered mixed-reality video in which human hands are replaced by Unitree G1 and BrainCo hands while the target object remains in the real scene, and (ii) a structural action-state record stored as .npz /.json 
+
+containing arm trajectories, finger commands, and camera-relative robot states. We compare AgenticFocus against Masquerade [9] and Do as I Do [17] under the same evaluation protocol. Before comparison, all trajectories are temporally resampled to a common normalized timeline and expressed in the same coordinate frame. 
+
+3.2 Trajectory Accuracy 
+
+Metric. We compute the mean 3D position error between the ground-truth trajectory pt and the reconstructed trajectory ˆ pt pro-duced by each method: 
+
+et = 100 ∥ ˆpt − pt ∥2 = 100 
+
+q
+
+( ˆxt − xt )2 + ( ˆyt − yt )2 + ( ˆzt − zt )2,
+
+(4) where the factor 100 converts meters to centimeters. The final error is averaged over all frames and evaluation clips; error bars denote the 95% confidence interval across episodes. 
+
+Results. Fig. 3 reports the mean 3D position error across evalu-ation episodes. AgenticFocus achieves the lowest reconstruction error among the compared methods, indicating better agreement with the ground-truth trajectory. This suggests that camera-relative alignment and full-hand retargeting reduce spatial mismatch com-pared with the baseline human-to-robot transfer pipelines. 
+
+Figure 3: Mean 3D position error for trajectory reconstruction. Lower values indicate better agreement with the ground-truth tra-jectory. Error bars show the 95% confidence interval. 
+
+3.3 Retargeting Smoothness 
+
+Metric. We quantify temporal smoothness using the Spectral Arc Length (SPARC) metric [2], computed from the humanoid wrist speed profile. Let V (ω) denote the Fourier magnitude spectrum of the wrist speed signal, and let ˆ V (ω) = V (ω)/V (0) be the normal-ized spectrum. SPARC is defined as SPARC = − 
+
+> Zωc
+> 0
+
+s 1
+
+ωc
+
+2
+
++
+
+ d ˆV (ω)
+
+dω
+
+2
+
+dω, (5) where ωc is the cutoff frequency. SPARC values are negative by construction; less negative values indicate smoother and more tem-porally stable motion. 
+
+Results. Fig 4(a) plots episode-wise SPARC across 75 valida-tion episodes. AgenticFocus consistently maintains the least neg-ative SPARC throughout, indicating smoother and more coher-ent retargeted wrist motion than both baselines. Fig 4(b) reports mean SPARC with 95% bootstrap confidence intervals: Agentic-Focus attains −5.18 (95% CI [−5.38 , −4.98 ]), compared to −5.56 ([−5.84 , −5.31 ]) for Masquerade and −6.05 ( [−6.42 , −5.72 ]) for Do as I Do. Relative to Masquerade, AgenticFocus reduces the SPARC magnitude by approximately 7%, and by roughly 14% rel-ative to Do as I Do. These results suggest that camera-relative re-targeting and dedicated trajectory smoothing substantially improve robot-ready humanoid wrist motion. (a) Episode-wise SPARC across validation episodes. Solid curves show a 7-episode rolling mean. 
+
+> (b) Mean SPARC with 95% bootstrap confidence intervals over 75 episodes. Less negative values correspond to smoother motion.
+
+Figure 4: SPARC-based trajectory smoothness comparison across Masquerade, Do as I Do, and AgenticFocus. 
+
+4 CONCLUSION 
+
+This paper presented AgenticFocus, a structured mixed-reality pipeline for converting ordinary human FPV videos into syn-chronized humanoid training demonstrations. By combining object-centric restoration, camera-relative full-hand retargeting, and layered compositing, the method preserves task-relevant object structure while transferring dexterous manipulation into a robot-consistent visual-action representation. Empirically, AgenticFocus achieves lower trajectory error and smoother retargeted wrist mo-tion (SPARC) than existing cross-embodiment baselines, indicating that camera-relative alignment and dedicated trajectory smoothing meaningfully improve the fidelity of synthesized humanoid demon-strations. The resulting dataset couples focused visual observations with robot actions and camera-relative states, providing a practical su-pervision source for humanoid visuomotor learning without relying on specialized capture hardware or fully generative scene trans-lation. Extending this evaluation to downstream policy training and broader embodiments is a natural direction for future work. More broadly, the method addresses a central bottleneck in cross-embodiment data conversion: transforming abundant egocentric human video into robot-trainable demonstrations at scale. 
+
+REFERENCES 
+
+[1] M. Ahn, A. Brohan, N. Brown, Y. Chebotar, O. Cortes, B. David, C. Finn, et al. Do as i can, not as i say: Grounding language in robotic affordances. arXiv preprint arXiv:2204.01691 , 2022. 2 [2] S. Balasubramanian, A. Melendez-Calderon, and E. Burdet. A robust and sensitive metric for quantifying movement smoothness. IEEE Transactions on Biomedical Engineering , 59(8):2126–2136, 2012. doi: 10.1109/TBME.2011.2179545 3 [3] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, X. Chen, K. Choro-manski, T. Ding, D. Driess, A. Dubey, C. Finn, et al. Rt-2: Vision-language-action models transfer web knowledge to robotic control. 2023. 1 [4] D. Damen, H. Doughty, G. M. Farinella, S. Fidler, A. Furnari, E. Kazakos, D. Moltisanti, J. Munro, T. Perrett, W. Price, and M. Wray. The epic-kitchens dataset: Collection, challenges and base-lines. IEEE Transactions on Pattern Analysis and Machine Intelli-gence , 43(11):4125–4141, 2021. doi: 10.1109/TPAMI.2020.2991965 1, 3 [5] D. Driess, F. Xia, M. S. M. Sajjadi, C. Lynch, A. Chowdhery, B. Ichter, et al. Palm-e: An embodied multimodal language model. In Interna-tional Conference on Machine Learning (ICML) , 2023. 2 [6] R. Hoque, P. Huang, D. J. Yoon, M. Sivapurapu, and J. Zhang. Egodex: Learning dexterous manipulation from large-scale egocen-tric video. In International Conference on Learning Representations (ICLR) , 2026. 1, 2 [7] W. Huang, F. Xia, T. Xiao, H. Chan, J. Liang, P. Florence, A. Zeng, et al. Inner monologue: Embodied reasoning through planning with language models. arXiv preprint arXiv:2207.05608 , 2022. 2 [8] M. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. Foster, G. Lam, P. Sanketi, et al. Open-vla: An open-source vision-language-action model. arXiv preprint arXiv:2406.09246 , 2024. 1, 2 [9] M. Lepert, J. Fang, and J. Bohg. Masquerade: Learning from in-the-wild human videos using data-editing. In Proc. 2026 IEEE Int. Conf. on Robotics and Automation (ICRA) . IEEE, 2026. 1, 2, 3 [10] Z. Li, C.-Z. Lu, J. Qin, C.-L. Guo, and M.-M. Cheng. Towards an end-to-end framework for video inpainting. In Proc. IEEE/CVF Conf. on Computer Vision and Pattern Recognition (CVPR) , pp. 17541–17550, 2022. 2 [11] Z. Li, W. Yang, W. Zhao, Y. Ma, Y. Tu, P. Marttinen, and J. Pajarinen. Bridging the embodiment gap: Disentangled cross-embodiment video editing. arXiv preprint arXiv:2605.03637 , 2026. 1, 2 [12] Y. Liu, S. Cheng, X. Yin, W. C. Shin, A. Cueva, Y. Yang, Z. Chen, C. Zhang, and D. Xu. Egoengine: From egocentric human videos to high-fidelity dexterous robot demonstrations. arXiv preprint arXiv:2606.12604 , 2026. 1, 2 [13] P. Milgram and F. Kishino. A taxonomy of mixed reality visual displays. IEICE Transactions on Information and Systems , E77-D(12):1321–1329, 1994. 2 [14] S. Mori, S. Ikeda, and H. Saito. A survey of diminished reality: Tech-niques for visually concealing, eliminating, and seeing through real objects. IPSJ Transactions on Computer Vision and Applications ,9(1):17, 2017. 2 [15] N. Nechyporenko, R. Hoque, C. Webb, M. Sivapurapu, and J. Zhang. Armada: Augmented reality for robot manipulation and robot-free data acquisition. arXiv preprint arXiv:2412.10631 , 2024. 2 [16] Open X-Embodiment Collaboration, A. O’Neill, A. Rehman, A. Gupta, et al. Open x-embodiment: Robotic learning datasets and rt-x models. arXiv preprint arXiv:2310.08864 , 2023. 1, 2 [17] B. Paliwal, H. Etukuru, W. Liang, P. Abbeel, N. M. M. Shafiullah, and J. Malik. Do as i do: Dexterous manipulation data from everyday human videos. arXiv preprint arXiv:2606.19333 , 2026. 1, 2, 3 [18] G. Pavlakos, D. Shan, I. Radosavovic, A. Kanazawa, D. Fouhey, and J. Malik. Reconstructing hands in 3D with transformers. In IEEE/CVF Conf. on Computer Vision and Pattern Recognition (CVPR) , 2024. 3 [19] R. A. Potamias, J. Zhang, J. Deng, and S. Zafeiriou. Wilor: End-to-end 3d hand localization and reconstruction in-the-wild, 2025. 3 [20] N. Ravi, V. Gabeur, Y.-T. Hu, R. Hu, C. Ryali, T. Ma, H. Khedr, R. R¨ adle, C. Rolland, L. Gustafson, et al. Sam 2: Segment anything in images and videos. arXiv preprint arXiv:2408.00714 , 2024. 2 [21] E. Todorov, T. Erez, and Y. Tassa. Mujoco: A physics engine for model-based control. In Proc. 2012 IEEE/RSJ Int. Conf. on Intelligent Robots and Systems (IROS) , pp. 5026–5033, 2012. doi: 10.1109/IROS .2012.6386109 3 [22] C. Wang, H. Shi, W. Wang, R. Zhang, L. Fei-Fei, and C. K. Liu. Dex-cap: Scalable and portable mocap data collection system for dexterous manipulation. In Robotics: Science and Systems (RSS) , 2024. 1, 2 [23] S. Wang et al. World action models: The next frontier in embodied ai. 
+
+arXiv preprint arXiv:2605.12090 , 2026. 1

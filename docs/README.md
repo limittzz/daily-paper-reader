@@ -6,50 +6,47 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-12
-- 运行时间：2026-07-12 20:50:04 UTC
+- 最新运行日期：2026-07-13
+- 运行时间：2026-07-13 20:21:36 UTC
 - 运行状态：成功
-- 本次总论文数：10
-- 精读区：1
-- 速读区：9
+- 本次总论文数：9
+- 精读区：3
+- 速读区：6
 
 ### 今日简报（AI）
-今日聚焦机器人与操作领域的轻量化模型创新，10篇论文中精读1篇、速读3篇。最值得关注的是《FabriVLA》提出的紧凑型视觉-语言-动作模型，实现高精度多任务操作，以及《ContactMimic》在人形机器人接触控制方面的突破。建议关注低参数模型在机器人中的应用趋势，并尝试将掩码分割等视觉先验融入实际控制的仿真到现实迁移。
-- 详情：[/202607/12/README](/202607/12/README)
+今日精读3篇、速读6篇，聚焦机器人操作学习与混合现实数据合成。最值得关注的是《AgenticFocus》提出对象保持的混合现实合成方法，以及《One-Shot Multimodal Learning》实现单次示范的多模态力约束学习。建议后续关注如何利用混合现实生成高质量训练数据，以及如何将单次学习推广到复杂灵巧操作场景。
+- 详情：[/202607/13/README](/202607/13/README)
 
 ### 精读区论文标签
-1. [FabriVLA: A Lightweight Vision-Language-Action Model for Precise Multi-Task Manipulation](/202607/12/2607.08575v1-fabrivla-a-lightweight-vision-language-action-model-for-precise-multi-task-manipulation)  
+1. [AgenticFocus: Object-Preserving Mixed Reality Synthesis from Human FPV Video for Dexterous Humanoid Learning](/202607/13/2607.08857v1-agenticfocus-object-preserving-mixed-reality-synthesis-from-human-fpv-video-for-dexterous-humanoid-learning)  
+   标签：评分：9.0/10、query:imitation
+   evidence：从人类第一人称视频生成机器人演示用于灵巧操作学习
+2. [One-Shot Multimodal Learning from Demonstration with Force-Constrained Elastic Maps](/202607/13/2607.09515v1-one-shot-multimodal-learning-from-demonstration-with-force-constrained-elastic-maps)  
+   标签：评分：9.0/10、query:imitation
+   evidence：基于力约束弹性映射的单次示教学习
+3. [FlowDAgger: Human-in-the-Loop Adaptation of Generative Robot Policies in Latent Space](/202607/13/2607.08877v1-flowdagger-human-in-the-loop-adaptation-of-generative-robot-policies-in-latent-space)  
    标签：评分：8.0/10、query:imitation
-   evidence：轻量VLA通过模仿学习训练，在多任务操作上达到90%成功率
+   evidence：通过动作反转进行扩散/流策略的人机联合适应
 
 ### 速读区论文标签
-1. [Behavior Foundations for Quadruped Robots: ABot-C0 Technical Report](/202607/12/2607.07370v2-behavior-foundations-for-quadruped-robots-abot-c0-technical-report)  
+1. [CAC-VLA: Context-Gated Action Conditioning for Vision-Language-Action Models](/202607/13/2607.04816v1-cac-vla-context-gated-action-conditioning-for-vision-language-action-models)  
    标签：评分：7.0/10、query:imitation
-   evidence：利用大规模运动数据训练四足机器人策略，类似模仿学习
-2. [ContactMimic: Humanoid Object Interaction via Contact Control](/202607/12/2607.08742v1-contactmimic-humanoid-object-interaction-via-contact-control)  
+   evidence：机器人操作中的动作条件化
+2. [Implicit-Behavior Coordination from Unlabeled Sub-Task Demonstrations for Rearrangement Tasks](/202607/13/2607.09234v1-implicit-behavior-coordination-from-unlabeled-sub-task-demonstrations-for-rearrangement-tasks)  
    标签：评分：7.0/10、query:imitation
-   evidence：用于人形物体交互的接触模仿框架
-3. [Mask2Real-WM: Segmentation Masks as a Sim-to-Real Bridge for Controllable Dexterous World Models](/202607/12/2607.04546v1-mask2real-wm-segmentation-masks-as-a-sim-to-real-bridge-for-controllable-dexterous-world-models)  
+   evidence：从无标注子任务演示中学习机器人排序任务
+3. [Dual Latent Memory in Vision-Language-Action Models for Robotic Manipulation](/202607/13/2607.07608v1-dual-latent-memory-in-vision-language-action-models-for-robotic-manipulation)  
    标签：评分：6.0/10、query:imitation
-   evidence：基于扩散渲染的行动条件世界模型，有益于模仿学习数据增强
-4. [Diffusion-Guided Uncertainty-Aware Delayed Policy Optimization](/202607/12/2607.05064v1-diffusion-guided-uncertainty-aware-delayed-policy-optimization)  
+   evidence：潜在记忆增强VLA策略以改进长时域操作
+4. [GenVid2Robot: From Video Generation to Robot Manipulation via Rigid-Geometric Consistency](/202607/13/2607.09191v1-genvid2robot-from-video-generation-to-robot-manipulation-via-rigid-geometric-consistency)  
    标签：评分：6.0/10、query:imitation
-   evidence：在强化学习中使用扩散模型进行策略优化
-5. [Cortex: A Bidirectionally Aligned Embodied Agent Framework for Long-horizon Manipulation](/202607/12/2607.05377v1-cortex-a-bidirectionally-aligned-embodied-agent-framework-for-long-horizon-manipulation)  
+   evidence：将生成视频的运动转化为机器人操作轨迹，实现视频模仿学习
+5. [PAC-ACT: Post-training Actor-Critic for Action Chunking Transformers](/202607/13/2607.09590v1-pac-act-post-training-actor-critic-for-action-chunking-transformers)  
    标签：评分：6.0/10、query:imitation
-   evidence：用于长程操作的分层VLA具身代理框架
-6. [From Fixed to Free Cameras: Calibration-Free View-Robust Vision-Language-Action Model](/202607/12/2607.05396v1-from-fixed-to-free-cameras-calibration-free-view-robust-vision-language-action-model)  
+   evidence：行为克隆训练的动作分块Transformer的强化学习后训练
+6. [B-spline Policy: Accelerating Manipulation Policies via B-spline Action Representations](/202607/13/2607.09648v1-b-spline-policy-accelerating-manipulation-policies-via-b-spline-action-representations)  
    标签：评分：6.0/10、query:imitation
-   evidence：视角鲁棒的VLA模型用于机器人操作
-7. [Learning 4D Geometric Priors for Inference-Efficient World Action Models](/202607/12/2607.05468v1-learning-4d-geometric-priors-for-inference-efficient-world-action-models)  
-   标签：评分：6.0/10、query:imitation
-   evidence：注入4D几何先验的世界行动模型，可应用于模仿学习
-8. [TFP: Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning](/202607/12/2607.08283v1-tfp-temporally-conditioned-memory-fusion-policies-for-visuomotor-learning)  
-   标签：评分：6.0/10、query:imitation
-   evidence：改进了VLA策略用于阶段相关操作，与近期模仿学习进展相关
-9. [Applying JEPA-Style Predictive Learning to JA4-Derived Network Fingerprints](/202607/12/2607.08465v1-applying-jepa-style-predictive-learning-to-ja4-derived-network-fingerprints)  
-   标签：评分：6.0/10、query:imitation
-   evidence：使用JEPA风格预测学习目标
+   evidence：连续动作表示加速操作策略，可应用于模仿学习
 
 
 <div class="dpr-home-promo-card">
