@@ -1,0 +1,992 @@
+Title: SegDiff: Segmented Trajectory Diffusion for Consistent and Adaptive Robot Manipulation
+
+URL Source: https://arxiv.org/pdf/2607.11027v1
+
+Published Time: Tue, 14 Jul 2026 02:13:49 GMT
+
+Number of Pages: 26
+
+Markdown Content:
+# SegDiff: Segmented Trajectory Diffusion for Consistent and Adaptive Robot Manipulation 
+
+Haidong Cao 1,2, Wenjun Cao 1,2, Quanhao Li 1,2, Sicheng Xie 1,2
+
+Zhiying Du 1,2, Jiaqi Leng 1,2, Zuxuan Wu 1,2,†, Yu-Gang Jiang 1,2
+
+> 1
+
+Institute of Trustworthy Embodied AI, Fudan University, China 
+
+> 2
+
+Shanghai Key Laboratory of Multimodal Embodied AI, China 
+
+> †
+
+Corresponding author 
+
+Abstract 
+
+Imitation learning enables robots to acquire manipulation skills from demonstrations by mapping observations to actions. Existing approaches predict either short-horizon continuous action sequences or discrete keyposes. However, continuous prediction methods suffer from compounding errors due to short prediction horizons and struggle with multi-modal action distributions, whereas keypose-based methods necessitate an external planner, constraining real-time applicability. To address these challenges, we introduce SegDiff , a closed-loop visuomotor policy that integrates the strengths of both paradigms. SegDiff decomposes demonstrations into motion segments between keyposes and learns to predict the continuous trajectory from the current state to the next keypose, enabling long-horizon prediction with real-time refinement. Furthermore, we leverage the capability of diffusion models and DDIM inversion to propose a Dynamic Temporal Ensembling mechanism, which allows the policy to efficiently respond to dynamic environments and mitigate discontinuities caused by inconsistent multi-modal sampling. SegDiff demonstrates significant performance gains over existing approaches across various simulated and real-world scenarios, indicating its strong ability to reason over extended temporal dependencies while maintaining real-time adaptability and control stability. 
+
+1 Introduction 
+
+Robotic manipulation is a critical skill for intelligent agents, yet developing robust policies remains challenging due to the complexity of the physical world. Imitation learning (IL) [ 2, 32 , 35 , 36 , 48 ], which learns directly from expert demonstrations, has thus emerged as a powerful and pragmatic paradigm. Offline imitation learning (OIL) [ 1 , 2, 7, 27 ] further improves data efficiency and safety by learning from fixed expert datasets without costly real-world interaction. Among OIL approaches, behavior cloning (BC) [ 2 ] remains the most fundamental and widely used paradigm. Traditional BC predicts the immediate action from the current observation, but even small deviations between the predicted and expert actions caused by perception noise or imperfect policy approximation can quickly accumulate and drive the robot into out-of-distribution (OOD) states. Recent approaches [ 4, 5 , 9, 24 , 42 , 50 , 51 , 54 ] extend the prediction horizon by predicting short action 1arXiv:2607.11027v1 [cs.RO] 13 Jul 2026 Keypose Prediction  
+
+> (e.g. PerAct, RVT )
+
+Continuous Prediction   
+
+> (e.g. ACT, Diffusion Policy )
+> Prediction Target
+> Predict Keypose Only
+> Execute via Path Planner
+> Prediction Target (End with Keypose)
+> Dynamic Temporal Ensembling Update
+
+SegDiff (Ours) 
+
+(a) 
+
+(b) 
+
+(c) 
+
+> Action Buffer
+> Execute
+> Execute
+
+# …… 
+
+# …
+
+# …       
+
+> Start Keypose End Action to execute Action for buffer Figure 1 Comparison of conventional continuous prediction methods, keypose prediction methods, and SegDiff . SegDiff combines the advantages of both paradigms by enforcing keypose constraints within continuous trajectory generation via
+> Segmented Trajectory Modeling , while improving action consistency and real-time responsiveness through Dynamic Temporal Ensembling .
+
+sequences as shown in Fig. 1(a), with some employing temporal ensembling [ 5, 54 ] between consecutive predictions to smooth motions. Although these methods improve short-term consistency, they still suffer from compounding errors over extended durations. Another major challenge arises from the multi-modal nature of the action distribution in robotic manipulation tasks. The same observation can correspond to multiple valid action modes such as grasping an object from different directions. Averaging across such modes can yield ambiguous actions and cause unsafe behaviors. Keypose-based prediction methods [ 11 , 13 , 14 , 18 , 23 , 38 , 49 ] mitigate compounding errors by focusing on discrete salient points (i. e., keyposes) and applying an external planner to generate motions toward the next keypose in an open-loop manner, as shown in Fig. 1(b). However, this open-loop design limits the adaptability to dynamic environments and constrains real-time applicability. While there are approaches that attempt to combine continuous action prediction and keypose prediction [ 43 , 47 , 52 ], they often rely on complex multi-stage architectures that increase inference latency and suffer from error propagation between modules. Furthermore, they typically struggle to handle the multi-modal nature of robotic actions, making them susceptible to mode switching and limiting their responsiveness in dynamic scenarios. To address these challenges, we propose SegDiff , a closed-loop robot manipulation policy that seamlessly integrates the strengths of continuous prediction and keypose prediction. The core idea is to leverage keyposes as prediction anchors and learn continuous motion to reach the next keypose. Specifically, we formulate the problem as predicting the complete trajectory from the current state to the next keypose, which we term Segmented Trajectory Modeling (as shown in Fig. 1(c)). This formulation directs learning toward task-critical states and alleviates the compounding errors common in continuous prediction. During inference, SegDiff follows the Receding Horizon Control (RHC) [ 31 ] scheme, executing only the initial portion of each predicted trajectory and storing the remainder in an action buffer. Benefiting from Segmented Trajectory Modeling, the buffer and the newly predicted trajectory share the same initial state and both terminate at the next keypose. This inherent alignment improves the accuracy of next keypose prediction and enables detection of action mode deviations. Leveraging this, SegDiff employs a Dynamic Temporal Ensembling mechanism using DDIM inversion to validate and refine the action buffer. Outdated buffers are discarded and replaced by trajectories generated conditioned on the latest observation. Conversely, when the buffer remains valid, new trajectories are generated from the latest observation while preserving the original 2action mode, which facilitates more effective temporal ensembling with the existing buffer. This entire design enables SegDiff to adapt to dynamic environments while ensuring modal consistency across consecutive predictions. In summary, our contributions are as follows: 1) We propose SegDiff (Segmented Trajectory Diffusion), featuring a novel Segmented Trajectory Modeling 
+
+approach that integrates keyposes as prediction anchors. This formulation not only serves as a training objective to guide the model toward task-critical states, but also acts as a crucial architectural enabler, laying the structural foundation for real-time action buffer refinement via DDIM inversion. 2) Building upon this structural design, we introduce a novel Dynamic Temporal Ensembling mechanism. By leveraging DDIM inversion, this mechanism enables the policy to seamlessly adapt to dynamic environments while strictly maintaining action mode consistency across consecutive predictions. 3) We demonstrate the superior and robust performance of SegDiff on two simulated benchmarks and five challenging real-world manipulation tasks, showing that SegDiff consistently outperforms existing advanced approaches. 
+
+2 Related Work 
+
+Keypose-Based Manipulation. Keypose-based policies reformulate the robotic manipulation task into predicting the next end-effector pose. Early methods [ 18 , 20 , 38 ] relied on pixel-level or voxel-level repre-sentations to locate the keypose, but incurred high computational cost and lacked real-time performance. Subsequent methods [ 6, 11 , 12 , 14 , 23 , 49 ] adopt representations such as neural fields or point clouds for improved spatial precision, yet still depend on external planners [ 21 , 22 , 25 , 26 ] and struggle in dynamic environments. ChainedDiffuser [ 45 ] utilizes a diffusion model to generate intermediate trajectories, but its two-stage inference pipeline limits real-time adaptability. In contrast, our method predicts the complete trajectory from the current pose to the next keypose at every inference step, enabling real-time adaptation while preserving the keypose constraint. 
+
+Continuous Action Prediction. Continuous prediction methods [ 4, 9 , 17 , 24 , 28 , 29 , 33 , 42 , 46 , 50 , 54 ] operate under a sliding-window paradigm, predicting short-horizon action sequences at each step while paying limited attention to task-critical states, which makes them prone to compounding errors. Waypoint-based and stage-conditioned methods [ 3 , 37 , 41 , 43 , 47 , 52 ] partially address this issue, but require extra annotations or incur multi-stage inference overhead. In contrast, our approach segments demonstrations using keyposes and predicts continuous trajectories toward the next keypose within a single end-to-end model. 
+
+Action Consistency and Temporal Ensembling. Temporal ensembling improves the smoothness of continuous predictions by aggregating outputs over time; however, abrupt mode switches can still produce unsafe actions. Recent approaches address this issue by adjusting denoising schedules [ 8, 10 , 16 ] or incorporating optimization for consistency [ 5 ]. However, these methods typically assume that previous predictions remain reliable, which may not hold in dynamic environments. SegDiff addresses this challenge with Dynamic Temporal Ensembling, which leverages DDIM inversion to explicitly validate and refine the action buffer in real time, improving both mode consistency and responsiveness. 
+
+3 Method 
+
+3.1 Preliminaries 
+
+Offline Imitation Learning. We focus on offline imitation learning (OIL), where the objective is to learn a visuomotor policy solely from expert demonstrations without interaction with the environment. In this setting, the demonstration dataset is denoted as 𝒟 = {( 𝑜 𝑡 , 𝑠 𝑡 , 𝑎 𝑡 )} 𝑁 𝑡 =1, where 𝑜 𝑡 represents the visual observation (e. g., RGB image) at time step 𝑡 , 𝑠 𝑡 denotes the robot state (e. g., end-effector pose), and 𝑎 𝑡 is the expert action. The 3Segmented by Keyposes  
+
+> cam1
+> cam2
+> Demo Trajectory
+> Robot State
+> Observation
+> Embedding
+> Denoising
+> Transformer
+
+×N
+
+Training  Denoised Action 
+
+> SegDiff
+> Sampling
+
+𝜺𝜺 𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑  Action Buffer 
+
+> SegDiff
+> Inversion
+
+𝝉𝝉 𝒑𝒑 𝒓𝒓𝒓𝒓𝒓𝒓 
+
+> Execute
+> Update
+> Add noise
+> Obs Emb
+
+Inference 
+
+> Human Expert Demonstrations
+
+𝜺𝜺 ~𝑵𝑵 (𝟎𝟎 , 𝑰𝑰 )
+
+𝝉𝝉 𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑    
+
+> DTE
+> t=0
+> t=1
+> t=2
+> Weighted Average
+> 𝑎𝑎 0𝑎𝑎 1𝑎𝑎 2
+
+…    
+
+> Traditional Temporal Ensembling
+> t=0
+> t=1
+> t=2
+> 𝑎𝑎 0𝑎𝑎 1𝑎𝑎 2𝑎𝑎 3
+
+…
+
+> Weighted Average
+
+…
+
+…
+
+…
+
+> 𝑎𝑎 𝑘𝑘𝑘𝑘𝑘𝑘𝑘𝑘𝑘𝑘𝑘𝑘𝑘𝑘
+> Temporal Ensembling in SegDiff
+> ResNet
+
+Figure 2 Overview of SegDiff . During training, demonstration episodes are segmented by keyposes, and the model learns to predict the complete trajectory from the current state to the next keypose ( Segmented Trajectory Modeling ). During inference, DDIM inversion [40 ] generates a prior-informed candidate, allowing Dynamic Temporal Ensembling (DTE) to produce a trajectory that adapts to the current observation while maintaining temporal consistency for execution and buffer update. 
+
+policy 𝜋 𝜃 (𝑎 𝑡 | 𝑜 𝑡 , 𝑠 𝑡 ) is typically trained with the objective: 
+
+ℒBC = 𝔼 (𝑜 𝑡 ,𝑠 𝑡 ,𝑎 𝑡 )∼𝒟 
+
+∥𝑎 𝑡 − 𝜋 𝜃 (𝑜 𝑡 , 𝑠 𝑡 ) ∥ 2 . (1) OIL methods can be broadly categorized into continuous prediction and keypose prediction. Continuous prediction methods replace the target 𝑎 𝑡 with a future action sequence 𝑎 𝑡 :𝑡 +𝐿 , improving long-horizon reasoning. During inference, they typically follow the Receding Horizon Control (RHC) scheme [ 31 ], executing part of the predicted sequence and re-planning with new observations. This setup naturally supports temporal ensembling [ 54 ], where the unexecuted portion of the previous sequence is blended with the latest prediction for more accurate and smoother actions. A representative approach is Diffusion Policy (DP) [ 9], which models the conditional distribution of continuous action sequences using a diffusion process [15]. Its training objective is formulated as: 
+
+ℒDP = 𝔼 𝑎 0  
+
+> 𝑡 :𝑡 +𝑙 ,𝜖 , 𝑘
+
+h
+
+∥𝜖 − 𝜖 𝜃 
+
+
+
+𝑎 𝑘 𝑡 :𝑡 +𝑙 , 𝑘, 𝑜 𝑡 −ℎ:𝑡 , 𝑠 𝑡 
+
+
+
+∥2
+
+i
+
+, (2) where 𝑘 denotes the diffusion step, 𝑙 is the length of the predicted action sequence, and ℎ indicates the number of historical observations used. Keypose prediction methods [ 12 , 14 , 18 , 23 , 38 , 49 ], by contrast, replace 𝑎 𝑡 with the next keypose (e. g., grasp pose), focusing on the most salient points within a trajectory while omitting intermediate motions. 
+
+DDIM Inversion. To enable prior-informed trajectory refinement within the diffusion policy framework, we employ DDIM [ 40 ], which provides a deterministic formulation of diffusion models that permits inversion of the sampling process. The deterministic form of DDIM [ 40 ] modifies the sampling process in DDPM [ 15 ] to: 
+
+𝑥 𝑡 −1 = √ ¯𝛼 𝑡 −1
+
+ 𝑥 𝑡 −√1− ¯ 𝛼 𝑡 𝜖 𝜃 (𝑥 𝑡 ,𝑡 )√ ¯𝛼 𝑡 
+
+
+
++ √1 − ¯ 𝛼 𝑡 −1 𝜖 𝜃 (𝑥 𝑡 , 𝑡 ) (3) This deterministic process enables DDIM inversion , which maps a data point x0 to its corresponding noise vector x𝐾 for prior-informed sampling and conditional generation. 43.2 Segmented Trajectory Modeling 
+
+As discussed in Sec. 3.1, continuous prediction models generate smooth actions but suffer from compounding errors inherent to their sliding-window paradigm. In contrast, keypose-based methods focus on the most important states in a demonstration (keyposes), making them particularly suitable for precise manipulation tasks; however, their open-loop nature requires external planners and prevents real-time adaptation. While approaches such as ChainedDiffuser [ 45 ] attempt to model intermediate paths, they remain limited in dynamic scenarios. To bridge these paradigms, we introduce Segmented Trajectory Modeling (STM). By using keyposes as prediction anchors, SegDiff mitigates compounding errors (see the supplementary material for a formal derivation) while maintaining a closed-loop control paradigm. Specifically, instead of predicting isolated keyposes or fixed-horizon action sequences, the model is trained to predict a continuous trajectory that originates from an arbitrary timestep 𝑡 and terminates at the subsequent keypose. We follow PerAct [ 38 ] to extract keyposes from expert demonstrations in which a keypose is defined as where the gripper state changes (i. e., opening or closing) or the velocity of the end-effector approaches zero. We denote a specific human expert demonstration trajectory as {𝑎 1 , 𝑎 2 , . . . , 𝑎 𝑇 }, and extracted keyposes as 𝑎 𝑘 1 , 𝑎 𝑘 2 , . . . , 𝑎 𝑘 𝑛 . To ensure complete coverage of the entire trajectory, the last action 𝑎 𝑇 is included in the keypose sequence  𝑎 𝑘 𝑛 = 𝑎 𝑇 
+
+,and we define 𝑎 𝑘 0 = 𝑎 1. The trajectory can then be segmented into multiple sub-trajectories based on these keyposes. Each sample in the training dataset is therefore represented as: 
+
+  𝑜 𝑡 −ℎ:𝑡 , 𝑠 𝑡 , 𝑎 𝑡 :𝑘 𝑚 
+
+ | 𝑘 𝑚 −1 ≤ 𝑡 < 𝑘 𝑚 , (4) where 1 ≤ 𝑚 ≤ 𝑛 , and ℎ denotes the duration of the observation history. In this way, we obtain demonstration sub-segments starting from an arbitrary timestep 𝑡 and ending at the subsequent keypose 𝑎 𝑘 𝑚 . Utilizing these sub-segments as training samples ensures that our model focuses on the keyposes of the demonstrations while simultaneously retaining an understanding of the intermediate motion process to support continuous action prediction. We use a diffusion model to learn the conditional distribution of these sub-segments. Because each sub-segment has a variable length 𝑘 𝑚 − 𝑡 , we interpolate all trajectories to a fixed length 𝐿 , using cubic spline interpolation for translation and spherical linear interpolation for rotation. The training objective for the diffusion policy then becomes: 
+
+ℒSegDiff = 𝔼 𝑎 𝑡 :𝑘𝑚 , 𝜖 , 𝑘 
+
+h
+
+∥𝜖 − 𝜖 𝜃 
+
+
+
+˜𝑎 𝑘   
+
+> (𝑡,𝑘 𝑚 )
+
+, 𝑘, 𝑜 𝑡 −ℎ:𝑡 , 𝑠 𝑡 
+
+
+
+∥2
+
+i
+
+, (5) where ˜𝑎 (𝑡,𝑘 𝑚 ) is the sub-segment of fixed length 𝐿 obtained by interpolating the ground-truth sub-segment 
+
+𝑎 𝑡 :𝑘 𝑚 , and 𝑘 denotes the diffusion timestep sampled uniformly from {1, 2, . . . , 𝐾 }.
+
+3.3 Dynamic Temporal Ensembling for Inference 
+
+During inference, SegDiff follows the RHC scheme (Sec. 3.1). At step 𝑡 , the policy predicts a trajectory 
+
+𝜏 𝑡 = {𝑎 𝑡 , . . . , 𝑎 𝑡 +𝐿 −1}, executing only the first 𝑛 𝑒𝑥𝑒𝑐 actions while storing the remainder in an action buffer 𝑏 𝑡 
+
+for temporal ensembling with later predictions. However, naive reuse of the action buffer introduces two challenges. First, due to the multi-modality in action distributions (Fig. 3(a)), newly predicted trajectories may belong to different modes, and directly switching between modes can lead to unsafe behavior (Fig. 4, left). Second, if environmental changes invalidate the action buffer, averaging the invalid buffer with the latest prediction may cause the robot to respond too slowly to environmental changes and even enter out-of-distribution states, potentially resulting in task failure. To address these challenges, we propose Dynamic Temporal Ensembling (DTE), a mechanism that leverages DDIM inversion to validate and refine the action buffer in real time. Unlike standard temporal ensembling which operates on a sliding window with shifting horizons, SegDiff instead anchors trajectory prediction to the next keypose (Sec. 3.2). Consequently, the action buffer 𝑏 𝑡 and the newly predicted trajectory 𝜏 𝑡 +1 share the 5𝒂𝒂 𝟎𝟎  𝒂𝒂 𝑻𝑻         
+
+> Standard Gaussian Distribution
+> Action Mode 1
+> Action Mode 2
+> Invert Buffer
+> Sample from 𝜺𝜺 𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑
+> Sample from random noise
+> Inversion Process
+> Sampling Process 𝒂𝒂 𝟎𝟎 𝒂𝒂 𝑻𝑻
+> Standard Gaussian Distribution
+> Sample from Invalid 𝜺𝜺 𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑
+> Sample from random noise
+> Inversion Process
+> Sampling Process
+> Invalid Buffer
+> Usable Action
+> Large Gap Tiny Gap
+> (a) DTE for multi-modal action distribution (b) DTE for invalid action buffer
+> 𝝉𝝉 𝒑𝒑𝒂𝒂 𝒓𝒓𝒓𝒓 𝝉𝝉 𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑𝒑 Action buffer Real Trajectory Sampling Path Diffusion Path Inversion Path
+
+Figure 3 Comparison between sampling from noise inverted from action buffer and from random noise. If there exists a large gap between action buffer and the action sampled from the inverted noise, we discard the action buffer as unusable. 
+
+same starting point and both terminate at the next keypose. This alignment facilitates more accurate keypose refinement as the keypose is repeatedly predicted before execution and provides the basis for using DDIM inversion to assess buffer consistency. At each inference step 𝑡 , we generate two candidates: (1) a standard prediction 𝜏 rand sampled from Gaussian noise, representing the most responsive prediction; and (2) a prior-informed prediction 𝜏 prior , obtained by first performing DDIM inversion on the action buffer 𝑏 𝑡 to acquire a noise vector 𝜖 prior , and then denoising from 𝜖 prior conditioned on the new observation. As illustrated in Fig. 3(a), if the action buffer is valid, denoising from the DDIM-inverted noise 𝜖 prior (red sampling path) under the current observation yields a trajectory that remains consistent with the action mode of the buffer. Conversely, if the action buffer is no longer feasible under the updated observation, sampling from the inverted noise produces a trajectory that deviates significantly from 𝑏 𝑡 (Fig. 3(b)). We quantify this mode-level consistency and feasibility using two RMSE-based metrics. The buffer validity 
+
+is defined as 𝑑 valid = RMSE  𝑏 𝑡 , 𝜏 prior 
+
+, where a large 𝑑 valid indicates that the buffered actions are no longer feasible under the current observation. The mode discrepancy is defined as 𝑑 mode = RMSE  𝜏 rand , 𝜏 prior 
+
+,where a large 𝑑 mode indicates that the standard prediction deviates from the buffered action mode. To determine whether these deviations are significant, we introduce a threshold 𝛿 . The threshold 𝛿 is determined in a data-driven manner by computing the DDIM inversion reconstruction error on the training set and selecting the maximum observed RMSE. Formally, the Dynamic Temporal Ensembling (DTE) mechanism computes the final action sequence 𝜏 𝐷𝑇𝐸 as: 
+
+𝜏 𝐷𝑇𝐸 =
+
+
+
+𝜂 · 𝜏 rand +  1 − 𝜂  · 𝑏 𝑡 , 𝑑 𝑣𝑎𝑙𝑖𝑑 ≤ 𝛿 and 𝑑 𝑚𝑜𝑑𝑒 ≤ 𝛿 𝜂 · 𝜏 prior +  1 − 𝜂  · 𝑏 𝑡 , 𝑑 𝑣𝑎𝑙𝑖𝑑 ≤ 𝛿 and 𝑑 𝑚𝑜𝑑𝑒 > 𝛿 𝜏 rand . 𝑑 𝑣𝑎𝑙𝑖𝑑 > 𝛿 
+
+(6) Here, 𝜂 ∈ [ 0, 1] is an update factor that controls the blending ratio between the new prediction and the action buffer. The rule in Eq. 6 operates as follows. When the buffer is valid ( 𝑑 valid ≤ 𝛿 ) and the new prediction remains mode-consistent ( 𝑑 mode ≤ 𝛿 ), we prioritize 𝜏 rand due to its stronger conditioning on the latest observation while blending it with the buffer. If the buffer is valid but a mode switch is detected ( 𝑑 mode > 𝛿 ), we suppress the switch by utilizing 𝜏 prior to preserve action-mode consistency. In contrast, when the buffer becomes invalid (𝑑 valid > 𝛿 ), it is discarded entirely and 𝜏 rand is fully adopted to rapidly adapt to environmental changes. 6Action Buffer Sample from random noise 
+
+Averaged Action 
+
+Collision 
+
+Sample from 
+
+inverted noise 
+
+Avoid Collision 
+
+Averaged Action 
+
+Action Buffer 
+
+Action buffer  Action sampled from random noise  Action sampled from inverted noise  Inver 
+
+Sra Figure 4 Mode switching in model predictions can lead to undesirable actions (left), whereas sampling from the inverted noise provides a consistent alternative (right). 
+
+The resulting 𝜏 𝐷𝑇𝐸 is then used for execution and buffer update: the first 𝑛 𝑒𝑥𝑒𝑐 actions are executed, and the remaining trajectory is interpolated to length 𝐿 to form 𝑏 𝑡 +1. This cycle repeats until the end-effector reaches the target keypose within a predefined tolerance 𝛿 𝑟 . Regarding computational efficiency, the DDIM inversion step count is decoupled from the sampling process, which enables flexible configurations that balance efficiency and precision. For example, lightweight inversion can be combined with multi-step sampling to maintain trajectory accuracy without significant computational overhead (analyzed in Sec. 5.4). In addition, the sampling of 𝜏 rand and 𝜏 prior can be performed in parallel, resulting in negligible additional latency. 
+
+4 Experiment 
+
+4.1 Simulation Experiments 
+
+Benchmarks. We evaluate SegDiff on two simulation benchmarks: RLBench [ 19 ] and RoboMimic [ 30 ]. 
+
+RLBench is built atop CoppeliaSim [ 34 ], where a Franka Panda robot manipulates the scene. We follow the task setup of CoA [ 52 ] and evaluate on both 10 representative tasks and the full RLBench-60 benchmark. RLBench demonstrations are generated via scripted policies, providing precise and consistent supervision. Each task contains 100 training episodes and 25 evaluation episodes. RoboMimic is another widely used benchmark for evaluating visuomotor policies. We conduct experiments on three tasks using the PH dataset, which consists of human expert demonstrations collected via teleoperation. This allows us to evaluate SegDiff on datasets with different characteristics, ranging from scripted demonstrations to human-collected    
+
+> Table 1 Success rates (%) on 10 RLBench tasks [ 19 ]. Results for ACT, DP, CoA and Octo are taken from [ 52 ] and [ 53 ]. We also reproduce the results of DP ourselves and report them as DP*. The results of SegDiff are averaged over 3 random seeds.
+
+Task ACT [54] DP [9] DP* [9] CoA [52] Octo [53] SegDiff Sweep Dust 100.0 100.0 100.0 92.0 80.0 100.0 ±0.0 
+
+Push Button 8.0 12.0 24.0 76.0 76.0 90.7 ±2.3 
+
+Stack Wine 56.0 56.0 56.0 80.0 52.0 94.7 ±2.3 
+
+Turn Tap 36.0 32.0 32.0 56.0 28.0 74.7 ±8.3 
+
+Open Drawer 52.0 44.0 52.0 88.0 84.0 97.3 ±2.3 
+
+Pick Up Cup 20.0 0.0 76.0 80.0 44.0 90.7 ±2.3 
+
+Take Lid 40.0 60.0 84.0 80.0 76.0 90.7 ±2.3 
+
+Press Switch 52.0 56.0 28.0 44.0 44.0 68.0 ±4.0 
+
+Reach Target 88.0 8.0 72.0 84.0 60.0 97.3 ±2.3 
+
+Open Box 36.0 48.0 20.0 76.0 96.0 62.7 ±6.1 
+
+Average 48.8 41.6 54.4 75.6 64.4 86.7 ±1.4 
+
+7lamp on      
+
+> remove plate
+> pick up cup
+> reach target
+> push button
+> open grill
+> hang frame
+> lamp off
+> drag to target
+> turn tap
+> remove toilet roll
+> turn oven on
+> place plate
+> move hanger
+> open drawer
+> phone on base
+> unplug charger
+> take out shoes
+> remove frame
+> stack wine
+> get ice
+> place knife
+> open wine
+> slide block
+> put bottle in fridge
+> close grill
+> open box
+> hang hanger
+> remove meat
+> open door
+> remove pan lid
+> remove umbrella
+> put money in safe
+> press switch
+> water plants
+> remove from scale
+> play jenga
+> close box
+> screw nail
+> open microwave
+> set clock
+> take out money
+> hockey
+> close drawer
+> basketball
+> seat down
+> put groceries on
+> hit ball
+> sweep dust
+> buzz game
+> change channel
+> straighten rope
+> close fridge
+> open washer
+> set checkers
+> lift block
+> remove USB
+> insert USB
+> seat up
+> 0.2
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> Success rate improvement
+> Method Avg SR
+> DP 0.308
+> CoA 0.549
+> SegDiff 0.640
+
+SegDiff DP 
+
+SegDiff CoA Figure 5 Success rate improvement of SegDiff over DP/CoA. Detailed per-task results are provided in the supplementary material. 
+
+trajectories, highlighting its robustness across diverse data sources. 
+
+Baselines. On RLBench, we evaluate our method against four representative visuomotor policies: ACT [ 54 ], Diffusion Policy (DP) [ 9], Chain-of-Action (CoA) [ 52 ], and a fine-tuned Octo policy [ 53 ]. Among the baselines, ACT and DP are the most commonly used baselines in prior work. CoA and the fine-tuned Octo are among the strongest previously reported methods on this benchmark. On RoboMimic, we compare our method against DP and AWE [ 37 ], where AWE enhances DP by filtering demonstration trajectories to emphasize critical waypoints. This comparison highlights the effectiveness of Segmented Trajectory Modeling over existing continuous diffusion-based approaches. 
+
+Implementation Details. Following prior work [ 9 ], SegDiff utilizes a separate ResNet18 encoder (not pretrained) for each camera view to process historical visual observations. The BatchNorm layers in the original ResNet blocks are replaced by GroupNorm [ 44 ], and the final global average pooling is substituted with spatial softmax pooling [ 30 ] to better capture spatial information. On RLBench, visual observations are captured by four RGB cameras (front, left shoulder, right shoulder, and wrist) and the images are rendered at a resolution of 128 × 128 . On RoboMimic, observations are captured by a third-person camera and a wrist camera with a resolution of 84 × 84 . Additional details are provided in the supplementary material. 
+
+Quantitative Results. Tab. 1 demonstrates that SegDiff consistently outperforms all baselines across 10 RLBench tasks, achieving an 11.1% higher average success rate and the best performance on 9 tasks. Notably, SegDiff yields over 30% improvement in precision-sensitive tasks (e.g., Turn Tap ) and outperforms Diffusion Policy (DP) by 30% on average, validating the efficacy of Segmented Trajectory Modeling for high-precision manipulation. Furthermore, as shown in Fig. 5, SegDiff excels on the full RLBench-60 Lift Can Square Lift Can Square Lift Can Square Lift Can Square 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Success Rate
+
+30 Demos 50 Demos 100 Demos 200 Demos 
+
+DP AWE SegDiff 
+
+Figure 6 Success rate on RoboMimic with varying numbers of demonstrations. 
+
+8Cube  Flip Cup  Package  Screw Cap Banana     
+
+> Position Generalization 6DoF Dexterity Multi-modality Precise Manipulation Dynamic Adaptation Figure 7 Demonstrations and design of real-world tasks.
+
+benchmark, outperforming DP and CoA by 34% and 9% respectively, demonstrating improved robustness and generalization. On RoboMimic (Fig. 6), SegDiff exhibits better data efficiency in low-demo regimes by mitigating compounding errors through keypose-anchored trajectory modeling, while remaining highly competitive as demonstrations increase. Detailed training configurations, task descriptions, and exhaustive results are provided in the supplementary material. 
+
+4.2 Real-World Experiments 
+
+Real-World Benchmarks. To comprehensively evaluate SegDiff, we design five real-world manipulation tasks (Fig. 7): 1) Cube: Grasp and place a cube onto a plate. Demonstrations are collected in a fixed area to evaluate robustness to position generalization .2) Flip Cup: Grasp, flip, and place an inverted cup. The randomized handle orientation tests complex 6-DoF 
+
+manipulation. 3) Package: Place a cardboard into a box. Two distinct sets of demonstrations (grasping from left/right) were provided to evaluate the policy’s ability to handle multi-modal action distributions. 4) Banana: Pick up a banana. The pose of the banana is actively perturbed during execution to test real-time adaptation to dynamic scenarios .5) Screw Cap: Grasp and screw a cap onto a bottle. The initial position of the cap is randomized to test proficiency in high-precision operations. 
+
+Details. Our robotic platform is an xArm7 manipulator equipped with a gripper. Visual inputs are captured by two Intel RealSense D435i cameras (third-person and wrist-mounted), with images collected via human teleoperation and resized to 240 × 240 . We use the same model architecture as described in Sec. 4.1. 
+
+Quantitative Results and Analysis. Real-world comparative results are presented in Tab. 2, where each task is evaluated with 10 trials. We specifically include DP (w/ TE) and DP (w/o TE) to illustrate the effect of 
+
+temporal ensembling (TE) . Overall, SegDiff achieves performance superior or comparable to all baselines. Task-level analysis follows: For Cube (position generalization ), SegDiff achieves a performance comparable to existing approaches. For Flip Cup (6-DoF ), SegDiff achieves a higher success rate by accurately planning the motion to the precise grasp pose for the cup handle. For Package (multi-modality ), since DP (w/o TE) does not incorporate temporal ensembling, the robot may exhibit an initial period of dithering around the starting position; however, once the policy commits to a specific behavioral mode (i. e., move to the left side), it can typically continue execution until successful completion. DP (w/TE) and ACT often fail due to the oscillation between different action modalities, leading 9to OOD states. SegDiff with Dynamic Temporal Ensembling prevents modality switching, achieving a success rate of 100%. For Banana (dynamic adaptation ), DP (w/TE) and ACT are negatively influenced by the outdated action buffer. The short prediction horizon of DP (w/o TE) limits its ability to react promptly. SegDiff recovers faster and executes correct actions due to its long-horizon planning and its ability to promptly discard the unusable action buffer. For Screw Cap (precise manipulation ), SegDiff is the only method that achieves partial success, indicating its advantage in precise manipulation. The real-world experiments confirm the effectiveness and manipulation capabilities of SegDiff in the physical world. Additional qualitative visualizations of full task executions are provided in the supplementary material. 
+
+Table 2 Success rates on real-world tasks. 
+
+Task DP (w/ TE) DP (w/o TE) ACT SegDiff Cube 0.7 0.6 0.7 0.8 
+
+Flip Cup 0.2 0.6 0.3 0.9 
+
+Package 0.4 0.8 0.8 1.0 
+
+Banana 0.2 0.4 0.4 0.9 
+
+Screw Cap 0.0 0.0 0.0 0.6 
+
+Table 3 Ablation on DTE mechanism. 
+
+Task RAND INV DTE RLBench 0.880 0.800 0.860 Cube 0.8 0.7 0.8 
+
+Flip Cup 0.9 0.7 0.9 
+
+Package 0.8 1.0 1.0 
+
+Banana 0.5 0.3 0.9 
+
+Screw Cap 0.3 0.5 0.6 
+
+5 Ablation Study and Discussion 
+
+5.1 Segmented Trajectory Modeling 
+
+A core component of SegDiff is Segmented Trajectory Modeling . We use Diffusion Policy (DP) as the baseline, which corresponds to a version without Segmented Trajectory Modeling. For fair comparison, both models employ only the basic temporal ensembling, with the Dynamic Temporal Ensembling mechanism disabled. Fig. 8 shows learning curves on four selected RLBench tasks, demonstrating that Segmented Trajectory Modeling accelerates convergence and achieves higher performance with fewer training steps. (芩)ew� sseuuns 100 90 80 70 60 50 
+
+Results on Different L   
+
+> .......SegDiff
+> ---CoA
+> ---DP 100 90 80 70 60 50
+
+Ablation on 11     
+
+> ---SegDiff
+> ---CoA
+> ---DP 10 25 50
+
+Interpolation Length L 
+
+> oo 08 1
+
+# (淙)$e 'tl  ssauuns  60 40 20 
+
+Pick U p Cu p
+
+# 。 。
+
+# — SegD iff 
+
+# — Diff us ion Pol icy    
+
+> 20 40 60 80
+
+Trainin g Ste ps (k) 100 100 100 80 60 40 20 
+
+> 。
+
+#  0.25 0.5 
+
+Update Factor fJ Push Button    
+
+> 20 40 60 80
+
+Trainin g Ste ps (k) 100 
+
+> 1
+> 100 80 60 40 20
+
+Turn Ta p   
+
+> 20 40 60 80
+
+Trainin g Ste ps (k) 100 
+
+> 。oooooo
+
+#  08642 1 Open Drawer    
+
+> 20 40 60 80
+
+Trainin g Ste ps (k) 100 
+
+Figure 8 Learning curves of SegDiff and Diffusion Policy across 4 tasks on RLBench. 
+
+5.2 Dynamic Temporal Ensembling 
+
+We conduct ablation experiments on the Dynamic Temporal Ensembling (DTE) mechanism by comparing three strategies: 1) RAND : Actions are sampled from random Gaussian noise and executed using vanilla temporal ensembling. 2) INV : Random sampling is used only when no action buffer is available (segment start); afterward, predictions are initialized from the inverted noise. 10 10 25 50 100     
+
+> Interpolation Length L
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> 100
+> Success Rate (%)
+> SegDiff
+> CoA
+> DP 00.25 0.5 1
+> Update Factor
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> 100
+> Success Rate (%)
+> SegDiff
+> CoA
+> DP Figure 9 Results on different interpolation length ( 𝐿 ) and update factor ( 𝜂 ).
+
+3) DTE : The complete DTE mechanism is applied. We use the average success rate on 10 RLBench tasks as the primary metric for simulation. As shown in Tab. 3, the DTE mechanism yields no performance improvement in the simulation environment. This is expected, as simulation environments are generally perturbation-free and exhibit highly monomodal trajectories. In contrast, DTE demonstrates significant advantages in the real-world setting. Specifically, DTE substantially boosts the success rate in the dynamically perturbed Banana task. For the Package task, which features multi-modal trajectories, DDIM inversion allows both the DTE and INV modes to perform markedly better than RAND. The performance difference between DTE and RAND is marginal for the remaining tasks with relatively fixed trajectory patterns. Crucially, both simulation and real-world results indicate that, in simpler tasks with deterministic trajectories, the INV mode negatively impacts performance. This finding aligns with our theoretical analysis in Sec. 3.3, as the action sampled from inverted noise is potentially influenced by observation from earlier timesteps, consequently reducing the policy’s real-time adaptiveness. 
+
+5.3 Hyperparameter Sensitivity 
+
+We also conduct several additional experiments on RLBench to analyze the sensitivity of key hyperparameters. The results are computed using the average success rate across 10 RLBench tasks. For the trajectory interpolation length ( 𝐿 ) used in Segmented Trajectory Modeling, the left panel of Fig. 9 shows that the success rate peaks at 𝐿 = 25 . SegDiff consistently outperforms other methods across different values of 𝐿 , demonstrating the robustness of our proposed approach. The update factor ( 𝜂 ) is another significant parameter controlling the blending ratio between the action buffer and the new prediction. As shown in the right panel of Fig. 9, when 𝜂 = 0, SegDiff executes the entire predicted trajectory from the current state to the keypose at once (i. e., no receding horizon update). Learning this highly constrained, long-horizon trajectory using a standard diffusion model proves challenging, leading to a noticeable drop in success rate. However, because the prediction still focuses on the critical keypose, its performance remains superior to that of the baseline DP. Conversely, 𝜂 = 1 corresponds to discarding the action buffer entirely and relying solely on the latest prediction for execution. This also results in degraded performance, as it loses the smoothing and consistency benefits of temporal ensembling. The performance degradation observed at both 𝜂 = 0 and 𝜂 = 1 further validates the necessity and efficacy of our Dynamic Temporal Ensembling mechanism. We also evaluate the sensitivity of the Dynamic Temporal Ensembling (DTE) mechanism to the choice of threshold 𝛿 used for judging whether two trajectories belong to the same mode. Specifically, we compute 𝛿 
+
+using three different statistics over the training set: the maximum RMSE (max), the 99% percentile (p99), and the 95% percentile (p95) of the RMSEs of all training samples. The results, reported in Tab. 4, show that DTE is relatively robust to threshold selection. 11 Table 4 Results of different threshold ( 𝛿 ) for DTE. 
+
+𝛿 max p99 p95 Success Rate 0.860 0.836 0.852          
+
+> Table 5 Results of DTE under different sampling and inversion steps. SS: Sampling Steps, IS: Inversion Steps, SR: Success Rate, IT: Inference Time. SS=50/IS=50 SS=50/IS=10 SS=10/IS=10 SR 0.860 0.860 0.808 IT(ms) 595.74 380.21 121.95
+
+5.4 Efficiency Analysis                       
+
+> Table 6 Efficiency analysis on a real robot system.
+> Method Interp. (ms) Inversion (ms) Sample (ms) Control (ms) Others (ms) Total (ms) Mem (GB) DP ––121.74 407.98 92.45 622.17 1.07 SegDiff 0.52 21.98 125.92 408.83 98.57 655.83 1.07
+
+As discussed in Sec. 3.3, the number of DDIM inversion steps in DTE is decoupled from the number of sampling steps. Tab. 5 reports the success rate and inference time under different inversion and sampling settings on a single RTX A6000 GPU, indicating that the inversion process is flexible and incurs only minor computational overhead. Furthermore, we evaluate the runtime efficiency of SegDiff on a real robot system, utilizing 10 steps for DDIM inversion and 50 steps for sampling (Tab. 6). Compared to the standard Diffusion Policy (DP), SegDiff increases the total latency by approximately 33.7 ms ( ∼5.4%). Specifically, the trajectory interpolation and DDIM inversion together introduce an overhead of 22.5 ms per control cycle. The remaining latency arises from the data organization and processing required to sample 𝜏 rand and 𝜏 prior in parallel. These results demonstrate that SegDiff achieves significantly improved robustness with negligible computational cost, maintaining the real-time responsiveness necessary for high-frequency robot deployment. 
+
+6 Conclusion 
+
+In this paper, we presented SegDiff, a novel framework for robotic manipulation that bridges continuous action prediction and keypose-level constraints via Segmented Trajectory Modeling. By predicting trajectories anchored to the next keypose, SegDiff effectively guides learning toward task-critical regions and alleviates compounding errors. Furthermore, we introduced the Dynamic Temporal Ensembling mechanism, which leverages DDIM inversion to validate and refine the action buffer in real time, ensuring action mode consistency and enhancing responsiveness to dynamic environments. Extensive experiments across diverse manipulation tasks demonstrate the superior performance of SegDiff in both simulation and real-world scenarios. These results highlight the effectiveness of integrating keypose-aware trajectory modeling with dynamic temporal ensembling for generalizable and reliable robotic policy learning. The primary limitation stems from the dependency on pre-defined keyposes for segmenting demonstrations; incorporating automated or self-supervised keypose discovery would therefore be a promising direction for future research. 12 References 
+
+[1] Nadun Ranawaka Arachchige, Zhenyang Chen, Wonsuhk Jung, Woo Chul Shin, Rohan Bansal, Pierre Barroso, Yu Hang He, Yingyan Celine Lin, Benjamin Joffe, Shreyas Kousik, et al. Sail: Faster-than-demonstration execution of imitation learning policies. In Conference on Robot Learning, pages 721–749. PMLR, 2025. [2] Michael Bain and Claude Sammut. A framework for behavioural cloning. In Machine intelligence 15, pages 103–129, 1995. [3] Suneel Belkhale, Yuchen Cui, and Dorsa Sadigh. Hydra: Hybrid robot actions for imitation learning. In Conference on Robot Learning, pages 2113–2133. PMLR, 2023. [4] Kevin Black, Noah Brown, Danny Driess, Adnan Esmail, Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy Groom, Karol Hausman, Brian Ichter, et al. \𝜋 0: A vision-language-action flow model for general robot control. arXiv preprint arXiv:2410.24164, 2024. [5] Kevin Black, Manuel Y Galliker, and Sergey Levine. Real-time execution of action chunking flow policies. arXiv preprint arXiv:2506.07339, 2025. [6] Shizhe Chen, Ricardo Garcia, Cordelia Schmid, and Ivan Laptev. Polarnet: 3d point clouds for language-guided robotic manipulation. In 7th Conference on Robot Learning (CoRL 2023), 2023. [7] Xinyue Chen, Zĳian Zhou, Zheng Wang, Che Wang, Yanqiu Wu, and Keith Ross. Bail: Best-action imitation learning for batch deep reinforcement learning. Advances in Neural Information Processing Systems, 33:18353–18363, 2020. [8] Zhuoqun Chen, Xiu Yuan, Tongzhou Mu, and Hao Su. Responsive noise-relaying diffusion policy: Responsive and efficient visuomotor control. arXiv preprint arXiv:2502.12724, 2025. [9] Cheng Chi, Zhenjia Xu, Siyuan Feng, Eric Cousineau, Yilun Du, Benjamin Burchfiel, Russ Tedrake, and Shuran Song. Diffusion policy: Visuomotor policy learning via action diffusion. The International Journal of Robotics Research, 44(10-11):1684–1704, 2025. [10] Yufei Duan, Hang Yin, and Danica Kragic. Real-time iteration scheme for diffusion policy. arXiv preprint arXiv:2508.05396, 2025. [11] Haoquan Fang, Markus Grotz, Wilbert Pumacay, Yi Ru Wang, Dieter Fox, Ranjay Krishna, and Jiafei Duan. Sam2act: Integrating visual foundation model with a memory architecture for robotic manipulation. In International Conference on Machine Learning, pages 15925–15942. PMLR, 2025. [12] Theophile Gervet, Zhou Xian, Nikolaos Gkanatsios, and Katerina Fragkiadaki. Act3d: 3d feature field transformers for multi-task robotic manipulation. In Conference on Robot Learning, pages 3949–3965. PMLR, 2023. [13] Ankit Goyal, Jie Xu, Yĳie Guo, Valts Blukis, Yu-Wei Chao, and Dieter Fox. Rvt: Robotic view transformer for 3d object manipulation. In Conference on Robot Learning, pages 694–710. PMLR, 2023. [14] Ankit Goyal, Valts Blukis, Jie Xu, Yĳie Guo, Yu-Wei Chao, and Dieter Fox. Rvt2: Learning precise manipulation from few demonstrations. RSS, 2024. [15] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising diffusion probabilistic models. Advances in neural information processing systems, 33:6840–6851, 2020. [16] Sigmund H Høeg, Yilun Du, and Olav Egeland. Streaming diffusion policy: Fast policy synthesis with variable noise diffusion models. arXiv preprint arXiv:2406.04806, 2024. [17] Yucheng Hu, Yanjiang Guo, Pengchao Wang, Xiaoyu Chen, Yen-Jen Wang, Jianke Zhang, Koushil Sreenath, Chaochao Lu, and Jianyu Chen. Video prediction policy: A generalist robot policy with predictive visual representations. In International Conference on Machine Learning, pages 24328–24346. PMLR, 2025. [18] Stephen James and Andrew J Davison. Q-attention: Enabling efficient learning for vision-based robotic manipulation. IEEE Robotics and Automation Letters, 7(2):1612–1619, 2022. [19] Stephen James, Zicong Ma, David Rovick Arrojo, and Andrew J Davison. Rlbench: The robot learning benchmark & learning environment. IEEE Robotics and Automation Letters, 5(2):3019–3026, 2020. 
+
+13 [20] Stephen James, Kentaro Wada, Tristan Laidlow, and Andrew J Davison. Coarse-to-fine q-attention: Efficient learning for visual robotic manipulation via discretisation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 13739–13748, 2022. [21] Sertac Karaman and Emilio Frazzoli. Sampling-based algorithms for optimal motion planning. The international journal of robotics research, 30(7):846–894, 2011. [22] Sertac Karaman, Matthew R Walter, Alejandro Perez, Emilio Frazzoli, and Seth Teller. Anytime motion planning using the rrt. In 2011 IEEE international conference on robotics and automation, pages 1478–1483. ieee, 2011. [23] Tsung-Wei Ke, Nikolaos Gkanatsios, and Katerina Fragkiadaki. 3d diffuser actor: Policy diffusion with 3d scene representations. In Conference on Robot Learning, pages 1949–1974. PMLR, 2025. [24] Moo Jin Kim, Chelsea Finn, and Percy Liang. Fine-tuning vision-language-action models: Optimizing speed and success. arXiv preprint arXiv:2502.19645, 2025. [25] James J Kuffner and Steven M LaValle. Rrt-connect: An efficient approach to single-query path planning. In Proceedings 2000 ICRA. Millennium conference. IEEE international conference on robotics and automation. Symposia proceedings (Cat. No. 00CH37065), volume 2, pages 995–1001. IEEE, 2000. [26] Steven LaValle. Rapidly-exploring random trees: A new tool for path planning. Research Report 9811, 1998. [27] Minghuan Liu, Hanye Zhao, Zhengyu Yang, Jian Shen, Weinan Zhang, Li Zhao, and Tie-Yan Liu. Curriculum offline imitating learning. Advances in Neural Information Processing Systems, 34:6266–6277, 2021. [28] Songming Liu, Lingxuan Wu, Bangguo Li, Hengkai Tan, Huayu Chen, Zhengyi Wang, Ke Xu, Hang Su, and Jun Zhu. Rdt-1b: a diffusion foundation model for bimanual manipulation. In International Conference on Learning Representations, volume 2025, pages 29982–30009, 2025. [29] Guanxing Lu, Zifeng Gao, Tianxing Chen, Wenxun Dai, Ziwei Wang, Wenbo Ding, and Yansong Tang. Manicm: Real-time 3d diffusion policy via consistency model for robotic manipulation. arXiv preprint arXiv:2406.01586, 2024. [30] Ajay Mandlekar, Danfei Xu, Josiah Wong, Soroush Nasiriany, Chen Wang, Rohun Kulkarni, Li Fei-Fei, Silvio Savarese, Yuke Zhu, and Roberto Martín-Martín. What matters in learning from offline human demonstrations for robot manipulation. In Conference on Robot Learning, pages 1678–1690. PMLR, 2022. [31] David Q Mayne and Hannah Michalska. Receding horizon control of nonlinear systems. In Proceedings of the 27th IEEE Conference on Decision and Control, pages 464–465. IEEE, 1988. [32] Takayuki Osa, Joni Pajarinen, Gerhard Neumann, J Andrew Bagnell, Pieter Abbeel, Jan Peters, et al. An algorithmic perspective on imitation learning. Foundations and Trends ® in Robotics, 7(1-2):1–179, 2018. [33] Aaditya Prasad, Kevin Lin, Jimmy Wu, Linqi Zhou, and Jeannette Bohg. Consistency policy: Accelerated visuomotor policies via consistency distillation. arXiv preprint arXiv:2405.07503, 2024. [34] Eric Rohmer, Surya PN Singh, and Marc Freese. V-rep: A versatile and scalable robot simulation framework. In 2013 IEEE/RSJ international conference on intelligent robots and systems, pages 1321–1326. IEEE, 2013. [35] Stefan Schaal. Learning from demonstration. Advances in neural information processing systems, 9, 1996. [36] Stefan Schaal. Is imitation learning the route to humanoid robots? Trends in cognitive sciences, 3(6):233–242, 1999. [37] Lucy Xiaoyang Shi, Archit Sharma, Tony Z Zhao, and Chelsea Finn. Waypoint-based imitation learning for robotic manipulation. In Conference on Robot Learning, pages 2195–2209. PMLR, 2023. [38] Mohit Shridhar, Lucas Manuelli, and Dieter Fox. Perceiver-actor: A multi-task transformer for robotic manipulation. In Conference on Robot Learning, pages 785–799. PMLR, 2023. [39] Mohit Shridhar, Yat Long Lo, and Stephen James. Generative image as action models. In Conference on Robot Learning, pages 2429–2455. PMLR, 2025. [40] Jiaming Song, Chenlin Meng, and Stefano Ermon. Denoising diffusion implicit models. In International Conference on Learning Representations, 2021. 
+
+14 [41] Priya Sundaresan, Hengyuan Hu, Quan Vuong, Jeannette Bohg, and Dorsa Sadigh. What’s the move? hybrid imitation learning via salient points. In International Conference on Learning Representations, volume 2025, pages 51806–51821, 2025. [42] Octo Model Team, Dibya Ghosh, Homer Walke, Karl Pertsch, Kevin Black, Oier Mees, Sudeep Dasari, Joey Hejna, Tobias Kreiman, Charles Xu, et al. Octo: An open-source generalist robot policy. arXiv preprint arXiv:2405.12213, 2024. [43] Dexin Wang, Chunsheng Liu, Faliang Chang, and Yichen Xu. Hierarchical diffusion policy: manipulation trajectory generation via contact guidance. IEEE Transactions on Robotics, 2025. [44] Yuxin Wu and Kaiming He. Group normalization. In Proceedings of the European conference on computer vision (ECCV), pages 3–19, 2018. [45] Zhou Xian, Nikolaos Gkanatsios, Theophile Gervet, Tsung-Wei Ke, and Katerina Fragkiadaki. Chaineddiffuser: Unifying trajectory diffusion and keypose prediction for robotic manipulation. In 7th Annual Conference on Robot Learning, 2023. [46] Sicheng Xie, Haidong Cao, Zejia Weng, Zhen Xing, Haoran Chen, Shiwei Shen, Jiaqi Leng, Zuxuan Wu, and Yu-Gang Jiang. Human2robot: Learning robot actions from paired human-robot videos. In Proceedings of the AAAI Conference on Artificial Intelligence, volume 40, pages 11078–11086, 2026. [47] Dongjie Yu, Hang Xu, Yizhou Chen, Yi Ren, and Jia Pan. Bikc: Keypose-conditioned consistency policy for bimanual robotic manipulation. arXiv preprint arXiv:2406.10093, 2024. [48] Maryam Zare, Parham M Kebria, Abbas Khosravi, and Saeid Nahavandi. A survey of imitation learning: Algorithms, recent developments, and challenges. IEEE Transactions on Cybernetics, 2024. [49] Yanjie Ze, Ge Yan, Yueh-Hua Wu, Annabella Macaluso, Yuying Ge, Jianglong Ye, Nicklas Hansen, Li Erran Li, and Xiaolong Wang. Gnfactor: Multi-task real robot learning with generalizable neural feature fields. In Conference on robot learning, pages 284–301. PMLR, 2023. [50] Yanjie Ze, Gu Zhang, Kangning Zhang, Chenyuan Hu, Muhan Wang, and Huazhe Xu. 3d diffusion policy: Generalizable visuomotor policy learning via simple 3d representations. Robotics: Science and Systems XX, 2024. [51] Yanjie Ze, Zixuan Chen, Wenhao Wang, Tianyi Chen, Xialin He, Ying Yuan, Xue Bin Peng, and Jiajun Wu. Generalizable humanoid manipulation with 3d diffusion policies. In 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), pages 2873–2880. IEEE, 2025. [52] Wenbo Zhang, Tianrun Hu, Yanyuan Qiao, Hanbo Zhang, Yuchu Qin, Yang Li, Jiajun Liu, Tao Kong, Lingqiao Liu, and Xiao Ma. Chain-of-action: Trajectory autoregressive modeling for robotic manipulation. arXiv preprint arXiv:2506.09990, 2025. [53] Wenbo Zhang, Yang Li, Yanyuan Qiao, Siyuan Huang, Jiajun Liu, Feras Dayoub, Xiao Ma, and Lingqiao Liu. Effective tuning strategies for generalist robot manipulation policies. In 2025 IEEE International Conference on Robotics and Automation (ICRA), pages 7255–7262. IEEE, 2025. [54] Tony Z Zhao, Vikash Kumar, Sergey Levine, and Chelsea Finn. Learning fine-grained bimanual manipulation with low-cost hardware. arXiv preprint arXiv:2304.13705, 2023. 
+
+15 Appendix 
+
+A Theoretical Analysis of Compounding Errors 
+
+As introduced in the method section of the main paper, Segmented Trajectory Modeling (STM) mitigates compounding errors that arise in continuous sliding-window prediction paradigms. In this appendix, we provide a theoretical analysis from the perspective of dynamical systems and imitation learning to support this claim. 
+
+Problem Setup. Consider a deterministic dynamical system governed by 
+
+𝑠 𝑡 +1 = 𝑓 (𝑠 𝑡 , 𝑎 𝑡 ), (7) where 𝑠 𝑡 denotes the system state and 𝑎 𝑡 denotes the control action. Let 𝜋 ∗ be the expert policy and 𝜋 𝜃 be the learned policy. For simplicity, we analyze the expected policy output under the diffusion model as a deterministic policy. We assume the learned policy approximates the expert policy with a uniformly bounded error over the state space: 
+
+∥𝜋 𝜃 (𝑠 𝑡 ) − 𝜋 ∗(𝑠 𝑡 )∥ ≤ 𝜖 . (8) We further assume that the system dynamics are Lipschitz continuous with respect to both state and action: 
+
+∥ 𝑓 (𝑠, 𝑎 ) − 𝑓 (𝑠 ′ , 𝑎 ′)∥ ≤ 𝐿 𝑠 ∥𝑠 − 𝑠 ′∥ + 𝐿 𝑎 ∥𝑎 − 𝑎 ′∥. (9) Additionally, we assume the expert policy is Lipschitz continuous: 
+
+∥𝜋 ∗(𝑠 ) − 𝜋 ∗(𝑠 ′)∥ ≤ 𝐿 𝜋 ∥𝑠 − 𝑠 ′∥. (10) Let 𝑠 ∗ 
+
+> 𝑡
+
+denote the expert state trajectory generated by 𝜋 ∗ and define the state deviation 𝑒 𝑡 = ∥𝑠 𝑡 − 𝑠 ∗ 
+
+> 𝑡
+
+∥. Our goal is to analyze how this deviation evolves during closed-loop execution. 
+
+Error Accumulation in Sliding-Window Paradigms. In traditional sliding-window approaches (e.g., Diffusion Policy), the model repeatedly predicts short-horizon action sequences while the prediction window continuously shifts. Because the target trajectory is not anchored to any fixed goal state, small prediction errors can accumulate over time. The state deviation at timestep 𝑡 + 1 satisfies 
+
+𝑒 𝑡 +1 = ∥ 𝑓 (𝑠 𝑡 , 𝜋 𝜃 (𝑠 𝑡 )) − 𝑓 (𝑠 ∗ 
+
+> 𝑡
+
+, 𝜋 ∗(𝑠 ∗ 
+
+> 𝑡
+
+))∥ . (11) Using the triangle inequality: 
+
+𝑒 𝑡 +1 ≤ ∥ 𝑓 (𝑠 𝑡 , 𝜋 𝜃 (𝑠 𝑡 )) − 𝑓 (𝑠 𝑡 , 𝜋 ∗(𝑠 𝑡 ))∥ + ∥ 𝑓 (𝑠 𝑡 , 𝜋 ∗(𝑠 𝑡 )) − 𝑓 (𝑠 ∗ 
+
+> 𝑡
+
+, 𝜋 ∗(𝑠 ∗ 
+
+> 𝑡
+
+))∥ . (12) The first term captures the policy prediction error. Using the Lipschitz property of the dynamics with respect to action: 
+
+∥ 𝑓 (𝑠 𝑡 , 𝜋 𝜃 (𝑠 𝑡 )) − 𝑓 (𝑠 𝑡 , 𝜋 ∗(𝑠 𝑡 ))∥ ≤ 𝐿 𝑎 ∥𝜋 𝜃 (𝑠 𝑡 ) − 𝜋 ∗(𝑠 𝑡 )∥ ≤ 𝐿 𝑎 𝜖 . (13) 16 The second term captures the propagation of state deviation through the dynamics. Using the Lipschitz property of 𝑓 and 𝜋 ∗:
+
+∥ 𝑓 (𝑠 𝑡 , 𝜋 ∗(𝑠 𝑡 )) − 𝑓 (𝑠 ∗ 
+
+> 𝑡
+
+, 𝜋 ∗(𝑠 ∗ 
+
+> 𝑡
+
+))∥ ≤ 𝐿 𝑠 ∥𝑠 𝑡 − 𝑠 ∗ 
+
+> 𝑡
+
+∥ + 𝐿 𝑎 ∥𝜋 ∗(𝑠 𝑡 ) − 𝜋 ∗(𝑠 ∗ 
+
+> 𝑡
+
+)∥ ≤ 𝐿 𝑠 𝑒 𝑡 + 𝐿 𝑎 𝐿 𝜋 𝑒 𝑡 . (14) Combining the two bounds gives 
+
+𝑒 𝑡 +1 ≤ ( 𝐿 𝑠 + 𝐿 𝑎 𝐿 𝜋 )𝑒 𝑡 + 𝐿 𝑎 𝜖 . (15) Define the closed-loop Lipschitz constant 
+
+˜𝐿 = 𝐿 𝑠 + 𝐿 𝑎 𝐿 𝜋 . (16) The error recursion becomes 
+
+𝑒 𝑡 +1 ≤ ˜ 𝐿𝑒 𝑡 + 𝐿 𝑎 𝜖 . (17) Solving this recurrence relation with 𝑒 0 = 0 yields 
+
+𝑒 𝑡 ≤ 𝐿 𝑎 𝜖 
+
+> 𝑡 −1
+
+Õ
+
+> 𝑖 =0
+
+˜𝐿 𝑖 . (18) For ˜𝐿 ≠ 1, this geometric series evaluates to: 
+
+𝑒 𝑡 ≤ 𝐿 𝑎 𝜖 ˜𝐿 𝑡 − 1
+
+˜𝐿 − 1 . (19) If ˜𝐿 > 1, the state deviation 𝑒 𝑡 grows exponentially with respect to time 𝑡 , making long-horizon open-loop predictions extremely brittle. Even in the marginally stable case ( ˜𝐿 = 1), which is a standard assumption in kinematic control analyses, the summation simplifies to a linear growth: 
+
+𝑒 𝑡 ≤ 𝑡𝐿 𝑎 𝜖 . (20) Under this ˜𝐿 = 1 assumption, the cumulative trajectory deviation over the entire execution horizon 𝑇 becomes: 
+
+ℰsliding =
+
+> 𝑇
+
+Õ
+
+> 𝑡 =1
+
+𝑒 𝑡 ≤
+
+> 𝑇
+
+Õ
+
+> 𝑡 =1
+
+𝑡𝐿 𝑎 𝜖 = 𝑇 (𝑇 + 1)
+
+2 𝐿 𝑎 𝜖 = 𝒪( 𝐿 𝑎 𝜖 𝑇 2). (21) This at least quadratic growth behavior (which becomes exponential if ˜𝐿 > 1) formally illustrates the well-known compounding error phenomenon in behavior cloning: small per-step prediction errors accumulate rapidly over long horizons, eventually driving the system into out-of-distribution (OOD) states. 
+
+Error Mitigation via Segmented Trajectory Modeling (STM). To address the compounding errors of sliding-window approaches, SegDiff decomposes the full trajectory of length 𝑇 into 𝑀 segments separated by keyposes 𝑘 0 , 𝑘 1 , . . . , 𝑘 𝑀 , where 𝑘 0 = 0 and 𝑘 𝑀 = 𝑇 . Let the maximum length of any single segment be bounded by 𝑆 , such that 𝑘 𝑚 − 𝑘 𝑚 −1 ≤ 𝑆 < 𝑇 .17 Consider the system at timestep 𝑡 within the 𝑚 -th segment, i.e., 𝑡 ∈ [ 𝑘 𝑚 −1 , 𝑘 𝑚 ). STM predicts the action sequence ˆ𝑎 𝑡 :𝑘 𝑚 −1 anchored at the next keypose 𝑘 𝑚 . To formally derive the bound on the keypose prediction error Δ𝑘 𝑚 |𝑡 = ∥ˆ 𝑠 𝑘 𝑚 |𝑡 − 𝑠 ∗ 
+
+> 𝑘 𝑚
+
+∥, we trace the intermediate predicted states ˆ𝑠 𝜏 |𝑡 for 𝜏 ∈ { 𝑡, . . . , 𝑘 𝑚 } starting from 
+
+ˆ𝑠 𝑡 |𝑡 = 𝑠 𝑡 . The deviation satisfies the following inequality: 
+
+∥ˆ 𝑠 𝜏 +1|𝑡 − 𝑠 ∗
+
+> 𝜏 +1
+
+∥ = ∥ 𝑓 (ˆ 𝑠 𝜏 |𝑡 , ˆ𝑎 𝜏 ) − 𝑓 (𝑠 ∗ 
+
+> 𝜏
+
+, 𝑎 ∗
+
+> 𝜏
+
+)∥ ≤ 𝐿 𝑠 ∥ˆ 𝑠 𝜏 |𝑡 − 𝑠 ∗
+
+> 𝜏
+
+∥ + 𝐿 𝑎 ∥ ˆ 𝑎 𝜏 − 𝑎 ∗
+
+> 𝜏
+
+∥≤ 𝐿 𝑠 ∥ˆ 𝑠 𝜏 |𝑡 − 𝑠 ∗
+
+> 𝜏
+
+∥ + 𝐿 𝑎 𝜖 .
+
+(22) Applying the inequality recursively from 𝑡 to 𝑘 𝑚 − 1 yields, the keypose prediction error is bounded by 
+
+Δ𝑘 𝑚 |𝑡 ≤ 𝐿 𝑘 𝑚 −𝑡 𝑠 𝑒 𝑡 + 𝐿 𝑎 𝜖  
+
+> 𝑘 𝑚 −𝑡 −1
+
+Õ
+
+> 𝑖 =0
+
+𝐿 𝑖 𝑠 . (23) Note that within each segment, the error propagation is governed only by the open-loop dynamics constant 
+
+𝐿 𝑠 , whereas in sliding-window paradigms it is governed by the closed-loop constant ˜𝐿 = 𝐿 𝑠 + 𝐿 𝑎 𝐿 𝜋 . Since 
+
+˜𝐿 > 𝐿 𝑠 , SegDiff inherently reduces the rate of error divergence. Furthermore, keyposes in robotic manipulation often act as bottleneck states that physically absorb relative pose errors, effectively resetting the execution deviation at the beginning of each segment ( 𝑒 𝑘 𝑚 −1 ≈ 0). Under this assumption, the deviation 𝑒 𝑡 within the segment satisfies 
+
+𝑒 𝑡 ≤ 𝐿 𝑎 𝜖 
+
+> 𝑡 −𝑘 𝑚 −1−1
+
+Õ
+
+> 𝑗 =0
+
+𝐿 𝑗 𝑠 . (24) Substituting this bound into Eq. 23 yields 
+
+Δ𝑘 𝑚 |𝑡 ≤ 𝐿 𝑘 𝑚 −𝑡 𝑠 
+
+©«
+
+𝐿 𝑎 𝜖 
+
+> 𝑡 −𝑘 𝑚 −1−1
+
+Õ
+
+> 𝑗 =0
+
+𝐿 𝑗 𝑠 
+
+ª®¬
+
++ 𝐿 𝑎 𝜖  
+
+> 𝑘 𝑚 −𝑡 −1
+
+Õ
+
+> 𝑖 =0
+
+𝐿 𝑖 𝑠 
+
+= 𝐿 𝑎 𝜖 ©«
+
+> 𝑡 −𝑘 𝑚 −1−1
+
+Õ
+
+> 𝑗 =0
+
+𝐿 𝑘 𝑚 −𝑡 +𝑗 𝑠 + 
+
+> 𝑘 𝑚 −𝑡 −1
+
+Õ
+
+> 𝑖 =0
+
+𝐿 𝑖 𝑠 
+
+ª®¬
+
+= 𝐿 𝑎 𝜖  
+
+> 𝑘 𝑚 −𝑘 𝑚 −1−1
+
+Õ
+
+> 𝑛 =0
+
+𝐿 𝑛 𝑠 ≤ 𝐿 𝑎 𝜖 
+
+> 𝑆 −1
+
+Õ
+
+> 𝑛 =0
+
+𝐿 𝑛 𝑠 .
+
+(25) The prediction error of the next keypose Δ𝑘 𝑚 |𝑡 is strictly bounded by the local segment length 𝑆 . In the marginally stable case ( 𝐿 𝑠 = 1), this simplifies to Δ𝑘 𝑚 |𝑡 ≤ 𝑆𝐿 𝑎 𝜖 . Even in unstable regimes where 𝐿 𝑠 > 1, STM still provides a significantly tighter bound than sliding-window paradigms. Recall that sliding-window methods suffer from error growth governed by the closed-loop constant ˜𝐿 = 𝐿 𝑠 + 𝐿 𝑎 𝐿 𝜋 . Since ˜𝐿 > 𝐿 𝑠 , the exponential divergence in SegDiff is restricted to the open-loop dynamics within a short segment 𝑆 , avoiding the accelerated drift caused by the learned policy’s sensitivity 𝐿 𝜋 over a long horizon. Unlike sliding-window paradigms where errors propagate continuously and influence all future states, STM decomposes the trajectory into nearly independent segments through keypose anchoring. In manipulation tasks, the successful execution of each segment primarily depends on whether the robot reaches the target keypose that terminates the segment. Therefore, the execution quality within a segment can be characterized by the accuracy of the predicted next keypose. 18 During execution, the policy predicts the future trajectory toward the same keypose multiple times at different timesteps within the segment. SegDiff further aggregates these repeated predictions through the Dynamic Temporal Ensembling (DTE) mechanism, producing a temporally smoothed estimate of the next keypose. Since the final prediction is obtained by averaging multiple predictions generated within the same segment, its deviation is naturally bounded by the largest single prediction error among them. Consequently, the execution stability of a segment is determined by the worst-case keypose prediction error that occurs within that segment. From this perspective, the global execution error of the entire trajectory can be bounded by 
+
+ℰSegDiff ≤ max 
+
+> 𝑚 ∈{ 1,...,𝑀 }
+
+
+
+max   
+
+> 𝑡 ∈[ 𝑘 𝑚 −1,𝑘 𝑚 −1]
+
+Δ𝑘 𝑚 |𝑡 
+
+
+
+≤ 𝒪( 𝐿 𝑎 𝜖 𝑆 ). (26) In contrast to sliding-window paradigms where the cumulative deviation scales with the full execution horizon 
+
+𝑇 (i.e., 𝒪( 𝐿 𝑎 𝜖 𝑇 2) under marginal stability), the error in STM is strictly capped by the local segment scale 𝑆 .Since 𝑆 ≪ 𝑇 in long-horizon manipulation tasks, SegDiff effectively transforms a long-term compounding error problem into a sequence of short-horizon, locally bounded regulation problems, thereby substantially improving robustness during long-horizon execution. 
+
+B Additional Visualizations 
+
+B.1 Visualization of Dynamic Temporal Ensembling Mechanism 
+
+As discussed in the method section, the Dynamic Temporal Ensembling (DTE) mechanism is designed to address potential action mode conflicts and enhance adaptation to dynamic environments.    
+
+> (a) Sampling from random Gaussian noise may generate a correct trajectory but inconsistent with the action buffer.
+> (b) Two situations faced by Dynamic Temporal Ensembling (left: valid action buffer; right: invalid buffer that must be discarded).
+> Figure 10 Illustrations of issues encountered during inference with diffusion-based policies and how Dynamic Temporal Ensembling handles them.
+
+In tasks such as Package mentioned in the experiment section, the same observation may correspond to multiple feasible action modes—for example, placing the package from different approach directions. When trajectories are sampled purely from random Gaussian noise, the resulting action may follow a mode that differs from the one encoded in the current action buffer (as illustrated in Fig. 10a). Interpolating between two inconsistent modes can lead to undesirable behavior. To prevent this, DTE initializes the sampling process using the noise inverted from the buffered trajectory, ensuring that the newly generated trajectory remains consistent with the buffer, as long as the buffer is still valid under the latest observation. The left panel of Fig. 10b shows the situation where the action buffer is valid, and the trajectory sampled 19 from the inverted noise is aligned with the action mode of the existing buffer. In such cases, the action buffer is refined through temporal ensembling, resulting in smoother and more accurate action output. The right panel illustrates the situation when the environment is significantly altered (generated in the execution process of the Banana task). In such cases, the action buffer is discarded, allowing the policy to rely solely on predictions inferred from the latest observation. 
+
+B.2 Visualization of SegDiff Execution 
+
+As detailed in the method section, SegDiff utilizes Segmented Trajectory Modeling (STM), predicting the continuous trajectory from the current state to the next keypose. This approach allows the model to focus on critical points while simultaneously modeling the intermediate motion. The visualization of the SegDiff execution process, showing the predicted segmented trajectory and corresponding observation, is provided in Fig. 11.  
+
+> Figure 11 Visualization of the predicted pose trajectory in Segmented Trajectory Modeling (STM). The prediction always targets at the next keypose, ensuring focused modeling of the trajectory toward task-critical points.
+
+C Task Details 
+
+C.1 RLBench Tasks 
+
+The full task names, descriptions, and number of corresponding keyposes of the selected 10 RLBench tasks are as follows: (1) Sweep Dust (sweep to dustpan): use the broom to brush the dirt into the dustpan. This task involves 2 to 3 keyposes. (2) Push Button (push button): press the button with the maroon base. This task involves 2 keyposes. (3) Stack Wine (stack wine): slide the bottle onto the wine rack. This task involves 2 keyposes. (4) Turn Tap (turn tap): grasp the tap and turn it. This task involves 2 keyposes. (5) Open Drawer (open drawer): grip the bottom handle and pull the drawer open. This task involves 2 keyposes. (6) Pick Up Cup (pick up cup): grasp the red cup and lift it. This task involves 2 keyposes. (7) Take Lid (take lid off saucepan): using the handle, lift the lid off of the pan. This task involves 2 keyposes. (8) Press Switch (press switch): turn the switch on or off. This task involves 2 keyposes. (9) Reach Target (reach target): touch the red ball with the panda gripper. This task involves only 1 keypose. (10) Open Box (open box): open the box lid. This task involves 2 keyposes. 20 C.2 RoboMimic Tasks 
+
+Descriptions and number of corresponding keyposes of three tasks from RoboMimic are as follows: (1) Lift : grasp the cube from the table. This task involves 2 keyposes. (2) Can : grasp the can and then place it in the designated place. This task involves 3 keyposes. (3) Square : pick up the square and assemble it with the wooden peg. This task involves 3 keyposes. Pick Up Cube  
+
+> Flip Cup
+> Package
+> Screw Cap
+> Pick Up Banana
+> disturb
+> Figure 12 Visualization of the complete processes of real-world tasks.
+
+C.3 Real-World Tasks 
+
+The visualization of the process of all real-world tasks can be found in Fig. 12, and the detailed descriptions are as follows: (1) Cube: Grasping and placing a cube onto a plate. Demonstrations were collected in a specific area to test the ability to handle position changes in the workspace. (2) Flip Cup: Grasping an inverted cup, flipping it mid-air, and placing it. The initial handle orientation was randomized to test complex 6-DoF manipulation. (3) Package: Placing a cardboard into a box. Two distinct sets of demonstrations (10 samples each) were provided to evaluate the policy’s ability to handle multi-modality in action distributions. 21 (4) Banana: Picking up a banana. The pose of the banana is actively perturbed during execution to test 
+
+real-time adaptation to dynamic scenarios .(5) Screw Cap: Grasping a cap and screwing it onto a bottle. The initial position of the cap is randomized to test proficiency in high-precision operations. 
+
+D Hyperparameters and Experiment Settings 
+
+RLBench We provide the training and evaluation hyperparameters for SegDiff and DP used on RLBench. The hyperparameters are aligned with previous works [ 9, 39 , 52 ], allowing us to isolate and assess the impact of our proposed Segmented Trajectory Modeling. Specifically, SegDiff inherits most of its settings from DP. Additionally, we incorporate vanilla temporal ensembling into DP to ensure fair comparison. 
+
+RoboMimic We evaluate SegDiff against DP and AWE on the selected three RoboMimic tasks. The hyperparameters are shown in Tab. 8. 
+
+Table 7 Hyperparameters for SegDiff and DP on RLBench 
+
+Parameter SegDiff DP 
+
+Action dimension 8 8Cameras 4 4Image size 128 × 128 128 × 128 
+
+Observation horizon 1 1Action sequence length — 20 Interpolation length ( 𝐿 ) 25 —Batch size 128 128 Learning rate 1𝑒 −4 1𝑒 −4
+
+Weight decay 1𝑒 −4 1𝑒 −4
+
+Iteration 100000 100000 Hidden dim 256 256 Feedforward dim 1024 1024 Noise predictor Transformer Transformer Scheduler DDPM DDPM Train diffusion steps 50 50 
+
+Inference&Execution Parameters 
+
+Num. execution ( 𝑛 ) 1 1Update factor ( 𝜂 ) 0.25 —Threshold ( 𝛿 ) max —Sampling steps ( 𝑆𝑆 ) 50 50 Inversion steps ( 𝐼𝑆 ) 10 —
+
+Table 8 Hyperparameters for SegDiff, DP, and AWE on RoboMimic                                                                         
+
+> Parameter SegDiff DP AWE
+> Action dimension 888Cameras 222Image size 76 ×76 76 ×76 76 ×76
+> Observation history 222Horizon —10 10 Action sequence length —88Interpolation length 50 ——Batch size 64 64 64 Learning rate 1.0𝑒 −41.0𝑒 −41.0𝑒 −4
+> Weight decay 1𝑒 −31𝑒 −31𝑒 −3
+> Epoch 2000 2000 2000 Hidden dim 256 256 256 Feedforward dim 1024 1024 1024 Noise predictor Transformer Transformer Transformer Noise scheduler DDPM DDPM DDPM Train diffusion steps 100 100 100
+> Inference & Execution Parameters
+> Num. execution ( 𝑛 )1——Update factor ( 𝜂 )0.25 ——Threshold ( 𝛿 )max ——Sampling steps ( 𝑆𝑆 )100 100 100 Inversion steps ( 𝐼𝑆 )10 ——
+
+E Additional Experiment Results 
+
+E.1 DTE Threshold Analysis 
+
+A significant component of our Dynamic Temporal Ensembling (DTE) mechanism is the threshold 𝛿 , which is employed to determine whether two trajectories still belong to the same behavioral mode. This determination is crucial for assessing the validity of the actions within the buffer. To estimate an effective value for 𝛿 , we operate on the fundamental assumption that all original trajectories in the training dataset represent correct behaviors conditioned on the given observation. Consequently, the reconstructed trajectory, obtained via DDIM inversion and subsequent sampling, should also belong to the same mode as the original. We statistically estimate the distribution of distances between these reconstructed and original trajectories to establish a quantitative baseline for "same-mode" proximity. While this estimation method based on reconstruction distance is inherently an approximation of the true mode distribution, it provides a measurable proxy. 22 Table 9 Statistics of reconstruction distance distribution on RLBench. max denotes the maximum reconstruction distance;    
+
+> 𝑝 99 and 𝑝 95 denote the 99th and 95th percentiles, respectively.
+
+Sweep Dust Push Button Stack Wine Turn Tap Open Drawer Pick Up Cup Take Lid Press Switch Reach Target Open Box 
+
+max 0.025 0.109 0.099 0.125 0.121 0.036 0.063 0.148 0.034 0.024 
+
+𝑝 99 0.016 0.058 0.049 0.072 0.039 0.024 0.029 0.107 0.028 0.017 
+
+𝑝 95 0.012 0.037 0.028 0.048 0.024 0.017 0.015 0.085 0.023 0.014 The DTE mechanism exhibits robustness to the selection of the threshold 𝛿 ; detailed ablation results in Tab.10 
+
+confirm that the specific choice of 𝛿 does not significantly impact the final task success rate on RLBench. The results calculated from the reconstruction distance distribution are shown in Tab.9 and the visualization of the reconstruction distance distribution is shown in Fig.13  
+
+> Table 10 Detailed experiment results on RLBench.
+
+Method Sweep Dust Push Button Stack Wine Turn Tap Open Drawer Pick Up Cup Take Lid Press Switch Reach Target Open Box Avg. SegDiff 0.96 0.76 0.88 0.72 1.00 0.96 0.80 0.80 1.00 0.72 0.860 
+
+RAND 1.00 0.92 0.96 0.84 1.00 0.92 0.92 0.72 0.96 0.56 0.880 
+
+INV 1.00 0.88 0.80 0.60 0.88 0.60 0.88 0.76 0.96 0.64 0.800 
+
+𝐿 =10 (w/o DTE) 0.96 0.72 0.96 0.72 0.96 0.84 0.76 0.84 1.00 0.60 0.836 
+
+𝐿 =50 (w/o DTE) 1.00 0.88 0.92 0.72 0.92 0.88 0.88 0.76 0.96 0.84 0.876 
+
+𝐿 =100 (w/o DTE) 1.00 0.76 0.96 0.60 0.80 0.92 0.88 0.52 0.96 0.56 0.796 
+
+𝛿 =2 × max 0.96 0.84 0.88 0.68 1.00 0.96 0.80 0.80 0.96 0.60 0.848 
+
+𝛿 =p99 0.92 0.76 0.88 0.72 0.96 0.84 0.80 0.72 1.00 0.76 0.836 
+
+𝛿 =p95 0.92 0.80 0.92 0.76 0.72 0.96 0.80 0.76 1.00 0.88 0.852 
+
+50 𝐼𝑆 /50 𝑆𝑆 0.96 0.76 0.88 0.64 1.00 0.96 0.84 0.84 1.00 0.72 0.860 
+
+10 𝐼𝑆 /10 𝑆𝑆 0.96 0.76 0.92 0.48 0.92 0.84 0.84 0.36 1.00 0.56 0.764 
+
+𝜂 =0 0.28 0.84 0.76 0.56 0.64 0.84 0.68 0.72 1.00 0.48 0.680 
+
+𝜂 =0.5 1.00 0.88 0.80 0.56 0.96 0.76 0.88 0.84 0.96 0.60 0.824 
+
+𝜂 =1 0.84 0.76 0.76 0.60 1.00 0.76 0.84 0.88 0.96 0.60 0.800 
+
+linear interp 1.00 0.88 0.96 0.76 1.00 0.92 0.80 0.68 0.96 0.60 0.856 
+
+E.2 Detailed Ablation Results 
+
+We also study the effect of different interpolation methods. For rotation, we use spherical linear interpolation. For translation, we test both linear and cubic interpolation during training and evaluation. The results, together with those from ablation experiments on 10 RLBench tasks, are shown in Tab. 10. We test different Interpolation Lengths L = {10 , 25 , 100 } without Dynamic Temporal Ensembling (w/o DTE). RAND and 
+
+INV are defined in the experiment section to test the effect of introducing DDIM inversion. We also test the mode switch threshold e = {2 ∗ max , p99 , p95 }, and the update factor 𝜂 = {0, 0.5, 1} used for blending trajectories. Additionally, we test the efficiency trade-off using different numbers of inversion steps ( IS ) and sampling steps ( SS ). Finally, linear interp uses linear interpolation for translation compared to the default cubic interpolation. 23 Figure 13 Distribution of reconstruction distance on 10 RLBench tasks. 
+
+24 F Per-Task Results 
+
+For completeness, we report the detailed success rates for all RLBench-60 tasks in Tab. 11 and all RoboMimic settings in Tab. 12. These results correspond to the aggregated metrics presented in the main paper and provide a more fine-grained comparison across tasks.  
+
+> Table 11 Detailed Results on RLBench-60
+
+Simplified name Full name DP CoA SegDiff lamp on lamp_on 0.00 0.48 0.80 remove plate take_plate_off_colored_dish_rack 0.12 0.40 0.80 pick up cup pick_up_cup 0.00 0.80 0.92 reach target reach_target 0.08 0.84 0.96 push button push_button 0.12 0.76 0.92 open grill open_grill 0.00 0.24 0.56 hang frame hang_frame_on_hanger 0.00 0.16 0.52 lamp off lamp_off 0.20 0.68 0.88 drag to target reach_and_drag 0.28 0.64 0.88 turn tap turn_tap 0.32 0.56 0.84 remove toilet roll take_toilet_roll_off_stand 0.08 0.56 0.72 turn oven on turn_oven_on 0.28 0.36 0.72 place plate put_plate_in_colored_dish_rack 0.04 0.32 0.56 move hanger move_hanger 0.32 0.88 0.96 open drawer open_drawer 0.44 0.88 1.00 phone on base phone_on_base 0.04 0.80 0.76 unplug charger unplug_charger 0.20 0.60 0.68 take out shoes take_shoes_out_of_box 0.16 0.08 0.40 remove frame take_frame_off_hanger 0.24 0.64 0.72 stack wine stack_wine 0.56 0.80 0.96 get ice get_ice_from_fridge 0.24 0.60 0.68 place knife place_knife_on_chopping_board 0.00 0.04 0.28 open wine open_wine_bottle 0.40 0.36 0.64 slide block slide_block_to_target 0.00 0.52 0.52 put bottle in fridge put_bottle_in_fridge 0.00 0.28 0.40 close grill close_grill 0.68 0.56 0.88 open box open_box 0.32 0.32 0.56 hang hanger place_hanger_on_rack 0.00 0.32 0.40 remove meat meat_off_grill 0.16 0.88 0.76 open door open_door 0.60 0.92 1.00 remove pan lid take_lid_off_saucepan 0.60 0.80 0.92 remove umbrella take_umbrella_out_of _umbrella_stand 0.20 0.52 0.56 put money in safe put_money_in_safe 0.24 0.80 0.72 press switch press_switch 0.56 0.44 0.68 water plants water_plants 0.00 0.48 0.40 remove from scale take_off_weighing_scales 0.64 0.84 0.88 play jenga play_jenga 0.72 1.00 1.00 close box close_box 0.76 1.00 1.00 screw nail screw_nail 0.00 0.08 0.16 open microwave open_microwave 0.40 0.44 0.52 set clock change_clock 0.20 0.40 0.40 25 Simplified name Full name DP CoA SegDiff take out money take_money_out_safe 0.68 0.76 0.80 hockey hockey 0.00 0.08 0.12 close drawer close_drawer 0.76 1.00 0.96 basketball basketball_in_hoop 0.72 0.76 0.80 seat down toilet_seat_down 0.88 1.00 1.00 put groceries on put_groceries_in_cupboard 0.00 0.08 0.08 hit ball hit_ball_with_cue 0.00 0.08 0.08 sweep dust sweep_to_dustpan 1.00 0.92 1.00 buzz game beat_the_buzz 0.00 0.36 0.20 change channel change_channel 0.00 0.12 0.08 straighten rope straighten_rope 0.00 0.00 0.00 close fridge close_fridge 0.76 0.92 0.84 open washer open_washing_machine 0.60 0.76 0.64 set checkers setup_checkers 0.04 0.04 0.00 lift block lift_numbered_block 0.08 0.08 0.04 remove USB take_usb_out_of_computer 0.72 0.60 0.60 insert USB insert_usb_in_computer 0.88 0.92 0.84 seat up toilet_seat_up 0.88 0.84 0.76  
+
+> Table 12 Success Rate (Mean) on 3 RoboMimic Tasks under 30/50/100/200 Demonstrations
+
+Demos Task DP AWE SegDiff 
+
+Lift 1.00 1.00 1.00 
+
+30 Can 0.64 0.62 0.66 
+
+Square 0.42 0.36 0.44 
+
+Lift 1.00 1.00 1.00 
+
+50 Can 0.86 0.77 0.87 
+
+Square 0.52 0.49 0.55 
+
+Lift 1.00 1.00 1.00 
+
+100 Can 0.93 0.87 0.92 Square 0.78 0.77 0.78 
+
+Lift 1.00 1.00 1.00 
+
+200 Can 0.98 0.96 0.98 
+
+Square 0.94 0.88 0.92 26

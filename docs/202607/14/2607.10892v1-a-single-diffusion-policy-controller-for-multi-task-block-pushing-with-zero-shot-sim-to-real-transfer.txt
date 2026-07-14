@@ -1,0 +1,410 @@
+Title: A Single Diffusion-Policy Controller for Multi-Task Block Pushing with Zero-Shot Sim-to-Real Transfer
+
+URL Source: https://arxiv.org/pdf/2607.10892v1
+
+Published Time: Tue, 14 Jul 2026 02:16:57 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# A Single Diffusion-Policy Controller for Multi-Task Block Pushing with Zero-Shot Sim-to-Real Transfer 
+
+Haitong Ma 1, Haldun Balim 1, Yang Hu 1, Bo Dai 2 and Na Li 1
+
+Abstract — Diffusion policies have shown promising empirical performance in representing and learning complex maneuvers for robots using behavior cloning (BC). In this paper, we explore training diffusion policies from scratch using reinforcement learning (RL) for multi-task robotic manipulation. Specifically, we aim to train a single diffusion policy for block-pushing tasks with multiple shapes. The proposed framework features a simple policy loss function, which is a reweighted evidence lower bound used in BC-based diffusion policy training and can seamlessly serve as the policy learning module in RL algorithms. To address the exploration challenges arising from the absence of demonstrations, we incorporate reverse curriculum gen-eration and objective-centric representations. Combined with the expressiveness of diffusion policies, our design supports learning of multi-task block-pushing policies in our sparse-reward simulation setting. We further evaluate whether the trained diffusion policy transfers in zero-shot to real-world tasks under varying environmental conditions including goal positions, block shapes, block weights and surface friction, providing evidence that this pipeline can transfer to our real-world block-pushing setup under the tested variations. 
+
+I. I NTRODUCTION 
+
+Denoising diffusion probabilistic model (DDPM) [1], [2], [3] has been showing remarkable expressiveness and flexi-bility in representing and generating complex data distribu-tions [4]. In light of these strengths, diffusion policies have been widely leveraged to generate long-horizon robot trajec-tories [5], [6], [7] or imitate expert policies in MDPs [8], [9], [10], [11] using behavior cloning or offline RL methods when expert demonstrations are available in abundance. Building on this foundation, a natural question to ask is whether such expressive policy classes can go beyond single-task learning and serve as a basis for more general-purpose robotic intelligence, since the ultimate goal of autonomous robotic manipulation is to learn one single universal policy that can solve a variety of different tasks [7]. These tasks are often contact-rich , where the presence of frequent and com-plex contacts makes the planning landscape highly sensitive to differences in both task objectives and external distur-bances. Capturing such variability requires sufficiently ex-pressive models to parameterize the universal policies—this is precisely where diffusion policies come into play, owing to their inherent expressiveness and flexibility [12], [13]. Despite the great success of diffusion policies, the current training approaches are generally based on behavior cloning (BC) [6], while RL only serves as an optional fine-tuning method [5]. However, such BC-based approaches could be challenging for multi-task manipulations, since the task space 
+
+> 1Harvard University.
+> 2Georgia Institute of Technology.
+
+requires a lot of diverse expert demonstrations across differ-ent tasks, which limits the scalability of the BC approaches. Worse still, the fine-tuning phase is usually fragile and faces the challenge of catastrophic forgetting [ ?], hindering its ability to reliably adapt to new tasks without compromising the performance of previously learned skills. Recently, a growing interest has emerged in training dif-fusion policies from scratch using online RL methods [14], [15], [16], which achieves stronger performance compared to previous algorithms based on deterministic or Gaussian policies [17], [18]. In fact, online RL has shown its strong potential for multi-task learning in arcade games and robotics locomotion [19], [20]. However, multi-task diffusion has been studied only with BC-based training [12], [21] but not yet with online RL. Meanwhile, one of the major challenges of applying online RL to real-world settings lies in sim-to-real transfer [22]. To the best of our knowledge, few studies have studies sim-to-real transfer for diffusion policies. 
+
+Contribution. To tackle these challenges and study how diffusion policies can help to promote sim-to-real transfer of online RL, we adopt the widely-used block-pushing tasks as our benchmark and extend it to a multi-task setting by introducing additional objectives involving blocks of varying shapes and weights. Under this setting, we present a complete pipeline that trains diffusion policies to perform multi-task, contact-rich manipulations with zero-shot sim-to-real transfer using an online RL framework, which incorporates carefully crafted observation and action spaces, curriculum learning strategies and perception algorithms for better performance. The contributions of this paper is summarized as follows: 
+
+a) We present a novel, simplified diffusion policy optimiza-tion method derived from policy mirror descent with a simple objective function, which only adds an additional reweighting factor to the evidence lower bound [1]. The reweighting factor is just the exponentiated action-value functions, which can seamlessly serve as the policy learn-ing module in RL algorithms. 
+
+b) We demonstrate that, by augmenting inputs with task infor-mation, employing objective-centric state representations, and leveraging reverse curriculum generation to mitigate exploration challenges, we can train a single diffusion policy to solve multiple block-pushing tasks involving diverse shapes and goal positions. In contrast, current RL methods with Gaussian policies (such as SAC and PPO) perform poorly even with these techniques. 
+
+c) We conduct extensive evaluations of the learned diffusion policy on real-world block-pushing tasks across diverse setups. The learned policy achieves zero-shot transfer to arXiv:2607.10892v1 [cs.RO] 12 Jul 2026 Fig. 1. (Upper) The pipeline we propose to train the diffusion policies with RL to solve the multi-task block-pushing task. (Lower)  
+
+> The learned diffusion policy can achieve zero-shot transfer to real-world block-pushing tasks with different block shapes, block weights, frictions, and goal poses. More figures and videos are available at https://diffusionpolicyrl.site/ .
+
+the real-world setting under various weights, frictions and perturbations, showing adaptive and robust manipulation capabilities for these block-pushing tasks. II. B ACKGROUND 
+
+A. Multi-Task Block-Pushing 
+
+Block-pushing is a representative contact-rich manipula-tion task, first introduced in [6] as Push-T and gradually gaining popularity for benchmarking diffusion policies [23], [24]. The block-pushing task is challenging because a) the agent needs to learn how to make and break contact with the block to complete the task; b) the optimal solution is usually multi-modal; and c) the contact point is usually an unstable equilibrium that magnifies the sim-to-real gap. To facilitate the study of multi-task learning performance, we extend Push-T to a multi-task setup that includes multiple block shapes (e.g., T-, C-, and L-shaped blocks) pushed to different goal positions, as illustrated in Figure 1. 
+
+B. Reinforcement Learning 
+
+Reinforcement Learning (RL) is a standard framework for sequential decision making in Markov Decision Pro-cesses (MDPs). Formally, an MDP is described by a tuple 
+
+(S, A, P, r, ρ, γ ), where S is the state space, A is the action space, P (s′|s, a ) is the transition probability function, r(s, a )
+
+is the reward function, ρ ∈ ∆( S) is the initial distribution, and γ ∈ [0 , 1) is the discount factor. The objective of RL is to find a policy π : S → ∆( A) that maximizes the expected cumulative return Eπ [P∞ 
+
+> t=0
+
+γtr(st, a t)] .
+
+Policy Mirror Descent. In this paper, we focus on policy optimization with a KL-divergence regularization term, also known as policy mirror descent [25], which leads to practical algorithms like trust region policy optimization (TRPO) [26]. Specifically, at each step, the policy is updated by solving the following optimization problem: 
+
+arg max  
+
+> π
+
+Ea∼π
+
+Qπold 
+
+(s, a ) − λD KL (π∥πold ), (1) where πold is the current policy, and Qπold 
+
+(s, a ) := Eπold 
+
+P ∞ 
+
+> t=0
+
+γtr(st, a t)|s0 = s, a 0 = a denotes its state-action value function. Intuitively, the KL-divergence regularization guarantees that the updated policy should remain close to the current policy πold after a single update. Solving (1) yields a closed-form optimal solution 
+
+π(a|s) = πold (a|s) exp  Qπold 
+
+(s, a )/λ 
+
+Z(s) ,
+
+where Z(s) = 
+
+Z
+
+exp 
+
+
+
+Qπold 
+
+(s, a )/λ 
+
+
+
+πold (a|s)da. (2) Despite its seemingly simple form, the closed-form solution (2) is usually intractable for fitting or sampling due to the appearance of the intractable normalization constant Z(s).In fact, existing approaches that build upon parameterized policy families generally need to overcome this intractability issue by projecting the updated policy π back into the policy family (via, e.g., minimizing DKL (π|| πθ )), especially with the popular choice of Gaussian policy families [18], [27], [28]. Such projection restricts the expressiveness of the policy family and hence hurts the performance of the learned policy, which can be avoided by diffusion policies. 
+
+Difference from Behavior Cloning (BC) methods [6]. 
+
+Existing BC-based diffusion policies generally learn to gen-erate state or action trajectories implemented in a receding horizon manner. In contrast, when using RL-based diffusion policies, we only generate one action at each step. Mean-while, instead of learning a visuomotor policy that directly predicts actions from images, we use state-based input and leverage a separate perception module to estimate the target pose. These techniques feature better interpretability, more efficient training, and more robust sim-to-real transfer. 
+
+C. Diffusion Policy 
+
+A diffusion policy is, in essence, a conditional denoising diffusion probabilistic model (DDPM) [1] of action a condi-tioned on the state s, aiming to represent the policy π(a|s).DDPM consists of a manually designed forward process that gradually corrupts the original data distribution a0 ∼ π(·| s)
+
+to Gaussian noise aT ∼ N (0 , I ), and a reverse denoising process leveraging a noise prediction model ϵθ (s, a t, t ) that iteratively denoises the Gaussian noise aT to original data 
+
+a0, using the following denoising scheme 
+
+at−1 = 1
+
+√αt
+
+
+
+at − 1 − αt
+
+√1 − ¯αt
+
+ϵθ (at, s, t )
+
+
+
++ σtzt
+
+for t = T, T − 1, . . . , 1. Here zt ∼ N (0 , I ) and αt, ¯αt, σ t
+
+are constants depending on t known as the noise schedule parameters. To learn the noise prediction model ϵθ (at, s, t ),[1] shows that maximizing the evidence lower bound (ELBO) is equialent to minimizing the following loss function: 
+
+Es∼D ,t ∈{ 1,2,...,T },a0∼π(·| s),ϵ ∼N (0 ,I )
+
+h
+
+ϵθ
+
+ √¯αta0 + √1 − ¯αtϵ, s, t  − ϵ 2i
+
+, (3) where D is the dataset (also known as replay buffer in RL). III. RL WITH DIFFUSION POLICY 
+
+In this section, we introduce the key components of the proposed multi-task RL method using diffusion policy, fea-turing a simple reweighted loss function, a unified design of observation and action spaces across different block-pushing tasks, and a curriculum learning scheme. 
+
+A. Simplified Loss Function for Diffusion Policies 
+
+In order to train a diffusion policy that fits the target policy defined in (2) and overcome the aforementioned challenges for RL-based diffusion policy training, we design the energy-guided score matching (ESM) loss as follows:        
+
+> Es∼D ,t ∈{ 1,2,...,T },a∼πold ,ϵ ∼N (0 ,I )
+> h
+> exp
+> 
+> Qπold
+> (s, a )/λ
+> 
+> ∥ϵθ(at;s, t )−ϵ∥2
+> i
+> ,
+
+(4) where at = √¯αta0 + √1 − ¯αtϵ is consistent with (3), and the energy function represents an importance sampling ratio as Qπold 
+
+appears in the log-density ratio between π and πold .
+
+Proposition 1. The energy-guided score matching loss is equivalent to the evidence lower bound in (3) that trains a diffusion policy to fit the target policy in (2) .
+
+The derivations are deferred to Appendix A. Note that the evidence lower bound in (3) of target policy π in (2) since we cannot directly sample from π in (2), thus the ESM loss is necessary for practical training of diffusion policies. 
+
+Connections to existing diffusion-based RL methods. 
+
+The ESM loss function specified in (4) is similar to the weighted score matching techniques used in several recent diffusion-based RL algorithms [10], [11], [15]. As compared to IDQL [10] and QIPO [11], our method avoids learning a baseline function for the weights. This is beneficial in that baseline estimation usually relies on Monte-Carlo sampling, which is biased and increases the computational cost. On the other hand, QVPO [15] reweights the score matching by a truncated Q-function rather than the exponential Q-function, which fails to handle the negative values of Q-functions. In contrast, our ESM can effective handle these issues. 
+
+B. Objective-centric State Representation for Observations and Actions 
+
+In multi-task block-pushing tasks, it is important to care-fully design the observation and action spaces to reduce the task complexity for a single universal policy. Here, we intro-duce our observation and action space designs by leveraging the objective-centric state representations. The observation space is a combination of spatial states sstates ∈ R6 and shape encoding stask ∈ [0 .0, 2.0] 4, while the action space is a velocity command of the push agent a ∈ [−1.0, 1.0] 2.   
+
+> Fig. 2. Observation space design: objective-centric representation (left)
+> and shape encoding (right) .
+
+Implicit goal conditioning by objective-centric state representations. It is standard to condition the policy on the goal position when there are multiple goals to reach [29]. However, simply conditioning on the absolute spatial posi-tion of the goal implicitly neglects the hidden prior knowl-edge of spatial transformation symmetry, making it hard for the learned policy to generalize to some simple unseen tasks (e.g., when the goal and initial positions undergo the same translational movement). To design policies generalizable to arbitrary goal poses and improve data efficiency, we transform the observation and action spaces to the local coordinate of the block (“block frame”), without explicitly conditioning on the goal. The state vector is constructed as sstate = {B pA, B pG, sin( B θG), cos( B θG)}, where B pA
+
+is the position of the agent, while B pG, B θG denote the position and orientation of the goal, both observed from the block frame at the current step . Note that B pG, B θG are updated at every step, so the task information is implicitly embedded in these observations in local coordinates. 
+
+Shape Encoding. In addition, we also condition the policy on a shape-encoding vector sshape ∈ [0 .0, 2.0] 4, as shown in Figure 2. Note that the naive shape encoding used here is just a proof-of-concept, which can be easily replaced by advanced 2D or image-based shape encoding. Experimental results in Section V-A.1 show that, even with such a simple scheme, diffusion policies are already able to display promising zero-shot transfer capabilities to unseen shapes. 
+
+Action space. The action is the velocity observed in the goal frame GvA, which can transformed to world frame by 
+
+vA = W RGG vA. Here W RG is the rotation matrix of the goal pose with respect to the world frame. 
+
+C. Curriculum Learning via Reverse Curriculum Generation 
+
+We follow an idea similar to the reverse curriculum gen-eration [30], where the curriculum is designed to gradually increase the distance from the goal position to the initial position, as shown in Figure 3. The curriculum is divided into M stages, and is updated automatically when the push succeeds for N times. More implementation details of the curriculum learning scheme can be found in Appendix B.  
+
+> Fig. 3. Curriculum learning by expanding the distance to goal.
+
+Comments on the sample efficiency improvement tech-niques. Curriculum learning and spatial information design require minimal domain knowledge of the tasks, which should be generalizable to a variety of goal-reaching ma-nipulation tasks. Our ablation studies in Section V-A.2 show that they are vital to the RL performance for block-pushing. IV. R EAL -WORLD IMPLEMENTATION 
+
+A. Zero-shot Sim-to-Real Transfer 
+
+Benefits of our framework design. The state-based inputs required by our algorithm allow easy sim-to-real transfer as long as we have access to an accurate pose estimation algo-rithm, which in practice can be implemented using ArUco markers or point cloud registration algorithms. Moreover, the observation and action space design facilitates training with a fixed goal pose in the simulator, while still enabling generalization to multiple different goal positions in the real world, owing to the relative nature of the state vector sstate .
+
+Significance of sim-to-real gaps. In our setup, the major sim-to-real gap of the block-pushing task lies in the friction coefficients against the surface. However, real-world exper-imental results (see Section V-B) confirm that the learned diffusion policy demonstrates consistently high performance in pushing the block across three distinct surface types. It can be argued that, with a powerful policy, the sim-to-real gap will not pose a significant challenge to the performance as long as it does not affect system stability, in which case (including our block-pushing tasks) we can simply ignore the sim-to-real gap and achieve zero-shot sim-to-real transfer. 
+
+B. Block Pose Estimation 
+
+Unlike other diffusion policies [6], our diffusion policy leverages state-based inputs. Therefore, we need to estimate the pose of the blocks before feeding the state into the policy, for which we shall resort to markers or vision-based methods. 
+
+ArUco markers. In this setup, ArUco markers are affixed to the blocks to provide robust pose estimation for robot manipulation, as shown in Figure 8 below. 
+
+Point cloud registration. Alternatively, we also develop a vision-based point cloud registration algorithm to avoid the usage of ArUco markers. Unlike many other objects in manipulation, our blocks have flat surfaces and sharp edges, which is incompatible with the commonly practice of normal-vector-based registration methods. Alternatively, we propose to use a geometry-based method that leverages the regular shape of the blocks to project them to the table surface before performing 2D point cloud registration.     
+
+> Fig. 4. An example point cloud registration results when large additional noises exist in the segmentation results. The point cloud transformed by the estimated transformation (green) fits well with the true point cloud projected to the table plane (red) .
+
+Additional filters and simulators. The primary chal-lenges to accurate pose estimation arise from observation noise and occlusions caused by the robot arm during motion. To handle the additional observation noise, we add a Kalman filter on top of the pose estimation results. Moreover, in the case when blocks are significantly blocked by the robot arm, we run a simulator parallel to the pose estimation module as a backup option, and switch to simulated pose estimations when the occlusion obstructs accurate pose estimation. V. E XPERIMENTAL RESULTS 
+
+In this section, we present a comprehensive experimental evaluation of our algorithm. We first show an extensive comparison in the simulated environment, and then proceed to the setup and results of real-world implementation. 
+
+A. Simulation Results 
+
+Simulation setup. We use the same simulator as in [6], [31] based on PyMunk physics simulators. We adapt the sim-ulator to match our observation and action space definitions described in Section III-B. The algorithm is implemented using the JAX framework. All environments are trained with a total of 4 million environment interactions under 3 random seeds. After training, we evaluate each algorithm in 100 randomized test trials to evaluate the algorithm by success rate and episodic lengths (algorithm terminates upon success; smaller episodic length indicates better performance). 1) Simulation Experiment Results: 
+
+Simulation performance and baselines. We compare the proposed ESM algorithm against three families of baselines. 
+
+a) Classic model-free RL algorithms: PPO [17], TD3 [32], and SAC [18], where PPO and SAC use Gaussian policy and TD3 uses deterministic policy. b) Recent diffusion-based RL algorithms: QVPO [15], QSM [33], and DACER [34]. c) 
+
+Behavior cloning [6]: we directly use the model checkpoints released by the authors. Since simulation data is abundant and cheap to obtain, we do not consider offline RL as baselines. The results are shown in Table I, which shows that only our ESM algorithm and SAC successfully learn policies that can solve the block-pushing task. Further, ESM achieves 100% block-pushing success rate and much lower episode lengths compared to SAC as well as all other baselines. 
+
+TABLE I PERFORMANCE COMPARISON OF METHODS ON THE MULTI -SHAPE PUSHING TASK (MAXIMUM EPISODE LENGTH : 300). Method Success Rate (%) ↑ Episode Length ↓                                               
+
+> Classic Model-free RL SAC [18] 66 .3±12 .2118 .9±130 .0
+> TD3 [32] 0±0300 ±0
+> PPO [17] 0±0300 ±0
+> Diffusion Policy RL ESM (ours) 100 ±021 .1±5.6
+> QVPO [15] 0±0300 ±0
+> DACER [34] 0±0300 ±0
+> QSM [33] 0±0300 ±0
+> Imitation Learning Diff. Policy [6] ∗35 179 .54 ±34 .12
+
+Fig. 5. Un-seen I-shape to test gen-eralization. 
+
+Multi-shape pushing and generalization to unseen shape and goals. We evaluate our method separately on different blocks to fur-ther justify its multi-task capabilities. To assess generalization beyond the training distribution, we further evaluate the methods on an unseen I-shaped block without any additional training. Our ESM is compared against the best baseline in previous expriments, SAC, to fully display its advantage. The results are reported in Table II. It is observed that ESM achieves consistently high performance ( 100% ) on the training shapes, and moderately high performance ( 61% )on the unseen I-block, demonstrating strong generalization without any additional training. On the contrary, the per-formance of SAC displays high variance, with particularly poor performance (complete failure) on the T-block and the unseen I-block. Screenshots of the block-pushing behavior are shown in Figure 6, highlighting the robustness and superior generalization ability of ESM compared to SAC. 
+
+TABLE II SUCCESS RATES OF SAC AND ESM ON DIFFERENT SHAPES .
+
+Method T-block C-block L-block I-block (zero-shot) 
+
+SAC 0% 100% 99 % 0% ESM 100% 100% 100% 61% 
+
+2) Ablation Studies: We conduct ablation studies to jus-tify the necessity and contribution of the efficiency improve-ment techniques specified in Section III-C, including: 
+
+Fig. 6. Screenshots of zero-shot generalization of the proposed ESM policy to random goal poses and unseen I-shape (last one located lower right).  
+
+> •
+
+Remove curriculum learning. Under this ablation, the block is randomly initialized in the whole space.  
+
+> •
+
+Remove objective-centric state representations. Under this ablation, the observation consists of agent, block and goal poses, all observed from the world frame .Both ablation studies compare the performance of the pro-posed ESM against the best baseline SAC, the result of which are shown in Figure 7. It can be seen that the proposed techniques effectively improve the data efficiency and per-formance of the diffusion policy training. Moreover, even after we ablate the curriculum learning or spatial observation design, diffusion policies can still achieve acceptable success rates (as compared the the complete failure of SAC), showing a huge performance improvement of the proposed ESM compared to the SAC baseline. 1 2 3 4     
+
+> Samples 1e6
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> Success Rate
+> Ablation Study: ESM (ours)
+> ESM
+> ESM No curriculum
+> ESM No spatial 1234
+> Samples 1e6
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> Success Rate
+> Ablation Study: SAC
+> SAC
+> SAC No curriculum
+> SAC No spatial
+
+Fig. 7. Ablation studies of ESM (proposed) and SAC (best baseline). The proposed ESM consistently perform better on multiple ablations. 
+
+B. Real-world Experiments 
+
+Fig. 8. Real-world configuration of the block-pushing tasks. 
+
+Setup. We evaluate the real-world performance of the learned diffusion pol-icy using the setup shown in Figure 8. Specifically, we use a UR5e manipula-tor to push the blocks and an Intel RealSense D435 camera placed upper left to localize the block. The light blue square drawn on the table indicates the goal position. We use the origi-nal 3D printing models for the stick and the T-block from [6], and create our own models of other shapes. 
+
+Tasks. As shown in Figure 9, the learned diffusion policy is evaluated in the real-world setting for a total of 36 tasks under varying conditions: a) Friction. To test the robustness against different friction levels, we use floor mats for higher friction levels and non-stick parchment paper for lower friction levels. b) Block weight. We print another thinner T-block that is only a quarter as thick (1 cm thick; the blue T-block in Figure 9) as the original T-block (4 cm; see the red block). c) Goal poses. We also test the policy using two random goal poses different from the one used in training.  
+
+> Fig. 9. All evaluation tasks in the real-world setting. Figures show the final timestep with successful pushing. Some initial states are shown in Figure 1.
+
+Zero-shot transfer performance. We record the zero-shot transfer performance of the learned diffusion policy, which can be found at our website https://diffusionpolicyrl.site/ .The learned diffusion policy successfully solves all the tasks ,showing its powerful capability for sim-to-real transfer and strong robustness to real-world conditions. Moreover, we also test the baseline policy learned by SAC on the 9 training tasks (shown in the upper left in Figure 9). A comparison of the success rate, total distance traveled, and total steps to push the block to goal position are listed in Table III. It is evident that the proposed ESM algorithm has a significant advantage over SAC with a Gaussian policy in terms of their real-world performances.                                 
+
+> TABLE III COMPARISON OF ESM AND SAC IN 9REAL -WORLD TASKS .Shape Metric Success Distance (m) Steps TESM 3/3 1.0 15.67 SAC 0/3 ∗--CESM 3/3 1.11 17.67
+> SAC 3/3 2.48 40.33 LESM 3/3 1.39 22.67
+> SAC 3/3 1.46 24
+> ∗SAC failed in pushing T, so the distance and steps are not counted.
+
+Empirical observations. After a detailed examination and comparison of the zero-shot sim-to-real transfer behavior produced by the proposed ESM and the baseline SAC algorithms, we observe that: a) in the simulated setting, the agent is able to learn multiple skills (such as pushing and rotating) using both algorithms, and can further use a diverse combination of these skills to finish the tasks; b) in the real-world setting, as some moves induce larger sim-to-real gaps, the agent falls back to a specific sequence of movement to finish the tasks. This empirical observation prompts us to further consider how the multi-modality of diffusion policies benefits the sim-to-real performance of RL algorithms. VI. R ELATED WORKS 
+
+Diffusion policy. In the realm of robotics manipulation, diffusion policies [1], [2], [3] have been widely leveraged to generate long-horizon robot trajectories, either using be-havior cloning training schemes [5], [6], [7] or mimicking expert policies in MDPs using offline RL [8], [9], [10], [11], both requiring an abundance of expert demonstrations. The expressiveness of diffusion policies also brings high multi-task capabilities [13], [12], [7], but a lack of expert data becomes the major bottleneck to scale up these multi-task diffusion policies. Recent findings have enabled diffusion policy in online RL [15], [33], [34], [11], yet they still suffer from various issues including biased solution approximation and expensive multi-step gradient preparations, which under-mines the true potential of diffusion policies in online RL. 
+
+Goal-conditioned RL and curriculum learning. Goal-conditioned RL refers to such RL approaches that aim to reach or manipulate the agent to reach a set of goal states that are usually not unique [29], which is challenging due to its multi-task and sparse-reward nature. To solve these issues, existing methods rely on reward shaping with estimated distance metrics [35] or success probability estimation [36], [37]. However, these techniques usually require complex al-gorithm design or involving domain knowledge. Curriculum learning [38] is another promising alternative that requires less domain knowledge, which has proven to be helpful in solving challenging RL tasks including goal reaching and drone stabilization [39], [40], [41]. VII. C ONCLUSION 
+
+In this paper, we deploy a novel RL framework to demon-strate that one single diffusion policy trained with online RL can successfully handle complex, multi-task, contact-rich block-pushing tasks without reliance on expert demonstration data. By imposing an energy-based value function guidance on the training loss, incorporating curriculum learning, and carefully designing observation and action spaces, our ap-proach effectively learns high-performance diffusion policies from sparse rewards for challenging tasks where traditional RL with unimodal Gaussian policies tend to fail. Empirical evaluations further reveal diffusion policies’ strong zero-shot transfer capabilities to real-world tasks, with diverse variations in goal positions, block shapes, block weights and friction levels, highlighting the robustness and efficiency of RL with diffusion policy for challenging manipulation tasks. 
+
+Limitations. The zero-shot sim-to-real transfer is sensitive to the sim-to-real gaps. Although our results show that the sim-to-real gap is not significant for block-pushing on 2D surfaces, it could be significant for other manipulation tasks. Potential approaches to close the sim-to-real gap include domain randomization with zero-shot transfer [22] and resid-ual learning for dynamics and action models for few-shot transfer and continual learning [42], [43]. The proposed RL pipeline can also be used in fine-tuning current models built upon BC or other imitation learning schemes. REFERENCES [1] J. Ho, A. Jain, and P. Abbeel, “Denoising Diffusion Probabilistic Models,” in Advances in Neural Information Processing Systems ,vol. 33. Curran Associates, Inc., 2020, pp. 6840–6851. [2] J. Sohl-Dickstein, E. Weiss, N. Maheswaranathan, and S. Ganguli, “Deep Unsupervised Learning using Nonequilibrium Thermodynam-ics,” in Proceedings of the 32nd International Conference on Machine Learning . PMLR, June 2015, pp. 2256–2265. [3] Y. Song, J. Sohl-Dickstein, D. P. Kingma, A. Kumar, S. Ermon, and B. Poole, “Score-Based Generative Modeling through Stochastic Differential Equations,” Feb. 2021. [4] P. Dhariwal and A. Nichol, “Diffusion models beat gans on image synthesis,” Advances in neural information processing systems , vol. 34, pp. 8780–8794, 2021. [5] M. Janner, Y. Du, J. B. Tenenbaum, and S. Levine, “Plan-ning with diffusion for flexible behavior synthesis,” arXiv preprint arXiv:2205.09991 , 2022. [6] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via ac-tion diffusion,” The International Journal of Robotics Research , p. 02783649241273668, 2023. [7] Y. Du, S. Yang, B. Dai, H. Dai, O. Nachum, J. Tenenbaum, D. Schu-urmans, and P. Abbeel, “Learning universal policies via text-guided video generation,” Advances in Neural Information Processing Sys-tems , vol. 36, 2024. [8] Z. Wang, J. J. Hunt, and M. Zhou, “Diffusion policies as an expres-sive policy class for offline reinforcement learning,” arXiv preprint arXiv:2208.06193 , 2022. [9] H. Chen, C. Lu, C. Ying, H. Su, and J. Zhu, “Offline reinforce-ment learning via high-fidelity generative behavior modeling,” arXiv preprint arXiv:2209.14548 , 2022. [10] P. Hansen-Estruch, I. Kostrikov, M. Janner, J. G. Kuba, and S. Levine, “Idql: Implicit q-learning as an actor-critic method with diffusion policies,” arXiv preprint arXiv:2304.10573 , 2023. [11] S. Zhang, W. Zhang, and Q. Gu, “Energy-weighted flow matching for offline reinforcement learning,” arXiv preprint arXiv:2503.04975 ,2025. [12] H. He, C. Bai, K. Xu, Z. Yang, W. Zhang, D. Wang, B. Zhao, and X. Li, “Diffusion model is an effective planner and data synthesizer for multi-task reinforcement learning,” Advances in neural information processing systems , vol. 36, pp. 64 896–64 917, 2023. [13] F. Ni, J. Hao, Y. Mu, Y. Yuan, Y. Zheng, B. Wang, and Z. Liang, “Metadiffuser: Diffusion model as conditional planner for offline meta-rl,” in International Conference on Machine Learning . PMLR, 2023, pp. 26 087–26 105. [14] L. Yang, Z. Huang, F. Lei, Y. Zhong, Y. Yang, C. Fang, S. Wen, B. Zhou, and Z. Lin, “Policy representation via diffusion probability model for reinforcement learning,” arXiv preprint arXiv:2305.13122 ,2023. [15] S. Ding, K. Hu, Z. Zhang, K. Ren, W. Zhang, J. Yu, J. Wang, and Y. Shi, “Diffusion-based reinforcement learning via q-weighted variational policy optimization,” arXiv preprint arXiv:2405.16173 ,2024. [16] A. Z. Ren, J. Lidard, L. L. Ankile, A. Simeonov, P. Agrawal, A. Majumdar, B. Burchfiel, H. Dai, and M. Simchowitz, “Diffusion policy policy optimization,” arXiv preprint arXiv:2409.00588 , 2024. [17] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, “Proximal policy optimization algorithms,” arXiv preprint arXiv:1707.06347 , 2017. [18] T. Haarnoja, A. Zhou, P. Abbeel, and S. Levine, “Soft actor-critic: Off-policy maximum entropy deep reinforcement learning with a stochastic actor,” in International conference on machine learning . PMLR, 2018, pp. 1861–1870. [19] L. Espeholt, H. Soyer, R. Munos, K. Simonyan, V. Mnih, T. Ward, Y. Doron, V. Firoiu, T. Harley, I. Dunning, et al. , “Impala: Scalable dis-tributed deep-rl with importance weighted actor-learner architectures,” in International conference on machine learning . PMLR, 2018, pp. 1407–1416. [20] G. B. Margolis and P. Agrawal, “Walk these ways: Tuning robot control for generalization with multiplicity of behavior,” in Conference on Robot Learning . PMLR, 2023, pp. 22–31. [21] X. Ma, S. Patidar, I. Haughton, and S. James, “Hierarchical diffu-sion policy for kinematics-aware multi-task robotic manipulation,” in 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 18 081–18 090. [22] J. Tobin, R. Fong, A. Ray, J. Schneider, W. Zaremba, and P. Abbeel, “Domain randomization for transferring deep neural networks from simulation to the real world,” in 2017 IEEE/RSJ international con-ference on intelligent robots and systems (IROS) . IEEE, 2017, pp. 23–30. [23] S. H. Høeg, Y. Du, and O. Egeland, “Streaming diffusion policy: Fast policy synthesis with variable noise diffusion models,” arXiv preprint arXiv:2406.04806 , 2024. [24] X. Li, V. Belagali, J. Shang, and M. S. Ryoo, “Crossway diffu-sion: Improving diffusion-based visuomotor policy via self-supervised learning,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2024, pp. 16 841–16 849. [25] M. Tomar, L. Shani, Y. Efroni, and M. Ghavamzadeh, “Mirror descent policy optimization,” arXiv preprint arXiv:2005.09814 , 2020. [26] J. Schulman, “Trust region policy optimization,” arXiv preprint arXiv:1502.05477 , 2015. [27] X. B. Peng, A. Kumar, G. Zhang, and S. Levine, “Advantage-weighted regression: Simple and scalable off-policy reinforcement learning,” 
+
+arXiv preprint arXiv:1910.00177 , 2019. [28] A. Nair, A. Gupta, M. Dalal, and S. Levine, “Awac: Accelerating online reinforcement learning with offline datasets,” arXiv preprint arXiv:2006.09359 , 2020. [29] M. Liu, M. Zhu, and W. Zhang, “Goal-conditioned reinforcement learning: Problems and solutions,” arXiv preprint arXiv:2201.08299 ,2022. [30] C. Florensa, D. Held, M. Wulfmeier, M. Zhang, and P. Abbeel, “Re-verse curriculum generation for reinforcement learning,” in Conference on robot learning . PMLR, 2017, pp. 482–495. [31] P. Florence, C. Lynch, A. Zeng, O. A. Ramirez, A. Wahid, L. Downs, A. Wong, J. Lee, I. Mordatch, and J. Tompson, “Implicit behavioral cloning,” in Conference on robot learning . PMLR, 2022, pp. 158– 168. [32] S. Fujimoto, H. Hoof, and D. Meger, “Addressing function approxi-mation error in actor-critic methods,” in International conference on machine learning . PMLR, 2018, pp. 1587–1596. [33] M. Psenka, A. Escontrela, P. Abbeel, and Y. Ma, “Learning a diffusion model policy from rewards via q-score matching,” arXiv preprint arXiv:2312.11752 , 2023. [34] Y. Wang, L. Wang, Y. Jiang, W. Zou, T. Liu, X. Song, W. Wang, L. Xiao, J. Wu, J. Duan, and S. E. Li, “Diffusion Actor-Critic with Entropy Regulator,” Dec. 2024. [35] M. Andrychowicz, F. Wolski, A. Ray, J. Schneider, R. Fong, P. Welin-der, B. McGrew, J. Tobin, O. Pieter Abbeel, and W. Zaremba, “Hind-sight experience replay,” Advances in neural information processing systems , vol. 30, 2017. [36] B. Eysenbach, T. Zhang, S. Levine, and R. R. Salakhutdinov, “Con-trastive learning as goal-conditioned reinforcement learning,” Ad-vances in Neural Information Processing Systems , vol. 35, pp. 35 603– 35 620, 2022. [37] E. Chane-Sane, C. Schmid, and I. Laptev, “Goal-conditioned reinforce-ment learning with imagined subgoals,” in International conference on machine learning . PMLR, 2021, pp. 1430–1440. [38] Y. Bengio, J. Louradour, R. Collobert, and J. Weston, “Curriculum learning,” in Proceedings of the 26th annual international conference on machine learning , 2009, pp. 41–48. [39] S. Narvekar and P. Stone, “Learning curriculum policies for reinforce-ment learning,” arXiv preprint arXiv:1812.00285 , 2018. [40] S. Narvekar, B. Peng, M. Leonetti, J. Sinapov, M. E. Taylor, and P. Stone, “Curriculum learning for reinforcement learning domains: A framework and survey,” Journal of Machine Learning Research ,vol. 21, no. 181, pp. 1–50, 2020. [41] J. Eschmann, D. Albani, and G. Loianno, “Learning to fly in seconds,” 
+
+IEEE Robotics and Automation Letters , 2024. [42] M. Saveriano, Y. Yin, P. Falco, and D. Lee, “Data-efficient control policy search using residual dynamics learning,” in 2017 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) .IEEE, 2017, pp. 4709–4715. [43] T. He, J. Gao, W. Xiao, Y. Zhang, Z. Wang, J. Wang, Z. Luo, G. He, N. Sobanbab, C. Pan, et al. , “Asap: Aligning simulation and real-world physics for learning agile humanoid whole-body skills,” arXiv preprint arXiv:2502.01143 , 2025. [44] D. Shribak, C.-X. Gao, Y. Li, C. Xiao, and B. Dai, “Diffusion spectral representation for reinforcement learning,” arXiv preprint arXiv:2406.16121 , 2024. [45] P. Vincent, “A Connection Between Score Matching and Denoising Autoencoders,” Neural Computation , vol. 23, no. 7, pp. 1661–1674, July 2011. APPENDIX 
+
+A. Derivations of Energy-Guided Score Matching 
+
+We first revisit the closed-form optimal solution of the DSM loss (3), and then show that our ESM loss (4) induces the same optimal solution to conclude loss equivalence. 
+
+1) Noise prediction to learn noise-perturbed score func-tion: We first revisit an existing result showing that the optimal solution of the noise prediction model ϵθ (at, s, t )
+
+is −σt∇at log ˜ πt(at|s), i.e. the noise-perturbed score func-tion [44]. Recall that the term score function refers to 
+
+∇x log p(x), the gradient of the log-density function. Before stating the result, we need to first define the noise-perturbed policy. For any fixed s, consider action samples 
+
+a0 ∼ π(·| s) corrupted by a Gaussian kernel qt|0(at|a0)= N (at; √¯αta0, (1 − ¯αt) I) under any noise schedule {¯αt},resulting in the noise-perturbed policy ˜πt(·| s) with density 
+
+˜πt(at|s) = 
+
+Z
+
+qt|0(at|a0)π(a0|s)da 0, t = 1 , 2, . . . , T. 
+
+Note that the Gaussian corruption kernel implies that at =√¯αta0 + √1 − ¯αtϵ, where ϵ ∼ N (0 , I ). This leads to the connection between the noise ϵ and the score function, i.e., 
+
+∇at log qt|0(at|a0) = − ϵ
+
+√1 − ¯αt
+
+For convenience, we use the shorthand σt := √1 − ¯αt.
+
+Proposition 2 (Diffusion models learn noise-perturbed score functions, [45]) . By optimizing the DSM loss in (3) , the score network ϵθ (at; s, t ) matches −σt∇at log ˜ πt(at|s) for all at
+
+in the action space A, which is the noise-perturbed score functions scaled by factor −σt.2) ESM loss as an equivalent reweighted loss.: Consider an equivalent loss with reweighting function g, i.e., 
+
+Lg (θ, s, t ) = 
+
+Z
+
+g(at, s, t ) ∥ϵθ (at; s, t ) + σt∇at log ˜ πt(at|st)∥2 da t,
+
+(5) where g(at, s, t ) is a strictly positive function everywhere in the action space A for any fixed s and t. The loss is called “equivalent” since we can indeed show that any reweighted loss will result in the same optimal solution as the one for the original DSM loss specified in Proposition 2. Specifically, when we choose g(at, s, t ) = ˜ π(a|s)Z(s), we have 
+
+Lg (θ, s, t )=
+
+Z
+
+g(at, s, t ) ∥ϵθ (at; s, t ) + σt∇at log ˜ πt(at|st)∥2 da t
+
+(Plug in the proof of Proposition 2 in [45] )=
+
+Z
+
+g(at, s, t ) 1˜πt(at|s)
+
+Z
+
+qt|0(at|a0)π(a0|s) ·∥ϵθ (at, s, t ) − ϵ∥2 da 0da t + const 
+
+(Apply the definition of π in (2) )=
+
+Z
+
+g(at, s, t ) 1˜πt(at|s)
+
+Z
+
+qt|0(at|a0)πold (a0|s) ·
+
+exp  Qπold 
+
+(s, a 0)/λ 
+
+Z(s) ∥ϵθ (at, s, t ) − ϵ∥2 da 0da t + const 
+
+(Apply the definition of g),
+
+=
+
+Z Z 
+
+qt|0(at|a0)πold (a0|s) exp  Qπold 
+
+(s, a 0)/λ  ·∥ϵθ (at, s, t ) − ϵ∥2 da 0da t + const 
+
+= Ea0∼πold ,ϵ∼N (0 ,I )
+
+h
+
+exp  Qπold 
+
+(s, a 0)/λ  ∥ϵθ (at, s, t ) − ϵ∥2i
+
++ const .
+
+Integrate the above over s and t, and we recover exactly the ESM loss specified in (4). This completes the proof. 
+
+B. Algorithm Implementation and Experimental Details 
+
+Detailed design of curriculum learning. At the mth stage, the initial distribution is designed such that x, y are randomly sampled from [256 − (30 + m/M · 100) , 256 + (30 + m/M ·
+
+100)] , with (256 , 256) defined as the center of the canvas. We select M = 10 , N = 50 in our implementation. 
+
+Comparison with Behavior Cloning (BC). We com-pare ESM against behavior cloning (BC) based on expert demonstrations using the simulator and experimental proto-col specified in [6]. We train ESM in the same simulator environment using the proposed RL objective. To evalu-ate [6], we use the model checkpoints released by the authors. Then we test each method across 100 randomized scenarios. Table IV reports the average episode lengths and success rates achieved by both methods. It is observed that ESM significantly outperforms the BC baseline, and also exhibits superior performance compared to SAC, both in terms of higher success rate and shorter episode length on average. Notably, ESM successfully completes the task in all 100 test scenarios without a single failure.

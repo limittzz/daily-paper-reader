@@ -1,0 +1,455 @@
+Title: Source-Lifted Flow Matching for Intervenable Multimodal Imitation
+
+URL Source: https://arxiv.org/pdf/2607.10206v1
+
+Published Time: Tue, 14 Jul 2026 00:54:20 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# Source-Lifted Flow Matching for Intervenable Multimodal Imitation 
+
+## He Zhang 1, Ying Sun 1∗, Pengteng Li 1, Ziyang Chen 1,Yiren Zhao 1, Ziyang Rao 1, Weiyu Guo 1, Yandong Guo 2, Hui Xiong 1∗
+
+> 1
+
+The Hong Kong University of Science and Technology (Guangzhou) 
+
+> 2
+
+AI 2 Robotics 
+
+Abstract 
+
+Flow-matching policies are promising for imitation learning because they model complex multimodal action distributions. However, their stochasticity is largely passive: repeated sam-pling may yield diverse behaviors, but users cannot directly choose among valid continuations from the same state. We propose Source-Lifted Flow Matching (SL-FM) , a source-intervenable flow-matching policy that exposes such a handle while keeping the velocity field shared and latent-free. The handle selects only the source endpoint of the conditional flow, not a mode-specific field, preserving the standard for-mulation while avoiding decomposition into separate mode-conditioned dynamics. The core mechanism is Orthogonal Source Lifting , designed to prevent path-crossing ambiguity. Instead of partitioning target actions by mode, SL-FM lifts handle-specific sources into auxiliary orthogonal coordinates and keeps targets in the original action subspace. This pre-serves the demonstrated action distribution while allowing one shared field to carry different branches without merging at crossings. To keep handles usable across states, we learn a state-dependent source mixture end to end and use a re-sponsibility floor, giving each handle weak supervision and mitigating dead modes. Experiments on crossing-flow diag-nostics and robot-control benchmarks show that SL-FM con-verts passive source randomness into an actionable interven-tion variable. It removes crossing-induced composite trajecto-ries, changes future routes in 91.1% of matched-prefix inter-ventions, and achieves strong free-deployment performance, with improvements in several benchmark settings. Overall, source geometry provides actionable multimodal control with-out conditioning the velocity field on the selected mode. 
+
+## Introduction 
+
+Recent advances in imitation learning have increasingly leveraged generative policies to model complex, multimodal action distributions (Chi et al. 2023; Pearce et al. 2023; Jiang et al. 2025). Unlike conventional behavioral cloning methods that often assume a unimodal Gaussian policy (Florence et al. 2022; Shafiullah et al. 2022), diffusion and flow-matching policies can represent multiple plausible actions for the same observation (Chi et al. 2023; Lipman et al. 2023; Jiang et al. 2025), which is essential in robot tasks with several valid strategies (Jia et al. 2024; Chi et al. 2023). For example, in obstacle avoidance, demonstrations may pass an obstacle from either side; a good policy should preserve both alterna-tives rather than collapse them into an averaged action. 
+
+> ∗
+
+Corresponding author. 
+
+Figure 1: Main idea of Source-Lifted Flow Matching. Stan-dard flow matching passively samples multimodal behaviors, while mode-conditioned fields may split both the target distri-bution and velocity field.. SL-FM instead lifts handle-specific sources into orthogonal coordinates, keeps all targets in the original action subspace, and uses one shared latent-free field to preserve source identity through crossings. However, representing diverse behaviors is not the same as controlling them. Existing flow-matching policies usually use source noise as a passive sampling mechanism (Lipman et al. 2023; Jiang et al. 2025): resampling the source may produce different rollouts, but the user cannot directly choose which continuation will be realized from a fixed decision state. This distinction matters for downstream planning, human-in-the-loop control, and robot tasks where several valid futures share the same prefix. A policy that sometimes goes left and sometimes goes right is useful; one that lets a planner choose the continuation from the same local state is more useful. A straightforward way to expose such a choice is to con-dition the policy or the velocity field on a discrete mode variable (Guo and Schwing 2025; Zhai et al. 2025). While effective, this changes the nature of the model. A velocity field of the form vθ (x, t, s, z ) can resolve multimodality by learning separate mode-specific dynamics, making the dis-arXiv:2607.10206v1 [cs.RO] 11 Jul 2026 crete input an expert selector rather than an intervention on the source of a single shared flow. Our goal is different: we ask whether a conditional flow-matching policy can retain one shared velocity field while exposing a source handle that can be selected at test time. To this end, we introduce Source-Lifted Flow Match-ing (SL-FM) , a source-intervenable flow-matching policy for multimodal imitation learning. SL-FM assigns each state a small set of source handles. In free deployment, the handle is sampled from a learned state-dependent prior. Under inter-vention, it can be set externally at a decision state. Crucially, the handle only determines where the conditional flow starts. The velocity field receives the intermediate point, time, and observation, but never the discrete handle itself. This pre-serves the standard conditional flow-matching formulation and forces behavior selection to arise from source geometry rather than from mode-conditioned subfields (Figure 1). The key technical challenge is that source-only handles are not automatically reliable. If two multimodal paths cross in action space, a shared field may lose the identity of the chosen source branch and average incompatible velocities near the crossing. We address this problem with Orthogonal Source Lifting . Instead of partitioning the demonstrated action dis-tribution into p(a | s, z ), SL-FM lifts handle-specific sources into auxiliary orthogonal coordinates while keeping every target action in the original action subspace. The target ac-tion distribution is therefore unchanged, but different handles remain separated during transport, allowing one latent-free field to carry different branches without losing identity at crossings. We further learn a state-dependent source mixture end to end and introduce a responsibility floor, which gives every handle weak transport supervision and mitigates dead modes under redundant handle counts. Our experiments evaluate both ordinary imitation per-formance and the proposed intervention interface. On a crossing-flow diagnostic, SL-FM removes composite trajec-tories caused by path crossings and enables direct branch se-lection through the source handle. On D3IL Avoiding, same-prefix counterfactual interventions show that changing only the local source handle redirects future behavior in 91.1% of matched pairs. Across multimodal robot-control bench-marks, including D3IL and PushT, SL-FM maintains strong free-deployment performance and achieves the best average score among same-harness mechanism-matched baselines. These results show that source geometry can turn passive flow-matching randomness into an actionable multimodal control interface without conditioning the velocity field on the selected mode. We summarize our contributions as follows: 
+
+• We formulate source-intervenable conditional flow matching for imitation learning, where a discrete han-dle selects the source endpoint but never conditions the velocity field. 
+
+• We identify path-crossing identity collapse as a failure mode of source-only intervention in shared flow fields and introduce Orthogonal Source Lifting to preserve source identity through crossings. 
+
+• We learn a state-dependent source mixture with a re-sponsibility floor to keep redundant handles trainable and mitigate dead modes. 
+
+• We evaluate SL-FM using both free-deployment bench-marks and same-prefix interventions, demonstrating an actionable source interface with strong imitation perfor-mance. 
+
+## Related Work 
+
+Generative policies for multimodal imitation. Diffusion and flow-based policies have become strong generative mod-els for multimodal imitation learning. Diffusion Policy, flow-matching policies, Streaming Flow Policy, and related im-plicit, tokenized, or score-based policies represent diverse action modes beyond unimodal Gaussian cloning (Chi et al. 2023; Lipman et al. 2023; Jiang et al. 2025; Florence et al. 2022; Shafiullah et al. 2022; Reuss et al. 2023; Pearce et al. 2023). Benchmarks such as D3IL and PushT further high-light the need to preserve multiple valid robot strategies rather than collapse them into averaged actions (Jia et al. 2024; Chi et al. 2023). This trend also appears in VLA and generalist robot policies, where systems such as π0, π0.5, and GR00T N1 use diffusion or flow-based action heads for con-tinuous control (Black et al. 2025; Physical Intelligence et al. 2025; NVIDIA et al. 2025). These works establish genera-tive action modeling as a strong tool for marginal coverage; SL-FM instead asks whether the source randomness can be made locally intervenable under a matched rollout prefix. 
+
+Policy steering and latent conditioning. Another line of work exposes control by steering, adapting, or condition-ing generative policies. Inference-time methods such as Dy-naGuide guide pretrained diffusion policies with external dy-namics or task objectives (Du and Song 2025). Adaptation and distillation methods, including DSRL, ReinFlow, Gold-enStart, RFS, and related latent policy steering approaches, optimize noise variables, priors, entropy, residual actions, or latent actors for policy improvement (Wagenmaker et al. 2025; Zhang et al. 2025; Zhang, Sun, and Xiong 2026; Su et al. 2026; Ren et al. 2024; Park, Li, and Levine 2025). Variational Flow-Matching Policy is closer to our setting, using latent priors and mode-aware decoding for multimodal manipulation (Zhai et al. 2025). These methods are com-plementary, but they expose control through guidance, value optimization, latent adaptation, or mode-conditioned gen-eration. SL-FM targets a stricter interface: the handle only chooses where the conditional flow starts, while the velocity field remains shared and latent-free. 
+
+Source and coupling design in generative flows. The source distribution and source–target coupling strongly shape flow-matching geometry. OT-CFM, minibatch OT, rectified or optimal flow methods, CPD, MM-FM, and modal coupling design priors or pairings to shorten transport, reduce cross-ings, or improve sample efficiency, mostly in vision, generic, or motion generation (Tong et al. 2024; Pooladian et al. 2023; Liu, Gong, and Liu 2023; Albergo and Vanden-Eijnden 2023; Issachar et al. 2025; Luo et al. 2026; Wang et al. 2025). Con-trol tasks add sequential decisions, state-dependent branch-ing, and closed-loop feedback, so better transport geometry alone does not necessarily yield an actionable decision vari-able. SL-FM uses source structure for intervention rather than generation quality: it keeps the demonstrated target distribu-tion intact, places the selectable handle only at the source, and tests whether changing that handle causally changes fu-ture behavior under a matched prefix. 
+
+## Preliminaries 
+
+Notation. We consider an imitation dataset D =
+
+{(si, a i)}Ni=1 , where s ∈ S denotes the policy observation and a ∈ Rda denotes a demonstrated action or a flattened action chunk. Here da is the action dimension, t ∈ [0 , 1] for the artificial flow-matching time and the timesteps in tasks are indexed by h. The goal of imitation learning is to sam-ple actions from the conditional demonstration distribution 
+
+pdata (a | s) while executing successfully in closed loop. 
+
+Conditional flow matching for actions. Conditional flow matching learns a velocity field vθ (xt, t, s ) that transports a source endpoint x0 ∼ p0(· | s) to a target endpoint x1 =
+
+a ∼ pdata (· | s) (Lipman et al. 2023; Tong et al. 2024). For the linear conditional path 
+
+xt = (1 − t)x0 + tx 1, ut = x1 − x0, (1) the standard regression objective is: 
+
+LCFM = E(s,a )∼D , x 0∼p0, t ∼U [0 ,1] 
+
+h
+
+∥vθ (xt, t, s ) − ut∥2i
+
+.
+
+(2) At deployment, one samples x0 from the source and inte-grates the ODE: 
+
+dx t
+
+dt = vθ (xt, t, s ) (3) from t = 0 to t = 1 . The results are then executed as actions. When pdata (a | s) is multimodal, a standard flow-matching policy can still produce diverse behaviors because different regions of the source space are transported to dif-ferent action modes (Lipman et al. 2023; Jiang et al. 2025). This is sufficient for marginal multimodal sampling, but the induced partition of the source space is implicit (Jiang et al. 2025). Resampling the source may change the rollout, yet the user or planner is not given an explicit local variable that selects which continuation should occur. 
+
+From passive sampling to source intervention. Fig-ure 2 illustrates the distinction. At a decision state, multiple demonstrated futures may share the same prefix and branch into different valid continuations. A standard flow-matching policy may sample either branch, but this choice is passive: it is determined by source noise rather than by an externally se-lectable handle (Jiang et al. 2025). We instead seek a source-intervenable policy with a discrete handle z ∈ { 1, . . . , K }
+
+satisfying three requirements. First, in free deployment, sam-pling z should recover ordinary stochastic imitation behavior and preserve the target action marginal. Second, under inter-vention, a planner should be able to set z = k at a local decision state while keeping the prefix fixed. Third, the ve-locity field must remain shared and latent-free, i.e., the model uses vθ ( ¯ xt, t, s ) rather than vθ (xt, t, s, z ).
+
+Figure 2: Same-prefix source-intervention problem. Standard flow matching can passively sample different continuations from a shared prefix, but the choice is not externally se-lectable. SL-FM asks for a local source handle z whose intervention selects among valid futures while the velocity field remains shared. More formally, consider two rollouts that share the same environment seed, state-action prefix, and stochastic draws before a decision step h. A source intervention changes only the local handle, from z = k to z = k′, and then resumes the same policy interface. Let ρ(·) denote an evaluation-time route or continuation label, not a training label. The desired behavior is that changing the handle can change the future continuation, 
+
+ρ(ξkh:)̸ = ρ(ξk′ 
+
+> h:
+
+), (4) while both branches remain valid task executions. This is stronger than showing diversity across independent rollouts: it asks whether the policy exposes a causal local variable for choosing among futures from the same prefix. This problem setup motivates the construction in the next section. Since the handle is not allowed to condition the velocity field directly, any intervention effect must be carried by the geometry of the source. The remaining challenge is to make that source identity survive multimodal path crossings, where a shared field may otherwise average incompatible branch velocities. 
+
+## Methodology 
+
+The previous section defines the desired interface: a discrete source handle should be selectable at a local decision state, while the velocity field itself remains shared and not explic-itly conditioned on that handle. We now introduce Source-Lifted Flow Matching (SL-FM) , which realizes this inter-face through three components, as illustrated in Figure 3: a state-conditioned source prior, Orthogonal Source Lifting, and floor-weighted flow training. 
+
+Modeling the Source Prior 
+
+Standard flow matching starts generation from an unstruc-tured source, such as a standard Gaussian. SL-FM in-stead models the source as a small state-conditioned mix-ture, where each mixture component corresponds to a se-lectable source handle (Bishop 1994; Jacobs et al. 1991). Let a ∈ Rda be the demonstrated action, and let xa 
+
+> 0
+
+∈ Rda
+
+denote the action-space source point before lifting. We use a. Model source prior b. Lift source, keep target 
+
+> 𝒂 𝟐
+
+## c. Floor -weighted training                                                                               
+
+> 𝒂 𝟏
+> Learnable source prior: At each 𝑥 ̅!
+> ":
+> 𝑝 !(𝑥 "
+> #∣𝑠 )=(𝜋 $
+> %
+> $&'
+> (𝑠 )𝑁 (𝑥 "
+> #;𝜇 $(𝑠 ),𝜎 $
+> ((𝑠 )𝐼 ).
+> Soft responsibility for each handle:
+> 𝜇 !(𝑠 )𝜇 "(𝑠 )
+> 𝜇 #(𝑠 )
+> 𝑎
+> 𝑧 =1𝑧 =2𝑧 =3Handle ：
+> 𝑟 $(𝑠 ,𝑎 )=𝜋 $(𝑠 )𝑁 (𝑎 ;𝜇 $(𝑠 ),𝜎 $
+> ((𝑠 )𝐼 )
+> ∑𝜋 )
+> %
+> )&'(𝑠 )𝑁 (𝑎 ;𝜇 )(𝑠 ),𝜎 )((𝑠 )𝐼 ).
+> 𝑥 ̅#,%=𝑥 #,%
+> "𝑒 %
+> 𝑥 ̅!
+> "=𝑎 0
+> Lift:
+> Keep:
+> 𝑥 ̅$,!
+> 𝑥 ̅$,"
+> 𝑥 ̅$,#
+> 𝑥 ̅!
+> &
+> 𝑥 ⃗!,#=1−𝑡 𝑥 $,#
+> %+𝑡𝑎 1−𝑡 𝑒 #,𝑒 &
+> '𝑒 (=𝛿 &( .
+> Orthogonal lifted interpolation path:
+> 𝑥 ⃗',(
+> Prevents dead handles !
+> Soft responsibility: 𝑟 #(𝑠 ,𝑎 )
+> 𝑟 '𝑟 (𝑟 *
+> 𝛾 '
+> Responsibility floor:
+> 𝛾 #(𝑠 ,𝑎 )=(1−𝛼 )𝑟 #(𝑠 ,𝑎 )+𝛼
+> 𝐾
+> 𝛾 (𝛾 *
+> Weighted FM loss:
+> Joint objective:
+> ℒ)*+, =5𝑠𝑔
+> -
+> #./
+> 𝛾 #𝑣 0(𝑥
+> *
+> !,#,𝑡 ,𝑠 )−𝑢
+> *
+> !,#
+> 1
+> ℒ=ℒ!"# +ℒ$%&' .
+> trained by ℒ234
+
+Figure 3: Method overview of Source-Lifted Flow Matching. SL-FM models a state-conditioned source prior, lifts handle-specific sources into auxiliary orthogonal coordinates while keeping all targets on the zero-lift plane, and trains one shared latent-free velocity field with floor-weighted responsibilities. For visual clarity, the schematic shows fixed anchors and omits scalar loss weights. 
+
+z ∈ { 1, . . . , K } to index K source handles. For each state 
+
+s, a prior network predicts the parameters of an isotropic Gaussian mixture: 
+
+{πk(s), μ k(s), σ k(s)}Kk=1 ,
+
+where πk(s) are mixture weights with P 
+
+> k
+
+πk(s) = 1,
+
+μk(s) ∈ Rda are component means, σk(s) > 0 are diag-onal scales, and Ida is the da-dimensional identity matrix. The resulting source prior is: 
+
+pϕ(xa 
+
+> 0
+
+| s) = 
+
+> K
+
+X
+
+> k=1
+
+πk(s)N  xa 
+
+> 0
+
+; μk(s), σ 2
+
+> k
+
+(s)Ida
+
+ . (5) Free deployment samples z ∼ πϕ(· | s) and then samples from the selected Gaussian component, 
+
+xa 
+
+> 0,k
+
+= μk(s) + σk(s)ϵk, ϵk ∼ N (0 , I da ). (6) Under intervention, the evaluator directly sets z = k and uses the corresponding component. Thus, the handle first appears as a choice of source component, not as an input label to the velocity field. We train this source prior to fit the demonstrated action distribution. Motivated by OT-CFM and related coupling-based flow-matching methods (Tong et al. 2024; Pooladian et al. 2023; Liu, Gong, and Liu 2023), and following the observation that flow matching tends to prefer short and ge-ometrically simple transports, we encourage each Gaussian component to lie near the actions it is responsible for, instead of forcing all handles to start from a fixed uninformed Gaus-sian. We therefore fit the mixture to demonstrated actions: 
+
+Lsrc = −E(s,a )∼D log 
+
+> K
+
+X
+
+> k=1
+
+πk(s)N  a; μk(s), σ 2
+
+> k
+
+(s)Ida
+
+ .
+
+(7) This density model induces a soft responsibility for each handle: 
+
+rk(s, a ) = πk(s)N  a; μk(s), σ 2
+
+> k
+
+(s)Ida
+
+PKj=1 πj (s)N  a; μj (s), σ 2 
+
+> j
+
+(s)Ida
+
+ . (8) Here rk(s, a ) is a training assignment. It measures how much component k is responsible for the demonstrated action un-der the current state. Unlike global source or coupling de-signs in computer-vision generative modeling, our assign-ment is conditioned on the robot state and is recomputed at every decision step. This distinction is important for control: the policy condition s changes continuously along a closed-loop trajectory, and the same action vector can have different meanings depending on the current observation, history, and future branch. 
+
+Orthogonal Source Lifting 
+
+The source prior above gives us selectable components, but source selection alone does not guarantee an intervenable shared field. If two branches cross in action space, two dif-ferent source components may reach the same intermediate action point with incompatible target velocities. A velocity field conditioned only on the action coordinate would then average these velocities and erase the selected source identity. Orthogonal Source Lifting prevents this identity collapse by transporting points in a lifted space. Let 
+
+¯x = [ xa, x g ] ∈ Rda+dg ,
+
+where xa ∈ Rda is the action component and xg ∈ Rdg
+
+is an auxiliary lift coordinate. We use orthogonal anchors 
+
+{ek}Kk=1 , with e⊤ 
+
+> k
+
+ej = δkj and typically dg ≥ K. Figure 3(b) shows the fixed-anchor case for readability. In the full model, we use state-dependent lift embeddings τk(s) regularized toward these anchors: 
+
+Lanc = EsKX
+
+> k=1
+
+∥τk(s) − ek∥2. (9) For handle k, SL-FM lifts only the source endpoint. Given an action-space source xa 
+
+> 0,k
+
+and a demonstrated target action 
+
+a, we define 
+
+¯x0,k = [ xa
+
+> 0,k
+
+, λτ k(s)] , ¯x1 = [ a, 0] , (10) where ¯x0,k is the lifted source endpoint, ¯x1 is the lifted target endpoint, and λ controls the lift scale. Importantly, the target distribution is not split by z. Ev-ery demonstrated action is embedded into the same zero-lift plane: 
+
+p1(¯ x | s) = pdata (a | s)δ(xg = 0) . (11) Equivalently, projecting the lifted target distribution back to the action component exactly recovers the original demon-stration distribution. Thus, SL-FM preserves the standard im-itation target rather than replacing it with mode-conditioned targets p(a | s, z ). The handle affects only the source geom-etry before transport, not which target actions are included in training. The lifted interpolation path is : 
+
+¯xt,k = (1 − t)¯ x0,k + t¯x1
+
+= (1 − t)xa 
+
+> 0,k
+
++ ta, (1 − t)λτ k(s) , (12) with target velocity: 
+
+¯ut,k = ¯ x1 − ¯x0,k = a − xa
+
+> 0,k
+
+, −λτ k(s) . (13) For t < 1, different handles remain separated in the lift coordinate even when their action coordinates overlap. At execution, only the terminal action component is applied to the robot. The lift coordinate is not a second robot action and is never sent to the environment. It is an internal integra-tion coordinate that preserves source identity until all targets meet on the zero-lift plane. The velocity field observes the continuous lifted state ¯xt, but it never receives a separate discrete expert label. 
+
+Floor-Weighted Flow Training 
+
+Given the lifted paths above, SL-FM trains one shared veloc-ity field over all handles. The soft responsibility rk(s, a ) from Eq. (8) determines how much handle k should contribute to the flow regression for the demonstrated pair (s, a ). A natural choice is to weight each lifted path by rk(s, a ), so that handles closer to the demonstrated action receive larger supervision. However, pure responsibility weighting can create dead handles when K is redundant. In practice, some components may receive almost no assignment for many states, as illus-trated by the low-responsibility handle in Figure 3(c). If such handles rarely participate in flow training, their lifted trajec-tories can be poorly learned, leading to unreliable behavior when the evaluator switches to them at test time. To keep every handle trainable while preserving the responsibility structure, we use a responsibility floor: 
+
+γk(s, a ) = (1 − α)rk(s, a ) + αK , (14) where α ∈ [0 , 1] controls the amount of uniform supervision in the objective. When α = 0 , the method naturally reduces to pure responsibility weighting. Futhermore, larger α gives more training signal to low-responsibility handles. The floor affects only the flow-regression weights. Again, it does not change the deployment prior πϕ(z | s), add a policy head, or condition the velocity field on z.The floor-weighted flow-matching objective is 
+
+LW -F M = E(s,a ),t, {ϵk }
+
+> K
+
+X
+
+> k=1
+
+sg( γk(s, a )) ∥vθ (¯ xt,k , t, s ) − ¯ut,k ∥2 ,
+
+(15) where the time step t ∼ U [0 , 1] and sg( ·) stops gradients through the assignment weights. This prevents the flow loss from directly reshaping the posterior assignments, while still allowing the lifted source construction and the shared field to be optimized jointly during training. Figure 3(c) summarizes the two main training signals as source fitting and weighted flow matching. In the implemen-tation, we also use scalar weights and the anchor regularizer: 
+
+L = LW -F M + wsrc Lsrc + βLanc . (16) Each minibatch predicts {πk, μ k, σ k, τ k}Kk=1 from s, com-putes rk and γk from the demonstrated action, constructs all lifted paths, and updates the source prior and shared velocity field jointly. 
+
+Deployment and source intervention. 
+
+At inference time, free deployment samples z ∼ πϕ(· | s):
+
+xa 
+
+> 0,z
+
+= μz (s) + σz (s)ϵz , ¯x0,z = [ xa 
+
+> 0,z
+
+, λτ z (s)] ,
+
+and integrates the shared field d¯xt/dt = vθ (¯ xt, t, s ). Only the terminal action component is executed. For intervention, the evaluator sets z = k at a chosen decision state and uses the same field. Therefore, the intervention changes only the local source endpoint, not the policy architecture or dynam-ics model. Our same-prefix protocol realizes Figure 2 by replaying an identical prefix and changing only this local handle. We provide the pseudocode in Algorithm 1.                                                                                                
+
+> Algorithm 1 SL-FM Training and Source Intervention
+> Input: demonstrations {(si, a i)}, handles K, anchors {ek}, lift scale λ, floor α, weights wsrc , β .
+> Output: source prior pϕ, shared field vθ, and source-handle rollout interface. 1: for minibatch (s, a )do
+> 2: Predict {πk, μ k, σ k, τ k}Kk=1 from s.3: Compute rk(s, a )and γk= (1 −α)rk+α/K .4: for handle k= 1 , . . . , K do
+> 5: Sample ϵk∼ N (0 , I da)and set xa
+> 0,k =μk(s) +
+> σk(s)ϵk.6: Lift source and target: ¯x0,k = [ xa
+> 0,k , λτ k(s)] ,¯x1=[a, 0] .7: Sample t∼ U [0 ,1] ; compute ¯xt,k ,¯ut,k , and ℓt,k .8: end for
+> 9: Update (θ, ϕ )with LW-F M +wsrc Lsrc +βLanc .10: end for
+> 11: Free rollout: sample z∼πϕ(· | s), sample ¯x0,z , inte-grate vθ(¯ xt, t, s ), and execute the action component. 12: Intervention: set z=k, sample ¯x0,k , integrate the same field, and execute only the action component.
+
+## Experiments 
+
+Protocol and Metrics 
+
+We evaluate SL-FM on D3IL Avoiding and Aligning, PushT, and D4RL Kitchen (Jia et al. 2024; Chi et al. 2023; Fu et al. Table 1: D3IL Avoiding results. Type denotes the main multimodal mechanism: global-src = global multimodal source/coupling; cond-src = conditional source prior; handle-src = state-conditioned source handle.                           
+
+> Method Success Entropy Type MM-FM 0.225 0.619 global-src Modal coupling 0.335 0.521 modal-cpl CPD 0.692 0.944 cond-src BeT 0.747 0.844 implicit IBC 0.760 0.850 implicit FM 0.798 0.933 single-src SL-FM w/o lift 0.733 0.907 handle-src SL-FM 0.825 0.921 handle-src + lift
+
+Table 2: Comparison across multimodal benchmarks. Avoid. and Align. report D3IL success. PushT reports mean max-imum coverage. Avg. is the unweighted average across the three columns.                     
+
+> Method Avoid. Align. PushT Avg. FM 0.798 0.808 0.801 0.802 CPD 0.692 0.715 0.814 0.740 MM-FM 0.225 0.000 0.279 0.168 Modal cpl. 0.335 0.623 0.839 0.599 Z-cond. field 0.708 0.750 0.833 0.764 SL-FM 0.825 0.792 0.852 0.823
+
+2020). The Avoiding task is the main source-intervention testbed because it has shared starts and frequent route deci-sions. We compare against FM, source and coupling base-lines (CPD, MM-FM, and Modal coupling), a direct z-conditioned field (Z-cond. field), and official BeT and IBC references. Avoiding and Aligning report success, Avoiding also reports route entropy, PushT reports mean maximum coverage, and Kitchen reports 500-step task completion. Ad-ditional baseline definitions, protocol details, and hyperpa-rameters are provided in detail in the appendix. 
+
+Task Performance Across Multimodal Benchmarks 
+
+We first test whether the source-intervention interface pre-serves ordinary free-deployment imitation. Table 1 shows that SL-FM achieves the best Avoiding success while re-taining high route entropy. The gap between SL-FM w/o lift 
+
+and full SL-FM indicates that learning a state-local source handle is not enough. Also, orthogonal lifting is needed to preserve handle identity when paths cross. MM-FM instead uses global action-space modes, which are not tied to local decision states. Across Avoiding, Aligning, and PushT, Ta-ble 2 shows the best average score for SL-FM. The gains con-centrate on tasks with more frequent local branching, while Aligning stays close to the base FM policy. CPD, modal cou-pling, and direct z-conditioning can be competitive in some settings, but they lack the same state-local, source-only in-tervention interface. We also evaluate SL-FM on D4RL Kitchen, a multi-task robot manipulation benchmark (Fu et al. 2020). Figure 4A shows that the K = 8 SL-FM variant improves over FM by +0 .42 completed tasks in 500-step rollouts, suggesting that the source-structured design remains useful beyond the 
+
+Figure 4: D4RL Kitchen diagnostic. A: 7-task completion mean and standard deviation for FM and the K = 8 SL-FM variant. B: source-handle–subtask correlation in rollouts. Table 3: Same-prefix source intervention on D3IL Avoiding. From an identical pre-decision prefix, paired rollouts differ only in the five-policy-call local intervention. Outside the window, stochastic draws are matched and the policies re-sume free sampling.                        
+
+> Method Intervention Future Route Both Both-succ. sep. changed success route chg. FM noise resample 0.190 m 0.767 0.428 0.286
+> z-field change zinput 0.273 m 0.930 0.455 0.421 SL-FM same handle 0.000 m 0.000 0.787 0.000 SL-FM change handle 0.287 m 0.911 0.639 0.578
+
+route-control setting. Figure 4B reports the source-handle– subtask correlation, which we discuss in the next section. 
+
+Source-Intervention Controllability 
+
+Task performance alone does not show that the sampled han-dle is an actionable cause of future behavior. We therefore use a same-prefix counterfactual on D3IL Avoiding. Two rollouts share an identical prefix and then differ only in the local source handle at the first high-entropy decision point in the pre-obstacle band y ∈ [−0.30 , −0.02] . For each matched state, we replay the prefix, branch into all six unordered pairs of z ∈ { 0, 1, 2, 3}, force each selected handle for five con-secutive policy calls, and then return both branches to free source resampling. Table 3 shows that changing the source handle redirects the future while preserving task execution. SL-FM changes the final route in 91 .1% of paired interventions and achieves a 57 .8% both-success route-change rate. This last metric is stricter than route change alone: it counts only pairs where both branches succeed and nevertheless take differ-ent routes. FM noise resampling and direct z-conditioning can also change routes, but they produce fewer successful route changes. The same-handle control produces no route changes, confirming that the effect comes from changing the source handle rather than replay instability. Free-rollout diagnostics show the same alignment without manual intervention. In Avoiding, each successful trajectory can be encoded by three route digits, where digit0, digit1, and digit2 denote the branch choices around the first, second, and third obstacle regions, respectively. Figure 6 reports the mu-tual information between sampled handles and these realized Figure 5: Hyperparameter and deployment-cost sensitivity on D3IL Avoiding, varying one setting per panel and keeping the remaining defaults fixed. 
+
+Figure 6: Per-step mutual information between sampled source handles and realized route labels under free source resampling, shown up to step 75 with bootstrap 95% inter-vals. Peaks align with route decision phases. 
+
+Figure 7: Fixed-state downstream selector diagnostic on Avoiding route targets. Joint goal success means that the selected route matches the target and the task succeeds. route digits over time. The digit0 curve reaches its peak be-fore the first obstacle, showing that early handle samples are most informative about the first branch choice. The digit1 curve peaks later, before the second obstacle, consistent with the second route decision occurring after the first branch has been resolved. The digit2 curve is weaker: near the final ob-stacle, the current position already strongly constrains the remaining route, so z carries less additional information un-der free rollout. Nevertheless, the intervention results show that changing z can still force meaningful future changes. Mutual information with success remains small throughout, indicating that the handles track branch identity rather than merely success or failure. Figure 4B extends this diagnos-tic to Kitchen, where the source-handle–subtask heat map is non-uniform. The strongest entries align specific handles with subtasks: z5 with kettle, z7 with microwave and light switch, z4 with hinge cabinet, and z2 with slide cabinet and bottom burner. Notably, slide cabinet and bottom burner are spatially and procedurally related subtasks, and their shared association with z2 suggests that the source handles can capture semantically meaningful structure rather than only arbitrary rollout variation. Together, these results suggest that the handles capture subtask-specific progress patterns in long-horizon manipulation. 
+
+Downstream Route Control 
+
+We next test whether a downstream module can use the ex-posed handle. With the low-level SL-FM policy frozen, a high-level selector chooses z every five consecutive policy calls from a fixed initial state. Free source resampling still solves the task, but it achieves 0% commanded-route success for the specified targets. CEM-retrieved source schedules and a PPO selector initialized from CEM elites reach 91 .7% 
+
+joint route-and-task success over all 24 route targets (Ru-binstein 1999; Schulman et al. 2017). Figure 7 shows the same trend under increasingly broad route sets: the selector reaches 100 .0% joint success over 10 target routes, 93 .3% 
+
+over 15 routes, and 91 .7% over all 24 routes. This result demonstrates that the source handle can serve as an action space for high-level control, analogous to skill-level decision abstractions, while the same-prefix experiment remains the primary causal evidence. 
+
+Design Ablations and Sensitivity 
+
+Finally, Figure 5 summarizes dense Avoiding sensitivity sweeps. The responsibility floor only changes the flow-regression weights γk. Moderate floors improve success while preserving route entropy, supporting their role as dead-handle robustness rather than collapse-inducing reg-ularization. Nearby anchor penalties, source scales, source-alignment weights, and mode counts K = 4 –10 remain vi-able. Very large K is less reliable, likely because a fixed minibatch provides noisier responsibility-weighted updates for each handle. Unstable lift scales and excessive Euler steps also reduce robustness. All plotted Avoiding points use the official 480-trajectory, three-seed protocol. 
+
+## Conclusion 
+
+We presented Source-Lifted Flow Matching, a flow-matching policy that exposes an intervenable source interface without conditioning the velocity field on a discrete code. The central mechanism is Orthogonal Source Lifting: sources are lifted into orthogonal coordinates while every target remains on the zero-tag plane. This preserves the original conditional data distribution at z = 0 , but makes source choices externally addressable during deployment. Across crossing-flow, D3IL, PushT, and Kitchen diagnostics, SL-FM remains competitive in free deployment and redirects behavior under same-prefix source interventions. 
+
+## References 
+
+Albergo, M. S.; and Vanden-Eijnden, E. 2023. Building Nor-malizing Flows with Stochastic Interpolants. In International Conference on Learning Representations .Bishop, C. M. 1994. Mixture Density Networks. Technical Report NCRG/94/004, Aston University. Black, K.; Brown, N.; Driess, D.; Esmail, A.; Equi, M. R.; Finn, C.; Fusai, N.; Groom, L.; Hausman, K.; Ichter, B.; Jakubczak, S.; Jones, T.; Ke, L.; Levine, S.; Li-Bell, A.; Mothukuri, M.; Nair, S.; Pertsch, K.; Shi, L. X.; Smith, L.; Tanner, J.; Vuong, Q.; Walling, A.; Wang, H.; and Zhilinsky, U. 2025. π0: A Vision-Language-Action Flow Model for General Robot Control. In Proceedings of Robotics: Science and Systems . Los Angeles, CA, USA. Chi, C.; Feng, S.; Du, Y.; Xu, Z.; Cousineau, E.; Burchfiel, B. C. M.; and Song, S. 2023. Diffusion Policy: Visuomotor Policy Learning via Action Diffusion. In Proceedings of Robotics: Science and Systems . Daegu, Republic of Korea. Du, M.; and Song, S. 2025. DynaGuide: Steering Diffusion Polices with Active Dynamic Guidance. In Advances in Neural Information Processing Systems .Florence, P.; Lynch, C.; Zeng, A.; Ramirez, O. A.; Wahid, A.; Downs, L.; Wong, A.; Lee, J.; Mordatch, I.; and Tompson, J. 2022. Implicit Behavioral Cloning. In Proceedings of the 5th Conference on Robot Learning , volume 164 of Proceedings of Machine Learning Research , 158–168. PMLR. Fu, J.; Kumar, A.; Nachum, O.; Tucker, G.; and Levine, S. 2020. D4RL: Datasets for Deep Data-Driven Reinforcement Learning. arXiv preprint arXiv:2004.07219 .Guo, P.; and Schwing, A. G. 2025. Variational Rectified Flow Matching. arXiv preprint arXiv:2502.09616 .Issachar, N.; Salama, M.; Fattal, R.; and Benaim, S. 2025. Designing a Conditional Prior Distribution for Flow-Based Generative Models. arXiv preprint arXiv:2502.09611 .Jacobs, R. A.; Jordan, M. I.; Nowlan, S. J.; and Hinton, G. E. 1991. Adaptive Mixtures of Local Experts. Neural Computation , 3(1): 79–87. Jia, X.; Blessing, D.; Jiang, X.; Reuss, M.; Donat, A.; Li-outikov, R.; and Neumann, G. 2024. Towards Diverse Be-haviors: A Benchmark for Imitation Learning with Human Demonstrations. In International Conference on Learning Representations .Jiang, S.; Fang, X.; Roy, N.; Lozano-Pérez, T.; Kaelbling, L. P.; and Ancha, S. 2025. Streaming Flow Policy: Simpli-fying Diffusion/Flow-Matching Policies by Treating Action Trajectories as Flow Trajectories. In Proceedings of the 9th Conference on Robot Learning , volume 305 of Proceedings of Machine Learning Research , 238–257. PMLR. Lipman, Y.; Chen, R. T. Q.; Ben-Hamu, H.; Nickel, M.; and Le, M. 2023. Flow Matching for Generative Modeling. In 
+
+International Conference on Learning Representations .Liu, X.; Gong, C.; and Liu, Q. 2023. Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow. In International Conference on Learning Representations .Luo, G.; Cole, F.; Zhang, S.; Wan, Y.; Lu, Y.; and Sun, J. 2026. Flow Matching for Multimodal Distributions. In Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 23260–23271. NVIDIA; Bjorck, J.; Castañeda, F.; Cherniadev, N.; Da, X.; Ding, R.; Fan, L. J.; Fang, Y.; Fox, D.; Hu, F.; Huang, S.; Jang, J.; Jiang, Z.; Kautz, J.; Kundalia, K.; Lao, L.; Li, Z.; Lin, Z.; Lin, K.; Liu, G.; Llontop, E.; Magne, L.; Mandlekar, A.; Narayan, A.; Nasiriany, S.; Reed, S.; Tan, Y. L.; Wang, G.; Wang, Z.; Wang, J.; Wang, Q.; Xiang, J.; Xie, Y.; Xu, Y.; Xu, Z.; Ye, S.; Yu, Z.; Zhang, A.; Zhang, H.; Zhao, Y.; Zheng, R.; and Zhu, Y. 2025. GR00T N1: An Open Foundation Model for Generalist Humanoid Robots. arXiv preprint arXiv:2503.14734 .Park, S.; Li, Q.; and Levine, S. 2025. Flow Q-Learning. 
+
+arXiv preprint arXiv:2502.02538 .Pearce, T.; Rashid, T.; Kanervisto, A.; Bignell, D.; Sun, M.; Georgescu, R.; Macua, S. V.; Tan, S. Z.; Momennejad, I.; Hofmann, K.; and Devlin, S. 2023. Imitating Human Be-haviour with Diffusion Models. In International Conference on Learning Representations .Physical Intelligence; Black, K.; Brown, N.; Darpinian, J.; Dhabalia, K.; Driess, D.; Esmail, A.; Equi, M.; Finn, C.; Fusai, N.; Galliker, M. Y.; Ghosh, D.; Groom, L.; Hausman, K.; Ichter, B.; Jakubczak, S.; Jones, T.; Ke, L.; LeBlanc, D.; Levine, S.; Li-Bell, A.; Mothukuri, M.; Nair, S.; Pertsch, K.; Ren, A. Z.; Shi, L. X.; Smith, L.; Springenberg, J. T.; Stachowicz, K.; Tanner, J.; Vuong, Q.; Walke, H.; Walling, A.; Wang, H.; Yu, L.; and Zhilinsky, U. 2025. π0.5: a Vision-Language-Action Model with Open-World Generalization. 
+
+arXiv preprint arXiv:2504.16054 .Pooladian, A.-A.; Ben-Hamu, H.; Domingo-Enrich, C.; Amos, B.; Lipman, Y.; and Chen, R. T. Q. 2023. Multi-sample Flow Matching: Straightening Flows with Minibatch Couplings. In Proceedings of the 40th International Confer-ence on Machine Learning , volume 202 of Proceedings of Machine Learning Research , 28100–28127. PMLR. Ren, A. Z.; Lidard, J.; Ankile, L. L.; Simeonov, A.; Agrawal, P.; Majumdar, A.; Burchfiel, B.; Dai, H.; and Simchowitz, M. 2024. Diffusion Policy Policy Optimization. arXiv preprint arXiv:2409.00588 .Reuss, M.; Li, M.; Jia, X.; and Lioutikov, R. 2023. Goal-Conditioned Imitation Learning using Score-Based Diffu-sion Policies. In Proceedings of Robotics: Science and Sys-tems . Daegu, Republic of Korea. Rubinstein, R. Y. 1999. The Cross-Entropy Method for Com-binatorial and Continuous Optimization. Methodology and Computing in Applied Probability , 1(2): 127–190. Schulman, J.; Wolski, F.; Dhariwal, P.; Radford, A.; and Klimov, O. 2017. Proximal Policy Optimization Algorithms. 
+
+arXiv preprint arXiv:1707.06347 .Shafiullah, N. M. M.; Cui, Z. J.; Altanzaya, A.; and Pinto, L. 2022. Behavior Transformers: Cloning k Modes with One Stone. In Advances in Neural Information Processing Systems , volume 35, 22955–22968. Su, E.; Westenbroek, T.; Nagabandi, A.; and Gupta, A. 2026. RFS: Reinforcement Learning with Residual Flow Steering for Dexterous Manipulation. arXiv preprint arXiv:2602.01789 .Tong, A.; Fatras, K.; Malkin, N.; Huguet, G.; Zhang, Y.; Rector-Brooks, J.; Wolf, G.; and Bengio, Y. 2024. Improving and Generalizing Flow-Based Generative Models with Mini-batch Optimal Transport. Transactions on Machine Learning Research .Wagenmaker, A.; Zhang, Y.; Nakamoto, M.; Park, S.; Yagoub, W.; Nagabandi, A.; Gupta, A.; and Levine, S. 2025. Steering Your Diffusion Policy with Latent Space Reinforce-ment Learning. In Proceedings of the 9th Conference on Robot Learning , volume 305 of Proceedings of Machine Learning Research , 258–282. PMLR. Wang, L.; Yu, H.; Yu, C.; Gao, S.; and Christensen, H. 2025. Controllable Motion Generation via Diffusion Modal Cou-pling. arXiv preprint arXiv:2503.02353 .Zhai, X.; Zhao, Q.; Yu, Q.; and Hao, C. 2025. VFP: Varia-tional Flow-Matching Policy for Multi-Modal Robot Manip-ulation. arXiv preprint arXiv:2508.01622 .Zhang, H.; Sun, Y.; and Xiong, H. 2026. GoldenStart: Q-Guided Priors and Entropy Control for Distilling Flow Poli-cies. In The Fourteenth International Conference on Learn-ing Representations .Zhang, T.; Yu, C.; Su, S.; and Wang, Y. 2025. ReinFlow: Fine-Tuning Flow Matching Policy with Online Reinforcement Learning. In Advances in Neural Information Processing Systems .
+
+## Experimental Details 
+
+Baselines and ablations. Unless labeled as an ablation, SL-FM uses source-only z, Orthogonal Source Lifting, one latent-free shared velocity field, and the responsibility floor. 
+
+FM. The standard conditional flow-matching policy uses a single Gaussian source and one field; its intervention baseline is source-noise resampling rather than handle selection. 
+
+CPD. Conditional Prior Distribution replaces the fixed source with a state-conditioned single Gaussian trained toward demonstrated actions, but has no K-way handle, responsibility assignment, or lifted tag coordinate. 
+
+MM-FM. MM-FM uses a global action-space GMM source; its component index is a global action cluster rather than a state-local decision handle. 
+
+Modal coupling. Modal coupling uses fixed global source anchors and hard action-cluster/source-target pairings, so its pairings are not recomputed as state-local decisions. 
+
+z-conditioned field. This direct-conditioning baseline feeds the discrete handle into vθ (xt, t, s, z ), allowing mode-specific dynamics; SL-FM keeps the field shared and lets 
+
+z affect only the source endpoint. 
+
+BeT. Behavior Transformer is included as an official D3IL Avoiding reference and represents multimodality through discrete behavior/action tokens rather than flow source geometry. 
+
+IBC. Implicit Behavioral Cloning is another official Avoid-ing reference; it scores candidate actions with an implicit model and has no flow source or source-level intervention variable. 
+
+SL-FM w/o lift. This ablation keeps the state-conditioned source mixture and source-only handle but removes the auxiliary lift coordinate, testing whether a learned local handle alone preserves identity through crossings. 
+
+Evaluation protocol. Avoiding follows the official D3IL state benchmark protocol and reports success and normalized route entropy over the 480-trajectory, three-seed evaluation. PushT reports mean maximum coverage, and Kitchen reports 500-step task completion with eight environments and three evaluation seed offsets. 
+
+Representative defaults. A representative D3IL Avoiding run uses K = 4 , dg = K, σiso = 1 .0, responsibility floor 
+
+α = 0 .25 , anchor/balance weights 0.3/0.01 , 10 Euler steps, and 2000 training epochs. The encoder, shared field, and source heads are residual MLPs with six 256-wide Mish layers; other domains keep the same interface while adjusting task-specific backbones or K.
+
+## Additional Discussion 
+
+Planning and reinforcement learning. The exposed source handle is an interface rather than a complete planner. It can be combined with MPC or RL by letting a planner, value function, or high-level policy choose or constrain z,while the flow policy executes low-level continuous actions. 
+
+Semantic conditioning. The handle can also be grounded by semantic signals. Text instructions, goal images, or vision-language embeddings could bias πϕ(z | s) or select inter-ventions, connecting high-level intent to continuous control without conditioning the shared velocity field directly on a discrete mode. 
+
+Large heterogeneous imitation data. Because responsi-bilities are learned without manual mode labels, source han-dles are promising for large imitation corpora that mix styles, imbalanced modes, and non-expert or mixed-quality trajec-tories. In this setting, the source prior can provide a compact interface for separating reusable behavior patterns while re-taining a single shared action generator. 
+
+## Additional Kitchen Results 
+
+Table 4 gives the full 500-step Kitchen diagnostic behind Figure 4A, using eight environments and seed offsets 0, 8, 16 .Here rf is the responsibility floor, α the anchor weight, bw the source-balance weight, and ss, t s the source and tag scales. Four of five source-structured variants exceed FM on 7-task completion, and the balance-weighted variant gives the best four-target score. Figure 8: Additional PushT branching examples. Columns show selected PushT states. Forced source choices in the source-structured policy expose visibly separated contact strategies, whereas FM source-noise resampling provides stochastic variation without an explicit persistent handle. 
+
+Figure 9: Representative successful downstream route-control trajectories on Avoiding. The low-level SL-FM policy is frozen, while a high-level selector chooses one source handle every five policy calls. The shown fixed-start PPO checkpoint reaches 
+
+22 /24 joint route-and-task success; colors indicate the executed source handle and black circles mark selector decisions. Table 4: D4RL Kitchen 500-step diagnostic at checkpoint 500. Four-target scores sum microwave, kettle, bottom burner, and light switch.                                      
+
+> Method / variant 7-task mean 4-target mean SL-FM rf=0 .10 , α =0 .3, s s=10 , t s=10 4.79 ±0.19 2.71 SL-FM rf=0 .25 , α =0 .3, b w=0 .005 , s s=10 , t s=10 4.71 ±0.14 2.96
+> SL-FM rf=0 .25 , α =0 .3, s s=10 , t s=10 4.67 ±0.80 2.83 SL-FM rf=0 .10 , α =0 .5, s s=10 , t s=15 4.62 ±0.22 2.62 SL-FM rf=0 .25 , α =0 .5, s s=10 , t s=10 4.29 ±0.26 2.54 FM 4.38 ±0.13 2.54
+
+## Additional Qualitative Results 
+
+Figure 8 visualizes PushT branching at matched states. Forced source choices in the source-structured policy pro-duce distinct contact strategies around the T block, while FM source-noise resampling gives stochastic variation with-out a persistent index for selecting one strategy. These ex-amples complement the aggregate PushT scores by showing that the exposed handle corresponds to qualitatively different manipulation choices. Figure 9 shows successful Avoiding trajectories from the downstream selector. Black circles mark selector decisions and colors indicate the active source handle. The trajecto-ries reach different commanded routes from the same start, illustrating that a high-level module can use the handle as a compact route-control interface after the low-level SL-FM policy is frozen.

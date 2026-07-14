@@ -1,0 +1,335 @@
+Title: SUREFlow: State-space Uncertainty-aware REsidual Flow Matching for Robust Robot Manipulation
+
+URL Source: https://arxiv.org/pdf/2607.10504v1
+
+Published Time: Tue, 14 Jul 2026 01:24:50 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+# SUREFlow: State-space Uncertainty-aware REsidual Flow Matching for Robust Robot Manipulation 
+
+Md Tanvir Islam, Sai Navaneet Peddapalli, Sangmoon Lee, Sangtae Ahn* 
+
+Abstract — Generative vision-language-action policies have advanced robot manipulation, but they often exhibit instability under noise, partial observability, and stochastic initial con-ditions. During extended rollouts, small velocity errors accu-mulate, degrading execution reliability. Existing diffusion and flow-based policies typically assume homoscedastic residuals and lack explicit uncertainty modeling within action generation, limiting robustness during iterative rollout. We propose SURE-Flow, a state-space uncertainty-aware residual flow matching framework built on a Mamba backbone. The method jointly predicts action velocities and input-dependent residual uncer-tainty, enabling selective refinement of unreliable action dimen-sions without environment feedback while preserving computa-tional efficiency. On LIBERO, SUREFlow achieves 92.5% aver-age success rate (SR), outperforming the Mamba-based MaIL by 34.2%. On LIBERO-PRO, it attains around 49% SR using only 179M parameters, achieving performance comparable to large VLAs with 3-7B parameters. SUREFlow source code is available on: https://github.com/tanvirnwu/SUREFlow. 
+
+I. I NTRODUCTION 
+
+Learning robot manipulation (RM) policies from demon-strations has become a dominant paradigm, where recent vision-language-action (VLA) models leverage multi-view visual observations and natural language conditioning to enable generalizable robotic skills across diverse tasks [1], [2], [3]. Despite this progress, many RM approaches still rely on direct action regression formulations [4], which yield deterministic predictions and are known to struggle when demonstrations exhibit multimodal behaviors, as commonly observed in real-world tasks [5]. To address these limitations, generative policy learning methods have recently gained attention. Diffusion-based and flow-based policies model the conditional distribution over actions rather than predicting a single output, enabling stochastic action generation and improved expressiveness, particularly in robotic manipulation settings [1], [6], [7]. Such methods have demonstrated improved robustness and flexibility compared to deterministic baselines. However, purely continuous generative policies typically operate at a single temporal scale and lack explicit temporal abstraction. As a result, stochasticity introduced during generation may accumulate over long action sequences, leading to unstable execution and inconsistent behaviors [5], [6]. Moreover, these approaches typically incur high computational costs due to  
+
+> Md Tanvir Islam, Sai Navaneet Peddapalli, Sangmoon Lee, and Sangtae Ahn are with School of Electronic and Electrical Engineering, Kyungpook National University, Daegu 41566, Republic of Korea. (e-mails: tanvirnwu, navaneet, moony, stahn @knu.ac.kr) *Corresponding author: Sangtae Ahn (stahn@knu.ac.kr)
+> Fig. 1. Overview of URFlow, illustrating closed-loop refinement of uncertain action dimensions via internal residual updates during inference, without external feedback. The right panel shows representative LIBERO results, demonstrating consistent improvements over recent SOTA baselines.
+
+iterative sampling and often rely on transformer-based archi-tectures, which substantially increase computational costs. In parallel, prior work has explored hierarchical and skill-based representations for RM, aiming to learn reusable skills directly from data rather than relying on hand-crafted primitives [8], [9]. However, most such approaches either separate skill learning from low-level control or depend on explicit planning modules, limiting seamless integration with end-to-end generative policies. Meanwhile, alternative sequence modeling architectures have recently gained atten-tion for long-horizon reasoning. State-space models such as Mamba [10] offer linear time complexity and strong temporal modeling capabilities, providing an efficient alternative to large backbones like Transformers. Despite their success in language and vision domains, their application to generative robot control remains limited. Moreover, generative manip-ulation policies introduce stochasticity during action gener-ation, which can accumulate over long-horizon rollouts and lead to unstable execution when actions are applied open-loop. Existing approaches typically lack explicit mechanisms to quantify or correct uncertain action predictions during inference, limiting their robustness in complex manipulation tasks utilizing a comparatively lightweight architecture. In this work, we address this gap by proposing “State-space Uncertainty-aware REsidual Flow (SUREFlow)” , a manipulation policy based on Mamba [10] that tackles long-horizon instability through action flow matching, effi-cient sequence modeling, and uncertainty-aware inference. The proposed framework formulates action generation as a continuous-time flow matching problem and learns a velocity field that maps noise to actions conditioned on visual obser-vations, robot states, and task embeddings. To improve ro-bustness during execution, it incorporates uncertainty-aware arXiv:2607.10504v1 [cs.RO] 11 Jul 2026 modeling that estimates prediction confidence alongside the action velocity field, as illustrated in Fig. 1. During in-ference, predicted uncertainty is used to selectively refine action sequences, mitigating error accumulation and enable stable long-horizon rollout execution, while maintaining a lightweight multimodal backbone and consistently outper-forming recent state-of-the-art (SOTA) robot manipulation baselines across multiple benchmarks. Our key contributions are as follows:  
+
+> •
+
+We introduce an Uncertainty-aware Residual Flow (UR-Flow) refinement framework within conditional flow matching for generative robot manipulation. URFlow learns input-dependent velocity variance and selectively corrects unreliable action dimensions with negligible computational overhead, stabilizing iterative flow inte-gration under extended rollouts.  
+
+> •
+
+We propose integrating a lightweight Memory-Guided Action Decoder (MGAD) that re-attends learnable action queries to multimodal memory representations, enabling context-aware and structured action refinement. This mechanism enhances temporal conditioning and im-proves robustness in generative action synthesis, as validated through ablation studies.  
+
+> •
+
+To the best of our knowledge, integrating uncertainty-aware residual refinement within a state-space genera-tive flow policy has not been previously explored. We address this gap by developing SUREFlow , a Mamba-based VLA architecture that unifies conditional flow matching with URFlow and MGAD. Leveraging linear-time sequence modeling, SUREFlow enables scalable and efficient generative control with only 179M param-eters, avoiding reliance on large multimodal backbones. II. R ELATED WORK 
+
+A. VLAs for Robot Manipulation 
+
+Recent advances in VLA models have significantly ex-panded the scope of generalist robotic manipulation by lever-aging large-scale vision-language pretraining. Early founda-tion models such as RT-1 [11] and RT-2 [2] demonstrated that pretrained vision-language representations can be adapted for discretized robot action prediction, enabling zero-shot generalization across diverse tasks and embodiments. Build-ing on this paradigm, OpenVLA scaled to 7B parame-ters [12], while Octo trained a transformer-based generalist policy across heterogeneous trajectories to promote multi-embodiment generalization [13]. Subsequent efforts focused on efficiency and architectural refinement. TinyVLA reduced model size while retaining competitive performance [14], and π0.5 [15] improved deployment efficiency of pretrained VLA backbones. QueST introduced structured tokenization and query-based conditioning [16], whereas TraceVLA in-jected spatial-temporal visual traces without modifying the backbone [17]. In parallel, Mamba [10] has been explored as an efficient alternative to transformer backbones. MaIL [3] leverages Mamba for long-horizon imitation learning, and RoboMamba [18] integrates Mamba within a VLA frame-work for multimodal policy learning. Beyond autoregressive VLAs, generative policies have emerged as an alternative paradigm for action synthesis. Diffusion-based approaches such as Diffusion Policy [6] and 3D Diffusion Policy [19] model multimodal action distributions through iterative denoising, but require multi-ple sampling steps during inference. Flow-based methods, including Flow Matching [7] and continuous normalizing flows [20], instead learn velocity fields that transport aprior distribution toward expert actions without explicit diffusion. While promising for generative modeling, these formulations typically assume homoscedastic residuals and lack explicit uncertainty-aware refinement mechanisms for stabilizing extended-horizon rollout execution. Despite these advances, many VLA models rely on large transformer backbones and autoregressive decoding, resulting in substantial computational overhead. Furthermore, explicit modeling of input-dependent uncertainty is typi-cally absent, reducing robustness during iterative rollout and extended rollout execution. These limitations motivate exploring efficient state-space backbones [10] combined with uncertainty-aware generative refinement to improve scalabil-ity and extended-horizon execution stability. 
+
+B. Uncertainty Modeling and Residual Learning 
+
+Uncertainty estimation has been widely studied in deep learning and control. Kendall and Gal [21] introduced het-eroscedastic regression for modeling input-dependent vari-ance, while uncertainty-aware reinforcement learning (RL) improves exploration and safety [22], [23]. However, these approaches are generally applied to value estimation or supervised prediction rather than generative action transport. Additionally, residual learning has proven effective in sta-bilizing robotic control. Residual RL [24] combines model-based controllers with learned residual policies to correct sys-tematic errors. Related strategies learn additive corrections to mitigate model mismatch, yet such residual formulations have not been integrated with flow-based generative policies. III. P ROBLEM FORMULATION 
+
+We consider the task of learning a goal-conditioned robot manipulation policy π(a | o, g ) that maps multimodal obser-vations to a sequence of continuous actions. Here, o ∈ O 
+
+denotes the current observation, g is a natural language task instruction, and a ∈ A is the target action sequence. The observation consists of multi-view RGB images and robot proprioceptive states as follows:      
+
+> ot={I(1)
+> t, I (2)
+> t, s t},(1)
+
+where I(1)  
+
+> t
+
+and I(2)  
+
+> t
+
+denote the agent’s view and eye-in-hand RGB images, respectively, and st denotes the robot joint and gripper states. The task instruction g is encoded as a fixed task embedding e using a precomputed language encoder. In our proposed SUREFlow, we formulate policy learning through the lens of conditional flow matching. Rather than directly regressing actions, the objective is to learn a time-dependent vector field vt that induces a probability path 
+
+pt(x) transforming a simple prior distribution p1 (Gaussian Fig. 2. Overall architecture of our proposed SUREFlow . Multimodal inputs are encoded and fused into a unified token representation. The fused tokens are processed by a shared backbone (stack of L Mamba blocks) conditioned on continuous flow time with the ‘Memory-Guided Action Decoder (MGAD)’ 
+
+> module to enhance temporal conditioning and contextual reasoning. The flow-matching policy predicts an action velocity field and an uncertainty estimate, yielding our Uncertainty-aware Residual Flow (URFlow), which constructs flow-matching and uncertainty-weighted losses during training. At inference time, URFlow performs closed-loop refinement via internal residual updates guided by predicted uncertainty, improving robustness during long-horizon execution without online action correction or environment feedback.
+
+noise) into the expert action distribution p0. To construct this path, we define a conditional probability trajectory xt for a continuous time variable t ∈ [0 , 1] as a linear interpolation between a ground truth action a ∼ p0 and a noise sample 
+
+z ∼ N (0 , I ) as follows:       
+
+> xt= (1 −t)a+tz. (2)
+
+The analytic vector field that generates this transformation is given by the target velocity as vt(xt) = z − a. We model the learned conditional velocity field as ˆvt = fθ (xt, s, t ),where s = ψ(ot, e ) denotes the fused multimodal condition-ing representation. Unlike standard formulations, SUREFlow 
+
+treats the discrepancy between the predicted and analytic target velocity as a residual flow matching problem. We hypothesize that this residual captures informative structure related to task complexity and data uncertainty, which can be exploited to refine policy behavior. IV. P ROPOSED METHOD : SUREF LOW 
+
+We present SUREFlow, an end-to-end VLA framework that integrates uncertainty-aware residual flow matching within a unified state-space backbone. The overall archi-tecture is illustrated in Fig. 2. Given multimodal inputs comprising RGB observations, robot proprioceptive states, and task language embeddings, each modality is encoded into a shared latent space through dedicated encoders and multimodal fusion. The resulting token sequence is processed by a Mamba-based state-space backbone, enabling efficient modeling of long-range temporal dependencies. On top of this backbone, a flow matching head predicts a conditional velocity field that transports Gaussian noise toward expert action trajectories. In parallel, an auxiliary head estimates input-dependent uncertainty over the pre-dicted residual. Unlike conventional diffusion or flow-based policies that optimize uniform velocity residuals, SUREFlow explicitly models heteroscedastic uncertainty, formulating action generation as a residual learning problem. This design supports training-time closed-loop refinement and enables uncertainty-guided closed-loop residual refinement during inference, minimizing the discrepancy between the predicted and analytic target velocities. To further enhance condition-ing and expressiveness, the framework optionally incorpo-rates Flow Conditioned Modulation (FCM) for timestep-dependent feature modulation and MGAD to ground learn-able action queries in multimodal observation memory. 
+
+A. Encoding and Conditioning 
+
+The first stage of SUREFlow is responsible for transform-ing raw multimodal inputs into a unified latent representation suitable for conditional flow matching. At each time step t,the observation ot contains two RGB images I(1)  
+
+> t
+
+and I(2) 
+
+> t
+
+corresponding to the agent view and the eye-in-hand view. Each image is processed independently using a convolutional visual encoder. Formally, for each camera view k ∈ { 1, 2},we compute the visual embedding as follows:        
+
+> z(k)
+> t=f(k)
+> img (I(k)
+> t)∈Rd,(3)
+
+where f (k) 
+
+> img
+
+denotes a ResNet-18 backbone with Group Normalization, and z(k) 
+
+> t
+
+is the resulting visual embedding. This produces one visual token per camera view at each t.The robot joint and gripper states st are embedded using a linear projection to obtain a proprioceptive token defined as 
+
+z(s) 
+
+> t
+
+= fstate (st), where fstate is a learnable affine mapping. This token captures the instantaneous physical configuration of the robot and complements the visual observations. The natural language instruction g is encoded using a pretrained language encoder to obtain a fixed task embedding e, which remains constant throughout the trajectory and serves as a global conditioning signal for the manipulation goal. To incorporate the continuous flow time variable t ∈ [0 , 1] 
+
+introduced in Sec. III, we use a learnable time embedding 
+
+ϕ(t) ∈ Rd. This embedding enables the policy to adapt its behavior along the probability path connecting the noise distribution p1 and the expert action distribution p0. The encoded components are combined to form a unified token sequence at time step t as follows:      
+
+> Xt=
+> h
+> ϕ(t), e, z (1)
+> t, z (2)
+> t, z (s)
+> t, x t
+> i
+> ,(4)
+
+where xt denotes the current action token along the prob-ability path defined in Sec. III. This sequence aggregates all conditioning information required for action generation, including task context, perception, robot state, and flow time. This unified token sequence Xt serves as the input to the sequence modeling component described in the following subsection, where temporal dependencies and conditional action generation are performed. 
+
+1) Flow Conditioned Modulation (FCM): Beyond explicit concatenation of the flow-time token, SUREFlow employs FCM to inject temporal conditioning directly into inter-mediate feature representations. FCM leverages the time embedding ϕ(t) to perform feature-wise affine modulation, enabling smooth conditioning of the sequence model without modifying the token structure. In practice, ϕ(t) is imple-mented using a sinusoidal frequency embedding followed by a two-layer MLP, producing a d-dimensional vector. Let U ∈ RB×N ×d denote a sequence of N token fea-tures with embedding dimension d, where U may represent state tokens, action tokens, task tokens, or decoded action features. From the flow-time embedding ϕ(t), we extract a conditioning vector c ∈ RB×d (selecting the first token when represented as a sequence). Two learnable linear projections generate feature-wise scale and shift parameters as follows:               
+
+> γ=Wγc+bγ,β=Wβc+bβ,(5)
+
+where γ, β ∈ RB×d. The modulated representation is com-puted via broadcasting across the token dimension:       
+
+> FCM( U, ϕ (t)) = U⊙(1 + γ) + β, (6)
+
+where ⊙ denotes element-wise multiplication and γ, β are broadcast along the token dimension. To ensure stable opti-mization, all modulation parameters are initialized to zero, yielding γ = 0 and β = 0 at initialization, such that FCM initially acts as an identity mapping. In SUREFlow, FCM is applied to embedded state tokens, embedded action tokens, and decoded action features prior to the final prediction head. When goal conditioning is enabled, it is also applied to the task embedding. This design introduces continuous flow-time awareness throughout the network while preserving architectural simplicity. 
+
+B. Sequence Modeling and Action Generation 
+
+Given the conditioned token sequence Xt constructed in Eq. (4), SUREFlow performs joint sequence modeling and conditional action generation using a shared Mamba [10] backbone. This component is responsible for integrating multimodal context, temporal structure, and flow time con-ditioning to predict the action velocity field required for conditional flow matching. The token sequence Xt is processed by a stack of L
+
+layers, which serve as the shared sequence backbone of the policy. Each layer implements a selective State-space model (SSM) [10] that updates hidden states through linear recur-rent dynamics combined with input-dependent gating. SSM enables efficient modeling of long-range temporal dependen-cies with linear computational complexity, making it well-suited for long-horizon execution and temporal modeling. If we formally let H(0)  
+
+> t
+
+= Xt to denote the input token sequence, the sequence backbone is computed as follows:     
+
+> H(ℓ)
+> t= Mamba ℓ
+>  H(ℓ−1)
+> t
+> ,ℓ= 1 , . . . , L, (7)
+
+where H(ℓ) 
+
+> t
+
+denotes the hidden token representations at layer 
+
+ℓ. The final representation H(L) 
+
+> t
+
+encodes joint information from visual observations, robot states, task context, flow time, and the current action token. 
+
+1) Memory-Guided Action Decoder (MGAD): To further enhance the interaction between action representations and multimodal context, SUREFlow optionally employs MGAD that treats the action token as a learnable query and allows it to attend to the remaining tokens in H(L) 
+
+> t
+
+, including visual, proprioceptive, and task tokens. This mechanism enables the action representation to selectively aggregate relevant contextual information before velocity prediction. Let h(a) 
+
+> t
+
+denote the action token extracted from H(L) 
+
+> t
+
+. The MGAD module in SUREFlow updates this token as follows:    
+
+> ˜h(a)
+> t= MGAD  h(a)
+> t, H (L)
+> t
+> ,(8)
+
+where MGAD( ·) denotes a cross-attention module parame-terized by the policy. Unlike full transformer decoders that employ multiple learnable action queries and stacked decoder layers, MGAD performs a lightweight, single-step cross-attention refinement over the action token, preserving archi-tectural efficiency. When MGAD is not used, the original action token h(a) 
+
+> t
+
+is passed directly to both the policy head 
+
+and the uncertainty head .
+
+2) Velocity and Uncertainty Prediction: The refined ac-tion representation is mapped to the parameters required for conditional flow matching. Specifically, from the decoded action features ˜h(a) 
+
+> t
+
+, the policy predicts both the velocity and the associated uncertainty as follows:       
+
+> ˆvt=fv
+> ˜h(a)
+> t
+> 
+> ,ˆst=fs
+> ˜h(a)
+> t
+> 
+> ,(9)
+
+where fv and fs are linear projection heads with independent parameters. Together with the shared backbone defined in Eq. (7), they instantiate the overall policy fθ (xt, s, t ), where the backbone produces the decoded action representation 
+
+˜h(a) 
+
+> t
+
+and the projection heads map it to velocity and uncer-tainty predictions. The predicted velocity ˆvt therefore cor-responds to the learned conditional vector field fθ (xt, s, t ),while ˆst estimates the log-variance ( log σ2) of the residual and is used for uncertainty-aware modeling and refinement. 
+
+C. Uncertainty-aware Residual Flow (URFlow) 
+
+Standard conditional flow matching learns a determinis-tic approximation of the analytic target velocity, implicitly treating all residual errors as equally reliable. During ex-tended rollout execution, demonstrations can be noisy or ambiguous, and the reliability of the learned flow may vary Algorithm 1 Pseudocode of URFlow in our SUREFlow.                                                                                          
+
+> Require: Action a∼p0, noise sample z, flow time t, observation ot,instruction g, task embedding e, policy fθ, uncertainty weight λu,threshold τ, refinement steps K, step size η.
+> Ensure: Training loss Land refined action sequence a.1: Encoding: compute fused latent s=ψ(ot, e )
+> 2: Path construction: xt←(1 −t)a+tz
+> 3: Target velocity: vt(xt)←z−a
+> 4: Predictions: (ˆ vt,ˆst)←fθ(xt, s, t )
+> 5: Residual: rt←ˆvt−vt(xt)
+> 6: Flow matching loss: Ea,z,t
+> h
+> ∥rt∥22
+> i
+> 7: Uncertainty loss: Lu← ∥ rt∥22/exp(ˆ st) + ˆ st
+> 8: Total loss: L ← L FM +λuLu
+> 9: return L▷Used during training
+> Inference time uncertainty-aware action refinement
+> 10: for k= 1 to Kdo
+> 11: At t= 0 :(ˆ v0,ˆs0)←fθ(a, s, 0)
+> 12: M ← { i|ˆs0,i > τ }▷Compute uncertainty mask
+> 13: for all i∈ M do
+> 14: ai←ai−ηˆv0,i
+> 15: end for
+> 16: end for
+> 17: return refined a
+
+across action dimensions and contexts. SUREFlow addresses this limitation by introducing an uncertainty-aware residual formulation within conditional flow matching, inspired by heteroscedastic regression for modeling input-dependent un-certainty [21] and residual learning strategies for stabilizing robot control [24]. URFlow explicitly models heteroscedas-tic uncertainty in the learned flow velocity field, enabling selective refinement of unreliable action dimensions and mitigating compounding integration errors during iterative flow execution. 
+
+1) Residual Flow Definition: As defined in Sec. III, the probability path is xt with a ∼ p0 and z ∼ N (0 , I ), and the analytic target velocity is vt(xt). Specifically, our policy 
+
+fθ predicts both the velocity ˆvt and its uncertainty ˆst via a function that is shown in line 4 of Alg. 1. This is instantiated via a shared backbone defined in Eq. (7), followed by the projection heads fv and fs defined in Eq. (9). Given the predicted velocity ˆvt produced by the policy fθ , we define the residual flow as rt, as in line 5 of Alg. 1. 
+
+2) Training Objective: A standard flow matching loss is then optimized together with an uncertainty-aware residual loss Lu as in Alg. 1 (line 7). The uncertainty-aware residual loss models rt as heteroscedastic and penalizes residuals under the predicted variance. The final training objective is defined in Alg. 1 (line 8), where λu controls the contribution of the uncertainty term. 
+
+3) Inference Time Refinement: At inference time, the pol-icy generates an action sequence by integrating the learned conditional velocity field ˆvt predicted by the policy to trans-port an initial noise sample toward the action distribution. To enhance stability in extended rollout steps, URFlow performs a deterministic refinement procedure guided by the predicted uncertainty ˆst introduced in Eq. (9). Given a generated action sequence a, we evaluate the predicted uncertainty at 
+
+t = 0 and construct a mask over unreliable action dimensions as defined in line 12 of Alg. 1, where τ is a predefined uncertainty threshold and ˆs0,i denotes the i-th dimension of the predicted log-variance at t = 0 . For dimensions i ∈ M ,the action is refined using the predicted velocity at t = 0 
+
+via ai ← ai − ηˆv0,i , where η is a fixed step size. This update is applied for a small number of refinement steps, and it operates entirely within the model without any online environment feedback or action correction. V. E XPERIMENTAL RESULTS 
+
+A. Experimental Setup 1) Implementation Details: All models are implemented in PyTorch and trained with AdamW using a learning rate of 1 × 10 −4, momentum 0.9, and weight decay 0.05 .Training is conducted for 300 epochs with a batch size of 256 on NVIDIA RTX 4090 GPU. For flow matching, the time variable t ∈ [0 , 1] is uniformly sampled per batch, with noise z ∼ N (0 , I ) used to construct xt as in Eq. (2). During inference, we use 70 flow integration steps. The time variable is provided as sigma and embedded via TimeEmbedding , corresponding to ϕ(t). The MGAD module uses 10 learnable action queries with a single-layer 4-head self and cross-attention decoder (head dim 64), followed by a 2-layer FFN (hidden 512) with LayerNorm. The output is linearly projected from 256 to 7 action dimensions. For perception, we use ResNet-18 as visual encoders (one per RGB view) with 256-dimensional latent projections, and a CLIP ViT-B/32 text encoder for language conditioning. Actions are encoded from R7 to the shared 256-dimensional latent space using a linear embedding layer. The Mamba backbone consists of 5 layers with hidden dimension 256 and intermediate dimension 256 . All token embeddings share a common embedding dimension of 256 . URFlow is enabled with λu = 0 .001 without overpowering the primary flow-matching objective. During inference, refinement is triggered only when the predicted uncertainty exceeds τ = 0 .9, and each selected action is refined for 3 iterations. For ablation studies, Success Rate (SR) is averaged across all evaluation tasks, where each task is executed for 50 rollouts. 
+
+2) Dataset & Models: We evaluate SUREFlow on Meta-World [25], LIBERO [26], and LIBERO-PRO [27] to assess multi-task generalization, compositional reasoning, and long-horizon robustness. We compare SUREFlow with representa-tive VLA and generative visuomotor policies spanning trans-former, diffusion, and state-space architectures, including large-scale VLAs such as OpenVLA [12], Octo [13], and 
+
+π0.5 [15]. All models follow their official training and evalu-ation protocols for fair comparison. Overall, our experiments aim to address the following key Research Questions (RQs):  
+
+> •
+
+RQ1: Can URFlow reduce compounding integration errors in generative flow-based control?  
+
+> •
+
+RQ2: Does URFlow matching improve stability and success under extended rollout horizons?  
+
+> •
+
+RQ3: Can URFlow achieve long-horizon robustness comparable to large-scale VLA models, without relying on billion-parameter backbones?  
+
+> •
+
+RQ4: How does uncertainty calibration interact with selective refinement? TABLE I PERFORMANCE COMPARISON ON LIBERO AND META -W ORLD BENCHMARKS . A LL VALUES DENOTE SUCCESS RATE (%).                                                                                
+
+> LIBERO Meta-World Method Venue Spatial Object Goal Long Average Method Venue Easy Medium Hard Very Hard Average Octo [13] RSS’24 78.9 85.7 84.6 51.1 75.1 DP3 [19] RSS’24 90.9 61.6 31.7 49.0 74.4 QueST [16] NeurIPS’24 89.0 90.0 88.4 87.0 88.6 Diffusion Policy [6] IJRR’25 83.6 31.1 9.0 26.6 37.6 MaIL [3] CoRL’24 53.8 81.5 56.3 41.7 58.3 Mamba Policy [1] IROS’25 95.4 92.2 48.3 71.2 76.8 TraceVLA [17] ICLR’25 84.6 85.2 75.1 54.1 74.8 TinyVLA-H [14] ICRA’25 77.6 21.5 11.4 15.8 31.6
+> SUREFlow (Ours) IROS’26 94.8 91.0 93.8 90.2 92.5 SUREFlow (Ours) IROS’26 97.8 93.5 86.1 75.9 88.32
+
+TABLE II LIBERO-PRO MODEL LEADERBOARD SHOWING NORMALIZED SUCCESS RATES UNDER FIVE PERTURBATION TYPES ACROSS FOUR BENCHMARKS .                                                                                                                      
+
+> Model LIBERO Goal LIBERO Spatial LIBERO 10 LIBERO Object Average Params ↓
+> Obj Pos Sem Task Env Obj Pos Sem Task Env Obj Pos Sem Task Env Obj Pos Sem Task Env SR ↑
+> OpenVLA [12] 0.96 0.00 0.98 0.00 0.98 0.97 0.00 0.97 0.00 0.89 0.81 0.00 0.96 0.00 0.85 0.98 0.00 0.98 0.00 0.00 0.52 7B
+> π0[28] 0.94 0.00 0.93 0.00 0.39 0.95 0.00 0.97 0.00 0.60 0.79 0.00 0.82 0.00 0.27 0.94 0.00 0.90 0.00 0.29 0.44 3B
+> π0.5[15] 0.97 0.38 0.97 0.00 0.46 0.97 0.20 0.97 0.01 0.46 0.92 0.08 0.93 0.01 0.46 0.98 0.17 0.96 0.01 0.73 0.53 3B
+> SUREFlow (Ours) 0.93 0.00 0.89 0.00 0.93 0.92 0.00 0.90 0.00 0.93 0.21 0.00 0.78 0.00 0.74 0.68 0.00 0.94 0.00 0.91 0.49 179.1M
+
+B. Comparison with SOTA Methods 
+
+To address RQ1 and RQ2, we first evaluate SUREFlow on the LIBERO and Meta-World benchmarks. As summarized in Table I, our SUREFlow achieves an average SR of 92.50%, outperforming transformer-based models like Octo by 17.4% and SSM-based methods MaIL by 34.2%. Representative simulation results across the LIBERO suites are presented in Fig. 3. On the Meta-World, which emphasizes diverse manipulation skills with varying difficulty levels, SUREFlow achieves an average SR of 88.32%, surpassing DP3 at 74.4%, Diffusion Policy at 37.6%, Mamba Policy at 76.8%, and TinyVLA-H at 31.6%. Notably, compared to Diffusion Policy, SUREFlow improves average success by nearly 78%, highlighting the capability of our SUREFlow’s efficient and stable action generation. Moreover, 34.2% gain over MaIL and 11.52% improve-ment over Mamba Policy, which are both based on Mamba backbone, further confirms that the performance gains are not solely attributable to the State-space backbone, but arise from our proposed URFlow-based uncertainty-aware residual modeling and closed-loop refinement. Thus, integrating UR-Flow within a state-space backbone improves long-horizon stability and robustness, directly addressing RQ1. Unlike autoregressive transformer VLAs that depend on large-scale pretrained backbones, SUREFlow learns a con-ditional velocity field with explicit uncertainty calibration, enabling selective refinement of unreliable action dimensions during rollout. The strong performance across easy to very hard task categories, together with improvements under ex-tended horizons, directly supports RQ2 by demonstrating that uncertainty-guided refinement enhances stability under increasing task complexity and rollout length. 
+
+C. Robustness Under Distribution Shift and Efficiency 
+
+To evaluate robustness under distribution shift and address RQ3, we compare SUREFlow with large-scale VLAs on LIBERO-PRO, which measures normalized SR under object position, semantic, task, and environment perturbations. Our SUREFlow achieves an average SR of 0.49 using 179 .1Mparameters. While OpenVLA ( 7B) and π0.5 (3B) obtain 
+
+Fig. 3. Example evaluation outcome of our SUREFlow on LIBERO. 
+
+0.52 and 0.53, respectively, SUREFlow remains competitive despite being more than an order of magnitude smaller. It also outperforms π0 (3B), which achieves an SR of 0.44. Despite operating with only 179 .1M parameters, SURE-Flow attains performance close to OpenVLA ( 7B) and π0.5
+
+(3B) under diverse perturbation settings, indicating that UR-Flow effectively compensates for model scale. The Mamba backbone in our SUREFlow enables linear-time modeling without quadratic transformer cost, while uncertainty-guided refinement stabilizes extended-horizon rollouts and reduces compounding errors. These results directly address RQ3 by demonstrating that our model SUREFlow achieves long-horizon robustness comparable to large VLA models. 
+
+1) Stability and Uncertainty Calibration Analysis: To further address RQ2, RQ3, and RQ4, we analyze long-horizon rollout behavior and uncertainty dynamics in Fig. 4. An extended rollout is particularly prone to compounding errors during open-loop execution, where small velocity inaccuracies accumulate over time. Fig. 4(a) shows that with URFlow enabled, performance improves steadily and remains stable as the rollout horizon increases. In contrast, without URFlow, the success rate decreases more rapidly and becomes less stable as the number of steps grows. This directly supports RQ2 by demonstrating that URFlow matching improves stability and success under extended rollout horizons. Furthermore, the improved stability under Fig. 4. Long-horizon rollout stability and URFlow-based refinement analysis on LIBERO Long. (a) Success rate vs. rollout horizon comparing SUREFlow with and without URFlow, showing slower performance degradation under extended rollouts when uncertainty-guided refinement is enabled. (b) Refinement activation rate under different uncertainty thresholds τ ∈ { 0.6, 0.8, 0.9} as rollout horizon increases; lower τ triggers more frequent updates, while higher τ                                                                             
+
+> yields more selective refinement. (c) Heatmap of success across thresholds and horizons, illustrating stable performance for moderate τunder long-horizon settings. (d) Evolution of predicted uncertainty statistics during training, indicating the stability with and without our MGAD module. TABLE III ABLATION STUDY ON SUREF LOW COMPONENTS .
+> Variant FCM MGAD URFlow SR ↑Params (M) ↓FLOPs (G) ↓
+> + FCM ✓××0.72 178.30 6.48 + MGAD ×✓×0.77 178.57 6.78 + URFlow ××✓0.81 177.78 6.41 + FCM + MGAD ✓✓×0.85 179.10 6.85 + MGAD + URFlow ×✓✓0.91 178.57 6.78 + FCM + URFlow ✓×✓0.87 178.30 6.48
+> SUREFlow (Baseline) ✓✓✓0.92 179.10 6.85
+> TABLE IV SENSITIVITY ANALYSIS OF URF LOW ON LIBERO ( AVERAGE SR).
+> Effect of Configuration SR ↑Effect of Configuration SR ↑
+> Uncertainty λu= 0 .001 0.92 Refinement K= 2 0.85 weight λu= 0 .01 0.87 steps K= 3 0.92
+> λuλu= 0 .05 0.79 KK= 5 0.88
+
+increasing horizons achieved without scaling model size fur-ther supports RQ3. This is because URFlow achieves long-horizon rollout robustness through calibrated residual refine-ment rather than reliance on billion-parameter backbones. Fig. 4(b) shows refinement activation rates under variable un-certainty thresholds τ . Lower τ values trigger more frequent residual updates, whereas higher values yield more selective refinement. The corresponding success heatmap in Fig. 4(c) reveals that moderate thresholds maintain stable performance across longer horizons, while overly aggressive or overly conservative refinement leads to reduced gains. These results address RQ4 by showing that uncertainty calibration directly governs the trade-off between refinement frequency and stability, enabling selective correction of unreliable action dimensions without introducing excessive updates. 
+
+2) Effect of MGAD on Uncertainty Calibration: Fig. 4(d) shows the evolution of predicted uncertainty statistics during training, comparing models with and without MGAD. The trends of ˆsmin and ˆsmax indicate that MGAD leads to faster convergence and a more stable uncertainty range. In contrast, removing MGAD results in consistently lower ˆsmin values, suggesting overconfident predictions. By moderating extreme values and maintaining a bounded uncertainty distribution, MGAD improves calibration and contributes to more stable behavior in extended rollout. 
+
+D. Ablation Study 1) Component Analysis: Table III evaluates the impact of FCM, MGAD, and URFlow. Individually, FCM achieves 0.72 SR, MGAD 0.77, and URFlow 0.81, with URFlow  
+
+> Fig. 5. Real-robot color-matching & cup insertion task by SUREFlow. Top: two-camera setup and SR over 20 rollouts per color. Bottom: representative multi-step execution sequences for red, blue, and yellow cups.
+
+providing the greatest single-module improvement. Combin-ing FCM and MGAD increases SR to 0.85, while MGAD with URFlow reaches 0.91, indicating strong complementary effects. The full SUREFlow model achieves the highest SR of 0.92. Notably, these improvements are obtained with only modest changes in parameter count and FLOPs, confirming that performance gains arise from improved modeling rather than brute-force scaling. 
+
+2) Sensitivity Analysis of URFlow: It is observed from the results in Table IV that moderate weighting improves stability and success. The best result of 0.92 is achieved with a properly calibrated λu, whereas excessive weighting degrades performance, emphasizing the need for balanced uncertainty regularization. Similarly, refinement depth in-fluences robustness: 2 refinement steps achieve 0.85 with moderate variance, while 3 steps attain 0.92 with improved stability; additional steps provide no further gains. These results confirm that properly calibrated uncertainty weighting and selective refinement are critical for mitigating com-pounding errors without overcorrection. VI. R EAL ROBOT EXPERIMENT 
+
+We evaluate SUREFlow on a real-world tabletop ma-nipulation task using a Franka Emika arm with a parallel gripper and an Intel RealSense D405 RGB-D camera, with inference running on an NVIDIA RTX 4090 GPU. The setup includes 6 cups in 3 colors, red, yellow, and blue, with two cups per color. Given a visual observation, the robot is required to (1) select one cup, (2) identify the second cup of the same color, and (3) insert the grasped cup onto its color-matched counterpart. This setup requires reliable color discrimination, precise grasping, and accurate spatial alignment during insertion. A total of 20 independent rollouts were conducted across the three color pairs. SUREFlow achieved an average SR of 88.5% over 20 rollouts per color (Fig. 5), consistently completing the color-matching pick-and-insert task. The model demonstrates reliable color-conditioned reasoning, stable grasping, and accurate insertion alignment. These results suggest that uncertainty-aware residual refinement enhances robustness under real-world perception noise and minor pose variations, supporting the practical effectiveness of SUREFlow. VII. C ONCLUSION 
+
+We presented SUREFlow, a state-space uncertainty-aware residual flow matching framework for robust generative robot manipulation. By integrating URFlow with a Mamba-based backbone and MGAD, our method models input-dependent uncertainty and performs selective residual re-finement to mitigate compounding errors during extended rollouts. Extensive evaluations on LIBERO, Meta-World, and LIBERO-PRO demonstrate strong performance gains over both transformer-based and state-space baselines, while maintaining a lightweight design. Real-world experiments further validate the practical robustness of our SUREFlow. ACKNOWLEDGMENTS 
+
+This work was supported by the National Research Foun-dation of Korea (NRF) grant funded by the Korea gov-ernment(MSIT)(No. RS-2025-02214941). This research was supported by the Regional Innovation System & Educa-tion(RISE) Glocal 30 program through the Daegu RISE Center, funded by the Ministry of Education(MOE) and the Daegu, Republic of Korea (2025-RISE-03-001). REFERENCES [1] J. Cao, Q. Zhang, J. Sun, J. Wang, H. Cheng, Y. Li, J. Ma, K. Wu, Z. Xu, Y. Shao, et al. , “Mamba policy: Towards efficient 3d diffu-sion policy with hybrid selective state models,” in 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) ,pp. 11359–11366, IEEE, 2025. [2] B. Zitkovich, T. Yu, S. Xu, P. Xu, T. Xiao, F. Xia, J. Wu, P. Wohlhart, S. Welker, A. Wahid, et al. , “Rt-2: Vision-language-action models transfer web knowledge to robotic control,” in Conference on Robot Learning , pp. 2165–2183, PMLR, 2023. [3] X. Jia, Q. Wang, A. Donat, B. Xing, G. Li, H. Zhou, O. Celik, D. Blessing, R. Lioutikov, and G. Neumann, “MaIL: Improving imitation learning with selective state space models,” in 8th Annual Conference on Robot Learning , 2024. [4] P. Florence, C. Lynch, A. Zeng, O. A. Ramirez, A. Wahid, L. Downs, A. Wong, J. Lee, I. Mordatch, and J. Tompson, “Implicit behavioral cloning,” in Conference on robot learning , pp. 158–168, PMLR, 2022. [5] C. Lynch, M. Khansari, T. Xiao, V. Kumar, J. Tompson, S. Levine, and P. Sermanet, “Learning latent plans from play,” in Conference on robot learning , pp. 1113–1132, Pmlr, 2020. [6] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” The International Journal of Robotics Research , vol. 44, no. 10-11, pp. 1684–1704, 2025. [7] Y. Lipman, R. T. Q. Chen, H. Ben-Hamu, M. Nickel, and M. Le, “Flow matching for generative modeling,” in The Eleventh International Conference on Learning Representations , 2023. [8] X. Ma, S. Patidar, I. Haughton, and S. James, “Hierarchical diffu-sion policy for kinematics-aware multi-task robotic manipulation,” in 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 18081–18090, 2024. [9] R. Liu, P. Zhou, Q. Luo, L. Sun, J. CEN, Y. Song, and Y. Yang, “Himacon: Discovering hierarchical manipulation concepts from un-labeled multi-modal data,” in The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2026. [10] A. Gu and T. Dao, “Mamba: Linear-time sequence modeling with selective state spaces,” in First conference on language modeling ,2024. [11] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn, K. Gopalakrishnan, K. Hausman, A. Herzog, J. Hsu, et al. , “Rt-1: Robotics transformer for real-world control at scale,” arXiv preprint arXiv:2212.06817 , 2022. [12] M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. P. Foster, P. R. Sanketi, Q. Vuong, T. Kollar, B. Burchfiel, R. Tedrake, D. Sadigh, S. Levine, P. Liang, and C. Finn, “OpenVLA: An open-source vision-language-action model,” in 8th Annual Conference on Robot Learning , 2024. [13] Octo Model Team, D. Ghosh, H. Walke, K. Pertsch, K. Black, O. Mees, S. Dasari, J. Hejna, C. Xu, J. Luo, T. Kreiman, Y. Tan, P. Sanketi, Q. Vuong, T. Xiao, D. Sadigh, C. Finn, and S. Levine, “Octo: An open-source generalist robot policy,” in Proceedings of Robotics: Science and Systems , (Delft, Netherlands), 2024. [14] J. Wen, Y. Zhu, J. Li, M. Zhu, K. Wu, Z. Xu, N. Liu, R. Cheng, C. Shen, Y. Peng, et al. , “Tinyvla: Towards fast, data-efficient vision-language-action models for robotic manipulation,” in IEEE Robotics and Automation Letters (RA-L) , 2025. [15] K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. R. Equi, C. Finn, N. Fusai, and et al., “$ \pi {0.5 }$: a vision-language-action model with open-world generalization,” in 9th Annual Conference on Robot Learning , 2025. [16] A. Mete, H. Xue, A. Wilcox, Y. Chen, and A. Garg, “Quest: Self-supervised skill abstractions for learning continuous control,” Ad-vances in Neural Information Processing Systems , vol. 37, pp. 4062– 4089, 2024. [17] R. Zheng, Y. Liang, S. Huang, J. Gao, H. D. III, A. Kolobov, F. Huang, and J. Yang, “TraceVLA: Visual trace prompting enhances spatial-temporal awareness for generalist robotic policies,” in The Thirteenth International Conference on Learning Representations , 2025. [18] J. Liu, M. Liu, Z. Wang, P. An, X. Li, K. Zhou, S. Yang, R. Zhang, Y. Guo, and S. Zhang, “Robomamba: Efficient vision-language-action model for robotic reasoning and manipulation,” Advances in Neural Information Processing Systems , vol. 37, pp. 40085–40110, 2024. [19] Y. Ze, G. Zhang, K. Zhang, C. Hu, M. Wang, and H. Xu, “3d diffusion policy: Generalizable visuomotor policy learning via simple 3d representations,” in Proceedings of Robotics: Science and Systems (RSS) , 2024. [20] M. S. Albergo and E. Vanden-Eijnden, “Building normalizing flows with stochastic interpolants,” in The Eleventh International Conference on Learning Representations , 2023. [21] A. Kendall and Y. Gal, “What uncertainties do we need in bayesian deep learning for computer vision?,” Advances in neural information processing systems , vol. 30, 2017. [22] G. Liu, Y. Luo, O. Schulte, and P. Poupart, “Uncertainty-aware reinforcement learning for risk-sensitive player evaluation in sports game,” Advances in Neural Information Processing Systems , vol. 35, pp. 20218–20231, 2022. [23] S. Depeweg, J.-M. Hernandez-Lobato, F. Doshi-Velez, and S. Udluft, “Decomposition of uncertainty in bayesian deep learning for efficient and risk-sensitive learning,” in International conference on machine learning , pp. 1184–1193, PMLR, 2018. [24] T. Johannink, S. Bahl, A. Nair, J. Luo, A. Kumar, M. Loskyll, J. A. Ojea, E. Solowjow, and S. Levine, “Residual reinforcement learning for robot control,” in 2019 international conference on robotics and automation (ICRA) , pp. 6023–6029, IEEE, 2019. [25] T. Yu, D. Quillen, Z. He, R. Julian, K. Hausman, C. Finn, and S. Levine, “Meta-world: A benchmark and evaluation for multi-task and meta reinforcement learning,” in Conference on robot learning ,pp. 1094–1100, PMLR, 2020. [26] B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone, “Libero: Benchmarking knowledge transfer for lifelong robot learn-ing,” Advances in Neural Information Processing Systems , vol. 36, pp. 44776–44791, 2023. [27] X. Zhou, Y. Xu, G. Tie, Y. Chen, G. Zhang, D. Chu, P. Zhou, and L. Sun, “Libero-pro: Towards robust and fair evaluation of vision-language-action models beyond memorization,” arXiv preprint arXiv:2510.03827 , 2025. [28] K. Black, N. Brown, D. Driess, A. Esmail, et al. , “ π0: A vision-language-action flow model for general robot control,” in Robotics: Science and Systems (RSS) , (Sydney, Australia), July 2026.

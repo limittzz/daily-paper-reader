@@ -1,0 +1,376 @@
+Title: Joint-Embedding Predictive Architecture for Solar PV Panel Fault Classification
+
+URL Source: https://arxiv.org/pdf/2607.09205v1
+
+Published Time: Mon, 13 Jul 2026 00:48:27 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+> 1
+
+# Joint-Embedding Predictive Architecture for Solar PV Panel Fault Classification 
+
+Seyyedhamid Azimidokht, Mehdi Monemi, Abdelhak Kharbouch, Farid Hamzehaghdam, Mehdi Rasti, Jamshid Aghaei and Emil Kurvinen 
+
+Abstract —The rapid expansion of solar photovoltaic (PV) systems has increased the need for reliable and scalable fault classification, as manual inspection is impractical at scale. Thermal infrared (IR) imaging provides a non-contact solution for identify-ing PV faults; however, accurate classification remains challenging due to class imbalance, limited texture information, and subtle thermal differences. In this work, we investigate the applicability of Joint-Embedding Predictive Architecture (JEPA) for thermal IR PV fault classification across various scenarios and propose JEFFNet (JEPA-EFFicientNet), a multibranch architecture that combines JEPA-based self-supervised representation learning with EfficientNetV2-S-based supervised convolutional feature extraction. JEFFNet fuses semantic representations from aJEPA-pretrained Vision Transformer with convolutional features from EfficientNetV2-S, enabling complementary feature learning. JEFFNet is evaluated on two public thermal IR datasets, PVF-10 and InfraredSolarModules (ISM), for both multiclass and derived binary (healthy/faulty) classification. On PVF-10, JEFFNet achieves an F1-score of 93 .21 and an accuracy of 94 .33 in the 10-class task, and an F1-score of 97 .53 and an accuracy of 96 .41 
+
+in the derived 2-class task. On ISM, JEFFNet achieves an F1-score of 72 .60 and an accuracy of 83 .88 in the 12-class task, and an F1-score of 94 .69 and an accuracy of 94 .78 in the derived 2-class task. JEFFNet also uses only 108.6M parameters versus 205.91M for GEPFNet, a 47.2% reduction. These results demonstrate that combining self-supervised semantic and supervised convolutional features provides an effective, parameter-efficient solution for thermal IR PV fault classification. 1
+
+Index Terms —Joint-Embedding Predictive Architecture (JEPA), photovoltaic (PV) panel, fault classification, infrared thermogra-phy, EfficientNetV2, self-supervised learning, solar PV inspection. 
+
+I. Introduction 
+
+Global renewable electricity capacity is projected to grow rapidly between 2025 and 2030, with solar photovoltaic (PV) systems expected to drive most of this expansion [1]. As PV deployment increases at large scale, traditional manual inspection and conventional monitoring become insufficient for ensuring reliability, performance, and safety. Recent reports by the IEA and IEA-PVPS highlight that AI- and ML-based methods can improve fault detection, predictive maintenance, and operational efficiency, helping reduce outages and main-tenance costs [2], [3]. In parallel, IEC standards such as IEC 
+
+Seyyedhamid Azimidokht, Mehdi Monemi, Abdelhak Kharbouch, Farid Hamzehaghdam, Mehdi Rasti, and Emil Kurvinen are with the University of Oulu, Oulu, Finland. E-mails: {seyyedhamid.azimidokht, mehdi.monemi, abdelhak.kharbouch, farid.hamzehaghdam, mehdi.rasti, emil.kurvinen }@oulu.fi. Jamshid Aghaei is with Central Queensland University, Australia. E-mail: j.aghaei@cqu.edu.au. 
+
+> 1
+
+The source code is publicly available at https://github.com/Azimi2kht/ JEFFNet 
+
+TS 62446-3:2017 provide important imaging protocols for PV inspection and support the development of automated computer vision pipelines [4], [5]. PV farms are exposed to harsh environmental conditions, including high irradiation, temperature variations, humidity, and mechanical stress, all of which contribute to degradation and diverse fault types over time [6]. Early fault detection is therefore essential, since undetected failures can reduce power generation, accelerate degradation, and create safety risks at the module and string levels [7]. Consequently, automated PV fault detection and classification has become an important task for large-scale operation and maintenance, especially in utility-scale installations where manual inspection is impractical. Several sensing modalities have been explored for PV inspection, including visible-light (RGB) imaging, infrared (IR) thermography, electroluminescence (EL) imaging, ultraviolet (UV) imaging, and electrical measurements. Among these, IR thermographic imaging has emerged as a key technology for PV inspection. IR imaging enables the non-contact visualization of thermal anomalies associated with electrical and structural faults, such as hotspots, short circuits, and connection failures, even under varying illumination conditions. Its importance is formally recognized in the IEC TS 62446-3:2017 standard [4], which specifies the use of IR thermography as a recommended technique for condition monitoring and fault diagnosis of PV modules and strings. By capturing temperature distributions rather than visible textures, IR images provide fault-relevant information that is often imperceptible in RGB imagery, making them particularly suitable for early-stage fault detection. In this work, we focus on IR-based PV fault classification. Most existing works on IR-based PV fault analysis rely on fully supervised learning or handcrafted feature engineering, and therefore do not explicitly exploit self-supervised representation learning or semantic prediction in latent space. As a result, the learned features are often tied to low-level appearance patterns and may be less robust when discriminative cues are subtle, as is common in thermal IR imagery. In this context, recent advances in representation learning have shown that Joint Embedding Predictive Architecture (JEPA) provides an effective alternative for high-level visual understanding tasks. Unlike reconstruction-based methods that emphasize pixel fidelity or contrastive methods that depend on pairwise alignment, JEPA learns by predicting target embeddings from context embeddings in a shared latent space. This encourages the model to capture semantically meaningful, task-relevant structure while suppressing irrelevant low-level variations, making it appealing for PV fault classification from IR images, where arXiv:2607.09205v1 [eess.IV] 10 Jul 2026 2
+
+textures are limited and defect evidence is often subtle. Recent studies indicate that JEPA is not limited to generic representation-learning benchmarks, but can also be effective for downstream classification tasks across different modalities. In particular, Assran et al. [8] demonstrated its effectiveness in image classification. However, existing JEPA-based classifi-cation studies have employed a single-branch setting, where only one feature-extraction pathway is used. A multibranch or fusion architecture refers to a framework in which multiple feature-extraction pathways process the same input in parallel and their learned representations are combined before final classification. In this work, we propose a novel multibranch framework that fuses JEPA-based self-supervised representa-tions with EfficientNetV2-S features for thermal IR PV fault classification. The motivation for this fusion is that the two branches capture complementary aspects of the same input image: JEPA provides semantic latent representations learned through self-supervised prediction, while EfficientNetV2-S provides discriminative convolutional features optimized for classification. By combining these representations, the proposed framework is expected to produce a richer image representation than either branch alone. 
+
+A. Related work 
+
+PV fault analysis has been studied mainly using three imaging modalities: RGB, electroluminescence (EL), and Infrared (IR). In RGB imagery, recent work has used deep learning for RGB defect detection and classification; for example, Authors of [9] proposed a recent RGB-based defect detector, while Authors of [10] showed that preprocessing and class balancing can materially affect RGB-based fault classification performance. However, RGB inspection is mainly limited to surface-visible defects and is sensitive to image quality, illumination, and dataset realism. In EL imaging, defect analysis has also been extensively studied because EL images reveal fine cell-level structural defects. Authors of [11] addressed automatic classification of defective PV cells in EL images, while Authors of [12] proposed semantic-segmentation-based defect detection and localization in EL images and introduced the UCF EL Defect dataset. Nevertheless, EL inspection typically requires controlled acquisition conditions and electrical excitation, which makes it less practical for large-scale field deployment. Aligned with many of existing related studies, our work is based on IR imagery, which is particularly attractive for PV fault analysis because it directly captures temperature distributions associated with operational faults and is therefore well suited for practical field-scale inspection. Several studies have investigated PV fault analysis using IR thermography due to its ability to directly capture thermal anomalies associated with operational defects. Authors of [13] proposed an automatic pipeline for aerial IR inspection of PV plants that first detects individual PV modules and then identifies thermal abnormalities, such as overheated modules, hot spots, and overheated substrings, using statistical analysis of IR imagery. Authors of [14] proposed a machine-learning framework for hotspot identification in PV modules using IR thermography, where handcrafted hybrid features, including RGB, texture, histogram of oriented gradient (HOG) and local binary pattern (LBP) descriptors, were fused and classified with a support vector machine (SVM). Their method categorized PV panels into healthy, non-faulty hotspot, and faulty classes, achieving 96.8% training accuracy and 92% testing accuracy while maintaining relatively low computational complexity and storage requirements. Authors of [15] investigated PV defect classification from thermal IR images using both feature-based machine learning and deep learning methods. In particular, they evaluated SIFT-based descriptors with conventional classifiers alongside VGG-16 and MobileNet, showing that deep CNN models achieved the strongest multiclass defect-classification performance, with MobileNet reaching 89.5% accuracy. Authors of [16] proposed a lightweight CNN-based framework for thermal inspection of PV modules and showed that accurate anomaly classification can be achieved in real time on edge devices. Their approach reached 85.35% accuracy on a 12-class IR dataset. Authors of [17] employed a ResNet-based convolutional neural network combined with ensemble learning for PV anomaly detection and classification. Evaluated on a dataset of 20,000 IR images spanning 12 defect categories, their method achieved 94.4% accuracy for anomaly detection and 85.9% for multi-class fault classification. Authors of [18] investigated PV fault diagnosis from IR images using both a lightweight DCNN and a fine-tuned VGG-16 model. Their results showed that transfer learning can achieve very high performance for both binary fault detection and multiclass fault diagnosis in thermographic PV inspection. Recent studies have also explored Vision Trans-formers (ViT) [19] for thermal PV fault detection. Transformer-based models such as ViT-Tiny and Swin-Tiny have shown strong binary and multiclass classification performance [20]; however, some fault categories, particularly environmentally induced defects such as soiling, remain difficult to distinguish, highlighting limitations related to thermal image quality and subtle inter-class differences. More recently, authors of [21] proposed GEPFNet, a group-equivariant feature extraction and parallel fusion network for fault classification. By combining group-equivariant feature learning with parallel feature fusion, GEPFNet achieved state-of-the-art results, with an F1-score of 92.47% and accuracy of 94.64% on the 10-class task, and an F1-score of 95.01% and accuracy of 96.05% in the healthy-versus-faulty 2-class setting. Meanwhile, JEPA has recently shown strong potential for downstream tasks such as classification, by learning compact semantic representations self-supervisedly [22]. By predict-ing target embeddings from context embeddings in latent space rather than reconstructing raw inputs, JEPA provides transferable features that have been shown to be effective for supervised classification. For example, I-JEPA demonstrated strong performance in downstream image classification task using representations learned in latent space, while Stochastic Positional Embeddings-JEPA (StoP-JEPA) further improved I-JEPA-style masked image modeling by introducing stochastic positional embeddings to reduce overfitting to exact target locations and improve robustness to location uncertainty [23]. A-JEPA [24] extended the JEPA paradigm to audio and speech classification and reported state-of-the-art results across 3
+
+multiple benchmarks. Similarly, Authors of [25] showed that JEPA-based pretraining improves downstream classification performance on electrocardiogram (ECG) data. 
+
+B. Motivations and Contributions 
+
+Although recent studies have shown that deep learning models can achieve strong performance for IR-based PV fault classification, the literature still has two important gaps. First, most existing methods rely on fully supervised training or handcrafted features, and therefore do not exploit self-supervised semantic representation learning in latent space. This is a notable limitation for IR PV imagery, where textures are weak and the visual differences between fault categories can be subtle. Second, while CNN-based supervised models are effective at learning discriminative task-specific patterns, the combination of such supervised representations with JEPA-based self-supervised semantic representations within the same modality has not been explored. Motivated by these limitations, the main contributions of this work are listed as follows:  
+
+> •
+
+JEPA learns semantically meaningful latent representations by predicting target embeddings from context embeddings, making it well suited to IR PV images where discrimina-tive cues are subtle and low-level textures are limited. In this work, we use the context encoder obtained from StoP-JEPA training for PV panel fault classification. Specifically, we first jointly train the context encoder, target encoder, and predictor in the the StoP-JEPA framework on the PVF-10 dataset, a widely used PV fault dataset in a self-supervised manner, and then use the trained context encoder as a feature extractor by attaching a classifier head and performing linear probing. Since JEPA is built upon a Vision Transformer (ViT) encoder, whose representation quality generally benefits from large-scale and semantically rich pretraining data, we also investigate the effect of transferring semantic knowledge learned from a broader visual domain; We evaluate a context encoder pretrained in the StoP-JEPA setting on ImageNet-1k [26], a large-scale semantically rich dataset, and adapt it to the PV fault classification task using the same linear probe strategy. The use of semantically rich out-of-domain ImageNet-1k pretraining improves the JEPA representations, leading to a significant improvement in downstream PV fault classification performance.  
+
+> •
+
+Building on the best-performing linear-probing setting, we further improve the adaptation of the StoP-JEPA context encoder using a staged fine-tuning strategy. In this strategy, the pretrained context encoder is first kept frozen and only the classifier head is trained, allowing the randomly initialized head to adapt to the PV fault classification task without disturbing the learned representations. The encoder is then unfrozen and the whole network is fine-tuned end-to-end. On the PVF-10 dataset, the staged fine-tuning strategy achieves 93.86% accuracy and 93.69% F1-score. This substantially improves over two extreme 
+
+non-staged training strategies: (a) linear-probing setting, which achieves 85.02% accuracy and 82.70% F1-score, as well as the setting in which the JEPA-encoder and the classifier head are trained together from the beginning, which achieves 88.09% accuracy and 82.41% F1-score.  
+
+> •
+
+To further enhance the performance, we introduce JEFFNet, an architecture that combines JEPA embeddings with EfficientNetV2-S features. The motivation for this design is to exploit the complementary strengths of the two components: JEPA provides semantic and transferable latent representations, while EfficientNetV2-S provides strong supervised local and task-specific discriminative features. JEFFNet adopts the staged training strategy described above, where the pretrained StoP-JEPA context encoder is first kept frozen while EfficientNetV2-S and the classifier head are trained, then the full network is fine-tuned end-to-end. We show that this framework improves over the staged single-branch StoP-JEPA classifier and achieves strong performance on two widely used PV fault datasets, PVF-10 and ISM. On the PVF-10 10-class setting, JEFFNet achieves an F1-score of 93.21% and recall of 93.19%, improving over GEPFNet [21], the recent state-of-the-art network for PV fault classification, by 0.74% in F1-score and 0.78% in recall. On the ISM 12-class benchmark, JEFFNet achieves an F1-score of 72.60% and recall of 71.47%, improving over GEPFNet by 1.28% in F1-score and 2.66% in recall.  
+
+> •
+
+In addition to the original multiclass settings, we also study 2-class scenarios in which all fault categories are grouped into a single defective class and contrasted against the healthy class. This setting is particularly important in practice because it directly reflects the screening task of deciding whether a PV panel is faulty or not. On PVF-10, JEFFNet achieves an F1-score of 97.53% and recall of 97.49%, improving over GEPFNet by 2.52% and 2.48%, respectively. On ISM, JEFFNet achieves an F1-score of 94.69% and recall of 93.16%, improving over GEPFNet by 0.76% in F1-score, while also achieving notable gains in precision and MCC of 2.34% and 1.69%, respectively. 
+
+II. Methodology 
+
+We first provide some prelimiaries in section II-A . Then we introduce the framework designed for classification of the solar panel defects. 
+
+A. Preliminaries 
+
+This section briefly introduces the two main building blocks underlying the proposed framework: the JEPA paradigm to enable self-supervised semantic representation learning, and EfficientNetV2-S, which provides efficient convolutional feature extraction. These preliminaries establish the foundation for the proposed architectures presented in the next section. 
+
+1) Joint Embedding Predictive Architecture (JEPA) Image Implementations: I-JEPA and StoP-JEPA: JEPA is a self-supervised learning framework that learns representations by predicting the latent embeddings of unseen targets from a visible context, rather than reconstructing the input signal itself. This latent prediction objective encourages the model to capture semantic and task-relevant structure while avoiding excessive emphasis on low-level image details. I-JEPA [8] is the first 4
+
+image-based implementation of the JEPA paradigm. The orange hatched region in Fig. 1 illustrates the I-JEPA-style pretraining mechanism. Given an input image, the image is first divided into a sequence of non-overlapping patches and a masking strategy is applied on the patch grid. Let 𝐵 𝑖 denote the set of patch indices corresponding to the 𝑖 -th target block, for 𝑖 = 1, . . . , 𝑀 ,and let 𝐵 𝑥 denote the visible context indices. The masked views are processed by two encoder branches: a context encoder 𝑓 𝜃 
+
+and a target encoder 𝑓 ¯𝜃 , both typically implemented as Vision Transformers (ViTs). The context encoder processes the visible context patches, whereas the target encoder provides the target patch representations used as prediction targets. The target encoder is updated through an exponential moving average (EMA) of the context encoder parameters. This slowly evolving target encoder provides stable target representations and helps prevent trivial solutions. The target encoder produces patch-level representations 
+
+s𝑦 = 𝑓 ¯𝜃 (𝑦 ) = {𝑠 𝑦 1 , 𝑠 𝑦 2 , . . . , 𝑠 𝑦 𝑁 }, (1) where 𝑠 𝑦 𝑗 is the embedding of the 𝑗 -th patch. For each target block 𝐵 𝑖 , the corresponding target representation is 
+
+s(𝑖 ) 
+
+> 𝑦
+
+= {𝑠 𝑦 𝑗 | 𝑗 ∈ 𝐵 𝑖 }. (2) Similarly, the context encoder produces the visible context representation 
+
+s𝑥 = 𝑓 𝜃 (𝑥 ) = {𝑠 𝑥 𝑗 | 𝑗 ∈ 𝐵 𝑥 }. (3) A predictor network 𝑔 𝜙 then uses the encoded context together with positional embedding about the target locations to produce the target predictions ˆs(𝑖 ) 
+
+> 𝑦
+
+. The model is trained by minimizing the discrepancy between the predicted and target representations over all target blocks: 
+
+L = 1
+
+𝑀 
+
+> 𝑀
+
+∑︁ 
+
+> 𝑖 =1
+
+𝐷  ˆs(𝑖 ) 
+
+> 𝑦
+
+, s(𝑖 )
+
+> 𝑦
+
+ = 1
+
+𝑀 
+
+> 𝑀
+
+∑︁ 
+
+> 𝑖 =1
+
+∑︁ 𝑗 ∈ 𝐵 𝑖 
+
+ˆ𝑠 𝑦 𝑗 − 𝑠 𝑦 𝑗  
+
+> 22
+
+. (4) For downstream image-level classification, only the pretrained context encoder is retained as the JEPA feature extractor, while the target encoder and predictor are discarded. StoP-JEPA extends I-JEPA by addressing location uncertainty in masked image modeling. Instead of conditioning the predictor on deterministic positional embeddings of the target patches, StoP-JEPA perturbs the target positional embeddings with Gaussian noise before they are provided to the predictor. Specifically, for the positional embedding 𝑝 𝑗 associated with the 𝑗 -th target patch, StoP-JEPA uses the positional embedding ˜𝑝 𝑗 = 𝑝 𝑗 + 𝜖 𝑗 , 𝜖 𝑗 ∼ N ( 0, 𝜎 2I), (5) where 𝜎 controls the noise magnitude. The predictor 𝑔 𝜙 then receives the encoded context together with the positional em-beddings { ˜𝑝 𝑗 } to generate the target predictions. By introducing uncertainty into the target positions during training, StoP-JEPA discourages the predictor from relying on exact spatial locations and instead encourages the encoder to learn more semantically meaningful representations. Consequently, StoP-JEPA preserves the latent-space prediction objective of I-JEPA while improving the transferability of the learned representations. 
+
+2) EfficientNetV2: EfficientNetV2 is a family of convolu-tional neural networks designed to improve training speed and parameter efficiency while maintaining strong classification performance [27]. It builds upon EfficientNet [28], which introduced compound scaling of network depth, width, and input resolution. EfficientNetV2 further improves this design by using Fused-MBConv blocks in the early stages, where the expansion and depthwise convolution are combined into a regular convolution, while retaining MBConv blocks with squeeze-and-excitation (SE) modules in deeper stages [29]. This design provides an efficient balance between representational capacity, model size, and training speed. 
+
+B. JEFFNet 
+
+As illustrated in Fig. 1 and Fig. 2, JEFFNet is designed for thermal IR PV fault classification by combining StoP-JEPA representations with EfficientNetV2-S features. In the StoP-JEPA pretraining, the context encoder, target encoder, and predictor has been trained in a self-supervised manner on ImageNet-1k [26], a large-scale semantically rich dataset. For the downstream classification task, only the pretrained context encoder is retained, while the target encoder and predictor are deactivated because no masked-target prediction is performed during classification. To provide complementary discriminative information, an EfficientNetV2-S branch is added alongside the StoP-JEPA context encoder, followed by a classifier head. During classification, the whole input image is fed to the StoP-JEPA context encoder and, in parallel, to EfficientNetV2-S. The extracted representations are projected into a shared feature space, refined through branch-specific transformation modules, concatenated, and passed to the classifier head for fault prediction. JEFFNet is trained using a staged strategy in which the pretrained StoP-JEPA context encoder is first kept frozen while the classifier head and EfficientNetV2-S branch are trained, and then the context encoder is unfrozen so that the full network can be fine-tuned end-to-end. Let 𝑥 ∈ R𝐻 ×𝑊 ×𝐶 denote an input IR image. In the JEPA branch, the input is processed by the pretrained JEPA context encoder, 
+
+s𝑥 = 𝑓 𝜃 (𝑥 ), (6) where s𝑥 = {𝑠 𝑥 𝑗 }𝑁 𝑗 =1 denotes the sequence of patch-level latent representations, 𝑁 is the number of image patches, and 𝑠 𝑥 𝑗 ∈
+
+R𝑑 jepa is the embedding of the 𝑗 -th patch produced by the JEPA context encoder. Since the target task is image-level classification, the patch-level representations are aggregated using global average pooling: 
+
+𝑧 jepa = 1
+
+𝑁 
+
+> 𝑁
+
+∑︁ 
+
+> 𝑗 =1
+
+𝑠 𝑥 𝑗 . (7) The resulting vector 𝑧 jepa is then mapped to a shared projection space using a projection module, 
+
+𝑝 jepa = 𝜙 jepa (𝑧 jepa ), (8) where 𝜙 jepa (·) consists of a fully connected linear layer, layer normalization, GELU activation, and dropout. The projected 5
+
+Fig. 1: Architecture of the proposed JEFFNet fusion model. The input thermal IR image is processed by two parallel branches: a JEPA-pretrained ViT encoder, which produces patch-level semantic feature vectors that are aggregated by global average pooling, and an EfficientNetV2-S backbone, which extracts spatial convolutional feature maps followed by global average pooling. The resulting branch representations are transformed through projection and scaling modules, concatenated, and passed to the classifier head to predict the PV fault class. representation is further processed by a branch-specific trans-formation module, ˜𝑧 jepa = 𝜓 jepa ( 𝑝 jepa ), (9) where 𝜓 jepa (·) consists of a fully connected linear layer, layer normalization, GELU activation, dropout, and a final fully con-nected linear layer. In parallel, the same input image is passed through an EfficientNetV2-S backbone. The classification layer of the backbone is removed, and global average pooling is used to obtain a convolutional feature vector: 
+
+𝑧 eff = 𝑓 eff (𝑥 ), (10) where 𝑧 eff ∈ R𝑑 eff denotes the feature representation extracted by EfficientNetV2-S. This feature vector is projected into the same shared representation space: 
+
+𝑝 eff = 𝜙 eff (𝑧 eff ), (11) where 𝜙 eff (·) follows the same structure as the JEPA projection module. The projected convolutional representation is then refined using a transformation module: ˜𝑧 eff = 𝜓 eff ( 𝑝 eff ), (12) where 𝜓 eff (·) has the same structure as the JEPA transformation module. The two transformed representations are concatenated: 
+
+𝑧 fused =  ˜𝑧 eff ∥ ˜𝑧 jepa 
+
+ , (13) where ∥ denotes feature concatenation. The resulting represen-tation is then passed to the classifier head: ˆ𝑦 = ℎcls (𝑧 fused ), (14) where ˆ𝑦 ∈ R𝐶 denotes the output logits and 𝐶 is the number of target classes. The classifier head consists of a fully connected linear layer, layer normalization, GELU activation, dropout, and a final fully connected linear layer. The model is optimized using weighted cross-entropy loss to account for class imbalance. For a batch of size 𝐵 , the loss is defined as 
+
+L = − 1
+
+𝐵 
+
+> 𝐵
+
+∑︁ 
+
+> 𝑖 =1
+
+𝑤 𝑦 𝑖 log exp ( ˆ𝑦 𝑖,𝑦 𝑖 )
+
+Í𝐶 𝑐 =1 exp ( ˆ𝑦 𝑖,𝑐 ) , (15) where 𝑦 𝑖 is the ground-truth label of the 𝑖 -th sample, ˆ𝑦 𝑖,𝑐 is the predicted logit for class 𝑐 , and 𝑤 𝑦 𝑖 is the class weight assigned to the ground-truth class. The class weights are computed from the training subset using the standard balanced weighting strategy, where each class is weighted inversely proportional to its frequency in the training data. 6
+
+Fig. 2: Detailed structure of the projection, scaling, and classifier modules used in JEFFNet. The projector maps each branch representation into a shared feature space using a fully connected layer followed by layer normalization and GELU activation. The scaler further refines the projected representation using two fully connected layers with intermediate normalization and activation. The classifier head maps the fused representation to the final class logits. 
+
+III. Experiments 
+
+A. Experimental Setup 1) Datasets: The proposed method was evaluated on two publicly available datasets: PVF-10 [30] and InfraredSolar-Modules (ISM) [31]. PVF-10 is a IR dataset designed for fine-grained PV fault classification. It contains 5579 annotated TIR images collected by unmanned aerial vehicles (UAVs) from operational PV farms under diverse acquisition conditions. The dataset includes images from different PV plants and regions, with variations in latitude, weather, solar exposure, and time of day, resulting in differences in illumination, thermal radiation, and scene complexity. These properties make PVF-10 a realistic benchmark for evaluating fine-grained PV fault classification methods under low thermal contrast and complex outdoor conditions. The dataset is annotated into ten classes, including 
+
+substring open circuit , panel short circuit , string short circuit ,
+
+debris covering , shadowed panel , bottom dirt , broken panel ,
+
+junction box overheating , overheated cell , and healthy panel .In this study, the 112 ×112 version of PVF-10 was used for model evaluation. The ISM dataset contains 20,000 IR images of size 24 × 40 pixels collected from aerial inspections of operational solar farms. It comprises 12 classes, including 11 anomaly types Cell , Cell-Multi , Cracking , Hot-Spot , Hot-Spot-Multi , Shadowing , Diode , Diode-Multi , Vegetation , Soiling ,and Offline-Module together with a No-Anomaly class. Fig. 3 illustrates the class distributions of both datasets. As shown in the figure, both datasets exhibit noticeable class imbalance, with certain defect categories containing substantially more samples than others. This imbalance reflects the natural occurrence frequencies of PV faults in real-world installations and presents an additional challenge for learning robust fault classification models. For PVF-10, we followed the fixed training and test split provided with the dataset. From the original training split, 10% of the samples were further separated as a validation set using a stratified random split to preserve the class distribution. The validation set was used for model selection, and the best-performing model on the validation set was then evaluated on the fixed test set. For the ISM dataset, since no predefined training, validation, and test split is provided, we constructed the splits from the full dataset. First, 10% of the samples were held out as the test set using stratified sampling. From the remaining 90%, 10% was further separated as the validation set, again using stratified sampling to preserve the class distribution. The remaining samples were used for training. The validation set was used for model selection, and the selected best-performing model was evaluated once on the held-out test set. 
+
+2) Evaluation Metrics: Since both PVF-10 and ISM datasets are imbalanced, we report macro-averaged metrics to give equal importance to all fault classes. Let 𝐶 be the number of classes, and let TP 𝑖 , FP 𝑖 , TN 𝑖 , and FN 𝑖 denote the true positives, false positives, true negatives, and false negatives for class 𝑖 , respectively. Overall accuracy is computed over all samples, Acc =
+
+Í𝐶 𝑖 =1 TP 𝑖 
+
+𝑁 , (16) where 𝑁 is the total number of samples. Precision, recall, and F1-score are first computed per class and then averaged, Pre 𝑖 = TP 𝑖 
+
+TP 𝑖 + FP 𝑖 
+
+, Re 𝑖 = TP 𝑖 
+
+TP 𝑖 + FN 𝑖 
+
+, F1 𝑖 = 2 Pre 𝑖 Re 𝑖 
+
+Pre 𝑖 + Re 𝑖 
+
+,
+
+(17) Pre = 1
+
+𝐶 
+
+> 𝐶
+
+∑︁ 
+
+> 𝑖 =1
+
+Pre 𝑖 , Re = 1
+
+𝐶 
+
+> 𝐶
+
+∑︁ 
+
+> 𝑖 =1
+
+Re 𝑖 , F1 = 1
+
+𝐶 
+
+> 𝐶
+
+∑︁ 
+
+> 𝑖 =1
+
+F1 𝑖 .
+
+(18) For AUC, we use the macro-averaged one-vs-rest formulation, AUC = 1
+
+𝐶 
+
+> 𝐶
+
+∑︁ 
+
+> 𝑖 =1
+
+AUC 𝑖 , (19) where AUC 𝑖 is the area under the ROC curve when class 𝑖 
+
+is treated as positive and all remaining classes as negative. We also report the multiclass Matthews correlation coefficient (MCC), computed directly from the confusion matrix M ∈
+
+R𝐶 ×𝐶 following Gorodkin [32], MCC = 𝑐 · 𝑠 − Í𝐶 𝑘 =1 𝑝 𝑘 𝑡 𝑘 √︂ 
+
+𝑠 2 − Í𝐶 𝑘 =1 𝑝 2
+
+> 𝑘
+
+  
+
+𝑠 2 − Í𝐶 𝑘 =1 𝑡 2
+
+> 𝑘
+
+ , (20) where 𝑠 = Í𝑖, 𝑗 𝑀 𝑖 𝑗 is the total number of samples, 𝑐 = Í𝑘 𝑀 𝑘𝑘 
+
+is the number of correctly classified samples, 𝑡 𝑘 = Í𝑖 𝑀 𝑘𝑖 is the number of times class 𝑘 truly occurs, and 𝑝 𝑘 = Í𝑖 𝑀 𝑖𝑘 is the number of times class 𝑘 is predicted. 
+
+B. Implementation Details 
+
+All input images were resized to 224 ×224 pixels before being fed to the model. For the JEPA branch, we used a ViT-B/16 encoder, where each image is divided into non-overlapping 7   
+
+> (a) PVF-10 dataset. (b) ISM dataset.
+
+Fig. 3: Class distributions of the datasets. Subfigure (a) shows the PVF-10 dataset, where the class symbols are: A: string short circuit, B: break, C: shadow, D: bottom dirt, E: debris cover, F: short circuit panel, G: substring open circuit, H: junction box heat, I: hot cell, and J: healthy panel. Subfigure (b) shows the ISM dataset, where the class symbols are: A: Diode-Multi, B: Soiling, C: Hot-Spot-Multi, D: Hot-Spot, E: Offline-Module, F: Cracking, G: Shadowing, H: Cell-Multi, I: Diode, J: Vegetation, K: Cell, and L: No-Anomaly. 
+
+TABLE I: Ablation study of the proposed JEFFNet components on the PVF-10 10-class task. The results in this table are obtained from a single representative run under the same fixed train/validation/test split and are intended only to analyze the contribution of different architectural and fine-tuning components.                                                             
+
+> No. Encoder Pretraining JEPA Dataset Training Strategy Multibranch Acc F1 Re Pre AUC MCC 1ViT-B (StoP-JEPA) PVF-10 Frozen ×68.95 65.56 67.21 65.97 93.16 63.51 2ViT-B (StoP-JEPA) ImageNet-1k Frozen ×85.02 82.70 87.10 80.46 98.53 82.56 3ViT-B (StoP-JEPA) ImageNet-1k Unfrozen ×88.09 82.41 82.16 82.92 98.41 85.91 4ViT-B (StoP-JEPA) ImageNet-1k Staged ×93.86 93.69 92.98 94.58 99.69 92.73 5ViT-B (StoP-JEPA) + EfficientNetV2-S ImageNet-1k Staged ✓94 .77 93 .84 92 .34 95 .86 99 .70 93 .80
+
+Fig. 4: The training and validation loss curves for proposed model. patches of size 16 × 16 . The JEPA encoder was initialized from the ImageNet-1k pretrained StoP-JEPA ViT-B checkpoint released by the authors of StoP-JEPA [23]. For downstream PV fault classification, we adopted a staged fine-tuning strategy. During the training, data augmentation was applied to improve robustness and reduce overfitting. The augmentations included random horizontal flipping with probability 0.5, random vertical flipping with probability 0.5, and brightness jittering with a brightness factor of 0.5. Images were normalized using the ImageNet mean and standard deviation. For validation and testing, only resizing and normalization were applied. The proposed JEFFNet was trained using a staged fine-tuning strategy for a total of 100 epochs. During the first 10 epochs, the pretrained ViT encoder was kept frozen while the EfficientNetV2-S branch, the feature fusion modules, and the classification head were trained. The ViT encoder was then unfrozen, and the entire network was jointly optimized for the remaining 90 epochs. The learning rate was set to 3 × 10 −4
+
+for the newly initialized layers and 1 × 10 −5 for the pretrained JEPA encoder after it was unfrozen. The training loss curves are shown in Fig. 4. All experiments were conducted using a batch size of 128 on an NVIDIA A100-40GB GPU. 
+
+C. Ablation Study 
+
+To analyze the contribution of the main components of the proposed framework, we conducted an ablation study on the PVF-10 10-class classification task. The results are reported in Table I. All variants were evaluated using the same fixed train/validation/test split. To better understand the contribution of each component, the ablation study is organized into three parts: (1) the effect of using a semantically rich out-of-domain 8
+
+TABLE II: Comparison of existing methods and the proposed model on the PVF-10 dataset for the 10-Class task. 
+
+No. Models/Study F1 Acc Re Pre AUC MCC 
+
+1 AlexNet [21] 85 .65 ± 1.31 90 .31 ± 1.26 85 .65 ± 1.34 85 .94 ± 1.49 98 .94 ± 0.15 88 .53 ± 1.48 2 EfficientNetB0 [21] 86 .89 ± 1.13 91 .53 ± 0.90 86 .41 ± 1.54 87 .69 ± 0.83 98 .87 ± 0.17 89 .97 ± 1.07 3 MobileNetV4 Small [21] 86 .43 ± 2.46 91 .12 ± 0.83 85 .90 ± 2.81 87 .32 ± 2.27 98 .70 ± 0.30 89 .48 ± 0.99 4 ConvNeXtV2 Base [21] 83 .62 ± 2.10 89 .31 ± 1.10 82 .96 ± 2.59 84 .88 ± 1.70 98 .66 ± 0.31 87 .34 ± 1.31 5 FastViT SA [21] 88 .08 ± 1.53 92 .24 ± 0.63 88 .17 ± 1.43 88 .42 ± 1.63 98 .96 ± 0.27 90 .82 ± 0.73 6 ResNet50 [30] 89 .78 92 .42 89 .02 89 .34 – –7 EfficientNetV2 Small [30] 91 .33 93 .14 89 .86 90 .38 – –8 Coat Lite Small [30] 90 .95 93 .32 87 .46 88 .74 – –9 Swin Transformer V2 Tiny [30] 85 .85 89 .71 84 .53 85 .05 – –10 Vision Transformer Small [30] 78 .36 83 .57 76 .29 77 .06 – –11 GEPFNet [21] 92 .47 ± 0.87 94 .64 ± 0.35 92 .41 ± 1.46 92 .72 ± 0.71 99 .39 ± 0.14 93 .66 ± 0.42 
+
+12 JEFFNet (Ours) 93 .21 ± 1.24 94 .33 ± 0.79 93 .19 ± 1.18 93 .66 ± 2.08 99 .65 ± 0.10 93 .30 ± 0.92  
+
+> Note: Bold values indicate the best results. In the 10-Class task on the PVF-10 dataset, our method and the comparative methods provide the average and standard deviation over 10 runs, while the results of the compared methods reported by [30] and [21] are taken directly from the paper. “–” indicates that the metric is not available.
+
+TABLE III: Comparison of existing methods and the proposed model on the PVF-10 dataset for the 2-Class healthy vs faulty detection task. 
+
+No. Models/Study F1 Acc Re Pre AUC MCC 
+
+1 AlexNet [21] 94 .03 ± 0.82 95 .25 ± 0.64 94 .21 ± 1.14 93 .91 ± 0.88 98 .36 ± 0.18 88 .11 ± 1.62 2 EfficientNetB0 [21] 93 .65 ± 0.83 94 .95 ± 0.65 93 .81 ± 0.95 93 .51 ± 0.86 98 .46 ± 0.38 87 .32 ± 1.66 3 MobileNetV4 Small [21] 93 .50 ± 0.73 94 .75 ± 0.62 94 .32 ± 0.65 92 .79 ± 0.94 98 .55 ± 0.13 87 .09 ± 1.42 4 ConvNeXtV2 Base [21] 93 .53 ± 0.96 94 .84 ± 0.76 93 .78 ± 1.18 93 .31 ± 1.02 98 .31 ± 0.27 87 .09 ± 1.94 5 FastViT SA [21] 92 .00 ± 1.07 93 .55 ± 0.91 92 .67 ± 0.87 91 .42 ± 1.36 97 .89 ± 0.38 84 .07 ± 2.10 6 ResNet50 [30] 93 .68 ± 0.47 95 .04 ± 0.36 93 .30 ± 0.72 94 .12 ± 0.58 98 .53 ± 0.30 87 .40 ± 0.94 7 EfficientNetV2 Small [30] 94 .38 ± 0.22 95 .52 ± 0.17 94 .56 ± 0.42 94 .21 ± 0.24 98 .82 ± 0.21 88 .77 ± 0.45 8 Coat Lite Small [30] 91 .32 ± 1.71 93 .14 ± 1.33 91 .19 ± 1.85 91 .48 ± 1.66 97 .50 ± 0.87 82 .66 ± 3.41 9 Swin Transformer V2 Tiny [30] 92 .40 ± 0.78 93 .97 ± 0.64 92 .40 ± 0.74 92 .42 ± 0.97 98 .25 ± 0.26 84 .82 ± 1.55 10 Vision Transformer Small [30] 87 .79 ± 1.47 90 .23 ± 1.09 88 .19 ± 1.93 87 .50 ± 1.29 95 .47 ± 0.63 75 .68 ± 2.95 11 GEPFNet [21] 95 .01 ± 0.58 96 .05 ± 0.42 95 .01 ± 1.10 95 .06 ± 0.47 98 .83 ± 0.38 90 .06 ± 1.15 12 JEFFNet (Ours) 97 .53 ± 0.35 96 .41 ± 0.51 97 .49 ± 0.34 97 .57 ± 0.58 99 .09 ± 0.14 90 .95 ± 1.32  
+
+> Note: Bold values in the table indicate the best results. All results show the average and standard deviation from 10 runs.
+
+TABLE IV: Comparison of existing methods and the proposed model on the ISM dataset in the 12-Class task. 
+
+No. Models/Study F1 Acc Re Pre AUC MCC 
+
+1 AlexNet 63 .76 ± 1.23 79 .49 ± 0.80 62 .85 ± 1.20 65 .82 ± 1.36 94 .51 ± 0.26 71 .35 ± 1.20 2 EfficientNetB0 69 .75 ± 1.42 83 .09 ± 0.55 67 .99 ± 1.50 72 .99 ± 1.54 96 .36 ± 0.27 76 .29 ± 0.80 3 MobileNetV4 Small 70 .24 ± 0.72 83 .34 ± 0.50 68 .72 ± 0.64 72 .92 ± 1.32 96 .92 ± 0.19 76 .67 ± 0.71 4 ConvNeXtV2 Base 65 .20 ± 1.27 80 .73 ± 0.75 62 .72 ± 1.26 69 .65 ± 2.30 95 .47 ± 0.27 72 .83 ± 1.06 5 FastViT SA 64 .44 ± 0.87 80 .08 ± 0.36 63 .18 ± 0.94 66 .90 ± 1.46 95 .74 ± 0.18 72 .15 ± 0.56 6 ResNet50 56 .75 ± 1.78 74 .97 ± 0.76 54 .67 ± 1.56 61 .48 ± 2.47 93 .58 ± 0.37 64 .57 ± 1.04 7 EfficientNetV2 69 .49 ± 0.83 83 .41 ± 0.14 67 .67 ± 1.07 72 .94 ± 0.89 96 .17 ± 0.16 76 .75 ± 0.18 8 Vision Transformer Small 55 .71 ± 1.17 75 .23 ± 0.72 53 .60 ± 1.33 59 .62 ± 1.40 93 .01 ± 0.47 64 .94 ± 1.04 9 Swin Transformer V2 Tiny 66 .77 ± 0.95 82 .34 ± 0.30 64 .98 ± 0.93 70 .58 ± 1.15 96 .05 ± 0.21 75 .22 ± 0.43 10 Coat Lite Small – – – – – –11 GEPFNet 71 .32 ± 0.72 83 .69 ± 0.35 68 .81 ± 1.12 75 .41 ± 1.12 96 .39 ± 0.35 76 .96 ± 0.35 12 JEFFNet (Ours) 72 .60 ± 1.96 83 .88 ± 0.73 71 .47 ± 2.18 74 .35 ± 2.19 96 .47 ± 0.46 77 .33 ± 1.06  
+
+> Note: The values in the table are the means and standard deviations of 10 runs. Bold values indicate the best results. Baseline results are taken from [21], while JEFFNet denotes our proposed method.
+
+dataset for JEPA representation learning, (2) the impact of different fine-tuning strategies for the pretrained JEPA encoder, and (3) the contribution of the proposed multibranch JEFFNet architecture. 
+
+1) Rich Out-of-Domain Semantics for JEPA Representation Learning: The first part of the ablation study investigates the effect of the dataset used for StoP-JEPA pretraining. Since StoP-JEPA employs a ViT as its encoder, its representation quality generally benefits from pretraining on large-scale and 9
+
+TABLE V: Comparison of existing methods and the proposed model on the ISM dataset in the 2-Class task. 
+
+No. Models/Study F1 Acc Re Pre AUC MCC 
+
+1 AlexNet 92 .52 ± 0.55 92 .53 ± 0.55 92 .53 ± 0.55 92 .53 ± 0.55 96 .91 ± 0.25 85 .07 ± 1.11 2 EfficientNetB0 93 .68 ± 0.31 93 .69 ± 0.31 93 .70 ± 0.32 93 .71 ± 0.32 97 .89 ± 0.09 87 .41 ± 0.64 3 MobileNetV4 Small 93 .87 ± 0.51 93 .88 ± 0.51 93 .90 ± 0.51 93 .91 ± 0.51 97 .81 ± 0.11 87 .81 ± 1.02 4 ConvNeXtV2 Base 92 .72 ± 0.52 92 .73 ± 0.52 92 .74 ± 0.51 92 .74 ± 0.51 97 .19 ± 0.22 85 .48 ± 1.02 5 FastViT SA 87 .51 ± 2.52 87 .54 ± 2.47 87 .60 ± 2.44 87 .91 ± 2.06 93 .89 ± 2.08 75 .50 ± 4.49 6 ResNet50 88 .79 ± 1.24 88 .79 ± 1.24 88 .82 ± 1.24 88 .87 ± 1.22 94 .99 ± 0.90 77 .69 ± 2.46 7 EfficientNetV2 93 .49 ± 0.29 93 .49 ± 0.29 93 .50 ± 0.30 93 .50 ± 0.30 97 .81 ± 0.13 87 .01 ± 0.59 8 Vision Transformer Small 86 .81 ± 0.75 86 .81 ± 0.75 86 .84 ± 0.74 86 .92 ± 0.72 93 .55 ± 0.79 73 .76 ± 1.46 9 Swin Transformer V2 Tiny 93 .16 ± 0.32 93 .17 ± 0.32 93 .18 ± 0.32 93 .18 ± 0.32 97 .57 ± 0.18 86 .36 ± 0.65 10 Coat Lite Small – – – – – –11 GEPFNet 93 .93 ± 0.24 94 .01 ± 0.35 93 .94 ± 0.25 93 .94 ± 0.24 97 .76 ± 0.11 87 .92 ± 0.50 12 JEFFNet (Ours) 94 .69 ± 0.59 94 .78 ± 0.56 93 .16 ± 1.08 96 .28 ± 0.60 98 .30 ± 0.31 89 .61 ± 1.10  
+
+> Note: The values in the table are the means and standard deviations of 10 runs. Bold values indicate the best results. Baseline results are taken from [21], while JEFFNet denotes our proposed method.
+
+Fig. 5: Confusion matrix of the best-performing JEFFNet run on the PVF-10 test set for the 10-class classification task. Each cell shows the sample count and corresponding row-wise percentage, with color intensity indicating the class-wise prediction rate. semantically rich datasets which is not fully exploited using existing solar datasets such as PVF-10 and ISM. To evaluate this, the same StoP-JEPA configuration was considered in two settings: one trained from scratch on the PVF-10 dataset and another pretrained on ImageNet-1k corresponding to the first and second row of Table I respectively. Using a linear probing protocol, the StoP-JEPA encoder trained from scratch on PVF-10 achieves an accuracy of 68.95% and an F1-score of 65.56%. In contrast, the ImageNet-1k-pretrained StoP-JEPA encoder achieves 85.02% accuracy and an F1-score of 82.70%. This substantial improvement demonstrates that learning semantic representations from a large and semantically rich domain 
+
+Fig. 6: Confusion matrix of the best-performing JEFFNet run on the ISM dataset for the 12-class classification task. Each cell shows the sample count and corresponding row-wise percentage, with color intensity indicating the class-wise prediction rate. such as ImageNet-1k yields substantially better transferable representations than learning solely from the relatively small solar dataset such as PVF-10. Based on this observation, all subsequent experiments employ the ImageNet-1k-pretrained StoP-JEPA encoder. 
+
+2) Fine-Tuning Strategies in a Single-Branch JEPA Sce-nario: The second part of the ablation study examines how the pretrained StoP-JEPA encoder should be adapted to the downstream PV fault classification task. Three strategies are evaluated. In the Frozen strategy corresponding to the second row of Table I, the self-supervised pretrained encoder remains fixed throughout supervised training and only the classifier 10 
+
+head is optimized. In the Unfrozen strategy corresponding to the third row of Table I, both the encoder and classifier head are optimized jointly from the beginning of supervised training allowing the representations to adapt to the new solar dataset domain. Finally, in the Staged strategy corresponding to the fourth row of Table I, only the classifier head is trained while the encoder remains frozen for the first few epochs. The encoder is then unfrozen, and the entire network is fine-tuned jointly for the remaining epochs. The results show that the Frozen strategy achieves 85.02% accuracy and an F1-score of 82.70%, while jointly training the entire network from the beginning increases the accuracy to 88.09% but does not improve the F1-score, which remains at 82.41%. In contrast, the proposed Staged strategy substantially improves all performance metrics, achieving 93.86% accuracy and 93.69% F1-score. These results indicate that gradually adapting the pretrained JEPA representations to the downstream task provides a more effective transfer strategy than either keeping the encoder permanently frozen or updating the weights of the entire network from the beginning. Therefore, the staged fine-tuning strategy is adopted in the proposed framework elaborated in the following subsection. 
+
+3) JEFFNet: A Staged Multibranch Architecture using rich JEPA Representations: The final part of the ablation study corresponding to last row of Table I which investigates whether the semantic representations learned by StoP-JEPA in a self-supervised manner can be complemented with supervised convolutional features. To this end, we augment the staged JEPA architecture with an EfficientNetV2-S branch, producing the proposed multibranch JEFFNet architecture as shown in Fig 1. The resulting model achieves the best overall performance, reaching an accuracy of 94.77%, an F1-score of 93.84%, a pre-cision of 95.86%, an AUC of 99.70%, and an MCC of 93.80%. Although the single-branch staged JEPA model attains a slightly higher recall, JEFFNet performs better across the remaining evaluation metrics. These results suggest that the semantic representations learned by StoP-JEPA and the discriminative convolutional features extracted by EfficientNetV2-S provide complementary information, and that their combination yields the most reliable model for fine-grained PV fault classification. 
+
+D. Experimental Comparisons 
+
+The proposed framework was evaluated on two datasets: PVF-10 and ISM. For PVF-10, we report results in two settings: 
+
+(i) the original 10-class fine-grained PV fault classification task, and (ii) a derived 2-class task in which the healthy 
+
+category is treated as one class and the remaining nine fault categories are grouped into a single faulty class. Similarly, for the ISM dataset, we evaluate the models in the original 12-class classification setting and in a derived 2-class healthy-versus-faulty setting. In both datasets, the 2-class results were not obtained by training separate binary classifiers. Instead, they were derived directly from the multiclass model outputs by merging all fault categories into a single faulty class. This provides an additional evaluation of model behavior in a practically important PV inspection scenario, where the main objective is often to determine if a module is healthy or faulty. Tables II and III summarize the results on PVF-10. In the 10-class setting, JEFFNet achieves the best F1-score, recall, precision, and AUC among the compared methods. Compared with GEPFNet, the proposed model improves the F1-score by 0.74%, recall by 0.78%, precision by 0.94%, and AUC by 0.26%. GEPFNet obtains slightly higher accuracy and MCC, with margins of 0.31 and 0.36%, respectively. These results indicate that although the accuracy difference is small, JEFFNet provides stronger performance in class-sensitive metrics, which is important for PVF-10 due to class imbalance and visually similar fault categories. In the derived 2-class PVF-10 setting, JEFFNet achieves the best performance across all reported metrics. Compared with GEPFNet, it improves the F1-score by 2.52%, accuracy by 0.36%, recall by 2.48%, precision by 2.51%, AUC by 0.26%, and MCC by 0.89%. The improvements in F1-score and recall are particularly important for practical PV inspection, since higher recall indicates that fewer faulty modules are missed during healthy-versus-faulty screening. The confusion matrix of the best-performing JEFFNet model on the PVF-10 test set is shown in Fig. 5. Overall, the matrix exhibits a strong diagonal structure, indicating that most defect categories are correctly identified. Four classes, namely break 
+
+and substring open circuit , are classified without error, while 
+
+shadow and short circuit panel also achieve recognition rates above 96%. The largest source of confusion occurs for the 
+
+debris cover class, where a small number of samples are misclassified as healthy panel (12.20%) and junction box heat 
+
+(2.44%). Minor confusion is also observed between healthy panel and visually similar fault categories, particularly debris cover (2.65%) and bottom dirt (1.99%), while junction box heat 
+
+is occasionally predicted as healthy panel (5.00%). In addition, a small proportion of string short circuit samples are classified as hot cell (14.29%), suggesting that these two fault types exhibit similar thermal signatures in some cases. Nevertheless, the limited number of off-diagonal entries demonstrates that JEFFNet effectively separates most fault categories despite the fine-grained nature of the PVF-10 dataset. Tables IV and V report the corresponding results on the ISM dataset. In the 12-class setting, JEFFNet achieves the best accuracy, F1-score, recall, and MCC. Compared with GEPFNet, the proposed model improves accuracy by 0.19%, F1-score by 1.28%, recall by 2.66%, and MCC by 0.37%. GEPFNet obtains higher precision by 1.06%, while MobileNetV4 Small obtains the highest AUC, exceeding JEFFNet by 0.45%. Overall, the results show that the proposed fusion strategy generalizes beyond PVF-10 and remains effective on the more challenging ISM dataset. In the derived 2-class ISM setting, JEFFNet achieves the best performance in most metrics. Compared with GEPFNet, it improves accuracy by 0.77%, F1-score by 0.76%, precision by 2.34%, AUC by 0.54%, and MCC by 1.69%. GEPFNet obtains a higher recall by 0.78%. Therefore, while GEPFNet is slightly more sensitive in detecting faulty samples, JEFFNet provides a stronger overall balance between fault detection and false-alarm reduction, as reflected by its higher F1-score, precision, AUC, and MCC. Fig. 6 presents the confusion matrix of the best-performing JEFFNet model on the ISM dataset. Compared with PVF-10, the ISM dataset exhibits substantially greater inter-class 11 
+
+confusion due to the larger number of categories and the greater visual similarity among several anomaly types. Nevertheless, JEFFNet maintains high recognition rates for dominant classes such as Offline-Module (100.00%), Cell-Multi (96.50%), and 
+
+Hot-Spot (96.00%). The most challenging categories are Cell 
+
+(45.00%), Hot-Spot-Multi (57.45%), and Soiling (58.14%), which are frequently confused with semantically related classes. In particular, Cell is often misclassified as Hot-Spot-Multi 
+
+(25.00%) and Soiling (20.00%), while Diode and Vegetation 
+
+are commonly predicted as Cell-Multi (19.28% and 16.04%, respectively). Similarly, Cracking is occasionally confused with Cell-Multi (16.00%), and No-Anomaly exhibits moderate confusion with Diode-Multi (13.41%) and Soiling (5.49%). Despite these challenging cases, the overall diagonal dominance of the confusion matrix is consistent with the quantitative improvements reported in Table IV, demonstrating that JEFFNet provides robust multiclass discrimination while the remaining errors are primarily concentrated among thermally similar defect categories. In addition to classification performance, model size is an important factor for practical deployment. JEFFNet contains only 108.6M parameters, compared with 205.91M parameters for GEPFNet. This corresponds to a 47.2% reduction in the number of parameters while maintaining competitive or superior performance across both datasets. These results suggest that the proposed fusion design improves the trade-off between predictive performance and model complexity, making it more suitable for scalable PV fault inspection systems. 
+
+IV. Conclusion 
+
+In this work, we introduced JEFFNet, a multibranch ar-chitecture that combines JEPA-based self-supervised repre-sentation learning with EfficientNetV2-S-based supervised feature extraction for PV fault classification from thermal IR imagery. Our ablation study shows that a staged fine-tuning strategy substantially improves the transferability of pretrained StoP-JEPA representations, while fusing these se-mantic representations with EfficientNetV2-S convolutional features further improves performance over the single-branch staged JEPA model. On the PVF-10 and ISM datasets, JEFFNet achieves state-of-the-art or highly competitive performance under both the original multiclass and derived binary clas-sification settings. Notably, these results are achieved using only 108.6M parameters, compared with 205.91M parameters for GEPFNet, corresponding to a 47.2% reduction in model size, demonstrating a favorable trade-off between predictive performance and model complexity. Several future directions can further extend this work. First, incorporating multimodal data, such as combining infrared imagery with RGB or other sensing modalities, could further improve detection performance, as suggested by recent multimodal PV inspection studies [33]. Second, investigating more advanced JEPA-based architectures, such as DSeq-JEPA [34], may enable more discriminative representation learning and improve downstream classification performance. Third, exploring alternative fusion mechanisms beyond feature concatenation, such as attention-based or gated fusion, may further improve the integration of semantic and convolutional representations. Finally, future work could explore model compression, inference-time efficiency analysis, and architectural simplification to enable efficient deployment on resource-constrained inspection systems. 
+
+References 
+
+[1] International Energy Agency, “Renewables 2025: Analysis and forecasts to 2030,” International Energy Agency, Tech. Rep., October 2025, available at: https://iea.blob.core.windows.net/assets/76ad6eac-2aa6-4c55-9a55-b8dc0dba9f9e/Renewables2025.pdf. [Online]. Available: https://www.iea.org/reports/renewables-2025 [2] ——, “Energy and AI,” International Energy Agency, Tech. Rep., April 2025, available at: https://iea.blob.core.windows.net/assets/ de9dea13-b07d-42c5-a398-d1b3ae17d866/EnergyandAI.pdf. [Online]. Available: https://www.iea.org/reports/energy-and-ai [3] IEA PVPS Task 1, “Trends in Photovoltaic Applications 2025,” IEA Photovoltaic Power Systems Programme (PVPS), Tech. Rep., October 2025, available at: https://iea-pvps.org/wp-content/uploads/ 2025/10/IEA-PVPS Trends 2025-.pdf. [Online]. Available: https: //iea-pvps.org/trends reports/trends-2025 [4] “Photovoltaic (pv) systems – requirements for testing, documentation and maintenance – part 3: Photovoltaic modules and plants – outdoor infrared thermography,” International Electrotechnical Commission (IEC), Geneva, Switzerland, Tech. Rep. IEC TS 62446-3:2017, 2017. [5] Sample, T., et al., “Standards for Photovoltaic Energy Systems,” European Commission, Joint Research Centre (JRC), Tech. Rep. JRC127142, 2022. [Online]. Available: https://publications.jrc.ec.europa. eu/repository/handle/JRC127142 [6] M. Waqar Akram, G. Li, Y. Jin, and X. Chen, “Failures of Photovoltaic modules and their Detection: A Review,” Applied Energy , vol. 313, p. 118822, 2022. [Online]. Available: https: //www.sciencedirect.com/science/article/pii/S0306261922002677 [7] International Energy Agency Photovoltaic Power Systems Programme (IEA PVPS), Task 13, “Assessment of photovoltaic module failures in the field,” IEA PVPS, Technical Report, 2017, available from IEA PVPS website. [Online]. Available: https://iea-pvps.org/key-topics/ report-assessment-of-photovoltaic-module-failures-in-the-field-2017/ [8] M. Assran, Q. Duval, I. Misra, P. Bojanowski, P. Vincent, M. Rabbat, Y. LeCun, and N. Ballas, “Self-supervised learning from images with a joint-embedding predictive architecture,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2023, pp. 15 619– 15 629. [9] L. Zhu, J. Cheng, and G. Liu, “A Novel Defect Detection Method for Photovoltaic Panels: Enhancing Visible Light Images Recognition Efficiency Through Extended Deep Learning Models,” Available at SSRN 5022044 .[10] M. E. Ramachandran, G. B. Balachandran, P. Velladurai, and A. Rajaku-mar, “Deep learning for solar pv fault classification using RGB imaging and comparison of preprocessing techniques,” Solar Energy , vol. 301, p. 113959, 2025. [11] S. Deitsch, V. Christlein, S. Berger, C. Buerhop-Lutz, A. Maier, F. Gall-witz, and C. Riess, “Automatic classification of defective photovoltaic module cells in electroluminescence images,” Solar Energy , vol. 185, pp. 455–468, 2019. [12] J. Fioresi, D. J. Colvin, R. Frota, R. Gupta, M. Li, H. P. Seigneur, S. Vyas, S. Oliveira, M. Shah, and K. O. Davis, “Automated defect detection and localization in photovoltaic cells using semantic segmentation of electroluminescence images,” IEEE Journal of Photovoltaics , vol. 12, no. 1, pp. 53–61, 2021. [13] S. Dotenco, M. Dalsass, L. Winkler, T. W¨ urzner, C. Brabec, A. Maier, and F. Gallwitz, “Automatic detection and analysis of photovoltaic modules in aerial infrared imagery,” in 2016 IEEE Winter Conference on Applications of Computer Vision (WACV) . IEEE, 2016, pp. 1–9. [14] M. U. Ali, H. F. Khan, M. Masud, K. D. Kallu, and A. Zafar, “A machine learning framework to identify the hotspot in photovoltaic module using infrared thermography,” Solar Energy , vol. 208, pp. 643–651, 2020. [15] C. Dunderdale, W. Brettenny, C. Clohessy, and E. E. Van Dyk, “Photovoltaic defect classification through thermal infrared imaging using a machine learning approach,” Progress in Photovoltaics: Research and Applications , vol. 28, no. 3, pp. 177–188, 2020. [16] M. Le, D. Le, and H. H. T. Vu, “Thermal inspection of photovoltaic modules with deep convolutional neural networks on edge devices in auv,” Measurement , vol. 218, p. 113135, 2023. 12 
+
+[17] M. Le, D. K. Nguyen, V.-D. Dao, N. H. Vu, H. H. T. Vu et al. , “Remote anomaly detection and classification of solar photovoltaic modules based on deep neural network,” Sustainable Energy Technologies and Assessments , vol. 48, p. 101545, 2021. [18] N. Kellil, A. Aissat, and A. Mellit, “Fault diagnosis of photovoltaic modules using deep neural networks and infrared images under algerian climatic conditions,” Energy , vol. 263, p. 125902, 2023. [19] A. Dosovitskiy, L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner, M. Dehghani, M. Minderer, G. Heigold, S. Gelly et al. ,“An image is worth 16x16 words: Transformers for image recognition at scale,” arXiv preprint arXiv:2010.11929 , 2020. [20] S. Aksoy, “Benchmarking Vision Transformers and CNNs for Thermal Photovoltaic Fault Detection with Explainable AI Validation,” arXiv preprint arXiv:2509.07039 , 2025. [21] J. Guo, B. K. Ng, C.-T. Lam, and P. H. Abreu, “GEPFNet: A group equivariant feature extraction with parallel fusion neural network for solar photovoltaic fault classification,” Information Fusion , vol. 129, p. 104014, 2026. [Online]. Available: https: //www.sciencedirect.com/science/article/pii/S1566253525010760 [22] M. Monemi, M. Chinipardaz, M. Rasti, M. Bennis, and M. Latva-Aho, “Tutorial on Joint Embedding Predictive Architectures (JEPA): Foundations, Applications, and Future Directions,” Authorea Preprints ,2025. [23] A. Bar, F. Bordes, A. Shocher, M. Assran, P. Vincent, N. Ballas, T. Darrell, A. Globerson, and Y. LeCun, “Stochastic positional embeddings improve masked image modeling,” arXiv preprint arXiv:2308.00566 , 2023. [24] Z. Fei, M. Fan, and J. Huang, “A-jepa: Joint-embedding predictive architecture can listen,” arXiv preprint arXiv:2311.15830 , 2023. [25] K. Weimann and T. O. Conrad, “Self-supervised pre-training with joint-embedding predictive architecture boosts ECG classification performance,” 
+
+Computers in Biology and Medicine , vol. 196, p. 110809, 2025. [26] J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, and L. Fei-Fei, “Imagenet: A large-scale hierarchical image database,” in 2009 IEEE Conference on Computer Vision and Pattern Recognition , 2009, pp. 248–255. [27] M. Tan and Q. Le, “Efficientnetv2: Smaller models and faster training,” in International conference on machine learning . PMLR, 2021, pp. 10 096–10 106. [28] ——, “Efficientnet: Rethinking model scaling for convolutional neural networks,” in International conference on machine learning . PMLR, 2019, pp. 6105–6114. [29] J. Hu, L. Shen, and G. Sun, “Squeeze-and-excitation networks,” in 
+
+Proceedings of the IEEE conference on computer vision and pattern recognition , 2018, pp. 7132–7141. [30] B. Wang, Q. Chen, M. Wang, Y. Chen, Z. Zhang, X. Liu, W. Gao, Y. Zhang, and H. Zhang, “PVF-10: A high-resolution unmanned aerial vehicle thermal infrared image dataset for fine-grained photovoltaic fault classification,” Applied Energy , vol. 376, p. 124187, 2024. [31] M. Millendorf, E. Obropta, and N. Vadhavkar, “Infrared solar module dataset for anomaly detection,” in Proc. Int. Conf. Learn. Represent ,vol. 3, 2020. [32] J. Gorodkin, “Comparing two k-category assignments by a k-category correlation coefficient,” Computational biology and chemistry , vol. 28, no. 5-6, pp. 367–374, 2004. [33] L. S. Pinho, T. D. Sousa, C. D. Pereira, and A. M. Pinto, “Anomaly detection for PV modules using Multi-modal data fusion in aerial inspections,” IEEE Access , 2025. [34] X. He, S. Sakai, S. Chandhok, S. Beery, K. Yuan, N. Padoy, T. Hasegawa, and L. Sigal, “DSeq-JEPA: Discriminative Sequential Joint-Embedding Predictive Architecture,” arXiv preprint arXiv:2511.17354 , 2025.

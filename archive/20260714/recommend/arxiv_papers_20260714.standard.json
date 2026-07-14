@@ -1,0 +1,602 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-14T21:35:29.975564+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 11,
+    "deep_cap": 6,
+    "deep_selected": 9,
+    "quick_candidates": 5,
+    "quick_skim_target": 11,
+    "quick_selected": 5
+  },
+  "deep_dive": [
+    {
+      "id": "2607.05238v2",
+      "source": "arxiv",
+      "title": "MoP-JEPA: Hard-Assigned Predictor Mixtures for Stochastic JEPA World Models",
+      "abstract": "JEPA world models commonly predict the next latent state with one regressor. Under stochastic transitions, squared and cosine regression return the conditional mean and its normalized direction, respectively: a single compromise that may match no valid successor. MoP-JEPA instead uses $K$ hard-assigned heads and a context-only router to produce a finite candidate set in one pass. On held-out OGBench transitions, graph search with single-output predictors succeeds on $0.02$--$0.09$ of queries, whereas MoP-JEPA reaches $0.85$. To distinguish useful successors from indiscriminate coverage, we also measure verified-route success (\\emph{realroute}), which checks after graph construction whether the proposal contains a path of real transitions. MoP-JEPA leads this same-protocol metric on all three mazes; an MDN attains high raw coverage but predicts many nonexistent edges.",
+      "authors": [
+        "Zhi Song",
+        "Ximing Xing",
+        "Zhenchao Tang",
+        "hanbo Huang",
+        "Weilong Yan",
+        "Tianxu Lv",
+        "Minghao Yang",
+        "Zhongzheng Niu",
+        "Bing He",
+        "Lusheng Wang",
+        "Jianhua Yao"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-06T15:47:37+00:00",
+      "link": "https://arxiv.org/pdf/2607.05238v2",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "improves JEPA world models with hard-assigned predictor mixtures",
+      "llm_evidence_cn": "用硬分配预测器混合改进JEPA世界模型",
+      "llm_evidence": "用硬分配预测器混合改进JEPA世界模型",
+      "canonical_evidence": "用硬分配预测器混合改进JEPA世界模型",
+      "llm_tldr_en": "Proposes MoP-JEPA using K hard-assigned prediction heads to handle stochastic transitions in JEPA world models, achieving 0.85 success rate.",
+      "llm_tldr_cn": "该论文针对JEPA世界模型在随机转换中单一预测器产生无效后继的问题，提出MoP-JEPA。它采用K个硬分配预测头和上下文路由器，一次前向生成多个候选，在OGBench过渡数据集上将图搜索成功率从0.09提升至0.85。该方法通过实数路径验证区分有效后继，为JEPA在不确定环境中的鲁棒预测提供了新思路。",
+      "llm_tldr": "该论文针对JEPA世界模型在随机转换中单一预测器产生无效后继的问题，提出MoP-JEPA。它采用K个硬分配预测头和上下文路由器，一次前向生成多个候选，在OGBench过渡数据集上将图搜索成功率从0.09提升至0.85。该方法通过实数路径验证区分有效后继，为JEPA在不确定环境中的鲁棒预测提供了新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.10206v1",
+      "source": "arxiv",
+      "title": "Source-Lifted Flow Matching for Intervenable Multimodal Imitation",
+      "abstract": "Flow-matching policies are promising for imitation learning because they model complex multimodal action distributions. However, their stochasticity is largely passive: repeated sampling may yield diverse behaviors, but users cannot directly choose among valid continuations from the same state. We propose Source-Lifted Flow Matching (SL-FM), a source-intervenable flow-matching policy that exposes such a handle while keeping the velocity field shared and latent-free. The handle selects only the source endpoint of the conditional flow, not a mode-specific field, preserving the standard formulation while avoiding decomposition into separate mode-conditioned dynamics. The core mechanism is \\textbf{Orthogonal Source Lifting}, designed to prevent path-crossing ambiguity. Instead of partitioning target actions by mode, SL-FM lifts handle-specific sources into auxiliary orthogonal coordinates and keeps targets in the original action subspace. This preserves the demonstrated action distribution while allowing one shared field to carry different branches without merging at crossings. To keep handles usable across states, we learn a state-dependent source mixture end to end and use a responsibility floor, giving each handle weak supervision and mitigating dead modes. Experiments on crossing-flow diagnostics and robot-control benchmarks show that SL-FM converts passive source randomness into an actionable intervention variable. It removes crossing-induced composite trajectories, changes future routes in 91.1\\% of matched-prefix interventions, and achieves strong free-deployment performance, with improvements in several benchmark settings. Overall, source geometry provides actionable multimodal control without conditioning the velocity field on the selected mode.",
+      "authors": [
+        "He Zhang",
+        "Ying Sun",
+        "Pengteng Li",
+        "Ziyang Chen",
+        "Yiren Zhao",
+        "Ziyang Rao",
+        "Weiyu Guo",
+        "Yandong Guo",
+        "Hui Xiong"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-11T08:33:04+00:00",
+      "link": "https://arxiv.org/pdf/2607.10206v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "source-lifted flow matching for intervenable imitation learning",
+      "llm_evidence_cn": "源抬升流匹配用于可干预的模仿学习",
+      "llm_evidence": "源抬升流匹配用于可干预的模仿学习",
+      "canonical_evidence": "源抬升流匹配用于可干预的模仿学习",
+      "llm_tldr_en": "SL-FM introduces source intervention in flow-matching policies, allowing user selection among valid action modes without retraining.",
+      "llm_tldr_cn": "流匹配策略能建模多模态动作分布，但用户无法主动选择行为模式。本文提出源抬升流匹配（SL-FM），通过正交源抬升机制允许用户选择条件流的源端点，从而在不同有效延续之间切换，且保持速度场共享。实验表明，SL-FM在保持原有性能的同时赋予用户干预能力，提升了模仿学习策略的灵活性与可控性。",
+      "llm_tldr": "流匹配策略能建模多模态动作分布，但用户无法主动选择行为模式。本文提出源抬升流匹配（SL-FM），通过正交源抬升机制允许用户选择条件流的源端点，从而在不同有效延续之间切换，且保持速度场共享。实验表明，SL-FM在保持原有性能的同时赋予用户干预能力，提升了模仿学习策略的灵活性与可控性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.10601v1",
+      "source": "arxiv",
+      "title": "Agentic-DPO: From Imitation to Agentic Policy Optimization on Expert Trajectories",
+      "abstract": "Large Language Model (LLM) agents are commonly trained from expert trajectories using supervised fine-tuning (SFT), which treats multi-turn agent behavior as ordinary text imitation. This recipe is simple and low-cost, but it only learns to imitate the sequence of expert actions, rather than training the agent to choose the right action against plausible mistakes at each state. Existing methods to mitigate this problem include preference learning or reinforcement learning, but they usually need high-cost environment rollouts and reward models. We propose Agentic-DPO, a lightweight offline agent policy optimization method that turns expert trajectories into state-conditioned preference supervision. At each expert action state, Agentic-DPO samples a one-step action from the current state, treats plausible wrong actions as negatives, and contrasts them with the expert action using a DPO-style preference objective. To avoid mixing both policy and schema in preference learning, we introduce Policy-Preserving Augmentation (PPA), which renders the same latent trajectory under multiple schemas while keeping the expert policy fixed. Agentic-DPO requires no online environment rollout, reward model, or full-trajectory student exploration. We conduct experiments across StableToolBench, tau-bench retail, and Mind2Web, where Agentic-DPO consistently improves agents at different model scales beyond imitation. In particular, it raises tau-bench accuracy from 21.7% (SFT) to 41.4% for a 9B model, matching online GRPO under the same backbone with only step-level rollouts and without environment interaction during gradient steps. The results suggest that expert trajectories can support low-cost agentic policy optimization when converted from demonstrations into state-level action preferences. Code for Agentic-DPO is released at https://github.com/Schuture/Agentic-DPO.",
+      "authors": [
+        "Yixiong Chen",
+        "Alan Yuille"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-12T06:38:55+00:00",
+      "link": "https://arxiv.org/pdf/2607.10601v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "improves imitation learning by converting expert trajectories into preference supervision",
+      "llm_evidence_cn": "通过将专家轨迹转换为偏好监督来改进模仿学习",
+      "llm_evidence": "通过将专家轨迹转换为偏好监督来改进模仿学习",
+      "canonical_evidence": "通过将专家轨迹转换为偏好监督来改进模仿学习",
+      "llm_tldr_en": "Proposes Agentic-DPO, a lightweight offline method that transforms expert trajectories into state-conditioned preferences for LLM agents.",
+      "llm_tldr_cn": "该论文针对监督微调仅模仿动作序列而无法纠正错误的问题，提出Agentic-DPO。它从专家轨迹中提取状态条件偏好，无需环境交互或奖励模型即可优化策略。实验表明Agentic-DPO在多个LLM agent任务上超越了SFT和偏好学习方法，其轻量级特性适合资源受限场景，为从离线数据中学习决策行为提供了新范式。",
+      "llm_tldr": "该论文针对监督微调仅模仿动作序列而无法纠正错误的问题，提出Agentic-DPO。它从专家轨迹中提取状态条件偏好，无需环境交互或奖励模型即可优化策略。实验表明Agentic-DPO在多个LLM agent任务上超越了SFT和偏好学习方法，其轻量级特性适合资源受限场景，为从离线数据中学习决策行为提供了新范式。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.10625v1",
+      "source": "arxiv",
+      "title": "Dual-Process Atomic Skill Learning: Decoupling Semantic Reasoning and Real-Time Control",
+      "abstract": "Language-conditioned Imitation Learning (IL) is essential for enabling robots to perform complex tasks following natural language instructions. However, generalizing to multi-step compositional tasks remains a significant challenge. While hierarchical approaches attempt to address this by decomposing tasks into atomic skills, existing methods often suffer from training instability and codebook collapse due to the tight coupling between high-level skill reasoning and low-level action generation in joint training paradigms. Inspired by the Dual-Process Theory of cognition, we propose Dual-Process Atomic Skill Learning (DASL), a novel asynchronous hierarchical imitation learning framework that decouples slow semantic reasoning from fast, real-time motion control. DASL comprises a Slow-Frequency Policy that predicts interpretable, discrete skills via Vector Quantization, and a High-Frequency Policy that leverages a latent diffusion model and a Decision Transformer to generate precise actions conditioned on these latent skills. By asynchronously coordinating these modules and utilizing diffusion to structure the latent space, our framework mitigates the skill codebook interference problem common in joint training paradigms. Evaluations across simulation benchmarks and experiment demonstrate that DASL significantly outperforms state-of-the-art baselines, excelling in skill acquisition and compositional generalization to unseen instructions. GitHub page: https://github.com/Hatakekaka/DASL",
+      "authors": [
+        "Jun Chen",
+        "Erdent Bao",
+        "Wenlong Dong",
+        "Jierui Liu",
+        "Qi Cai",
+        "Hao Wan",
+        "Shaopeng Li",
+        "Weijun Qin",
+        "Jing Liang",
+        "Huiping Zhuang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-12T07:38:53+00:00",
+      "link": "https://arxiv.org/pdf/2607.10625v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "language-conditioned imitation learning framework for robotics",
+      "llm_evidence_cn": "语言条件模仿学习框架",
+      "llm_evidence": "语言条件模仿学习框架",
+      "canonical_evidence": "语言条件模仿学习框架",
+      "llm_tldr_en": "Proposes DASL, an asynchronous hierarchical imitation learning framework that decouples semantic reasoning from real-time control for multi-step compositional tasks.",
+      "llm_tldr_cn": "该论文针对语言条件模仿学习在多步组合任务中泛化困难的问题，提出了DASL框架。它借鉴双过程认知理论，将高级语义推理与低级动作生成异步解耦，避免了联合训练中的不稳定性和码本崩溃。实验表明该方法能有效提升语言引导的组合任务成功率，为机器人模仿学习提供了新范式。",
+      "llm_tldr": "该论文针对语言条件模仿学习在多步组合任务中泛化困难的问题，提出了DASL框架。它借鉴双过程认知理论，将高级语义推理与低级动作生成异步解耦，避免了联合训练中的不稳定性和码本崩溃。实验表明该方法能有效提升语言引导的组合任务成功率，为机器人模仿学习提供了新范式。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.10892v1",
+      "source": "arxiv",
+      "title": "A Single Diffusion-Policy Controller for Multi-Task Block Pushing with Zero-Shot Sim-to-Real Transfer",
+      "abstract": "Diffusion policies have shown promising empirical performance in representing and learning complex maneuvers for robots using behavior cloning (BC). In this paper, we explore training diffusion policies from scratch using reinforcement learning (RL) for multi-task robotic manipulation. Specifically, we aim to train a single diffusion policy for block-pushing tasks with multiple shapes. The proposed framework features a simple policy loss function, which is a reweighted evidence lower bound used in BC-based diffusion policy training and can seamlessly serve as the policy learning module in RL algorithms. To address the exploration challenges arising from the absence of demonstrations, we incorporate reverse curriculum generation and objective-centric representations. Combined with the expressiveness of diffusion policies, our design supports learning of multi-task block-pushing policies in our sparse-reward simulation setting. We further evaluate whether the trained diffusion policy transfers in zero-shot to real-world tasks under varying environmental conditions including goal positions, block shapes, block weights and surface friction, providing evidence that this pipeline can transfer to our real-world block-pushing setup under the tested variations.",
+      "authors": [
+        "Haitong Ma",
+        "Haldun Balim",
+        "Yang Hu",
+        "Bo Dai",
+        "Na Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-12T19:48:46+00:00",
+      "link": "https://arxiv.org/pdf/2607.10892v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Trains a single diffusion policy using RL for multi-task block pushing, demonstrating zero-shot sim-to-real transfer",
+      "llm_evidence_cn": "使用强化学习训练单一扩散策略进行多任务积木推动，实现零样本仿真到现实迁移",
+      "llm_evidence": "使用强化学习训练单一扩散策略进行多任务积木推动，实现零样本仿真到现实迁移",
+      "canonical_evidence": "使用强化学习训练单一扩散策略进行多任务积木推动，实现零样本仿真到现实迁移",
+      "llm_tldr_en": "A single diffusion policy trained with RL for multi-task robotic manipulation, using a reweighted ELBO loss and reverse curriculum generation for exploration, achieves zero-shot sim-to-real transfer.",
+      "llm_tldr_cn": "针对扩散策略在机器人模仿学习中的应用，提出使用强化学习从零训练扩散策略的框架。通过重加权证据下界作为策略损失，并引入反向课程生成解决无演示探索问题。在多种形状积木推动任务上训练单一策略，实现了零样本仿真到现实迁移。",
+      "llm_tldr": "针对扩散策略在机器人模仿学习中的应用，提出使用强化学习从零训练扩散策略的框架。通过重加权证据下界作为策略损失，并引入反向课程生成解决无演示探索问题。在多种形状积木推动任务上训练单一策略，实现了零样本仿真到现实迁移。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.11027v1",
+      "source": "arxiv",
+      "title": "SegDiff: Segmented Trajectory Diffusion for Consistent and Adaptive Robot Manipulation",
+      "abstract": "Imitation learning enables robots to acquire manipulation skills from demonstrations by mapping observations to actions. Existing approaches predict either short-horizon continuous action sequences or discrete keyposes. However, continuous prediction methods suffer from compounding errors due to short prediction horizons and struggle with multi-modal action distributions, whereas keypose-based methods necessitate an external planner, constraining real-time applicability. To address these challenges, we introduce SegDiff, a closed-loop visuomotor policy that integrates the strengths of both paradigms. SegDiff decomposes demonstrations into motion segments between keyposes and learns to predict the continuous trajectory from the current state to the next keypose, enabling long-horizon prediction with real-time refinement. Furthermore, we leverage the capability of diffusion models and DDIM inversion to propose a Dynamic Temporal Ensembling mechanism, which allows the policy to efficiently respond to dynamic environments and mitigate discontinuities caused by inconsistent multi-modal sampling. SegDiff demonstrates significant performance gains over existing approaches across various simulated and real-world scenarios, indicating its strong ability to reason over extended temporal dependencies while maintaining real-time adaptability and control stability.",
+      "authors": [
+        "Haidong Cao",
+        "Wenjun Cao",
+        "Quanhao Li",
+        "Sicheng Xie",
+        "Zhiying Du",
+        "Jiaqi Leng",
+        "Zuxuan Wu",
+        "Yu-Gang Jiang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-13T02:48:03+00:00",
+      "link": "https://arxiv.org/pdf/2607.11027v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "segmented trajectory diffusion for robot manipulation imitation learning",
+      "llm_evidence_cn": "分段轨迹扩散用于机器人操作模仿学习",
+      "llm_evidence": "分段轨迹扩散用于机器人操作模仿学习",
+      "canonical_evidence": "分段轨迹扩散用于机器人操作模仿学习",
+      "llm_tldr_en": "SegDiff integrates keypose and continuous trajectory diffusion for closed-loop visuomotor policy, avoiding compounding errors and planner dependency.",
+      "llm_tldr_cn": "模仿学习中的连续轨迹预测存在累积误差，而关键姿态方法需外部规划器。SegDiff将演示分解为关键姿态间的运动段，并学习扩散生成连续轨迹，同时保留多模态分布。在多种机器人操作任务上，SegDiff在实时性、一致性和适应性上均优于现有方法，为闭环模仿学习提供了新范式。",
+      "llm_tldr": "模仿学习中的连续轨迹预测存在累积误差，而关键姿态方法需外部规划器。SegDiff将演示分解为关键姿态间的运动段，并学习扩散生成连续轨迹，同时保留多模态分布。在多种机器人操作任务上，SegDiff在实时性、一致性和适应性上均优于现有方法，为闭环模仿学习提供了新范式。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.11167v1",
+      "source": "arxiv",
+      "title": "Pix2Act: Image-Space Manipulation Policies with Equivariant Augmentation",
+      "abstract": "Representing manipulation actions as 2D trajectories in the camera plane provides a compact and interpretable basis for learning complex 3D manipulation policies. However, it also creates challenges from out-of-frame trajectories and limited precision. We propose Pix2Act, an imitation learning method that addresses these challenges by generating continuous image-space keypoint trajectories in each camera plane and losslessly recovering end-effector poses via triangulation. This reformulates high-dimensional 3D control as a simpler, more learnable 2D prediction problem. Crucially, it aligns observations and actions in the same coordinate space, enabling equivariant transformations to jointly rotate individual camera images together with their image-space actions. We analyze the symmetry properties of this augmentation and design a network architecture that can fuse multiple camera views while respecting their per-view rotations. As a result, Pix2Act implicitly enlarges the support of the data distribution and learns invariant action structures across transformations, yielding improved generalization and overall performance. Across diverse simulated and real-world manipulation tasks, Pix2Act outperforms state-of-the-art baselines and remains robust under camera perturbations.",
+      "authors": [
+        "Haojie Huang",
+        "Linfeng Zhao",
+        "Haotian Liu",
+        "Zhang Ye",
+        "Si-Yuan Huang",
+        "Mingxi Jia",
+        "Boce Hu",
+        "Fangzhou Lin",
+        "Yu Qi",
+        "Dian Wang",
+        "Robin Walters",
+        "Robert Platt"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-13T07:03:29+00:00",
+      "link": "https://arxiv.org/pdf/2607.11167v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "imitation learning method using 2D keypoint trajectories",
+      "llm_evidence_cn": "使用2D关键点轨迹的模仿学习方法",
+      "llm_evidence": "使用2D关键点轨迹的模仿学习方法",
+      "canonical_evidence": "使用2D关键点轨迹的模仿学习方法",
+      "llm_tldr_en": "Pix2Act is an imitation learning method that represents manipulation actions as 2D keypoint trajectories in camera planes, enabling equivariant augmentation and robust 3D control.",
+      "llm_tldr_cn": "针对3D操纵策略学习困难和复杂度高的问题，提出Pix2Act模仿学习方法，将操作动作表示为图像空间的连续关键点轨迹，通过三角测量无损恢复末端执行器姿态，并利用等变数据增强提升泛化能力，在多个基准上取得了先进性能。",
+      "llm_tldr": "针对3D操纵策略学习困难和复杂度高的问题，提出Pix2Act模仿学习方法，将操作动作表示为图像空间的连续关键点轨迹，通过三角测量无损恢复末端执行器姿态，并利用等变数据增强提升泛化能力，在多个基准上取得了先进性能。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.11397v1",
+      "source": "arxiv",
+      "title": "WALA Learning Executable Latent Actions from Action-Labeled Demonstrations and Action-Free Videos",
+      "abstract": "Generalizable robot policies typically rely on action-labeled robot demonstrations, which are expensive to collect and difficult to scale. In contrast, large-scale human and robot videos contain rich physical interactions but often lack executable robot action labels. We present WALA, a framework for learning executable latent actions from both action-labeled demonstrations and action-free videos. WALA first pretrains a semantic-geometric latent action model from videos by modeling the evolution between current observations and sparsely sampled future observations. Instead of reconstructing raw pixels, WALA predicts future deltas in the DINOv3 feature space and dense depth space, preserving task-relevant semantic and geometric structure while reducing sensitivity to appearance details. During policy training, the pretrained encoder provides stable latent action targets, and the decoder serves as a trainable latent world model. The latent actions generated by the vision-language backbone are jointly supervised by robot action prediction, latent action target matching, and future dynamics prediction. This enables action-labeled demonstrations to provide executable control supervision, while action-free videos contribute dynamics supervision without requiring robot action annotations. Experiments show that WALA achieves strong performance on RoboTwin, sets a new state-of-the-art result on RoboCasa with 75.2% average success, and improves both policy performance and generalization in real-world manipulation tasks.",
+      "authors": [
+        "Jiahao Liu",
+        "Zhongpu Xia",
+        "Shuai Tian",
+        "Huangrui Li",
+        "Yuhang Zheng",
+        "Ning Ma",
+        "Xin Fu",
+        "Xiaotian Liu",
+        "Jing Li",
+        "Yixian Li",
+        "ShangQing Zhou",
+        "Zebin Xing",
+        "Linbo Wang",
+        "Chaoyue Li",
+        "Haoran Li",
+        "Dongbin Zhao"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-13T11:02:04+00:00",
+      "link": "https://arxiv.org/pdf/2607.11397v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "learns executable latent actions from demonstrations and videos for robot policy",
+      "llm_evidence_cn": "从演示和视频中学习可执行潜在动作用于机器人策略",
+      "llm_evidence": "从演示和视频中学习可执行潜在动作用于机器人策略",
+      "canonical_evidence": "从演示和视频中学习可执行潜在动作用于机器人策略",
+      "llm_tldr_en": "Proposes WALA to learn latent actions from action-labeled demonstrations and unlabeled videos using semantic-geometric prediction.",
+      "llm_tldr_cn": "该论文针对机器人策略依赖昂贵动作标签的问题，提出WALA框架，同时利用有标签演示和无标签视频学习可执行潜在动作。它通过预测未来观测在DINOv3特征和深度空间的增量来建模动作，不依赖像素重建。实验显示WALA学习到的潜在动作可直接用于下游策略且泛化性良好，为利用丰富互联网视频进行机器人学习开辟了新路径。",
+      "llm_tldr": "该论文针对机器人策略依赖昂贵动作标签的问题，提出WALA框架，同时利用有标签演示和无标签视频学习可执行潜在动作。它通过预测未来观测在DINOv3特征和深度空间的增量来建模动作，不依赖像素重建。实验显示WALA学习到的潜在动作可直接用于下游策略且泛化性良好，为利用丰富互联网视频进行机器人学习开辟了新路径。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.11884v1",
+      "source": "arxiv",
+      "title": "Mixture of Frames Policy: Multi-Frame Action Denoising for Bimanual Mobile Manipulation",
+      "abstract": "Robotic manipulation is inherently multi-frame: local actions may be simple in an end-effector frame, while transport, upright-object handling, and whole-body coordination are better represented in a base-aligned frame. However, modern diffusion-based visuomotor policies typically commit to a single predefined action frame, forcing one denoiser to model action distributions that are often unnecessarily complex in that frame. We propose Mixture of Frames Policy (MoF), a diffusion policy that performs synchronized action denoising across multiple coordinate frames. MoF maintains a single canonical diffusion state, re-expresses it in several task-relevant frames, applies frame-specialized denoisers, and fuses their noise predictions back in the canonical frame. To make this possible for intermediate noisy diffusion states, we introduce a column-based 6D rotation representation within an SE(3) action parameterization that supports exact, differentiable frame transformations without requiring noisy rotations to lie on the SO(3) manifold. Across nine simulated bimanual manipulation tasks, we show that the best action frame is task-dependent and that MoF improves over oracle frame selection and standard Mixture-of-Experts (MoE) baselines. We further evaluate MoF on two real-world bimanual mobile manipulation tasks, demonstrating that it outperforms all constituent single-frame baselines. Project homepage: https://mofpo.github.io",
+      "authors": [
+        "Dian Wang",
+        "Jisang Park",
+        "Xiaomeng Xu",
+        "Han Zhang",
+        "Shuran Song",
+        "Jeannette Bohg"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-13T17:59:40+00:00",
+      "link": "https://arxiv.org/pdf/2607.11884v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "multi-frame diffusion policy for bimanual manipulation",
+      "llm_evidence_cn": "多帧扩散策略用于双臂移动操作",
+      "llm_evidence": "多帧扩散策略用于双臂移动操作",
+      "canonical_evidence": "多帧扩散策略用于双臂移动操作",
+      "llm_tldr_en": "Mixture of Frames Policy (MoF) is a diffusion policy that denoises actions across multiple coordinate frames, improving learning and performance for bimanual mobile manipulation.",
+      "llm_tldr_cn": "针对现有扩散策略使用单一动作帧导致分布复杂的问题，提出混合帧策略MoF，在多个任务相关帧中同步去噪，融合各帧专用去噪器的预测，有效简化了动作分布建模，在双臂移动操作任务上显著提升了成功率和泛化能力。",
+      "llm_tldr": "针对现有扩散策略使用单一动作帧导致分布复杂的问题，提出混合帧策略MoF，在多个任务相关帧中同步去噪，融合各帧专用去噪器的预测，有效简化了动作分布建模，在双臂移动操作任务上显著提升了成功率和泛化能力。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.09205v1",
+      "source": "arxiv",
+      "title": "Joint-Embedding Predictive Architecture for Solar PV Panel Fault Classification",
+      "abstract": "The rapid expansion of solar photovoltaic (PV) systems has increased the need for reliable and scalable fault classification, as manual inspection is impractical at scale. Thermal infrared (IR) imaging provides a non-contact solution for identifying PV faults; however, accurate classification remains challenging due to class imbalance, limited texture information, and subtle thermal differences. In this work, we investigate the applicability of Joint-Embedding Predictive Architecture (JEPA) for thermal IR PV fault classification across various scenarios and propose JEFFNet (JEPA-EFFicientNet), a multibranch architecture that combines JEPA-based self-supervised representation learning with EfficientNetV2-S-based supervised convolutional feature extraction. JEFFNet fuses semantic representations from a JEPA-pretrained Vision Transformer with convolutional features from EfficientNetV2-S, enabling complementary feature learning. JEFFNet is evaluated on two public thermal IR datasets, PVF-10 and InfraredSolarModules (ISM), for both multiclass and derived binary (healthy/faulty) classification. On PVF-10, JEFFNet achieves an F1-score of $93.21$ and an accuracy of $94.33$ in the 10-class task, and an F1-score of $97.53$ and an accuracy of $96.41$ in the derived 2-class task. On ISM, JEFFNet achieves an F1-score of $72.60$ and an accuracy of $83.88$ in the 12-class task, and an F1-score of $94.69$ and an accuracy of $94.78$ in the derived 2-class task. JEFFNet also uses only 108.6M parameters versus 205.91M for GEPFNet, a 47.2\\% reduction. These results demonstrate that combining self-supervised semantic and supervised convolutional features provides an effective, parameter-efficient solution for thermal IR PV fault classification. The source code is publicly available at https://github.com/Azimi2kht/JEFFNet",
+      "authors": [
+        "Seyyedhamid Azimidokht",
+        "Mehdi Monemi",
+        "Abdelhak Kharbouch",
+        "Farid Hamzehaghdam",
+        "Mehdi Rasti",
+        "Jamshid Aghaei",
+        "Emil Kurvinen"
+      ],
+      "primary_category": "eess.IV",
+      "categories": [
+        "eess.IV",
+        "cs.CV"
+      ],
+      "published": "2026-07-10T08:50:02+00:00",
+      "link": "https://arxiv.org/pdf/2607.09205v1",
+      "tags": [
+        "keyword:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "applies Joint-Embedding Predictive Architecture to solar fault classification",
+      "llm_evidence_cn": "将联合嵌入预测架构应用于太阳能故障分类",
+      "llm_evidence": "将联合嵌入预测架构应用于太阳能故障分类",
+      "canonical_evidence": "将联合嵌入预测架构应用于太阳能故障分类",
+      "llm_tldr_en": "Investigates JEPA for thermal IR PV fault classification, proposing JEFFNet combining JEPA self-supervised learning with EfficientNetV2-S.",
+      "llm_tldr_cn": "该论文探索了联合嵌入预测架构（JEPA）在太阳能光伏板热红外故障分类中的应用，并提出了JEFFNet多分支结构。JEFFNet同时利用JEPA的自监督表示学习和EfficientNetV2-S的监督卷积特征，在处理类别不平衡和细微热差异方面表现出色。结果验证了JEPA在工业检测场景的迁移潜力。",
+      "llm_tldr": "该论文探索了联合嵌入预测架构（JEPA）在太阳能光伏板热红外故障分类中的应用，并提出了JEFFNet多分支结构。JEFFNet同时利用JEPA的自监督表示学习和EfficientNetV2-S的监督卷积特征，在处理类别不平衡和细微热差异方面表现出色。结果验证了JEPA在工业检测场景的迁移潜力。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.09825v1",
+      "source": "arxiv",
+      "title": "More Structure, Not More Capacity: Object-Centric Representations for Visuomotor Imitation Learning",
+      "abstract": "Robotic manipulation policies rely on pre-trained vision models that give either a global scene embedding or a dense patch grid. Both mix task-relevant and task-irrelevant features. Object-centric slot representations are a structured alternative: they group features into a few per-object slots. We test what this structure buys on ManiSkill3 PickCube-v1, with a frozen encoder and a held-out-seed evaluation. Holding the policy, goal token, rendering, and calibration fixed and changing only the encoder, a frozen object-centric SPOT representation (DINO ViT-B/16 + Slot Attention) reaches 55.0$\\pm$2.9% success, 22.4% above a dense DINO global-feature baseline (32.6 $\\pm$ 1.5%), with the same trainable policy and no encoder fine-tuning. More tokens alone do not help: a dense patch grid with 16x the tokens performs no better than the global feature. Adding an explicit 2D spatial goal and native-resolution rendering raises the full system to 68.7$\\pm$4.2%, just below a privileged 3D-oracle upper bound (71.7$\\pm$4.1%). An automated kinematic failure taxonomy then separates spatial-precision (Near-Miss) failures from object-tracking (No-Grasp) failures: spatial grounding reduces Near-Miss while leaving No- Grasp unchanged. The same taxonomy transfers to the harder StackCube-v1 and points to occlusion as the main bottleneck.",
+      "authors": [
+        "Yi Li",
+        "Alexandre Chapin",
+        "Liming Chen",
+        "Jan Peters",
+        "Alap Kshirsagar"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-10T10:35:24+00:00",
+      "link": "https://arxiv.org/pdf/2607.09825v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "object-centric representations improve visuomotor imitation learning",
+      "llm_evidence_cn": "以对象为中心的表示提升视觉运动模仿学习",
+      "llm_evidence": "以对象为中心的表示提升视觉运动模仿学习",
+      "canonical_evidence": "以对象为中心的表示提升视觉运动模仿学习",
+      "llm_tldr_en": "Shows that object-centric slot representations (SPOT) significantly outperform global features for visuomotor imitation learning on a manipulation task.",
+      "llm_tldr_cn": "机器人操作策略通常使用全局场景嵌入或密集网格表示，但这混淆了任务相关与无关特征。本文证明，使用冻结的对象中心槽表示（SPOT：DINO ViT-B/16 + 注意力槽）在ManiSkill3 PickCube任务上达到55.0%成功率，比密集DINO全局特征基线高22.4个百分点，且无需微调编码器。这表明为模仿学习提供结构化表示比增加模型容量更有效。",
+      "llm_tldr": "机器人操作策略通常使用全局场景嵌入或密集网格表示，但这混淆了任务相关与无关特征。本文证明，使用冻结的对象中心槽表示（SPOT：DINO ViT-B/16 + 注意力槽）在ManiSkill3 PickCube任务上达到55.0%成功率，比密集DINO全局特征基线高22.4个百分点，且无需微调编码器。这表明为模仿学习提供结构化表示比增加模型容量更有效。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.10504v1",
+      "source": "arxiv",
+      "title": "SUREFlow: State-space Uncertainty-aware REsidual Flow Matching for Robust Robot Manipulation",
+      "abstract": "Generative vision-language-action policies have advanced robot manipulation, but they often exhibit instability under noise, partial observability, and stochastic initial conditions. During extended rollouts, small velocity errors accumulate, degrading execution reliability. Existing diffusion and flow-based policies typically assume homoscedastic residuals and lack explicit uncertainty modeling within action generation, limiting robustness during iterative rollout. We propose SUREFlow, a state-space uncertainty-aware residual flow matching framework built on a Mamba backbone. The method jointly predicts action velocities and input-dependent residual uncertainty, enabling selective refinement of unreliable action dimensions without environment feedback while preserving computational efficiency. On LIBERO, SUREFlow achieves 92.5% average success rate (SR), outperforming the Mamba-based MaIL by 34.2%. On LIBERO-PRO, it attains around 49% SR using only 179M parameters, achieving performance comparable to large VLAs with 3-7B parameters. SUREFlow source code is available on: https://github.com/tanvirnwu/SUREFlow",
+      "authors": [
+        "Md Tanvir Islam",
+        "Sai Navaneet Peddapalli",
+        "Sangmoon Lee",
+        "Sangtae Ahn"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-11T23:25:42+00:00",
+      "link": "https://arxiv.org/pdf/2607.10504v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "uncertainty-aware residual flow matching for robot manipulation, related to diffusion policy",
+      "llm_evidence_cn": "面向机器人操纵的不确定性感知残差流匹配，与扩散策略相关",
+      "llm_evidence": "面向机器人操纵的不确定性感知残差流匹配，与扩散策略相关",
+      "canonical_evidence": "面向机器人操纵的不确定性感知残差流匹配，与扩散策略相关",
+      "llm_tldr_en": "SUREFlow proposes a state-space uncertainty-aware residual flow matching framework using a Mamba backbone, improving robustness of generative policies for robot manipulation.",
+      "llm_tldr_cn": "该论文指出现有扩散和流策略在噪声和部分可观测条件下累积误差，缺乏显式不确定性建模，提出SUREFlow框架。基于Mamba骨干网络，联合预测动作速度和输入相关残差不确定性，实现在线选择性修正不可靠的动作维度。该方法直接改进生成式策略的鲁棒性，与扩散策略用于机器人控制的需求高度吻合。",
+      "llm_tldr": "该论文指出现有扩散和流策略在噪声和部分可观测条件下累积误差，缺乏显式不确定性建模，提出SUREFlow框架。基于Mamba骨干网络，联合预测动作速度和输入相关残差不确定性，实现在线选择性修正不可靠的动作维度。该方法直接改进生成式策略的鲁棒性，与扩散策略用于机器人控制的需求高度吻合。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.11270v1",
+      "source": "arxiv",
+      "title": "Towards Predictive, Aligned, and Scalable Robot Learning",
+      "abstract": "Learning, at its core, extends beyond memorization to the ability to reason and solve novel problems by navigating a space of possibilities. We introduce Lumo-2, a latent world-action model that generates actions by reasoning over world dynamics in latent space. The learned latent world dynamics capture physically grounded visual transitions, naturally encoding future possibilities and providing a unified substrate for cross-modal alignment. This formulation enables predictive reasoning akin to world modelling while remaining lightweight and focused on physical dynamics relevant to control. Central to our approach is the hypothesis that action generation quality is governed by the geometry of the latent space. We observe that standard reconstruction-based action tokenization objectives induce representations biased toward low-level signal fidelity, leading to misalignment between reconstruction quality and downstream control performance. To address this limitation, we propose a multi-stage modality pre-alignment strategy in which action representations are progressively aligned with latent world dynamics, vision, and language. This process enforces cross-modal consistency, promotes abstraction, and induces a structured latent space for predictive reasoning. We provide a systematic empirical study of latent world modelling and modality alignment, analyzing their roles in scaling laws and out-of-distribution generalization. Results show that Lumo-2 consistently outperforms strong vision-language-action (VLA) and world-action model (WAM) baselines, with gains on challenging real-world tasks requiring temporal reasoning, physical understanding, or high control complexity, including long-horizon and dexterous manipulation. These findings suggest that structured multimodal alignment and predictive reasoning are fundamental principles for advancing embodied intelligence.",
+      "authors": [
+        "Peijun Tang",
+        "Shangjin Xie",
+        "Baifu Huang",
+        "Binyan Sun",
+        "Haotian Yang",
+        "Kuncheng Luo",
+        "Weiqi Jin",
+        "Shilin Fang",
+        "Jianan Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-13T08:53:34+00:00",
+      "link": "https://arxiv.org/pdf/2607.11270v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "latent world-action model predictive reasoning similar to JEPA",
+      "llm_evidence_cn": "潜在世界行动模型的预测推理与JEPA思路相似",
+      "llm_evidence": "潜在世界行动模型的预测推理与JEPA思路相似",
+      "canonical_evidence": "潜在世界行动模型的预测推理与JEPA思路相似",
+      "llm_tldr_en": "Introduces Lumo-2, a latent world-action model for robot learning that generates actions by reasoning over world dynamics, enabling predictive and scalable learning.",
+      "llm_tldr_cn": "现有机器人学习方法往往缺乏对世界动态的预测推理能力。本文提出Lumo-2，一种潜在世界-行动模型，通过在潜在空间中推理世界动态来生成动作，实现类似世界模型的预测能力。该方法轻量且聚焦于控制相关的物理动态，实验表明其能显著提升跨模态对齐和动作生成质量，为机器人学习提供了可扩展的预测框架。",
+      "llm_tldr": "现有机器人学习方法往往缺乏对世界动态的预测推理能力。本文提出Lumo-2，一种潜在世界-行动模型，通过在潜在空间中推理世界动态来生成动作，实现类似世界模型的预测能力。该方法轻量且聚焦于控制相关的物理动态，实验表明其能显著提升跨模态对齐和动作生成质量，为机器人学习提供了可扩展的预测框架。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.11874v1",
+      "source": "arxiv",
+      "title": "A Minimalist Retargeting-Guided Reinforcement Learning Recipe for Dexterous Manipulation",
+      "abstract": "Recent work in humanoid whole-body control has found success with a simple recipe: retarget human motion to robot kinematic references, then train policies via reinforcement learning (RL) to track them. But how does this recipe transfer to dexterous manipulation? The answer is not obvious, as manipulation involves complex, contact-rich dynamics and requires delicate regulation of contact modes and forces. We present REGRIND, a minimalist retargeting-guided RL pipeline that learns dexterous manipulation policies from a single human demonstration. REGRIND retargets human hand-object motion to a robot reference that preserves hand-object spatial and contact relationships, trains a residual RL policy in simulation to track object-centric keypoints along that reference, and transfers the resulting policy zero-shot to hardware with careful system identification. The resulting policies produce fluid, human-like behavior on two different multi-fingered hands across contact-rich tool-use tasks, including operating a pair of scissors and turning a screwdriver. Through systematic hardware experiments, we identify and analyze the key factors that govern sim-to-real transfer in dexterous manipulation, offering practical guidance for retargeting-based learning in contact-rich settings. Videos and code are available at https://yunhaifeng.com/REGRIND.",
+      "authors": [
+        "Yunhai Feng",
+        "Natalie Leung",
+        "Jiaxuan Wang",
+        "Lujie Yang",
+        "Haozhi Qi",
+        "Preston Culbertson"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-13T17:56:08+00:00",
+      "link": "https://arxiv.org/pdf/2607.11874v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "learns dexterous manipulation policies from single human demonstration via retargeting and RL",
+      "llm_evidence_cn": "通过重定向和强化学习从单个人类演示学习灵巧操纵策略",
+      "llm_evidence": "通过重定向和强化学习从单个人类演示学习灵巧操纵策略",
+      "canonical_evidence": "通过重定向和强化学习从单个人类演示学习灵巧操纵策略",
+      "llm_tldr_en": "REGRIND introduces a retargeting-guided RL pipeline that learns dexterous manipulation policies from a single human demonstration, using object-centric tracking.",
+      "llm_tldr_cn": "该论文探索从少量人类演示学习灵巧操纵的简单配方。提出REGRIND，将人类手物运动重定向到保留接触关系的机器人参考，再通过残差强化学习在仿真中训练以追踪以物体为中心的轨迹。仅需单次演示即可学习有效策略，为机器人模仿学习提供了一种简洁高效的方法。",
+      "llm_tldr": "该论文探索从少量人类演示学习灵巧操纵的简单配方。提出REGRIND，将人类手物运动重定向到保留接触关系的机器人参考，再通过残差强化学习在仿真中训练以追踪以物体为中心的轨迹。仅需单次演示即可学习有效策略，为机器人模仿学习提供了一种简洁高效的方法。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

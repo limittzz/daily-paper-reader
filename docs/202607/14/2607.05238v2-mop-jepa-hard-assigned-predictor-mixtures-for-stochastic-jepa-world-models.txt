@@ -1,0 +1,775 @@
+Title: MoP-JEPA: Hard-Assigned Predictor Mixtures for Stochastic JEPA World Models
+
+URL Source: https://arxiv.org/pdf/2607.05238v2
+
+Published Time: Tue, 14 Jul 2026 00:57:58 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+## MoP-JEPA: Hard-Assigned Predictor Mixtures for Stochastic JEPA World Models 
+
+Zhi Song 1,2 , Ximing Xing 2, Zhenchao Tang 2, Hanbo Huang 2, Weilong Yan 2, Tianxu Lv 2, Minghao Yang 2, Zhongzheng Niu 2, Bing He *2 , Lusheng Wang *1 , Jianhua Yao *2 
+
+> 1
+
+City University of Hong Kong, China 2Tencent, China 
+
+Abstract 
+
+JEPA world models commonly predict the next latent state with one regressor. Under stochastic transitions, squared and cosine regression return the conditional mean and its normal-ized direction, respectively: a single compromise that may match no valid successor. MoP-JEPA instead uses K hard-assigned heads and a context-only router to produce a finite candidate set in one pass. On held-out OGBench transitions, graph search with single-output predictors succeeds on 0.02 –
+
+0.09 of queries, whereas MoP-JEPA reaches 0.85 . To dis-tinguish useful successors from indiscriminate coverage, we also measure verified-route success ( realroute ), which checks after graph construction whether the proposal contains a path of real transitions. MoP-JEPA leads this same-protocol met-ric on all three mazes; an MDN attains high raw coverage but predicts many nonexistent edges. 
+
+Introduction 
+
+JEPA world models plan by rolling a latent predictor forward (LeCun 2022; Zhou et al. 2024; Assran et al. 2025). They work well when the future is nearly deterministic. Stochas-tic dynamics violate this assumption. One context can have several valid successors, and planning requires those succes-sors rather than their average. A deterministic JEPA predictor trained by squared re-gression returns the conditional mean; with normalized tar-gets and cosine loss, it returns the mean direction. A gated weighted-sum MoE still emits one vector per context and therefore retains the same single-output restriction. MoP-JEPA replaces that output with a predictor containing K
+
+hard-assigned heads. Each target updates its nearest head, while a router learns which heads are active from context alone. The resulting candidate set can be used by graph search or MPC. Figure 1 summarizes the argument. We first characterize the single-output restriction of de-terministic and fused-MoE predictors and relate hard as-signment to conditional vector quantization (Props. 1–3). Trained models are then examined in latent and decoded space, with additional tests on antmaze, image observa-tions, ETH/UCY, SVHN, and DINO-WM. Finally, we de-termine whether the candidate successors form usable tran-sitions for planning. Because a large candidate set can inflate coverage without learning context dependence, the evalu-ation includes a context-free codebook, shuffled contexts, 
+
+> *
+
+Corresponding author.   
+
+> Branch
+> one context many futures
+> Collapse
+> single head predicts mean
+> Enumerate
+> hard heads cover modes
+> Audit
+> router-gated realroute plans
+> failure fix
+> predictor-level mechanism planning-level evidence
+
+Figure 1: A single JEPA predictor represents a stochastic transition by one compromise output. Hard-assigned heads retain multiple candidate successors, whose transition valid-ity is evaluated through planning rather than raw coverage alone. router gating, transition precision, and verified-route success (Sec. ). The multiple-choice objective itself is classical (Guzman-Rivera, Batra, and Kohli 2012; Lee et al. 2016). Our contri-butions are its use as a finite successor interface for JEPA world models, an empirical account of how single-output prediction affects planning under stochastic transitions, and an evaluation protocol that distinguishes context-dependent transitions from coverage obtained by indiscriminate predic-tion. 
+
+Related Work 
+
+JEPA world models. I-JEPA (Assran et al. 2023) and V-JEPA (Bardes et al. 2024) established latent-regression pre-diction. DINO-WM (Zhou et al. 2024) and V-JEPA 2 (Ass-ran et al. 2025) extend it to action-conditioned planning. The original blueprint includes a latent variable for information left undetermined by a multimodal future (LeCun 2022). Re-leased systems omit that variable and remain deterministic. The released 305 M-parameter V-JEPA 2-AC checkpoint, for example, emits one next latent per state-action pair. We ver-ified this behavior with the released checkpoint and authors’ code. We study the effect of this choice and change only the predictor, not the encoder or its anti-collapse machinery (Bardes, Ponce, and LeCun 2022). 
+
+Probabilistic JEPA. Huang et al. (2026) argue JEPA should be probabilistic and add a variational single-Gaussian predictive distribution. We benchmark a cosine-trained, residual-calibrated implementation, called Var-JEPA here to avoid confusion with Meta’s V-JEPA. A single Gaussian can arXiv:2607.05238v2 [cs.AI] 11 Jul 2026 si                
+
+> online encoder
+> fθ
+> ci= [ zi, a i]
+> ai
+> s+
+> i
+> EMA target encoder fξ
+> z+
+> i
+> stop-grad
+> unchanged JEPA backbone
+> zi
+> shared ci
+> Kpredictors
+> predictor 1: gϕ1
+> predictor 2: gϕ2
+> . . .
+> predictor K:gϕK
+> router
+> rψ(ci)→πi
+> train: CE target k∗
+> i
+> candidate set
+> {uik }Kk=1
+> decoded active set
+> similarity +πgate
+> planner BFS graph search
+> hard assignment winner head k∗
+> i
+> outputs kept as a set
+
+Figure 2: MoP-JEPA architecture. The unchanged backbone encodes si as zi, forms ci = [ zi, a i], and supplies the stop-gradient EMA target z+ 
+
+> i
+
+. The new interface comprises K parallel predictors and a context-only router. Training updates the predictor nearest to z+ 
+
+> i
+
+and uses its index k∗ 
+
+> i
+
+to supervise the router. Deployment decodes and gates the predicted latents into an finite successor set for graph search. spread probability mass but cannot enumerate discrete suc-cessor modes for search. 
+
+MoE predictors in JEPA. M3-JEPA (Lei et al. 2024) im-plements the predictor as a gated MoE fused by a weighted sum into one output. The fusion remains subject to the single-output restriction in Prop. 2; increasing the expert count does not expose multiple successors to the planner. 
+
+Multiple-choice and mixture regression. MCL/WTA (Guzman-Rivera, Batra, and Kohli 2012; Lee et al. 2016) and mixture density networks (Bishop 1994) address one-to-many regression. We apply this idea to JEPA world-model planning, diagnose collapse, and add controls absent from oracle-coverage evaluation. These controls test whether the recovered modes form context-dependent real transitions. 
+
+Stochastic world models beyond JEPA. Reconstruction-based world models make the transition generative :Dreamer’s RSSM samples discrete stochastic latents (Hafner et al. 2021, 2023), and diffusion world models sam-ple observations (Alonso et al. 2024). These models can sample a multimodal law, but obtaining a finite set of rep-resentative successors may require multiple rollouts. MoP-JEPA retains decoder-free latent regression and returns its candidate set in one pass. 
+
+Offline GCRL (external anchor). OGBench’s published baselines (Park et al. 2025, 2023; Wang et al. 2023; Eysen-bach et al. 2022; Ghosh et al. 2021) solve these tasks with reward-free policy learning. We do not claim to beat this line. Their published numbers provide external context for real-environment execution. 
+
+Setup and Notation 
+
+Offline transitions D = {(s, a, s ′)} come from the official OGBench datasets (Park et al. 2025). An encoder fθ (s) →
+
+z ∈ Rd is trained with an EMA target copy fξ . A predic-tor maps the context c = ( z, a ) to an estimate of the tar-get z′ = fξ (s′). Teleport and stitch data make p(z′ | c)
+
+multimodal, with 2.1–2.2 successor modes per cell on aver-age. Let μ1, . . . , μ M denote the mode centers, w1, . . . , w M
+
+their weights, σ the within-mode standard deviation, and 
+
+ˆz′ = z′/∥z′∥ a normalized target. The downstream task is goal-conditioned planning over predicted successors, with-out ground truth at decision time. 
+
+Single-Output Regression 
+
+Proposition 1 (deterministic predictor) . Under squared loss the optimal single predictor is g∗(c) = E[z′ | c] =P 
+
+> m
+
+wmμm, and its minimum risk is the sum of within-mode and between-mode variance. For two modes separated by ∆, with both weights at least η, the mean is at least 
+
+η∆ from either center. For three or more modes, pairwise separation alone does not guarantee that the mean is off-mode; the relevant condition is a positive margin ρ(c) = min m∥E[z′ | c] − μm∥. Under cosine loss with normalized targets, the optimal unit vector is the normalized mean di-rection u∗ = E[ˆ z′ | c]/∥E[ˆ z′ | c]∥ when the numerator is nonzero. 
+
+Proposition 2 (gated MoE) . A weighted sum v(c) =P 
+
+> k
+
+πk(c) gk(c) still outputs one vector per context. At the level of the fused output, optimizing any pointwise regression loss is therefore the same single-output problem as optimiz-ing a deterministic predictor with output v(c). In particu-lar, sufficiently expressive fused models have the squared-and cosine-loss optima of Prop. 1; their expert parameteri-zations need not be unique. 
+
+Proposition 3 (conditional quantization) . For fixed context 
+
+c, the best-of-K squared-loss term E[min k∥gk(c) − z′∥2 | c]
+
+is exactly the K-means distortion of p(z′ | c) (Lloyd 1982); with normalized outputs and cosine distance, it is the corre-sponding spherical quantization objective. If K ≥ M and the heads can represent the M mode centers, placing one head at each center gives distortion no greater than the to-tal within-mode variance. This construction shows that the objective can represent all modes, but it does not guarantee that gradient optimization finds that allocation or that every 18.8% 
+
+> 39.2%
+> 22.2%
+> 19.8%
+> -1.4
+> -1.4
+> 0
+> 0
+> 1.4
+> 1.4
+> 0
+> 0.5
+> 1.0
+> density
+> 100.0%
+> one peak
+> -1.3
+> -1.3
+> 0
+> 0
+> 1.3
+> 1.3
+> 0
+> 0.5
+> 1.0
+> 17.8%
+> 20.3% 17.5%
+> 44.4%
+> -1.4
+> -1.4
+> 0
+> 0
+> 1.4
+> 1.4
+> 0
+> 0.5
+> 1.0
+> 39.1%
+> 23.1%
+> 7.5%
+> 30.3%
+> -1.2
+> -1.2
+> 0
+> 0
+> 1.2
+> 1.2
+> 0
+> 0.5
+> 1.0
+> density
+> 100.0%
+> one peak
+> -1.0
+> -1.0
+> 0
+> 0
+> 1.0
+> 1.0
+> 0
+> 0.5
+> 1.0
+> 7.3%
+> 23.1% 29.1%
+> 36.4%
+> -1.2
+> -1.2
+> 0
+> 0
+> 1.2
+> 1.2
+> 0
+> 0.5
+> 1.0
+> 77.2%
+> 11.3%
+> 11.6%
+> -1.3
+> -1.3
+> 0
+> 0
+> 1.3
+> 1.3
+> latent x
+> latent y
+> 0
+> 0.5
+> 1.0
+> density
+> 100.0% one peak
+> -1.3
+> -1.3
+> 0
+> 0
+> 1.3
+> 1.3
+> latent x
+> latent y
+> 0
+> 0.5
+> 1.0
+> 11.4%
+> 11.2%
+> 77.4%
+> -1.3
+> -1.3
+> 0
+> 0
+> 1.3
+> 1.3
+> latent x
+> latent y
+> 0
+> 0.5
+> 1.0
+
+Two-step successor beliefs      
+
+> Where a branching maze forks three-to-four ways, a dense predictor collapses onto a single mode; best-of-K re-opens every branch.
+> G R O U N D T R U T H
+> true 2-step successor law
+> D E N S E P R E D I C T O R
+> belief collapses to one mode
+> B E S T - O F - K ·O U R S
+> belief re-opens the full fan-out
+> cell (0, 3)
+> Teleport maze
+> cell (5, 1)
+> Teleport maze
+> cell (5, 3)
+> Medium-stitch maze
+> Green pins = true successors. Dense puts 100% on a single mode; best-of-K restores a peak under every branch.
+
+Figure 3: Two-step successor beliefs at three high-branching cells. Columns show empirical targets (green), the dense predictor (red), and MoP-JEPA (blue) in the local latent plane. Height is normalized predictive density. Percentages give empirical branch frequencies (left) and active-head router weights (right). The dense predictor forms one peak. MoP-JEPA recovers one peak per branch. 
+
+global optimum serves a low-weight mode. 
+
+Proofs and qualifications are given in the technical ap-pendix. Props. 1 and 2 formalize the single-output restric-tion; they do not imply that every multimodal distribution has an invalid mean. Prop. 3 identifies the WTA term as a quantization objective rather than a training guarantee. Fig-ures 3 and 4 measure the resulting geometry in trained mod-els, and Fig. 9 examines how performance changes with K.
+
+Method 
+
+Variables and standard JEPA objective. For transition 
+
+i, let si, ai, and s+
+
+i denote the state, action, and observed successor. We take ai ∈ Rp and set p = 0 in action-free domains. The online encoder is fθ : S → Rd. Its EMA copy 
+
+fξ is the target encoder. For minibatch B,
+
+zi = fθ (si)
+
+∥fθ (si)∥2
+
+,z+
+
+i = sg 
+
+ fξ (s+
+
+i )
+
+∥fξ (s+
+
+i )∥2
+
+
+
+,ci = [ zi, a i],
+
+(1) where sg blocks gradients through the target branch. When 
+
+p = 0 , ci = zi. A standard predictor gϕ : Rd+p → Rdteleport cell    
+
+> true dest. true dest.
+> prediction = invalid midpoint
+> dense predictor (standard JEPA)
+> teleport cell
+> true dest. true dest.
+> =0.57 =0.43
+> best-of-K (ours, router )
+> 0.55
+> 0.60
+> 0.65
+> 0.70
+> 0.75
+> 0.80
+> 0.85
+> 0.90
+> 0.95
+> 1.00
+> cosine similarity of predicted
+> next-latent to each cell (  0.55)
+
+Figure 4: Decoded predictions on OGBench pointmaze-teleport. Heat shows cosine similarity to each cell latent. At the teleport cell (star), the dense prediction (red cross) lies between the two destinations (green circles). Two ac-tive MoP heads (blue crosses) recover both destinations with 
+
+π = 0 .57 /0.43 . Empirical frequencies are 0.42 /0.40 .minimizes 
+
+Ldense (θ, ϕ ; ξ) = 1
+
+|B| 
+
+X
+
+i∈B 
+
+ℓ ¯gϕ(ci), z +
+
+i
+
+ ,
+
+¯gϕ(c) = gϕ(c)
+
+∥gϕ(c)∥2
+
+,
+
+(2) with cosine distance ℓ(u, v ) = 1 − u⊤v in our implementa-tion. After each optimizer step on (θ, ϕ ), the target encoder is updated by 
+
+ξ ← τ ξ + (1 − τ )θ, (3) with τ = 0 .996 . MoP-JEPA changes only the predictor. 
+
+Mixture-of-Predictors parameterization. MoP-JEPA replaces the single predictor gϕ with K predictor heads 
+
+{gϕk }Kk=1 . Each maps the same ci to one candidate succes-sor. A context-only router rψ : Rd+p → RK predicts head probabilities: 
+
+uik = gϕk (ci)
+
+∥gϕk (ci)∥2
+
+,πik = exp( rψ (ci)k)
+
+PKj=1 exp( rψ (ci)j ) ,dik = ℓ(uik , z +
+
+i ).
+
+(4) The router never sees z+
+
+i and cannot select a head from the realized future. 
+
+Hard-assignment objective. Each target selects its near-est head: 
+
+k∗
+
+i = arg min 
+
+1≤k≤K dik , γik = 1[k = k∗
+
+i ], (5) The MoP-JEPA loss is 
+
+LMoP = 1
+
+|B| 
+
+X
+
+i∈B 
+
+KX
+
+k=1 
+
+γik dik + λroute 
+
+1
+
+|B| 
+
+X
+
+i∈B 
+
+− log πik ∗
+
+i
+
++ λbal 
+
+KX
+
+k=1 
+
+¯γk log( K ¯γk),
+
+(6) Here ¯γk = |B| −1 P
+
+i γik is minibatch head usage. λroute 
+
+and λbal weight router cross-entropy and load balancing. The three terms train the winning predictor, fit the router to 
+
+k∗ 
+
+> i
+
+, and penalize KL(¯ γ∥Unif( K)) , respectively. Thus each predictor receives the ordinary JEPA update on its assigned subset, while gradients also update θ and ψ. For K = 1 ,Eq. (6) reduces to Ldense up to constants. This objective uses the assignment step of hard EM: it selects the nearest head, then updates that head and fits the router to the same index. The WTA term is the empirical conditional quantization objective of Prop. 3; the router and load-balancing terms are additional regularizers. This objec-tive permits, but does not guarantee, specialization by suc-cessor mode. 
+
+Baselines and protocol. Every predictor uses the same en-coder, data, EMA target, and planner. We compare dense JEPA ( K=1 ), weighted M3-JEPA (Lei et al. 2024), varia-tional single-Gaussian Var-JEPA (Huang et al. 2026), load-balanced MDN (Bishop 1994), and MoP-JEPA. MDN is se-lected from a K × λ grid. Var-JEPA uses a cosine-trained mean, residual-calibrated σ, and 1/√d-scaled sampling. These are same-protocol reimplementations because prior work reports no JEPA planning results for these predictors. Published OGBench GCRL results serve only as external context. 
+
+Prediction interface. At test time the model receives only 
+
+(s, a ). It computes z = fθ (s)/∥fθ (s)∥2, c = [ z, a ], and emits the set 
+
+P(s, a ) = {(uk, π k)}Kk=1 ,uk = gϕk (c)
+
+∥gϕk (c)∥2
+
+,πk = softmax( rψ (c)) k.
+
+(7) The output is therefore a finite successor set in one forward pass, not samples from a post-hoc decoder or a weighted average. A planner can use all heads or a router-thresholded subset without observing the realized successor. 
+
+Verified-Route Evaluation 
+
+We evaluate every method that emits multiple successors with the same protocol. planAll runs graph search over pre-dicted successors, while official-goal success restricts goals to the held-out OGBench set. For realroute (verified-route success), the model first proposes a transition graph without ground truth. Evaluation then asks whether that graph con-tains any start-to-goal route made entirely of real transitions. 
+
+Transition precision is the fraction of predicted edges that are real, and execution success measures closed-loop plan-ning. Three controls test context dependence. A codebook ig-nores the input, shuffled contexts break the input-output pairing, and router gating keeps only heads with πk >
+
+0.5/K .
+
+Experiments 
+
+Setup. We use official OGBench pointmaze-medium-stitch, pointmaze-large-stitch, pointmaze-teleport-navigate, and antmaze-teleport (29-D). Coordinate features prevent                               
+
+> Question Evidence Collapse Dense/gated-MoE emit one latent mean; the decoded maze state is an invalid midpoint (Figs. 3, 4). Specialization In each trained model’s latent space, dense/gated-MoE predictions sit on the conditional mean (cos .99 ) far from every true mode in these data ( .77 –.80 ), while MoP-JEPA heads sit on distinct modes (cos .96 ; cov-erage .76 ±.21 over all 5seeds, .87 on the 4non-collapsed ones) with calibrated router mass; indepen-dent ensemble heads are pairwise identical (technical appendix). Branching complexity In acontrolled k-ary sweep (k=1 →5,capacity fixed), every single-output, gated-mixture, ensemble, and codebook predictor collapses to zero verified plan-ning at the first branch, while MoP-JEPA remains nonzero (technical appendix). Generality ETH/UCY, SVHN, antmaze, pixel observations, and DINO-WM show single-output averaging and head specialization beyond 2-D point mazes (the full plan-ning closed-loop is run on OGBench). Planning consequence Realroute verifies that enumerated modes form asearchable graph of real transitions.
+
+Table 1: Evidence for single-output averaging, head special-ization, and verified planning. cell-identity memorization, and 20% of unique transitions are held out. Planning uses five seeds. Coverage and execu-tion use three. Tables report mean ±std, and figures show in-dividual seeds. No metric uses ground truth at decision time. 
+
+Mechanism and Generality 
+
+Table 1 summarizes results across predictors, branching de-grees, and domains. Figure 5 shows the main diagnostics. The pattern extends beyond low-dimensional mazes. On leave-one-scene-out ETH/UCY pedestrian forecasting (Pel-legrini et al. 2009), MoP has ADE 0.053 , compared with 
+
+0.070 for the codebook and 0.118 for dense. Shuffling dou-bles the error. On separate multimodal-regression tests, MoP improves pedestrian forecasting by +37 .7% and image in-painting by +24 .1% over dense. On nearly deterministic masked-image SSL, multiple predictors tie a single predic-tor, as expected. The mechanism also transfers to DINO-WM (Zhou et al. 2024) through the predictor override 
+
+predictor=mixture . On held-out pixel point-maze, the winning head’s next-latent error is two orders of magni-tude below the head average. About 2 heads are active per state, matching the local branching factor. On bottom-half SVHN inpainting, the deterministic predictor recovers 0.31 
+
+of the conditional digit modes. MoP recovers 0.78 (2.5×, 3 seeds). Density and ensemble baselines reach 0.85 –0.89 but do not provide router-gated modes for planning. Across all three- and four-way two-step maze cells, MoP-JEPA recovers 82 –88% of successors over 3 seeds. The dense predictor recovers none. MoP retains successors be-low 10% probability, although some four-way cells still lose one rare mode. pixel 
+
+COV-R 
+
+SVHN 
+
+modes 
+
+ETH/UCY 
+
+ADE 
+
+DINO-WM 
+
+head gap 
+
+10 0
+
+10 1
+
+10 2
+
+> relative gain
+> (log scale)
+
+2.5x 2.5x 
+
+1.6x 
+
+360.7x 
+
+Beyond 2-D mazes 
+
+2 3 4 5
+
+true modes 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9 
+
+> mode coverage
+
+Branching complexity 
+
+dense 
+
+MDN 
+
+MoP 
+
+3-way 4-way 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 
+
+> successor recall
+
+0.89 
+
+0.82 
+
+> DINO-WM winner
+> 361x below mean head
+
+Head specialization 
+
+dense 
+
+MoP Figure 5: Results across domains and branch counts. Left: domain-specific metrics beyond 2-D mazes. Middle: coverage as the number of modes grows. Right: recovered successors at real 3/4-way maze branchings. 
+
+planAll ↑ med-stitch teleport large-stitch dense (JEPA) .084 ±.03 .037 ±.01 .016 ±.01 
+
+M3-JEPA .075 ±.02 .036 ±.01 .031 ±.01 
+
+Var-JEPA .085 ±.01 .035 ±.01 .033 ±.00 
+
+MDN .566 ±.20 .512 ±.12 .717 †±.12 
+
+MoP-JEPA .851 ±.08 .748 ±.09 .386 ±.45 
+
+codebook (control) .267 ±.02 .167 ±.02 .149 ±.04 
+
+Table 2: Predicted-graph searchability (planAll, 5 seeds). Official-goal success has the same ordering (Fig. 6). The codebook reaches only 0.00 –0.15 official-goal success. †See Table 3 for MDN transition validity. dense       
+
+> M3-JEPA
+> Var-JEPA
+> MDN
+> ours
+> codebook
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> planning success (planAll)
+> 0.08 0.07 0.09
+> 0.57
+> 0.85
+> 0.27
+> medium-stitch
+> dense
+> M3-JEPA
+> Var-JEPA
+> MDN
+> ours
+> codebook
+> 0.04 0.04 0.03
+> 0.51
+> 0.75
+> 0.17
+> teleport-navigate
+> dense
+> M3-JEPA
+> Var-JEPA
+> MDN
+> ours
+> codebook
+> 0.02 0.03 0.03
+> 0.72
+> 0.39
+> 0.15
+> large-stitch
+
+Figure 6: planAll by arm (bars: mean, dots: seeds, hatched: codebook control). 
+
+Planning on the Predicted Graph 
+
+Single-output predictors reach 0.02 –0.09 planAll. MoP-JEPA reaches up to 0.85 (Table 2). 
+
+Verified-Route Results 
+
+MDN attains high raw scores with low transition precision: 
+
+0.14 –0.21 , compared with 0.42 –0.56 for MoP-JEPA. Real-route favors MoP-JEPA on all three mazes (Table 3). The paired advantage over MDN is significant on medium-stitch (bootstrap 95% CI [0 .06 , 0.18] ) and teleport ( [0 .07 , 0.24] ). On large-stitch, the five-seed CI includes zero, so the shared-protocol means are inconclusive (seed bimodality is dis-cussed in Limitations). 
+
+realroute ↑ dense MDN MoP-JEPA 
+
+medium-stitch .083 ±.03 .134 ±.03 .247 ±.08 
+
+teleport-navigate .035 ±.01 .039 ±.01 .192 ±.09 
+
+large-stitch .016 ±.01 .057 ±.03 .139 ±.15 
+
+Table 3: Verified planning (5 seeds). A route counts only if the blindly proposed graph contains a path made entirely of real transitions. 2 4 6 8 10 12 14             
+
+> true shortest-path distance
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> verified planning
+> (realroute)
+> medium-stitch
+> dense (JEPA)
+> MDN
+> best-of-K (ours)
+> 246810 12 14
+> true shortest-path distance
+> teleport-navigate
+> 246810 12 14
+> true shortest-path distance
+> large-stitch
+
+Figure 7: Realroute success by true goal distance (3 seeds). On teleport, MoP-JEPA remains nonzero at distances 10 –14 .Both baselines reach zero by d=6 .Matched K=16 , 60 k-step runs over 5 seeds give realroute 
+
+0.208 for MoP-JEPA and 0.095 for MDN. MDN finds many paths ( 0.88 ) but has 0.21 precision, versus 0.42 for MoP-JEPA. Its best shorter-budget setting ( K=16 , λ=0 .1, 30 ksteps, 3 seeds) reaches 0.191 . Across these configurations, the precision gap remains stable. 
+
+Long horizons. At distance 6 on medium-stitch, MoP-JEPA retains 0.18 verified success versus 0.01 for MDN. On teleport it retains 0.05 –0.15 through distance 14 , while both baselines reach zero by distance 6–8 (Fig. 7). One-step mode errors compound over long rollouts. 
+
+MDN hyperparameters. A fairness grid over compo-nents K ∈ {8, 16 } and load-balance weight λ ∈{0, 0.01 , 0.1} (learned σ, 3 seeds) preserves the medium and teleport orderings. The best MDN reaches 0.125 on medium (MoP-JEPA: 0.247 ) and 0.114 on teleport (MoP-JEPA: 0.192 ). On large-stitch, its best grid point reaches 
+
+0.191 , above the MoP-JEPA shared-protocol mean of 0.139 dense    
+
+> M3-JEPA
+> Var-JEPA
+> MDN
+> ours
+> codebook
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> teleport-destination COV-R
+> 0.24 0.24
+> 0.00
+> 0.29
+> 0.63
+> 1.00
+> pointmaze-teleport (2-D)
+> raw K modes
+> router-gated
+> dense
+> M3-JEPA
+> Var-JEPA
+> MDN
+> ours
+> codebook
+> 0.29 0.24
+> 0.00
+> 0.24
+> 0.34
+> 1.00
+> antmaze-teleport (29-D ant)
+
+Figure 8: Raw (light) vs. router-gated (solid) coverage on pointmaze and 29-D antmaze. and within the noise of its matched-capacity mean of 0.208 .At K=16 and 60 k steps, the same MDN setting reaches 
+
+0.095 over 5 seeds. Large-stitch is therefore distinguished by transition precision, not mean realroute. 
+
+Verified Planning Across the JEPA Predictor Family 
+
+All arms in Table 4 differ only in the predictor module. The executor succeeds on 15 /15 true paths. With 10% false edges, replanning raises success from 0.40 to 1.00 . Uni-form edge costs preserve all rankings. Execution can there-fore repair a low-precision graph online, whereas realroute measures model fidelity. This explains MDN’s .87 medium-stitch execution score despite its low precision. For external context, MoP-JEPA reaches 33% execution success on large-stitch. Among seven published OGBench offline-GCRL baselines (Park et al. 2025), QRL scores 84 ,GCIQL 31 , HIQL 13 , GCIVL 12 , GCBC 7, and CRL 0.These policy results are not same-protocol comparisons. 
+
+Coverage of Stochastic Dynamics 
+
+The input-agnostic codebook reaches raw COV-R 1.0 be-cause teleport destinations are fixed. Across t ∈ [1 /64 , 1/4] ,MoP gated coverage changes from 0.74 to 0.40 , while pre-cision ( ≈ 0.92 ) and shuffle leakage ( ≈ 0.26 ) remain stable. On antmaze-teleport, destinations are manifolds of 32 real samples in a 29-D state space. MoP reaches 0.576 raw cov-erage, versus 0.294 for dense and 0.386 for MDN. Gated coverage is 0.342 at 0.86 precision. Var-JEPA scores 0.On visual-antmaze-teleport ( 64 ×64 ×3), MoP reaches 0.613 
+
+raw COV-R versus 0.24 –0.27 for all baselines ( 2.4×). This experiment trains a CNN JEPA from scratch and oversam-ples teleport transitions equally for every arm. Gating recov-ers about 1 of 3 modes at 0.97 precision. These results show partial, not complete, mode recovery in high-dimensional and pixel observations. 
+
+Summary and Ablations 
+
+Design ablations. An explicit head-separation loss can re-duce recall because WTA already separates heads. Slow soft-to-hard annealing moves every head toward the mean. Hard EM works better at full scale. Independent heads with-out assignment also collapse. They obtain realroute 0.03 –
+
+0.10 with zero head spread, consistent with applying Prop. 1 to each head. 1 2 3 4 8
+
+> number of predictor heads K
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> teleport COV-R
+> K = #modes
+> best-of-K (ours)
+> dense (K=1)
+> MDN (K=8)
+
+Figure 9: K-sweep on teleport COV-R. Coverage rises from 
+
+0.231 at K=1 (dense: 0.258 ) to 0.712 at K=3 , then reaches 
+
+0.945 at K=8 (MDN: 0.531 ), consistent with the capacity of the quantization objective in Prop. 3. 
+
+Evaluation Checks 
+
+Transition precision identifies MDN’s non-existent edges, and the codebook exposes context-independent coverage in-flation. An off-manifold antmaze reference scored every method at zero. Real-sample manifolds correct the arti-fact. A +36% taxi-forecasting gain is 84% reproducible by the codebook and is rejected. We also report no gain on persistence-dominated video. 
+
+Discussion and Limitations 
+
+Implications for scaling JEPA world models. Video-and robot-scale world models (Assran et al. 2025; Zhou et al. 2024) are trained on data where stochastic transitions are common. A deterministic predictor may produce a compro-mise at branchings that matter for planning. MoP-JEPA in-stead supplies multiple candidate successors at the predictor output, independently of encoder scale. The same transition-validity checks can be applied to mixture, variational, diffu-sion, and other multi-future world models. 
+
+Limitations. No model can select an aleatoric branch be-fore it occurs. We claim only to represent the transition dis-tribution. WTA is seed-bimodal on the hardest maze, con-sistent with the initialization sensitivity of Lloyd-style op-timization. Training loss separates the two basins in 20 /20 
+
+runs because collapsed runs have zero router branch entropy. Restart selection obtains planAll 0.90 and realroute 0.35 in one selected run. Our tables report unselected means. The basin hit rate is 2–8 of 10 , and this restart rule is validated only on the current task family. At four-way branchings, successors below 10% proba-bility may remain inactive. Full four-mode recovery oc-curs in 37% of such cells. Annealing does not fix this at scale, head repulsion hurts, and rare-mode replay and head-specific learning rates remain untested. The main mazes are low-dimensional. Antmaze tests 29-D states with weaker gains, and DINO-WM tests pixel ob-servations. In the official DINO-WM stack, an end-to-end stochastic teleport variant shows no statistically resolved closed-loop MPC improvement over dense prediction ( ≈
+
+.34 –.40 ): replanning repairs one-step errors online, so ex-ecution under-discriminates transition fidelity. The verified-verified planning (realroute) ↑ execution ↑                              
+
+> JEPA predictor (same encoder, data, planner) med-stitch teleport large-stitch med large dense (standard JEPA) .083 .035 .016 .27 .13 M3-JEPA .075 .036 .031 ——Var-JEPA (variational) .034 .001 .033 ——MDN .134 .039 .057 .87 .27
+> MoP-JEPA .247 .192 .139 .67 .33
+
+Table 4: Same-protocol comparison ( K=8 , 30 k steps, 5 seeds). MoP-JEPA leads MDN in realroute by 1.8×/4.9×/2.4×. Exe-cution uses the official info[’success’] signal and a replanning executor.                             
+
+> pointmaze-teleport raw π-gated COV-P shuffle dense .244 ±.03 .244 ±.03 .733 2.4 ×
+> M3-JEPA .242 ±.04 .242 ±.04 .727 1.4 ×
+> Var-JEPA .001 ±.00 .001 ±.00 .000 —MDN .596 ±.02 .292 ±.01 .864 1.8 ×
+> MoP-JEPA .997 ±.00 .632 ±.22 .924 2.4 ×
+> codebook 1.00 ±.00 1.00 ‡.417 1.0 ×
+
+Table 5: Coverage of three teleport destinations (COV-R, 3 seeds). ‡The context-free codebook cannot be gated. Its perfect raw coverage shows why router-gated COV-R is re-quired.                                      
+
+> mode set COV-R prec. RR wins exec type (gated) (of 3) (hard) dense no .24 high 0/3 .13 M3-JEPA no .24 high 0/3 —Var-JEPA samples .00 —0/3 —MDN soft .29 .14–.21 0/3 .27
+> MoP-JEPA yes .63 .42–.56 3/3 .33
+> codebook static n/a —0/3 —
+
+Table 6: Summary of mode enumeration, gated coverage, transition precision, verified-route wins, and execution. Re-alroute wins are reported as the number of mazes led out of three. route evaluation requires a planner that consumes the full candidate set (technical appendix). Video- and robot-scale verification remains future work. Predictor-family baselines are same-protocol reimple-mentations. MDN receives a K × λ grid. Var-JEPA and M3-JEPA use matched capacity and shared hyperparame-ters. The published OGBench baseline numbers are quoted rather than rerun. 
+
+Conclusion 
+
+A deterministic JEPA predictor represents a stochastic tran-sition with one regression optimum, whereas hard assign-ment permits different heads to represent different succes-sors. Across the evaluated domains, this distinction is re-flected in latent geometry and in the validity of predicted planning graphs, though optimization remains sensitive to initialization and rare modes. Evaluations of multimodal world models should therefore measure context dependence and transition validity in addition to raw coverage. 
+
+References 
+
+Alonso, E.; Jelley, A.; Micheli, V.; Kanervisto, A.; Storkey, A.; Pearce, T.; and Fleuret, F. 2024. Diffusion for World Modeling: Visual Details Matter in Atari. In Advances in Neural Information Processing Systems .Assran, M.; Bardes, A.; Fan, D.; Garrido, Q.; Howes, R.; et al. 2025. V-JEPA 2: Self-supervised video models en-able understanding, prediction and planning. arXiv preprint arXiv:2506.09985 .Assran, M.; Duval, Q.; Misra, I.; Bojanowski, P.; Vincent, P.; Rabbat, M.; LeCun, Y.; and Ballas, N. 2023. Self-supervised learning from images with a joint-embedding predictive ar-chitecture. In CVPR .Bardes, A.; Garrido, Q.; Ponce, J.; Chen, X.; Rabbat, M.; LeCun, Y.; Assran, M.; and Ballas, N. 2024. Revisiting feature prediction for learning visual representations from video. arXiv preprint arXiv:2404.08471 .Bardes, A.; Ponce, J.; and LeCun, Y. 2022. VI-CReg: Variance-invariance-covariance regularization for self-supervised learning. In ICLR .Bishop, C. M. 1994. Mixture density networks. Technical report, Aston University. Eysenbach, B.; Zhang, T.; Levine, S.; and Salakhutdinov, R. 2022. Contrastive learning as goal-conditioned reinforce-ment learning. In NeurIPS .Ghosh, D.; Gupta, A.; Reddy, A.; Fu, J.; Devin, C.; Eysen-bach, B.; and Levine, S. 2021. Learning to reach goals via iterated supervised learning. In ICLR .Guzman-Rivera, A.; Batra, D.; and Kohli, P. 2012. Multi-ple choice learning: Learning to produce multiple structured outputs. In NeurIPS .Hafner, D.; Lillicrap, T.; Norouzi, M.; and Ba, J. 2021. Mas-tering Atari with Discrete World Models. In International Conference on Learning Representations .Hafner, D.; Pasukonis, J.; Ba, J.; and Lillicrap, T. 2023. Mastering Diverse Domains through World Models. arXiv preprint arXiv:2301.04104 .Huang, W.; et al. 2026. VJEPA: Variational joint embedding predictive architectures as probabilistic world models. arXiv preprint arXiv:2601.14354 .LeCun, Y. 2022. A path towards autonomous machine intel-ligence. OpenReview .Lee, S.; Purushwalkam, S.; Cogswell, M.; Ranjan, V.; Cran-dall, D.; and Batra, D. 2016. Stochastic multiple choice learning for training diverse deep ensembles. In NeurIPS .Lei, H.; Cheng, X.; Qin, Q.; Wang, D.; Fan, K.; Huang, H.; Gu, Q.; Wu, Y.; Jiang, Z.; Chen, Y.; and Ji, L. 2024. M3-JEPA: Multimodal alignment via multi-gate MoE based on the joint-embedding predictive architecture. arXiv preprint arXiv:2409.05929 .Lloyd, S. 1982. Least squares quantization in PCM. IEEE Transactions on Information Theory , 28(2): 129–137. Park, S.; Frans, K.; Eysenbach, B.; and Levine, S. 2025. OGBench: Benchmarking offline goal-conditioned RL. In 
+
+ICLR .Park, S.; Ghosh, D.; Eysenbach, B.; and Levine, S. 2023. HIQL: Offline goal-conditioned RL with latent states as ac-tions. In NeurIPS .Pellegrini, S.; Ess, A.; Schindler, K.; and Van Gool, L. 2009. You’ll never walk alone: Modeling social behavior for multi-target tracking. In ICCV .Wang, T.; Torralba, A.; Isola, P.; and Zhang, A. 2023. Op-timal goal-reaching reinforcement learning via quasimetric learning. In ICML .Zhou, G.; Pan, H.; LeCun, Y.; and Pinto, L. 2024. DINO-WM: World models on pre-trained visual features enable zero-shot planning. arXiv preprint arXiv:2411.04983 .
