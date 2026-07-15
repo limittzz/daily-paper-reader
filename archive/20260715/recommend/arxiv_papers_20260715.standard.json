@@ -1,0 +1,274 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-15T20:28:14.066783+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 5,
+    "quick_skim_target": 11,
+    "quick_selected": 5
+  },
+  "deep_dive": [
+    {
+      "id": "2607.10706v1",
+      "source": "arxiv",
+      "title": "Action Map Policy: Learning 3D Closed-loop Manipulation via Pixel Classification",
+      "abstract": "The action space poses a major challenge in robot learning, since it is often high-dimensional, can span long time horizons, and frequently admits multi-modal optimal solutions. A good choice of action representation and loss function can help to address these concerns, but there are often trade offs. We propose Action Map Policy (AMP), which casts 3D closed-loop manipulation policy learning as a classification problem in image space. While classification has been an effective formulation in generative language models, applying it to robot action learning is difficult because naively discretizing high-dimensional continuous actions explodes the token vocabulary. Our key idea is to project 3D actions onto the camera image planes and treat each pixel location as a discrete class, thus controlling dimensionality while retaining multi-modality. This method supports millimeter-level precision for high-dimensional actions without requiring a prohibitively large vocabulary, while preserving fine-grained pixel-wise visual signals. Furthermore, it can predict the entire action chunk in a single forward pass, avoiding complex noise scheduling and iterative denoising while achieving substantially faster inference than diffusion policies. Experiments on various manipulation tasks show that AMP outperforms strong baselines, achieving higher success rates, faster inference, and enhanced spatial reasoning.",
+      "authors": [
+        "Haojie Huang",
+        "Zhang Ye",
+        "Linfeng Zhao",
+        "Boce Hu",
+        "Mingxi Jia",
+        "Yu Qi",
+        "Ahmed Agha",
+        "Dian Wang",
+        "Robert Platt",
+        "Robin Walters"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-07-12T10:58:06+00:00",
+      "link": "https://arxiv.org/pdf/2607.10706v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "imitation learning for robot manipulation via pixel classification",
+      "llm_evidence_cn": "通过像素分类进行机器人操作模仿学习",
+      "llm_evidence": "通过像素分类进行机器人操作模仿学习",
+      "canonical_evidence": "通过像素分类进行机器人操作模仿学习",
+      "llm_tldr_en": "AMP casts 3D closed-loop manipulation policy learning as a classification problem in image space, addressing high-dimensional continuous action spaces.",
+      "llm_tldr_cn": "该论文提出动作地图策略（AMP），将3D闭环操作策略学习转化为图像空间中的分类问题，通过将3D动作投影到相机图像平面来避免动作空间高维与多模态问题，有效降低了模仿学习复杂度。",
+      "llm_tldr": "该论文提出动作地图策略（AMP），将3D闭环操作策略学习转化为图像空间中的分类问题，通过将3D动作投影到相机图像平面来避免动作空间高维与多模态问题，有效降低了模仿学习复杂度。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.09042v1",
+      "source": "arxiv",
+      "title": "Learning More from Less: Reinforcement Learning from Hindsight",
+      "abstract": "Reinforcement learning (RL) is increasingly used to post-train vision-language-action (VLA) models, but every update consumes robot rollouts that are slow and costly to collect, making sample efficiency a central concern. Manipulation tasks typically provide only sparse rewards, so a weak policy fails almost every rollout early in training and has little to learn from, even when those failures execute coherent behavior. Such a failure, however, is a success at a different task. We present Learning from Hindsight (LfH), which brings hindsight relabeling to RL post-training of VLAs by scoring failed rollouts against the tasks they actually achieved. A single vision-language model relabels both the instruction and the reward, proposing a hindsight instruction for a group of failed rollouts and scoring how well each satisfies it, and the policy trains on the relabeled and original rollouts jointly. Because VLAs generalize across language, relabeling in language lets the policy learn more from the same trajectories. On out-of-distribution LIBERO-PRO tasks, where standard RL improves only slowly, LfH achieves $5\\times$ improvement in sample efficiency, and outperforms a dense progress-reward baseline. The gains hold across VLA backbones and on a physical Franka robot.",
+      "authors": [
+        "Iris Xu",
+        "Sunshine Jiang",
+        "John Marangola",
+        "Nitish Dashora",
+        "Richard Li",
+        "Thomas Liu",
+        "Zexue He",
+        "Yuheng Zhi",
+        "Alex Pentland",
+        "Pulkit Agrawal",
+        "Zhang-Wei Hong"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-10T02:17:41+00:00",
+      "link": "https://arxiv.org/pdf/2607.09042v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "hindsight relabeling for reinforcement learning post-training of vision-language-action models",
+      "llm_evidence_cn": "对视觉-语言-动作模型进行后训练的遗憾重标记强化学习",
+      "llm_evidence": "对视觉-语言-动作模型进行后训练的遗憾重标记强化学习",
+      "canonical_evidence": "对视觉-语言-动作模型进行后训练的遗憾重标记强化学习",
+      "llm_tldr_en": "Learning from Hindsight improves sample efficiency of RL post-training for VLAs by relabeling failed rollouts as successes for achieved tasks",
+      "llm_tldr_cn": "强化学习常用于后训练VLA模型，但机器人rollout收集缓慢且稀疏奖励下早期失败率高。本文提出Learning from Hindsight（LfH），将遗憾重标记引入VLA的RL后训练：用视觉语言模型重新标记失败rollout实际成功的任务和奖励，提出遗憾指令。实验表明LfH显著提升样本效率，使弱策略也能从失败中学习。",
+      "llm_tldr": "强化学习常用于后训练VLA模型，但机器人rollout收集缓慢且稀疏奖励下早期失败率高。本文提出Learning from Hindsight（LfH），将遗憾重标记引入VLA的RL后训练：用视觉语言模型重新标记失败rollout实际成功的任务和奖励，提出遗憾指令。实验表明LfH显著提升样本效率，使弱策略也能从失败中学习。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.10288v1",
+      "source": "arxiv",
+      "title": "PIER-Flow: Physics-Informed Efficient Rectified Flow for Real-Time Mobile Robot Navigation",
+      "abstract": "Autonomous navigation in dense and highly dynamic environments requires both physically feasible control and low-latency replanning. Optimization-based methods such as Model Predictive Control (MPC) explicitly handle robot kinematics and safety constraints, but repeated nonlinear optimization can limit real-time responsiveness. Deterministic behavior-cloning policies enable efficient inference but may fail to represent multimodal avoidance behaviors, whereas diffusion policies capture multimodality at the cost of time-consuming iterative denoising. We propose PIER-Flow (Physics-Informed Efficient Rectified Flow), a lightweight navigation policy for mobile robots. By distilling an MPC expert into a continuous-time Ordinary Differential Equation (ODE), PIER-Flow achieves single-step action generation through parallel latent sampling and lightweight feasibility selection. We introduce a physics-informed training objective to enforce kinematic consistency, paired with an asynchronous action chunking architecture for robust sim-to-real deployment. Extensive simulations demonstrate that PIER-Flow achieves a 98.85\\% success rate and zero collisions, with an average inference of $\\sim$1.29 ms, which accelerates planning by 37.2$\\times$ compared to MPC and over 800$\\times$ against standard diffusion models. Crucially, real-world deployment on a resource-constrained edge computer further achieves an approximately stable inference latency of $\\sim$5.3 ms, avoiding the latency spikes and freezing events observed with planning baselines.",
+      "authors": [
+        "Shibo Li",
+        "Zhongcheng Wang",
+        "Jiahe Cao",
+        "Jianhua Yang",
+        "Ke Wu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-11T12:34:28+00:00",
+      "link": "https://arxiv.org/pdf/2607.10288v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "uses rectified flow (related to diffusion policy) for robot navigation policy, capturing multimodality",
+      "llm_evidence_cn": "采用整流流（与扩散策略相关）用于移动机器人导航策略，捕捉多模态行为",
+      "llm_evidence": "采用整流流（与扩散策略相关）用于移动机器人导航策略，捕捉多模态行为",
+      "canonical_evidence": "采用整流流（与扩散策略相关）用于移动机器人导航策略，捕捉多模态行为",
+      "llm_tldr_en": "PIER-Flow distills an MPC expert into a continuous-time rectified flow policy for real-time mobile robot navigation, addressing multimodality and inference speed.",
+      "llm_tldr_cn": "该论文提出PIER-Flow，一种用于移动机器人导航的轻量级策略，通过将MPC专家蒸馏为连续时间整流流模型，在保持多模态行为捕捉能力的同时实现实时推理。相比扩散策略的迭代去噪耗时，整流流推理更快。实验表明该方法在密集动态环境中优于行为克隆和扩散策略，提供了导航控制中扩散策略的高效替代方案。",
+      "llm_tldr": "该论文提出PIER-Flow，一种用于移动机器人导航的轻量级策略，通过将MPC专家蒸馏为连续时间整流流模型，在保持多模态行为捕捉能力的同时实现实时推理。相比扩散策略的迭代去噪耗时，整流流推理更快。实验表明该方法在密集动态环境中优于行为克隆和扩散策略，提供了导航控制中扩散策略的高效替代方案。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.12423v1",
+      "source": "arxiv",
+      "title": "Model-Based Diffusion Optimal Control for Multi-Robot Motion Planning",
+      "abstract": "Multi-Robot Motion Planning in continuous environments, where robots must generate dynamically feasible, collision-free trajectories, is challenging due to the combinatorial growth of the joint trajectory space and the difficulty of enforcing dynamic feasibility and hard safety constraints. Recent approaches recast trajectory planning as probabilistic inference, sampling from a posterior over trajectories using diffusion models whose score functions are learned from demonstration data. While showing promising performance, these approaches are limited: they often rely on sizable demonstration datasets and struggle to rigorously enforce dynamics and hard safety constraints during sampling. To this end, we introduce Model-Based Diffusion Optimal Control (MDOC), a model-based diffusion planner that efficiently produces dynamically feasible trajectories without relying on data. Crucially, we show that MDOC's safety mechanism -- combining known dynamics models with Control Barrier Function-constrained projections -- naturally scales to multi-robot planning settings through Conflict-Based Search. Across simulation experiments, this integrated method consistently outperforms representative baseline planners in sample efficiency, geometric smoothness, and success rate, while reducing computation time and producing collision-free trajectories.",
+      "authors": [
+        "Zhilin He",
+        "Yorai Shaoul",
+        "Jiaoyang Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-14T06:54:03+00:00",
+      "link": "https://arxiv.org/pdf/2607.12423v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "model-based diffusion optimal control for multi-robot motion planning",
+      "llm_evidence_cn": "基于模型的扩散最优控制用于多机器人运动规划",
+      "llm_evidence": "基于模型的扩散最优控制用于多机器人运动规划",
+      "canonical_evidence": "基于模型的扩散最优控制用于多机器人运动规划",
+      "llm_tldr_en": "Introduces Model-Based Diffusion Optimal Control (M) for multi-robot motion planning, using diffusion models learned from demonstrations with dynamics and safety constraints.",
+      "llm_tldr_cn": "多机器人运动规划面临组合爆炸和约束推理难题。现有扩散方法依赖大量演示且难以施加硬约束。本文提出基于模型的扩散最优控制，融合动力学模型和安全约束，实现从演示中采样可行轨迹。实验验证在复杂环境中生成高质量无碰撞轨迹。该方法扩展了扩散模型在规划中的应用。",
+      "llm_tldr": "多机器人运动规划面临组合爆炸和约束推理难题。现有扩散方法依赖大量演示且难以施加硬约束。本文提出基于模型的扩散最优控制，融合动力学模型和安全约束，实现从演示中采样可行轨迹。实验验证在复杂环境中生成高质量无碰撞轨迹。该方法扩展了扩散模型在规划中的应用。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.10369v1",
+      "source": "arxiv",
+      "title": "VINE: Taming Generative Control Policies for Reinforcement Learning",
+      "abstract": "Flow-matching policies have emerged as an effective policy parameterization for robot learning. They iteratively generate actions from noise, enabling highly expressive modeling of complex and multimodal action distributions. However, prior works observed that scaling these policies with value-gradient reinforcement learning (RL) often leads to training instability. Existing methods attribute this instability to iterative generation and therefore avoid end-to-end value-gradient optimization by sacrificing iterative generation, high expressiveness, or value-gradient optimization. Contrary to prior belief, we show the instability does not stem from iterative generation itself, but from the vanilla sampling strategy originally designed for behavior cloning, which becomes brittle under value-gradient RL. Motivated by this insight, we propose VINE, an RL-oriented sampling method that enables stable end-to-end value-gradient optimization for flow-matching policies. Instead of following a single flow trajectory, VINE reconstructs a new interpolation state at every denoising step, creating a stable differentiable path for value-gradient propagation while remaining compatible with the original flow-matching denoising process. As a result, VINE preserves the expressiveness and iterative generation of flow-matching without sacrificing end-to-end value-gradient optimization. Despite performing end-to-end backpropagation through all ten denoising steps, VINE achieves stable policy improvement and consistently outperforms state-of-the-art RL methods on the OGBench offline RL benchmark and real-world robotic manipulation task. Videos are available on our website: https://agibottech.github.io/vine.",
+      "authors": [
+        "Rushuai Yang",
+        "Zhuo Han",
+        "Houlin Li",
+        "Hecheng Wang",
+        "Zhichao Wu",
+        "Rui Zhang",
+        "Zhaowei Zhang",
+        "Zihong Chen",
+        "Xiaohan Yan",
+        "Chiming Liu",
+        "Yi Chen",
+        "Wei Shan",
+        "Maoqing Yao"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-11T15:45:12+00:00",
+      "link": "https://arxiv.org/pdf/2607.10369v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Generative control policies akin to diffusion policy for robot learning",
+      "llm_evidence_cn": "生成式控制策略（类似于扩散策略）用于机器人学习",
+      "llm_evidence": "生成式控制策略（类似于扩散策略）用于机器人学习",
+      "canonical_evidence": "生成式控制策略（类似于扩散策略）用于机器人学习",
+      "llm_tldr_en": "Finds that instability in value-gradient RL for flow-matching policies stems from sampling strategy, not iterative generation, and proposes corrections.",
+      "llm_tldr_cn": "流匹配策略作为机器人学习的有效参数化，但结合值梯度强化学习时训练不稳定。本文揭示不稳定性源于原始行为克隆的采样策略，而非迭代生成本身。提出改进的采样和训练方法，使流匹配策略能稳定地通过RL优化，保留其高表达力，为生成式策略在机器人强化学习中的应用提供了新理解。",
+      "llm_tldr": "流匹配策略作为机器人学习的有效参数化，但结合值梯度强化学习时训练不稳定。本文揭示不稳定性源于原始行为克隆的采样策略，而非迭代生成本身。提出改进的采样和训练方法，使流匹配策略能稳定地通过RL优化，保留其高表达力，为生成式策略在机器人强化学习中的应用提供了新理解。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.12892v1",
+      "source": "arxiv",
+      "title": "UR-VC: Unsupervised Robotic Value Correction for Time-Derived Progress Proxies",
+      "abstract": "Modern robot learning systems increasingly rely on dense progress or value signals to evaluate intermediate states, guide policy learning, and detect task completion, making the quality of these signals critical. Since such dense labels are rarely available at scale, normalized time within a demonstration is often used as a scalable substitute: later frames are treated as higher progress. However, this time-derived label is only a noisy proxy for physical task progress. In contact-rich manipulation, a robot may make progress and then lose it through slips, failed grasps, or partial undoing, while the time-derived label continues to increase monotonically. We introduce Unsupervised Robotic Value Correction (UR-VC), an offline, training-free method for correcting time-derived progress labels. UR-VC exploits a simple regularity in demonstration data: similar states often recur across different episodes, but at different timestamps. Instead of trusting the timestamp from a single trajectory, UR-VC retrieves similar states from other episodes and aggregates their time-derived labels to obtain a corrected progress estimate. UR-VC requires no manual progress labels, reward annotations, or additional value model. We evaluate UR-VC on real bimanual cloth flatten-and-fold data, a long-horizon deformable-object manipulation task with visible intermediate progress. The corrected labels capture local regressions and non-uniform progress that normalized time cannot represent, while preserving the overall task trend. We further use the corrected signal to construct advantage labels for VLA training, following recent advantage-conditioned policy learning. UR-VC shows a positive trend in real-robot task success under matched data, model, and training settings.",
+      "authors": [
+        "Lirui Zhao",
+        "Modi Shi",
+        "Li Chen",
+        "Qi Liu",
+        "Ping Luo",
+        "Hongyang Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-14T15:33:33+00:00",
+      "link": "https://arxiv.org/pdf/2607.12892v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "unsupervised value correction for robot learning from demonstrations",
+      "llm_evidence_cn": "用于机器人演示学习的无监督价值修正",
+      "llm_evidence": "用于机器人演示学习的无监督价值修正",
+      "canonical_evidence": "用于机器人演示学习的无监督价值修正",
+      "llm_tldr_en": "UR-VC corrects time-derived progress proxies offline for dense reward signals in contact-rich manipulation, improving policy learning without additional labels.",
+      "llm_tldr_cn": "UR-VC是一种无监督、无需训练的价值修正方法，针对接触丰富操作中时间进度代理的噪声问题，通过离线修正为密集奖励信号提供更准确的进度估计，从而提升机器人策略学习质量。该方法在无需额外标注的情况下，显著提高了进展检测和任务完成判断的可靠性。",
+      "llm_tldr": "UR-VC是一种无监督、无需训练的价值修正方法，针对接触丰富操作中时间进度代理的噪声问题，通过离线修正为密集奖励信号提供更准确的进度估计，从而提升机器人策略学习质量。该方法在无需额外标注的情况下，显著提高了进展检测和任务完成判断的可靠性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -1,0 +1,602 @@
+Title: PIER-Flow: Physics-Informed Efficient Rectified Flow for Real-Time Mobile Robot Navigation
+
+URL Source: https://arxiv.org/pdf/2607.10288v1
+
+Published Time: Tue, 14 Jul 2026 00:44:37 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+> 1
+
+# PIER-Flow: Physics-Informed Efficient Rectified Flow for Real-Time Mobile Robot Navigation 
+
+Shibo Li, Zhongcheng Wang, Jiahe Cao, Jianhua Yang, and Ke Wu 
+
+Abstract —Autonomous navigation in dense and highly dynamic environments requires both physically feasible control and low-latency replanning. Optimization-based methods such as Model Predictive Control (MPC) explicitly handle robot kinematics and safety constraints, but repeated nonlinear optimization can limit real-time responsiveness. Deterministic behavior-cloning policies enable efficient inference but may fail to represent multimodal avoidance behaviors, whereas diffusion policies capture multi-modality at the cost of time-consuming iterative denoising. We propose PIER-Flow (Physics-Informed Efficient Rectified Flow), a lightweight navigation policy for mobile robots. By distilling an MPC expert into a continuous-time Ordinary Differential Equation (ODE), PIER-Flow achieves single-step action gener-ation through parallel latent sampling and lightweight feasibility selection. We introduce a physics-informed training objective to enforce kinematic consistency, paired with an asynchronous action chunking architecture for robust sim-to-real deployment. Extensive simulations demonstrate that PIER-Flow achieves a 98.85% success rate and zero collisions, with an average inference of ∼1.29 ms, which accelerates planning by 37.2 × compared to MPC and over 800 × against standard diffusion models. Crucially, real-world deployment on a resource-constrained edge computer further achieves an approximately stable inference latency of ∼5.3 ms, avoiding the latency spikes and freezing events observed with planning baselines. 
+
+Index Terms —Collision Avoidance, Machine Learning for Robot Control, Reactive Planning, Generative Models, Rectified Flow. 
+
+I. I NTRODUCTION 
+
+Navigating a mobile robot safely through dense and dy-namic environments remains a fundamental challenge in robotics [1]–[3]. Model Predictive Control (MPC) addresses this problem by optimizing a finite-horizon trajectory sub-ject to robot kinematics and collision constraints, providing valuable look-ahead capability in complex interactions [4]– [6]. However, repeatedly solving a nonlinear program becomes increasingly expensive as the prediction horizon and obstacle count grow, while sensitivity to initialization may introduce variable convergence time and delayed control [7]. Control Barrier Function (CBF) quadratic programs provide a compu-tationally lighter alternative by minimally modifying a nominal command to enforce forward-invariance conditions [8], [9].         
+
+> Manuscript received: Month, Day, Year; Revised: Month, Day, Year; Accepted: Month, Day, Year. Shibo Li, Zhongcheng Wang, Jiahe Cao, and Jianhua Yang are with the School of Automation, Northwestern Polytechnical University, Xi’an, China (e-mail: lishibo97@mail.nwpu.edu.cn; wangzhongcheng@mail.nwpu.edu.cn; chelde@mail.nwpu.edu.cn; yangjianhua@nwpu.edu.cn). *(Corresponding au-thor: Jianhua Yang.)* Ke Wu is with the Department of Robotics, Mohamed bin Zayed University of Artificial Intelligence, Abu Dhabi SE45 05, United Arab Emirates (e-mail: ke.wu@mbzuai.ac.ae). Digital Object Identifier (DOI): see top of this page.
+
+Nevertheless, conventional CBF safety filters can be locally myopic and conservative, potentially causing excessive de-celeration, deadlocks, and freezing-like behaviors in cluttered environments [10], [11]. Behavior Cloning (BC) provides an efficient alternative by learning a direct observation-to-action policy from ex-pert demonstrations through supervised learning [12], [13]. Action-sequence prediction and action chunking further im-prove temporal consistency and reduce error accumulation [14]. However, explicit BC policies trained with pointwise regression losses typically learn deterministic and unimodal mappings. In ambiguous situations where several maneuvers are valid, such policies may average incompatible action modes [15]. Moreover, closed-loop execution exposes the policy to observations outside the expert distribution, causing covariate shift, compounding errors, and limited generalization to unseen interactions [16]. These limitations have motivated generative policies that explicitly model conditional action distributions. Diffuser for-mulates trajectory planning as iterative denoising [17], while Diffusion Policy generates observation-conditioned action se-quences and captures multimodal robot behaviors [18]. Condi-tional diffusion models have also shown strong performance in mobile navigation [19], [20], and recent work has learned dif-fusion controllers from optimization-based experts [21]. How-ever, diffusion inference requires multiple sequential neural-network evaluations. Physics-aware variants further increase this burden: SafeDiffuser introduces CBF-based guidance dur-ing reverse diffusion [22], whereas M2Diffuser applies differ-entiable optimization during denoising [23]. Although these methods improve safety and executability, iterative sampling and repeated correction conflict with the high-frequency, low-jitter requirements of edge-deployed chassis control. Flow Matching provides promising alternatives for reducing generative inference cost [24], [25]. In particular, Rectified Flow (RF) learns an approximately straight transport path from noise to data, allowing accurate generation with fewer inte-gration steps [26]. FlowMP introduces second-order motion information to improve trajectory smoothness and executabil-ity [27]. However, standard flow objectives primarily match demonstration distributions and do not inherently guarantee consistency with robot kinematics or safety constraints. Exist-ing constraint-aware approaches commonly rely on test-time barrier correction, numerical integration, or sampling-based MPC refinement [28]. Such online procedures may offset the efficiency advantages of flow-based generation on resource-constrained hardware. Motivated by this gap, we propose Physics-Informed Ef-ficient Rectified Flow (PIER-Flow), a lightweight generative arXiv:2607.10288v1 [cs.RO] 11 Jul 2026 2
+
+navigation framework that integrates finite-horizon decision making, multimodal behavior generation, real-time inference, and safety-aware execution. A differentiable robot kinematic rollout is embedded into the flow-matching objective, transfer-ring kinematic regularization from online correction to offline training. At inference, a single flow step generates multiple action-chunk candidates in parallel, while a lightweight fea-sibility selector evaluates their imminent execution segments against current obstacle observations. This complementary design improves kinematic and collision feasibility without gradient-based projection or online trajectory optimization. To-gether with a lightweight LiDAR adapter and asynchronous ac-tion chunking, PIER-Flow supports continuous high-frequency control on resource-constrained edge platforms. Our primary contributions are threefold: 1) We propose PIER-Flow, a lightweight generative navi-gation framework that unifies finite-horizon action gen-eration, multimodal decision making, real-time infer-ence, and safety-aware execution for mobile robots. By generating parallel action-chunk candidates through a single Rectified Flow step, it preserves look-ahead behavior while avoiding deterministic mode averaging and iterative diffusion sampling. 2) We introduce a physics-informed training objective based on differentiable kinematic rollout to improve kinematic consistency without online computational overhead. A lightweight feasibility selector further eval-uates the imminent execution horizon and rejects po-tentially unsafe candidates without iterative test-time optimization. 3) We design a complete edge-oriented deployment archi-tecture and conduct extensive simulation and physical evaluations. PIER-Flow achieves a 98.85% success rate with approximately ∼1.29 ms mean latency in simula-tion and maintains an approximately ∼5.3 ms inference latency on a computationally limited edge computer, substantially reducing the latency variation and freezing events observed with baselines. II. P ROBLEM FORMULATION 
+
+Let the system state be defined as xt =[px, p y , θ, v x, v y , ω ]T ∈ R6, and the control input as 
+
+ut = [ vcx, v cy , ω c]T ∈ R3. The discrete-time kinematics are 
+
+xt+1 = fkin (xt, ut). To navigate safely among K dynamic obstacles, we formulate the task as a finite-horizon non-linear programming (NLP) at each time step t:                                   
+
+> min
+> U,ϵ
+> N−1X
+> k=0
+> J(xk,uk) + JT(xN) + Wcol KX
+> j=1
+> NX
+> k=0
+> ϵ2
+> j,k (1a) s.t. xk+1 =fkin (xk,uk),
+> umin ≤uk≤umax ,
+> ∥pk−p(j)
+> obs,k ∥2+ϵj,k ≥(Rrob +R(j)
+> obs +dsaf e )2,ϵj,k ≥0,∀j∈ { 1, . . . , K }
+> (1b)
+
+where U = {u0, . . . , uN −1} is the optimized control se-quence, N is the horizon, pk is the Cartesian position, and 
+
+p(j) 
+
+> obs,k
+
+is the predicted position of obstacle j. Slack vari-ables ϵj,k ensure recursive feasibility. While solving this NLP problem guarantees theoretical safety and optimal topological behavior, computing the exact solution online in complex multi-obstacle scenarios is computationally prohibitive. The 
+
+O(N × K) complexity frequently leads to severe latency spikes, highlighting the critical need for a reactive, constant-time approximation. III. M ETHODOLOGY 
+
+As illustrated in Fig. 1, PIER-Flow consists of two stages: offline physics-informed training and online inference and control. An MPC expert first generates state-action chunks, from which PIER-Flow learns a multimodal action distribution regularized by differentiable kinematic rollout. Single-step parallel generation and lightweight feasibility selection provide action chunks to the high-frequency chassis controller. 
+
+A. State Representation and Expert Data Generation 
+
+We formulate local navigation as the conditional generation of a horizon-H body-frame velocity chunk. Given an obser-vation St ∈ R24 , the policy generates        
+
+> ˆAt= [ˆ ut, 0,ˆut, 1, . . . , ˆut,H −1]∈R3H,(2)
+
+where ˆut,h = [ vx, v y , ω ]T is the body-frame chassis command at prediction step h. We use H = 20 and ∆t = 0 .05 s, resulting in a 1.0 s predictive horizon. The egocentric observation is            
+
+> St=(sgoal t)T,(sego t)T,(o(1)
+> t)T, . . . , (o(K)
+> t)T,uT
+> t−1
+> T(3)
+
+Specifically, sgoal t = [dg , cos αg , sin αg ]T ∈ R3 repre-sents the polar coordinates of the relative goal, and sego t =[vx, v y , ω ]T ∈ R3 captures the ego-velocity. We track the 
+
+K = 3 most threatening obstacles, encoding each as o(j) 
+
+> t
+
+=[d(j) 
+
+> s
+
+, cos( α(j)), sin( α(j)), v (j)
+
+> x,rel
+
+, v (j)
+
+> y,rel
+
+]T ∈ R5. Dummy val-ues are padded when fewer than three obstacles are detected. 
+
+Short-term Intention Memory. Symmetric scenes may admit distinct valid behaviors, such as passing an obstacle from either side. Small observation perturbations can there-fore cause a generative policy to switch repeatedly between behavioral modes. To provide short-term intention memory and reduce such mode switching, we augment the current ob-servation with the previously executed command ut−1 ∈ R3.
+
+Expert Data Collection via MPC. To collect high-quality expert demonstrations, we employ an MPC solver [4] to resolve the optimal control problem defined in Eq. (1) across randomized dynamic environments. To improve gradient flow during neural network training, all velocity actions are nor-malized via an amplification scalar γscale . Only collision-free trajectories are recorded, yielding a dataset of optimal topological decisions where the expert action chunk is defined as Aexpert = [ uexpert  
+
+> 0
+
+, . . . , uexpert H−1 ] ∈ R3H .
+
+B. Lightweight Physics-Informed Rectified Flow Policy 
+
+We formulate local navigation as the conditional generation of expert velocity chunks. Let z1 ∼ γscale ·pexpert (Aexpert |St)
+
+denote the scaled expert chunk, and let z0 ∼ N (0, I) be the base noise. Rectified Flow constructs a straight transport path between the noise and the expert action:            
+
+> zτ= (1 −τ)z0+τz1,τ∼ U (0 ,1) ,(4) 3
+
+Simulation Environment 
+
+Data Generation 
+
+Expert MPC  expert 
+
+A
+
+> t
+
+S   
+
+> Expert Data
+> 0~( , ) z0 I 
+
+Gaussian noise 
+
+
+
+> θ
+
+A
+
+Velocity Network 
+
+> θ
+
+v
+
+Rectified Flow 
+
+Rectified Flow Training  Physics-Informed Loss 
+
+Flow-matching 
+
+Objective  flow 
+
+Differentiable Kinematic Engine ( )kin f state 
+
+Physical trajectory 
+
+X
+
+> expert
+
+X 
+
+> total flow phys state
+
+λ=+
+
+
+
+Offline Physics-Informed Training 
+
+Online  Inference & Control 
+
+Perception                    
+
+> Obstacle State Extraction
+> ()()()()(),(),cos( )sin( )
+> jsjjjtjx rel jy rel dvv
+> αα= 
+> o
+> ego t
+
+s
+
+> goal t
+
+s 
+
+> ()jt
+
+o 
+
+> 1t−
+
+u
+
+Target 
+
+Ego 
+
+velocity 
+
+Obstacle 
+
+features 
+
+History 
+
+actions 
+
+State Assembly & Inference  Feasibility-aware  Action Chunking 
+
+> Velocity Network
+> θ
+
+v
+
+> 0
+
+z A
+
+Single-step Euler 
+
+ODE Solver      
+
+> (1) (1) (1) (1) 0119
+
+ˆ ˆ ˆ ˆ[ , , , ]= …A u u u
+
+20-step action sequence  candidate 
+
+2E = 
+
+> 20Hz Low-level Controller
+> 10Hz Sensory Observation
+> expert
+
+A
+
+> t
+
+## S ⋮
+
+feasibility  cost  feas 
+
+> latent
+
+M         
+
+> ()()()()0119
+
+ˆ ˆ ˆ ˆ[ , , , ]M M M M
+
+= …A u u u
+
+⋮
+
+Fig. 1. Overview of the proposed Physics-Informed Efficient Rectified Flow (PIER-Flow) navigation framework. Offline physics-informed training: An MPC expert generates state-action sequences in simulated randomized dynamic environments. Rectified Flow constructs a straight transport path from Gaussian noise z0 to the scaled expert action chunk z1. The training objective combines an action-space flow-matching loss Lf low with a trajectory-level state loss 
+
+Lstate , where both the reconstructed action chunk and the expert chunk are propagated through the same differentiable kinematic rollout. Online inference and control: The current observation includes local obstacle features and the previously executed action. A single Euler step generates M action-chunk candidates from a fixed latent bank in parallel. A lightweight feasibility selector evaluates the imminent E execution steps, after which the selected commands are dispatched through an asynchronous command buffer to the high-frequency chassis controller. 
+
+whose target velocity is v∗ = z1 − z0. We train a conditional velocity field vθ (zτ , τ, St) using the flow-matching objective: 
+
+Lf low = E ∥vθ (zτ , τ, St) − (z1 − z0)∥22
+
+ . (5) 
+
+The velocity network vθ is a compact multi-layer per-ceptron (MLP) conditioned on both the noisy action and the current state. The flow time τ is embedded via a 64-dimensional Gaussian Fourier projection. The network input is [zτ , ϕ (τ ), St] ∈ R60+64+24 , and the main MLP contains three 1024-unit hidden layers with SiLU activations. The 60-dimensional output predicts the full H = 20 action chunk. This architecture contains approximately 2.32M parameters, ensuring suitability for onboard edge inference. To improve physical consistency, we augment the standard flow objective with a differentiable kinematic unrolling loss. For each sampled point on the PIER-Flow transport path, the model implies a predicted endpoint: 
+
+ˆz1 = zτ + (1 − τ )vθ (zτ , τ, St), ˆAθ = ˆ z1/γ scale . (6) 
+
+After reshaping ˆAθ into horizon-H commands [vx, v y , ω ]T,we unroll the omnidirectional kinematics from (x0, y 0, θ 0) = (0 , 0, 0) :
+
+xh+1 = xh + ( vx,h cos θh − vy,h sin θh)∆ t, (7a) 
+
+yh+1 = yh + ( vx,h sin θh + vy,h cos θh)∆ t, (7b) 
+
+θh+1 = θh + ωh∆t. (7c) 
+
+Let xh = [ˆ xh, ˆyh, ˆθh]T and xexpert h =[xexpert h , y expert h , θ expert h ]T. Starting from the same initial pose, Eq. (7) is recursively applied to the predicted commands in ˆAθ
+
+and the expert commands in Aexpert , respectively. This yields 
+
+ˆX1: H = [ˆ x1, . . . , ˆxH ] and Xexpert  
+
+> 1: H
+
+= [ xexpert  
+
+> 1
+
+, . . . , xexpert H ].The physics-informed state loss is calculated as: 
+
+Lstate = E
+
+"
+
+1
+
+H
+
+> H
+
+X
+
+> h=1
+
+ˆxh − xexpert h
+
+> 22
+
+#
+
+(8) 
+
+Ltotal = Lf low + λphys Lstate (9) 
+
+where λphys is an empirically selected weighting coefficient. The state loss acts as an inductive bias that penalizes the accumulated trajectory-level deviation between the predicted and expert actions under the robot kinematics. 
+
+C. Feasibility-aware Action Chunking 
+
+A critical challenge in deploying generative navigation policies on mobile platforms is the frequency mismatch be-tween the planning loop and the low-level chassis control. Let 
+
+fplan denote the frequency of sensory perception and neural inference, and fctrl denote the high-frequency requirement of the motor controller. To address this mismatch without reintroducing online trajectory optimization, we combine par-allel candidate generation, lightweight feasibility selection, and action chunking. 
+
+Parallel Latent Candidate Generation. Instead of drawing a single random sample or relying purely on the expected mean, we construct a parallel batch of M latent candidates during each replanning cycle: Z0 = [z(1) 0 , . . . , z(M )0 ]. To aggressively exploit the dominant deterministic mode while maintaining exploration, the first candidate is anchored at the noise mean ( z(1) 0 = 0). The remaining M − 1 candidates 40ms  100ms  200ms          
+
+> 0ms 100ms 200ms
+> Perception &
+> Inference
+> @10Hz
+> Generated
+> Trajectory
+> Horizon
+> Motor
+> Execution
+> @ 20Hz
+> 50ms 150ms
+> Perception
+> PIER-Flow Inference
+> 1.0 sec 1.0 sec
+> Predicted Future Trajectory (H=20) Predicted Future Trajectory (H=20)
+> Execution of Execution of Execution of Execution of
+> 0
+
+u 1u 1u0u 
+
+> E=2 E=2
+
+Fig. 2. Asynchronous timing diagram illustrating the action chunking strategy. The perception and PIER-Flow inference loop operates at 10 Hz, generating a 20-step predictive trajectory horizon ( H = 20 ). The low-level chassis controller sequentially executes the first two velocity commands ( E = 2 )at 20 Hz, ensuring continuous and smooth physical motion. 
+
+utilize fixed random seeds ( z(m)0 ∼ N (0, I) for m > 1) to provide topological diversity while preserving strict temporal consistency across consecutive sensory frames. By leveraging parallel computation, the PIER-Flow ODE 
+
+dzτ /dτ = vθ (zτ , τ, St) is solved using a fast, single-step Euler integration over the batch Z0. This simultaneously yields 
+
+M candidate trajectory chunks, { ˆA(1)  
+
+> t
+
+, . . . , ˆA(M ) 
+
+> t
+
+}, each cov-ering a horizon of H steps. 
+
+Lightweight Feasibility Selector. To select an executable chunk without invoking an online MPC solver, we introduce a lightweight feasibility selector. The execution engine calcu-lates the required execution steps E = fctrl /f plan . For each candidate chunk, only the imminent E execution steps are evaluated, since these commands will be executed before the next replanning cycle. The feasibility cost is defined as: 
+
+Cf eas ( ˆA) = 
+
+> E−1
+
+X
+
+> e=0
+
+
+
+cvel (ˆ ut,e ) + cyaw (ˆ ut,e ) + cobs (ˆ xt,e , Ot)
+
+
+
+(10) 
+
+where cvel and cyaw heavily penalize violations of the pre-defined chassis velocity and angular limits, and cobs penalizes intrusion into the inflated safety margins of perceived dynamic obstacles ( Ot). The selected action chunk is then obtained by ˆA∗ 
+
+> t
+
+=arg min m∈{ 1,...,M } Cf eas ( ˆA(m) 
+
+> t
+
+). This selector screens poten-tially unsafe candidates over the imminent execution horizon. 
+
+Asynchronous Action Chunking. Finally, the low-level controller sequentially executes the first E velocity commands of ˆA∗ 
+
+> t
+
+at frequency fctrl . At the next planning cycle, a new action chunk is generated and selected based on the updated observation. For instance, illustrated in Fig. 2, given an inference loop of 10 Hz and a motor control loop of 20 Hz, the execution ratio is 
+
+E = 2 . The action chunking mechanism bridges the planning-control frequency gap by providing continuous high-frequency commands derived from the selected generative action chunk. IV. S IMULATION EXPERIMENTS 
+
+To rigorously evaluate the proposed PIER-Flow navigation policy, we conduct extensive simulations in a highly dynamic multi-obstacle environment. We compare our approach against learning-based and optimization-based baselines. 
+
+A. Expert Data Generation and Training Setup 
+
+To generate the expert demonstrations, we employ the MPC controller in a custom mecanum-wheel robot simulator (∆t = 0 .05 s). Each training episode initializes the robot near the origin with a randomized position ( ±0.2 m) and randomized initial body-frame velocities to expose the policy to nonzero transient states. The goal is fixed at (3 .0, 3.0) mwith a constant heading of π/ 4. The environment features three circular dynamic obstacles placed along the start-goal corridor. These obstacles are assigned lateral offsets and move perpendicularly to the nominal path with random speeds up to 
+
+1.0 m/s. At every control step, the MPC solves a horizon-20 local planning problem with velocity bounds of ±1.0 m/s on vx
+
+and vy , zero commanded yaw rate, and a safety margin of 
+
+0.2 m around each obstacle. To improve policy robustness, occasional safe state perturbations are injected during data collection; perturbations that would place the robot inside an inflated obstacle boundary are rejected. Retaining only suc-cessful, collision-free MPC episodes yields 2000 expert roll-outs, comprising exactly 166,599 supervised samples. These collected training scenarios are stored separately from the evaluation set. During PIER-Flow training, expert actions are scaled by 
+
+γscale = 10 to improve gradient flow and unscaled post-inference. The dataset is split into 90% training and 10% validation subsets. The velocity network is trained using the Adam optimizer. The final PIER-Flow model utilizes the physics-informed loss empirically weighted at λphys = 10 .
+
+B. Comparative Analysis 
+
+We benchmark our method against five baselines over 2000 randomized evaluation cases: 1) MPC: The expert non-linear predictive controller [4]; 2) CBF: A reactive Control Bar-rier Function method [9]; 3) BC-MLP: A standard Behavior Cloning MLP trained via pure regression [13]; 4) DDPM: A standard diffusion policy using 100 denoising steps [18]; 5) DDIM: An accelerated diffusion policy using 8 denoising steps [18]. To ensure a fair comparison, both learning-based base-lines (BC-MLP, DDPM and DDIM) are trained on the exact same expert demonstration dataset as our proposed PIER-Flow policy, sharing identical state-action representations. For our PIER-Flow online inference, we set the number of parallel can-didates to M = 2 (the noise mean and one fixed-seed latent) to balance topological diversity with ultra-low computational overhead. The simulated benchmarking was conducted on a workstation equipped with an NVIDIA GeForce RTX 3090 GPU. The quantitative results are summarized in Table I. MPC 
+
+> CBF
+> BC-MLP
+> DDPM
+> DDIM
+> Ours
+> 80.0
+> 82.5
+> 85.0
+> 87.5
+> 90.0
+> 92.5
+> 95.0
+> 97.5
+> 100.0
+> Success rate (%)
+> Success
+> MPC
+> CBF
+> BC-MLP
+> DDPM
+> DDIM
+> Ours
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> Mean latency (ms, log)
+> Planner Latency
+
+Fig. 3. Comparison of success rates and inference latency (log-scale). 
+
+As shown in Table I, our proposed PIER-Flow achieves the highest success rate (98.85%) and strictly maintains zero colli-5                                                     
+
+> TABLE I QUANTITATIVE COMPARISON ON THE MULTI -O BSTACLE DYNAMIC NAVIGATION BENCHMARK
+> Method Success (%) ↑Collision (%) ↓Timeout (%) ↓Min Clearance (m) ↑Mean Latency (ms) ↓P95 Latency (ms) ↓
+> MPC 97.45 0.00 2.55 0.206 48.01 52.24 CBF 87.15 0.00 12.85 0.309 0.18 0.18
+> BC-MLP 98.20 0.30 1.50 0.202 0.54 0.55 DDPM 97.80 1.35 0.85 0.189 1077.24 1081.10 DDIM 97.85 1.40 0.75 0.189 84.73 85.41
+> Ours 98.85 0.00 1.15 0.201 1.29 1.40
+
+sions, successfully distilling the safety guarantees of the expert MPC. While the purely regression-based BC-MLP achieves faster neural inference (0.54 ms), it incurs a 0.30% collision rate. This highlights the inherent limitation of standard be-havior cloning: it struggles to capture the multi-modal nature of expert demonstrations. DDIM and DDPM similarly exhibit higher collision rates in this benchmark, indicating potential vulnerabilities in highly cluttered scenarios. The purely reac-tive CBF achieves the absolute lowest inference time (0.18 ms) but suffers from a significant timeout rate (12.85%). Lacking long-horizon foresight, the CBF aggressively decelerates to maintain strict safety invariants when confronted with dense dynamic obstacles, thereby triggering the classic “freezing robot” problem. Crucially, the proposed PIER-Flow policy resolves the com-putation bottleneck inherent to robust generative navigation models. As illustrated by the quantitative results, PIER-Flow completes batch inference and feasibility selection in merely 1.29 ms on average, running approximately 37.2 × faster than the MPC solver, 65.7 × faster than DDIM, and over 800 ×
+
+faster than standard DDPM. While marginally slower than the naive BC-MLP, this near-millisecond execution provides collision safety and topological diversity, making the policy highly suitable for integration into high-frequency embedded real-time control loops. 
+
+C. Ablation Studies 1) Effect of Integration Sampling Steps: Generative models typically face a fundamental trade-off between sample quality and inference speed, dictated by the number of integration steps. We analyze this trade-off for our trained PIER-Flow policy in Fig. 4. Counter-intuitively, increasing the number of solver steps does not yield better navigation performance. The single-step solver not only achieves the fastest inference but also strictly dominates in success rate and safety. This strongly validates our design choice: the straight-line probability paths learned by the flow-matching objective enable the policy to jump directly from the noise distribution to the expert action distribution in a single robust step. 
+
+2) Impact of the Physics-Informed Loss: To evaluate the contribution of the physics-guided training objective, we com-pare the full PIER-Flow pipeline against an action-only RF baseline trained exclusively on regression loss. While the action-only baseline already demonstrates strong imitation capabilities, integrating the differentiable kinematic constraints further improves the success rate and reduces 2.5 5.0 7.5 10.0 12.5 15.0 17.5 20.0             
+
+> Sampling steps
+> 98.0
+> 98.2
+> 98.4
+> 98.6
+> 98.8
+> 99.0
+> Success rate (%)
+> Sampling Step Ablation
+> Success
+> Latency
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> Mean latency (ms)
+> Fig. 4. Impact of integration steps on navigation success rate and inference latency. TABLE II ABLATION ON PHYSICS -I NFORMED TRAINING
+> Variant Success (%) Collision (%) Timeout (%)
+> Action-only RF 98.10 0.10 1.80
+> Ours 98.85 0.00 1.15
+
+collisions and timeouts (Table II). More importantly, rather than pursuing a dramatic numerical gain in pure simulation, the primary role of the physics-informed loss is to serve as an inductive bias. It strictly penalizes dynamically infeasible trajectory predictions during training, yielding actions that respect chassis mobility limits. This kinematic consistency drastically minimizes the sim-to-real gap, ensuring the policy’s safe deployability on physical mobile robots. V. H ARDWARE VALIDATION AND REAL -W ORLD 
+
+EXPERIMENTS 
+
+To validate the sim-to-real transferability and the real-time execution capabilities of the proposed PIER-Flow policy, we deployed our algorithm on a physical omnidirectional mobile robot. 
+
+A. Hardware Setup and System Implementation 
+
+The physical experiments were conducted on a ROSMAS-TER X3 mobile robot equipped with mecanum wheels. For environmental perception, the robot utilizes a high-frequency RPLIDAR-S2, providing continuous 2D point cloud scans. All computations, including perception, state estimation, and neural network inference, are executed entirely onboard using an NVIDIA Jetson Orin Nano edge computer running the ROS2 framework. 6
+
+Real-time Perception Pipeline. To bridge the reality gap between simulation states and physical LiDAR data, we imple-mented a lightweight onboard tracking module. Raw LiDAR scans are truncated to a valid range of 0.25 m to 3.0 m and transformed into the robot’s odometry frame. We apply a Non-Maximum Suppression (NMS) [29] clustering algorithm with a spatial threshold of 0.5 m to isolate distinct physical entities. To estimate the velocity of dynamic obstacles, a temporal matching filter is applied across consecutive frames, utiliz-ing an exponential moving average to smooth instantaneous velocity vectors. 
+
+Action Chunking Execution. Operating generative models on edge hardware demands rigorous timing management. Our PIER-Flow model infers a future trajectory of 20 velocity com-mands ( ∆t = 0 .05 s). To adhere to the real-time constraints, we set the parallel generation batch size to M = 2 . We employ the action chunking strategy, in which the low-level chassis controller sequentially executes the first E = 2 steps of the predicted chunk at a control rate of 20 Hz, thereby masking the neural network’s inference latency before the next LiDAR frame triggers the replanning cycle. 
+
+B. Evaluation Scenarios and Baselines 
+
+We established four distinct physical testing scenarios to progressively stress-test the navigation algorithms: 1) Single Static , 2) Multi Static , 3) Single Dynamic , and 4) Multi Dynamic .We compared our PIER-Flow method against three base-lines: the expert MPC [4], a reactive CBF [9], and a DDIM [18]. The standard DDPM [18] was explicitly excluded from hardware evaluation, as its prolonged multi-step inference fundamentally violates the control loop constraints of physical mobile platforms. Furthermore, BC-MLP [13] was also ex-cluded from physical deployment because it struggles to cap-ture the multimodal characteristics of expert demonstrations, making it ill-suited for complex obstacle avoidance scenarios. 
+
+C. Real-World Performance and Behavioral Analysis 
+
+The quantitative performance across all real-world scenarios is summarized in Table III, while the latency distribution and trajectory behaviors are visualized in Figs. 5 and 6. Overall, PIER-Flow succeeds in all four scenarios and maintains a stable onboard inference latency of 5.3 ms, with the maximum latency bounded by 6.65 ms. In contrast, the baselines expose different failure modes: MPC suffers from latency spikes, CBF exhibits conservative freezing-like behavior, and DDIM is too slow for real-time physical deployment. 
+
+Latency Stability and Real-world Failures. The onboard latency distributions explain the performance gap between simulation and physical deployment. DDIM consistently re-quires nearly 700 ms per inference step on the edge computer, making the robot unable to react to dynamic changes in time. As a result, DDIM fails in all real-world scenarios and must be manually terminated. Although MPC serves as a strong optimization-based expert in simulation, its nonlinear solver exhibits a long-tail latency distribution on onboard hardware. In the most complex Multi Dynamic scenario, the maximum MPC latency reaches 454.53 ms. Such computational dead time forces the robot to execute outdated commands while the environment continues to evolve, leading to collisions in three out of the four real-world scenarios. In comparison, PIER-Flow shows a near-vertical latency CDF in Fig. 5, indicating highly predictable and low-jitter onboard computation. 10 1 10 2 10 3 
+
+> Per-planning-call latency (ms, log)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> CDF
+> Onboard Latency Distribution
+> Ours
+> MPC
+> CBF
+> DDIM
+> Fig. 5. Per-step Latency CDF recorded during physical deployment. Our PIER-Flow policy exhibits a near-vertical, deterministic timing profile.
+
+Conservativeness and Freezing Behavior. CBF achieves the lowest latency because it solves only a lightweight reac-tive QP. However, this low computational cost comes at the expense of overly conservative behavior. When an obstacle blocks the direct path to the goal, CBF tends to decelerate aggressively to maintain safety invariance, which may cause the robot to remain nearly stationary. For example, in the Single Static scenario, CBF requires 12.27 s to complete the task, nearly twice the time of PIER-Flow, which finishes in 6.57 s. 
+
+Trajectory Visualization and Analysis. The recorded tra-jectories in Fig. 6 and the deployment snapshots in Fig. 7 further illustrate the behavioral differences. When confronted with suddenly appearing dynamic obstacles, PIER-Flow gen-erates smooth evasive maneuvers and maintains a non-zero velocity profile until reaching the goal. This behavior results from finite-horizon action-chunk generation, multimodal can-didate sampling, and lightweight feasibility selection. By con-trast, MPC may fail when solver latency becomes excessive, CBF may stop or slow down under frontal blockage, and DDIM cannot produce timely commands due to its multi-step denoising process. VI. C ONCLUSION 
+
+In this paper, we presented PIER-Flow, a lightweight gener-ative navigation framework that combines multimodal action generation, kinematic consistency, and low-latency execution for mobile robots. Trained on state-action sequences gen-erated by an MPC expert, PIER-Flow formulates action-chunk generation as a rectified-flow problem and produces parallel candidates through a single ODE integration step. A differentiable kinematic rollout is incorporated into the training objective to promote physically consistent actions. Together with lightweight feasibility selection and asynchronous action chunking, the proposed framework maintains continuous high-7
+
+TABLE III OVERALL REAL -R OBOT EXPERIMENTAL RESULTS ON THE ROSMASTER X3 
+
+Scenario Method Outcome Time (s) ↓ Path (m) Mean Latency (ms) ↓ Max Latency (ms) ↓
+
+Single Static MPC Success 7.02 5.08 69.22 108.78 CBF Success 12.27 4.73 3.27 3.75 
+
+DDIM Fail - - 692.10 863.00 
+
+Ours Success 6.57 4.83 5.32 6.65 Multi Static MPC Collision 9.22 5.71 80.98 194.10 CBF Success 9.78 4.51 3.36 3.82 
+
+DDIM Fail - - 691.51 784.20 
+
+Ours Success 7.22 4.98 5.33 6.01 Single Dynamic MPC Collision 6.18 4.26 74.45 162.03 CBF Success 7.20 4.27 3.27 3.94 
+
+DDIM Fail - - 693.00 841.50 
+
+Ours Success 6.71 4.83 5.35 6.46 Multi Dynamic MPC Collision 12.88 7.33 85.10 454.53 CBF Success 8.98 5.04 3.39 4.20 
+
+DDIM Fail - - 694.94 846.50 
+
+Ours Success 8.46 5.87 5.36 6.53 0     
+
+> 1
+> 2
+> 3
+> 4
+> Relative X (m)
+> Single Static Multi Static
+> -2 -1 012
+> Relative Y (m)
+> 0
+> 1
+> 2
+> 3
+> 4
+> Relative X (m)
+> Single Dynamic
+> -2 -1 012
+> Relative Y (m)
+> Multi Dynamic
+> MPC CBF Ours Start Goal
+
+Fig. 6. Trajectory visualization for Ours, MPC, and CBF across the four evaluation scenarios. 
+
+frequency chassis control despite the mismatch between per-ception, inference, and control rates. Extensive evaluations in both simulation and physical edge deployments demonstrated that PIER-Flow consistently out-performs optimization-based methods and traditional diffusion baselines. By maintaining a highly deterministic latency of 
+
+∼5.3 ms on an onboard GPU, PIER-Flow eliminates the computational latency spikes, as well as the short-sighted “freezing” behaviors. Future work will explore extending the PIER-Flow framework to incorporate vision-based end-to-end perception and scaling the policy for multi-agent decentralized navigation in unstructured environments. REFERENCES [1] H. Kretzschmar, M. Spies, C. Sprunk, and W. Burgard, “Socially compliant mobile robot navigation via inverse reinforcement learning,” 
+
+The International Journal of Robotics Research , vol. 35, no. 11, pp. 1289–1307, 2016. [2] D. Fox, W. Burgard, and S. Thrun, “The dynamic window approach to collision avoidance,” IEEE robotics & automation magazine , vol. 4, no. 1, pp. 23–33, 1997. [3] S. Nahavandi, R. Alizadehsani, D. Nahavandi, S. Mohamed, N. Moha-jer, M. Rokonuzzaman, and I. Hossain, “A comprehensive review on autonomous navigation,” ACM Computing Surveys , vol. 57, no. 9, pp. 1–67, 2025. [4] F. Borrelli, A. Bemporad, and M. Morari, Predictive control for linear and hybrid systems . Cambridge University Press, 2017. [5] B. Brito, M. Everett, J. P. How, and J. Alonso-Mora, “Where to go next: Learning a subgoal recommendation policy for navigation in dynamic environments,” IEEE Robotics and Automation Letters , vol. 6, no. 3, pp. 4616–4623, 2021. [6] B. Brito, B. Floor, L. Ferranti, and J. Alonso-Mora, “Model predictive contouring control for collision avoidance in unstructured dynamic environments,” IEEE Robotics and Automation Letters , vol. 4, no. 4, pp. 4459–4466, 2019. [7] L. Cleac’h, M. Schwager, Z. Manchester et al. , “Algames: A fast solver for constrained dynamic games,” in Robotics: Science and Systems (RSS) , 2020. [8] A. D. Ames, S. Coogan, M. Egerstedt, G. Notomista, K. Sreenath, and P. Tabuada, “Control barrier functions: Theory and applications,” pp. 3420–3431, 2019. [9] D. Morton and M. Pavone, “Safe, task-consistent manipulation with operational space control barrier functions,” in 2025 IEEE/RSJ Inter-national Conference on Intelligent Robots and Systems (IROS) . IEEE, 2025, pp. 187–194. [10] S. Keyumarsi, M. W. S. Atman, and A. Gusrialdi, “Circulation-embedded control barrier function for safe navigation: A solution to avoid undesired equilibria and dysfunctional circulation,” Robotics and Autonomous Systems , p. 105132, 2025. [11] P. Trautman and A. Krause, “Unfreezing the robot: Navigation in dense, interacting crowds,” pp. 797–803, 2010. 8Ours 
+
+MPC 
+
+CBF 
+
+DDIM 
+
+Freezing Robot 
+
+Sequential Physical Deployment Snapshots 
+
+# t
+
+Fig. 7. Real-world deployment snapshots in the Multi Dynamic scenario (corresponding to the trajectories in Fig. 6). Red arrows indicate the robot’s instantaneous velocity direction. [12] P. Florence, C. Lynch, A. Zeng, O. A. Ramirez, A. Wahid, L. Downs, A. Wong, J. Lee, I. Mordatch, and J. Tompson, “Implicit behavioral cloning,” in Conference on robot learning . PMLR, 2022, pp. 158–168. [13] A. Mandlekar, D. Xu, J. Wong, S. Nasiriany, C. Wang, R. Kulkarni, L. Fei-Fei, S. Savarese, Y. Zhu, and R. Mart´ ın-Mart´ ın, “What matters in learning from offline human demonstrations for robot manipulation,” 
+
+arXiv preprint arXiv:2108.03298 , 2021. [14] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn, “Learning fine-grained bimanual manipulation with low-cost hardware,” in Robotics: Science and Systems (RSS) , 2023. [15] N. M. Shafiullah, Z. Cui, A. A. Altanzaya, and L. Pinto, “Behavior transformers: Cloning k modes with one stone,” Advances in neural information processing systems , vol. 35, pp. 22 955–22 968, 2022. [16] S. Ross, G. Gordon, and D. Bagnell, “A reduction of imitation learning and structured prediction to no-regret online learning,” in Proceedings of the fourteenth international conference on artificial intelligence and statistics . JMLR Workshop and Conference Proceedings, 2011, pp. 627–635. [17] M. Janner, Y. Du, J. Tenenbaum, and S. Levine, “Planning with diffusion for flexible behavior synthesis,” in International Conference on Machine Learning . PMLR, 2022, pp. 9902–9915. [18] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” The International Journal of Robotics Research , vol. 44, no. 10-11, pp. 1684–1704, 2025. [19] A. Sridhar, D. Shah, C. Glossop, and S. Levine, “Nomad: Goal masked diffusion policies for navigation and exploration,” in 2024 IEEE Inter-national Conference on Robotics and Automation (ICRA) . IEEE, 2024, pp. 63–70. [20] W. Yu, J. Peng, H. Yang, J. Zhang, Y. Duan, J. Ji, and Y. Zhang, “Ldp: A local diffusion planner for efficient robot navigation and collision avoidance,” in 2024 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . IEEE, 2024, pp. 5466–5472. [21] A. Marquez Julbe et al. , “Diffusion-based approximate model pre-dictive control for high-frequency robot control,” arXiv preprint arXiv:2508.01192 , 2025. [22] W. Xiao, T.-H. Wang, C. Gan, R. Hasani, M. Lechner, and D. Rus, “Safediffuser: Safe planning with diffusion probabilistic models,” in 
+
+International Conference on Learning Representations (ICLR) , 2023. [23] X. Yan et al. , “M2diffuser: Scene-conditioned diffusion models for mobile manipulation with differentiable optimization,” arXiv preprint arXiv:2504.04603 , 2025. [24] Z. Ding and C. Jin, “Consistency models as a rich and efficient policy class for reinforcement learning,” in International Conference on Learning Representations , vol. 2024, 2024, pp. 53 047–53 066. [25] Y. Lipman, R. T. Chen, H. Ben-Hamu, M. Nickel, and M. Le, “Flow matching for generative modeling,” arXiv preprint arXiv:2210.02747 ,2022. [26] X. Liu, C. Gong, and Q. Liu, “Flow straight and fast: Learning to gen-erate and transfer data with rectified flow,” in International Conference on Learning Representations (ICLR) , 2023. [27] T. Nguyen et al. , “Flowmp: Flow matching for motion planning,” arXiv preprint arXiv:2503.06135 , 2025. [28] K. Mizuta and K. Leung, “Unified generation-refinement planning via conditional flow matching and model predictive path integral control,” 
+
+arXiv preprint arXiv:2410.11402 , 2025. [29] A. Neubeck and L. Van Gool, “Efficient non-maximum suppression,” in 
+
+18th international conference on pattern recognition (ICPR’06) , vol. 3. IEEE, 2006, pp. 850–855.

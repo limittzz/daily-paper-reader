@@ -1,0 +1,2693 @@
+Title: VINE: Taming Generative Control Policies for Reinforcement Learning
+
+URL Source: https://arxiv.org/pdf/2607.10369v1
+
+Published Time: Tue, 14 Jul 2026 00:50:40 GMT
+
+Number of Pages: 20
+
+Markdown Content:
+# VINE: Taming Generative Control Policies for Reinforcement Learning 
+
+Rushuai Yang 1,2 Zhuo Han 1 Houlin Li 1 Hecheng Wang 1
+
+Zhichao Wu 1 Rui Zhang 1 Zhaowei Zhang 3 Zihong Chen 1
+
+Xiaohan Yan 1 Chiming Liu 1,† Yi Chen 2 Wei Shan 1,† Maoqing Yao 1,† 1AgiBot 2The Hong Kong University of Science and Technology 3Peking University 
+
+> †
+
+Corresponding Author 
+
+Abstract: Flow-matching policies have emerged as an effective policy param-eterization for robot learning. They iteratively generate actions from noise, en-abling highly expressive modeling of complex and multimodal action distribu-tions. However, prior works observed that scaling these policies with value-gradient reinforcement learning (RL) often leads to training instability. Exist-ing methods attribute this instability to iterative generation and therefore avoid end-to-end value-gradient optimization by sacrificing iterative generation, high expressiveness, or value-gradient optimization. Contrary to prior belief, we show the instability does not stem from iterative generation itself, but from the vanilla sampling strategy originally designed for behavior cloning, which becomes brit-tle under value-gradient RL. Motivated by this insight, we propose VINE, an RL-oriented sampling method that enables stable end-to-end value-gradient opti-mization for flow-matching policies. Instead of following a single flow trajectory, VINE reconstructs a new interpolation state at every denoising step, creating a stable differentiable path for value-gradient propagation while remaining com-patible with the original flow-matching denoising process. As a result, VINE preserves the expressiveness and iterative generation of flow-matching without sacrificing end-to-end value-gradient optimization. Despite performing end-to-end backpropagation through all ten denoising steps, VINE achieves stable pol-icy improvement and consistently outperforms state-of-the-art RL methods on the OGBench offline RL benchmark and real-world robotic manipulation task. Videos are available on our website: https://agibottech.github.io/vine. Behavior Flow Policy Backprop Through Time 
+
+> !
+
+!
+
+> !
+
+!
+
+> !
+
+!
+
+> !
+
+"
+
+! " #! " # 
+
+> !
+
+! 
+
+> High Q
+> Low Q Low Q
+> !
+
+!
+
+> !
+
+"
+
+VINE (Ours) 
+
+! " #! " # 
+
+> High Q !
+
+!
+
+> !
+
+"
+
+> !
+
+!
+
+> !!
+> !
+> "#
+> "#
+> +
+> !
+
+! !!
+
+> !
+
+" !" !"             
+
+> !" # $!"# $ % !
+> !" # $!"# $ % !
+> !" # $!"# $ % !
+> !" # $!"# $ % !
+> !!
+> !
+> "#
+> "#
+> +
+> Ideal Sampling path Drifted BPTT path Correct path Gradient chain Q-gradient direction
+
+Figure 1: Left: A flow policy trained by behavior cloning fits the multi-modal data distribution. 
+
+Middle: Directly backpropagating the critic gradient through the denoising steps (value BPTT) destabilizes the trajectory. Right: VINE produces a stable denoising trajectory that supports value-gradient BPTT toward a1.arXiv:2607.10369v1 [cs.RO] 11 Jul 2026 1 Introduction 
+
+In robotic learning, generative control policies such as diffusion and flow-matching models have achieved remarkable success for behavior cloning in a wide range of manipulation and control tasks [1, 2, 3, 4]. In general, they start from randomly sampled noise, and iteratively refine the noise using a learned velocity or score field until an executable action is produced. By combining structured noise injection with iterative refinement, these policies can represent complex and mul-timodal action distributions with substantially greater expressive power than conventional policy parameterizations [2]. Because human demonstrations are not always optimal and do not directly align with reward maximization, prior work has begun to further improve these generative control policies with reinforcement learning [5, 6, 7, 8, 9, 10]. In this paradigm, the policy is trained to max-imize expected returns, using a learned value function to estimate future returns as the optimization signal. Yet prior work has found that such approaches suffer from severe training instability when value-gradient optimization is applied to highly expressive generative policies [11, 12, 13, 14, 15]. To mitigate this problem, existing work generally attributes this instability to the iterative generation process, and therefore avoids propagating value gradients through the full denoising trajectory [16, 17]. Specifically, prior methods typically adopt one of three strategies: (1) freezing the parameters of the generative control policy and using external guidance signals to steer the denoising dynamics [14, 18, 15, 12, 19]; (2) using (residual) Gaussian policy or distilling multi-step iterative generation into a one-step policy [13, 20]; and (3) discarding the critic’s action gradient entirely and using scalar value estimates as weighting signals only [21, 22, 23]. While these approaches improve training stability, they all introduce fundamental compromises. Strategy (1) sacrifices expressiveness. It does not fully utilize representational capacity of generative model and the learnable component used for RL is restricted. Strategy (2) removes iterative generation, despite iterative refinement being widely recognized as a key advantage of generative policies. Strategy (3) sacrifices value-gradient optimization, which is generally regarded as more efficient [13, 24]. In essence, existing methods often lead to suboptimal performance without addressing challenge arising from the combination of high expressiveness, iterative generation, and value-gradient optimization in reinforcement learning for generative control policies [20, 25]. In this paper, we revisit the source of training instability in reinforcement learning for generative control policies. We identify one important bottleneck as the noise sampling process, which is poorly aligned with the optimization dynamics of reinforcement learning. Existing noise sampling strategies are primarily designed for behavior cloning. They aim to reconstruct a fixed action distri-bution, with expressiveness mainly reflected in how well noise can be denoised into a static, often multimodal, data distribution [2]. While this design is highly effective for supervised distribution modeling, reinforcement learning requires more than reconstructing a fixed distribution. During RL fine-tuning, the policy is repeatedly optimized through value queries from a learned critic, whose gradients encourage the policy to shift probability mass toward higher-value actions [12, 26]. This requires the iterative sampling process to transition smoothly among different high-value modes rather than simply reproduce the behavior distribution. A sampling process designed for static mul-timodal reconstruction is therefore forced to support a dynamic, value-driven mode-shifting pro-cess, creating the instability observed in value-gradient fine-tuning. This observation motivates a reinforcement-learning-oriented redesign of the sampling process. Our primary contribution is an RL-oriented sampling method, which we call VINE, for fine-tuning generative control policies with end-to-end value gradients while simultaneously preserving their ex-pressive iterative sampling structure. VINE replaces the standard single-noise flow trajectory with a sequence of reconstructed interpolation states and intermediate noise injection, providing a stable differentiable path for value-gradient backpropagation through the sampler. Our analysis shows that this reconstruction keeps every network query compatible with the original flow-matching training semantics. As a result, VINE can be applied to pretrained flow-matching policies by modifying only the sampler implementation. Empirically, we evaluate VINE on challenging offline RL bench-marks and real-world control task, where it achieves state-of-the-art performance while improving the robustness of value-gradient fine-tuning. 2Figure 2: Toy simulation of probability paths induced by different samplers under behavior cloning and offline value-gradient fine-tuning. Left: Under behavior cloning, all samplers re-cover the multimodal data distribution, but Euler trajectories form isolated petal-like paths, DDPM explores broadly with noisy endpoints, and VINE provides structured exploration and broader state coverage. Right: After assigning different rewards ( R) to the clusters and fine-tuning with value gradients, standard diffusion and Euler flow-matching samplers are prone to persistent directional errors, whereas VINE enables later refinement steps to correct early deviations and steer the trajec-tory toward high-value action regions. 
+
+2 Preliminaries 
+
+2.1 Reinforcement Learning and Actor-Critic Training 
+
+We consider a Markov Decision Process M = ( S, A, P, γ, R, μ ), where S is the state space, 
+
+A = Rd is the continuous action space, P : S × A → ∆( S) is the transition function, γ ∈ [0 , 1) 
+
+is the discount factor, R : S × A → R is the reward function, and μ ∈ ∆( S) is the initial state distribution. We denote by D = {(si, a i, r i, s ′
+
+> i
+
+)}|D|  
+
+> i=1
+
+the data buffer used for actor-critic training. In offline RL, D is fixed and pre-collected; in online RL, D is a replay buffer that is continually expanded through environment interaction. The goal is to learn a policy πθ : S → ∆( A) that max-imizes the expected discounted return J(πθ ) = E P ∞ 
+
+> k=0
+
+γkR(sk, a k). To optimize this objective from sampled transitions in D, prior work commonly adopts behavior-regularized actor-critic frame-works [27, 28, 29]. These methods are simple to implement yet empirically strong, and have been shown to achieve competitive performance on standard offline RL benchmarks [29, 30, 31, 13]. A minimalist instantiation minimizes the following critic and actor losses: 
+
+Lcritic (ϕ) = E(s,a,r,s ′)∼D 
+
+h Qϕ(s, a ) − r − γQ ¯ϕ(s′, π θ (s′)) 2i
+
+, (1) 
+
+Lactor (θ) = −Es∼D [Qϕ(s, π θ (s))] + α E(s,a )∼D F (a, π θ (s)) , (2) where Qϕ is the critic parameterized by ϕ, which estimates the expected return of taking action 
+
+a in state s, and Q ¯ϕ is the corresponding target critic used for stable bootstrapping. The function 
+
+F (a, π θ (s)) measures the discrepancy between the dataset action a and the policy action πθ (s);The actor loss maximizes the critic-estimated value of the policy action, regularized by a behavior-cloning penalty that limits deviation from the dataset action. Its optimization requires differentiating through the policy πθ , allowing the critic’s action gradient ∇aQϕ(s, a ) to update the policy param-eters. For one-step policies, such as Gaussian actors whose network output directly parameterizes the final action a, actor-critic training is well studied. However, for multi-step generative policies, 3the critic’s action gradient must be backpropagated through the entire generation process, making policy optimization substantially more challenging, which we discuss next. 
+
+2.2 Generative Control Policies 
+
+Generative control policies represent the action distribution by transforming a simple noise source into an executable action through an iterative generation process conditioned on the state s. Two representative constructions of this paradigm are flow matching [32, 33, 34] and diffusion mod-els [35, 36]. Their multi-step generation process gives policies enough expressiveness to model complex and multimodal action distributions, making them particularly attractive for robot learning from diverse demonstrations [2]. Flow matching parameterizes a state-conditioned policy with a time-dependent velocity field vθ (x, t ; s) that transports noise into actions. In the continuous-time view, this transport is described by 
+
+d ˆXt = vθ ( ˆXt, t ; s) d t, ˆX0 ∼ N (0 , I d). (3) The velocity field is trained with the conditional flow matching objective [32]: 
+
+LFM (θ) = Et∼U [0 ,1] , z ∼N (0 ,I ), a ∼p1(·| s)
+
+∥vθ (xt, t ; s) − (a − z)∥2 , (4) where xt = t a + (1 − t) z is the noisy interpolation between a data action a and noise z at time 
+
+t. At inference, the standard flow policy generates an action by discretizing the ODE into K Euler steps from initial noise x0 ∼ N (0 , I d):
+
+xk+1 = xk + 1 
+
+> K
+
+vθ (xk, t k; s), a = xK . (5) Thus, the same initial noise sample is refined along a single denoising trajectory until it becomes the final action. Diffusion policies also perform iterative denoising, gradually transforming noise into actions through a sequence of intermediate states. While they are often trained as score- or noise-prediction models with a prescribed noise schedule, suitable parameterizations can rewrite them as velocity-field models [36, 37]. We adopt the flow-matching formulation because it gives a direct velocity-field view and typically enables faster generation with fewer steps. Nevertheless, VINE is a sampling-level redesign and can be applied beyond flow matching to iterative generative policies such as diffusion policies. 
+
+2.3 The Instability Challenge of Applying RL on Generative Control Policies. 
+
+When a policy is parameterized as a generative control policy, value-gradient optimization requires backpropagation through multiple denoising steps. Recall that rewards are assigned to state-action pairs, and the critic trained by Eq. (1) evaluates completed actions in the action space. In standard actor-critic training, Qϕ(s, a ) assigns value to a final action a. However, in a generative control policy, this action is produced through an internal iterative denoising process rather than a single network evaluation. For a flow policy, the final action is the endpoint a = xK of the Euler sampler in Eq. (5). Updating the velocity network with the actor objective therefore requires propagating the critic’s action gradient through every denoising step. By the chain rule, the actor gradient can be written as 
+
+∇θ Qϕ(s, a ) = 
+
+> K−1
+
+X 
+
+> k=0 1
+> K
+
+∇aQϕ(s, a ) ∂x K
+
+∂x k+1 
+
+∂v θ (xk, t k; s)
+
+∂θ , a = xK . (6) This expression shows that each velocity update is driven by a gradient derived from the final action-value and is propagated backward through all subsequent denoising steps. As discussed in prior work, such direct value-gradient optimization is often unstable for multi-step generative poli-cies [38]. Existing methods therefore avoid the full BPTT problem either by removing ∇aQϕ from the policy update or by shortening the generation horizon K [6, 14, 13]. In contrast, a key insight is that the chain fundamentally depends on the sampler, which determines the denoising path. We therefore next discuss how to construct a stable denoising path for actor updates. 4Algorithm 1 VINE: Actor-Critic Training  
+
+> 1:
+
+function GENERATE (s) 
+
+> 2:
+
+ˆa0 ∼ N (0 , I d) 
+
+> 3:
+
+for k = 0 , . . . , K − 1 do ▷ Iterative generation  
+
+> 4:
+
+tk ← k/K  
+
+> 5:
+
+xk ← xk + 1 
+
+> K
+
+vθ (xk, t k; s) ▷ Replace Euler Method  
+
+> 6:
+
+zk ∼ N (0 , I d) 
+
+> 7:
+
+ˆxk ← tk ˆak + (1 − tk) zk 
+
+> 8:
+
+ˆak+1 ← ˆxk + (1 − tk) vθ (ˆ xk, t k; s) 
+
+> 9:
+
+end for  
+
+> 10:
+
+return ˆaK 
+
+> 11:
+
+end function  
+
+> 12:
+
+while not converged do  
+
+> 13:
+
+Collect transitions with G ENERATE (s) and add to D ▷ Optionally for online RL  
+
+> 14:
+
+Sample batch {(s, a, r, s ′)} ∼ D  
+
+> 15:
+
+a′ ← GENERATE (s′) 
+
+> 16:
+
+Update ϕ to minimize E[( Qϕ(s, a ) − r − γQ ¯ϕ(s′, a ′)) 2] ▷ Train critic Qϕ 
+
+> 17:
+
+ˆaK ← GENERATE (s) 
+
+> 18:
+
+Update θ to minimize −Qϕ(s, ˆaK ) + α∥ˆaK − a∥2 ▷ Train velocity vθ via BPTT  
+
+> 19:
+
+end while  
+
+> 20:
+
+return policy πθ (s) ≡ GENERATE (s)
+
+3 VINE: Value-gradient Iterative Noise Exploration 
+
+To make value-gradient propagation through the sampling chain more stable, we reconsider how the sampler transports one intermediate state to the next. The key observation is that flow-matching training adds noise to each target action by sampling many noise levels t and noise draws z. The velocity field therefore learns to reach the same action from many possible paths, whereas the Euler ODE sampler in Eq. (5) follows only one of them. This gives us the freedom to construct a different sampling path. VINE uses this freedom to build an RL-oriented sampler: at each step, it reconstructs a noisy intermediate state around the current action estimate, then applies the same velocity field to produce a refined estimate. Recall that in standard flow-matching training, noise is introduced by interpolating between a ground-truth action and a Gaussian noise sample: xt = t a + (1 − t)z. If we have a current action estimate ˆak predicted before the k denoising step, the natural way to inject noise while staying consistent with flow matching is to use the same interpolation form: 
+
+ˆxk = tk ˆak + (1 − tk) zk, zk ∼ N (0 , I d). (7) We denote the reconstructed interpolation state by ˆxk to distinguish it from the Euler state xk,the noise zk is sampled independently at each step. We take 0 ≤ t1 < · · · < t K ≤ 1 to be a monotonically increasing time schedule, so that ˆxk is progressively dominated by the current action estimate ˆak as k grows. Note that ˆxk is a fresh noisy interpolation state used as the network input, rather than a state obtained in Eq. (5). The remaining question is how to recover an action estimate from this noisy state during RL rollout, where the ground-truth endpoint is unavailable. From a probabilistic view, the flow-matching objective trains vθ to predict the conditional velocity from a noisy interpolation state. Under the optimal velocity v⋆, the transformed quantity xt + (1 −
+
+t)v⋆(xt, t ; s) estimates the posterior mean of the final action. Applying this closed form to ˆxk
+
+yields, 
+
+ˆak+1 = ˆ xk + (1 − tk) vθ (ˆ xk, t k; s), (8) Starting from an initial action estimate ˆa0 ∼ N (0 , I d), we recursively compute the interpolation state with Eq.(7) and endpoint prediction with Eq.(8) so the final action becomes a = ˆ aK . This sampling method has two practical consequences. First, each network query remains compatible with the flow-matching training semantics: the input is a noisy interpolation state, and the velocity field is used in its form. Thus, VINE changes the sampling path without requiring a new generative objective or an auxiliary guidance model; we provide a more formal justification in Appendix A.1. 5Second, fresh noise is injected locally around the current action estimate at every step. This makes stochasticity act as structured local exploration during refinement, rather than letting a single initial noise sample determine the entire action trajectory as in Eq. (5). Moreover, since tk is monotoni-cally increasing, the noise weight (1 − tk) decreases across steps, moving the sampler from coarse stochastic exploration toward finer deterministic refinement of the final action. To understand the sampling process, we visualize this behavior with a toy simulation in noise space in Fig. 2. Under behavior cloning, both the flow-matching and VINE are trained using the same flow-matching objective in Eq. (4), while the DDPM baseline is trained with the standard diffusion loss. At inference, we sample many initial points from N (0 , I ) and trace their trajectories using three samplers: Euler, a DDPM sampler, and VINE. Euler trajectories form isolated petal-like paths with few bridges between modes. DDPM explores more broadly, but its stochastic transitions intro-duce endpoint-prediction error. In contrast, VINE traverses the full pentagon with bridging paths between neighboring modes, yielding broader state coverage while preserving accurate endpoints. This coverage is useful under critic-gradient fine-tuning, where the desired action may shift from one mode to another. 
+
+4 Related Work 
+
+Gaussian and one-step actors for RL. Classical actor-critic methods typically parameterize the policy with a Gaussian, deterministic, or residual actor, making value-gradient optimization straight-forward because the critic’s action gradient is backpropagated through a single network evalua-tion [27, 28, 29, 39]. This simplicity makes Gaussian-style actors strong baselines for offline RL, including behavior-regularized methods [40, 41]. Recent work applies a similar principle to gen-erative policies by shortening the sampling chain, using consistency models, shortcut models, or one-step flow policies before applying value-gradient optimization [42, 43, 13, 44, 45]. These ap-proaches improve stability by simplifying the policy computation graph, but they sacrifice the itera-tive refinement and expressive multimodal modeling that motivate generative control policies. 
+
+RL fine-tuning of diffusion and flow policies. Diffusion and flow-matching policies have been widely adopted in robot learning and reinforcement learning because they can represent complex multimodal action distributions [2, 46, 3, 47]. The central challenge is how to optimize these multi-step generative policies with a learned critic [48, 49]. Existing methods differ mainly in where the value signal is applied relative to the denoising chain. Around-the-chain methods avoid direct BPTT through the full sampler by constructing objectives around the denoising process. Advantage- or value-weighted methods avoid critic action gradients by reweighting generative-model objectives with scalar critic values [50, 51, 52]. Other methods convert value, energy, or guidance signals into denoising objectives or guidance terms, steering generation without directly optimizing through the complete sampling chain [14, 19, 53, 54]. Adjoint matching [55] transports terminal gradients backward to provide step-wise supervision, and QAM [12] applies this idea to offline RL. Related variants make different approximation and complexity trade-offs [56, 57, 58, 59]. Outside-the-chain methods improve actions after or outside the base sampling process through value-guided selec-tion [22, 20], residual corrections in action or noise space [60, 61, 18], or gradient-based action editing [62]. These methods can improve sampled actions, but the value signal acts outside the internal denoising dynamics. Through-the-chain methods directly differentiate through the full de-noising process [63, 64, 65, 11]. This is the most direct way to use critic action gradients, but prior work has found it unstable for expressive multi-step policies. In contrast, VINE keeps the full it-erative chain and supports stable value-gradient BPTT by redesigning the noise injection process, rather than bypassing the chain, shortening it, or applying value signals only outside it. 
+
+5 Experiments 
+
+We conduct experiments to study how well VINE optimizes generative control policies on both benchmark tasks and real-world manipulation. Concretely, we ask three research questions: (1) Can 6Gaussian Around the Chain Outside the Chain Through the Chain Task Category ReBRAC FQL FAWAC IFQL QAM DAC QSM CGQL CGQL-M CGQL-L DSRL FEdit FBRAC BAM VINE antmaze-large [94 ,95] 
+
+94 [72 ,79] 
+
+76 [15 ,19] 
+
+17 [32 ,39] 
+
+36 [78 ,84] 
+
+81 [86 ,90] 
+
+88 [89 ,93] 
+
+91 [73 ,80] 
+
+76 [68 ,73] 
+
+71 [62 ,67] 
+
+65 [56 ,66] 
+
+61 [53 ,62] 
+
+58 [1 ,4] 
+
+2 [82 ,85] 
+
+84 [98 ,100] 
+
+99 
+
+antmaze-giant [53 ,60] 
+
+57 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,2] 
+
+1 [14 ,22] 
+
+18 [11 ,21] 
+
+16 [11 ,17] 
+
+15 [0 ,2] 
+
+0 [1 ,8] 
+
+4 [1 ,6] 
+
+3 [1 ,4] 
+
+3 [1 ,3] 
+
+2 [0 ,0] 
+
+0 [0 ,2] 
+
+1 [68 ,83] 
+
+76 
+
+humanoidmaze-medium [65 ,74] 
+
+69 [63 ,73] 
+
+68 [22 ,26] 
+
+24 [85 ,87] 
+
+86 [64 ,69] 
+
+67 [81 ,85] 
+
+83 [80 ,86] 
+
+83 [57 ,62] 
+
+60 [40 ,43] 
+
+42 [57 ,67] 
+
+62 [48 ,57] 
+
+53 [20 ,23] 
+
+22 [37 ,41] 
+
+39 [58 ,62] 
+
+60 [79 ,93] 
+
+87 
+
+humanoidmaze-large [15 ,20] 
+
+17 [7 ,11] 
+
+9 [0 ,0] 
+
+0 [21 ,27] 
+
+24 [9 ,14] 
+
+11 [0 ,0] 
+
+0 [9 ,11] 
+
+10 [4 ,5] 
+
+5 [3 ,8] 
+
+6 [5 ,8] 
+
+6 [2 ,5] 
+
+3 [2 ,3] 
+
+3 [0 ,0] 
+
+0 [4 ,8] 
+
+5 [36 ,56] 
+
+46 
+
+scene-sparse [61 ,69] 
+
+65 [77 ,80] 
+
+78 [35 ,41] 
+
+38 [83 ,85] 
+
+84 [96 ,98] 
+
+97 [65 ,70] 
+
+68 [84 ,87] 
+
+86 [36 ,40] 
+
+38 [72 ,76] 
+
+74 [85 ,91] 
+
+88 [99 ,100] 
+
+99 [60 ,65] 
+
+62 [43 ,57] 
+
+50 [97 ,99] 
+
+98 [60 ,85] 
+
+73 
+
+puzzle-3x3-sparse [73 ,84] 
+
+79 [60 ,78] 
+
+70 [2 ,3] 
+
+3 [100 ,100] 
+
+100 [99 ,100] 
+
+100 [62 ,75] 
+
+68 [49 ,57] 
+
+53 [39 ,55] 
+
+48 [100 ,100] 
+
+100 [83 ,96] 
+
+90 [82 ,92] 
+
+87 [98 ,100] 
+
+99 [0 ,1] 
+
+0 [48 ,64] 
+
+56 [93 ,97] 
+
+95 
+
+cube-double [8 ,10] 
+
+9 [43 ,49] 
+
+46 [2 ,2] 
+
+2 [10 ,12] 
+
+11 [62 ,66] 
+
+64 [33 ,36] 
+
+35 [53 ,58] 
+
+56 [36 ,41] 
+
+38 [39 ,43] 
+
+41 [43 ,47] 
+
+45 [72 ,76] 
+
+74 [37 ,43] 
+
+40 [0 ,0] 
+
+0 [44 ,50] 
+
+47 [1 ,6] 
+
+4
+
+cube-triple [0 ,1] 
+
+1 [2 ,4] 
+
+3 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [3 ,4] 
+
+3 [3 ,6] 
+
+5 [3 ,4] 
+
+3 [7 ,9] 
+
+8 [7 ,9] 
+
+8 [7 ,9] 
+
+8 [1 ,2] 
+
+1 [2 ,3] 
+
+2 [0 ,1] 
+
+0 [2 ,5] 
+
+3 [0 ,1] 
+
+1
+
+all (40 tasks) [37 ,60] 
+
+49 [31 ,56] 
+
+44 [6 ,16] 
+
+10 [31 ,55] 
+
+43 [42 ,68] 
+
+55 [33 ,57] 
+
+45 [37 ,62] 
+
+50 [24 ,44] 
+
+34 [30 ,56] 
+
+43 [34 ,57] 
+
+46 [35 ,61] 
+
+48 [24 ,48] 
+
+36 [5 ,20] 
+
+12 [32 ,56] 
+
+44 [55 ,65] 
+
+60 
+
+Table 1: Offline RL results on OGBench. We follow the QAM evaluation protocol [12]. Around the Chain denotes methods that update the generative control policy with gradient information but avoid BPTT through the full sampler; Outside the Chain denotes methods that freeze the generative policy and optimize actions externally; Through the Chain denotes methods that directly perform BPTT through the sampler. VINE achieves better performance on 40 tasks in total. VINE optimize policies effectively compared to representative offline RL methods on OGBench? (2) Can VINE make flow-matching stable for real-world online RL? (3) Why VINE helps? 
+
+5.1 Experimental Setup Offline RL setting. We first evaluate VINE in the offline RL setting on eight domains from OGBench, each containing five tasks: antmaze-large, antmaze-giant, humanoidmaze-medium, humanoidmaze-large, scene-sparse, puzzle-3x3-sparse, cube-double, and cube-triple. The antmaze and humanoidmaze domains test long-horizon navigation from diverse offline trajectories, while the scene, puzzle, and cube domains require solving sparse-reward manipulation-style tasks. For of-fline RL baselines, we compare against representative Gaussian, flow, and diffusion policy methods, grouped by how they propagate value-gradient updates through or around the sampling chain. These include ReBRAC [29], FQL and FAWAC [13], IFQL [22], QAM [12], DAC [19], QSM [14], CGQL variants [53], DSRL [18], FEdit [20], FBRAC [13], and BAM [55, 12]. 
+
+Real-world online RL setting. We further evaluate VINE on a real-world socket insertion task to assess whether stable value-gradient optimization can transfer to physical robotic manipulation. In this task, the robot must pick up a plug from the table and insert it into a socket, requiring precise contact-rich control under tight insertion tolerances. We evaluate each method over 20 trials and report the success rate, wall-clock fine-tuning time, and the fraction of trajectories requiring human intervention. We compare against representative real-world reinforcement learning baselines, including SAC-Flow [11], Hil-SERL [7], DSRL [18], RLT [24], and EXPO [20]. All methods receive images and proprioceptive states as inputs and directly predict low-level actions or action chunks. We divide the baselines into two categories according to their training paradigms. DSRL, RLT, and EXPO leverage pretrained policies. Specifically, we initialize these methods from π0.5 and perform BC warm-up using 15 pre-collected human demonstrations before online RL. In contrast, Hil-SERL, SAC-Flow, and VINE are trained without pretrained initialization. For Hil-SERL, SAC-Flow, and VINE, we use a ResNet-10 encoder to extract visual features. SAC-Flow follows flow-matching objective but employs a transformer-based action head, whereas Hil-SERL and VINE use a three-layer MLP action head for single action prediction. For fair comparison, SAC-Flow, and VINE all use 10 denoising steps during action generation. 
+
+5.2 Can VINE optimize effectively compared to representative methods on OGBench? 
+
+Table 1 reports results on 40 OGBench tasks across eight domains. Following QAM [12], we train each task with 12 seeds and report the mean performance with 95% confidence intervals computed by bootstrapping with 5000 samples. VINE achieves the best aggregate score, with especially large gains on long-horizon navigation domains such as antmaze-giant and humanoidmaze-large .7VINE Successful Insertion  
+
+> Starting position successfully inserts the plug
+
+SAC-Flow Failure Mode  
+
+> Starting position fails to recover when misaligned
+
+Figure 3: Real-world online RL setting . VINE learns an policy that insert successfully from any location. SAC-Flow fails to learn a successful policy during online RL. Table 2: Online RL results on a real-world human-in-the-loop manipulation task. We evaluate plug insertion and report success rate over 20 trials, online RL fine-tuning time, and the fraction of online rollout steps requiring human intervention.               
+
+> Plug Insertion BC init. DSRL RLT EXPO SAC-Flow Hil-SERL VINE Success rate ( ↑)Time ( ↓)10/20 –17/20 50 min 17/20 50 min 19/20 50 min 12/20 20 min 16/20 20 min
+> 20/20 20 min
+> Human-intervention ( ↓)––29.7% 56.3% 74.6% 55.9% 19.2%
+
+These results suggest that VINE can stably optimize expressive generative policies with value gra-dients in offline RL. 
+
+5.3 Can VINE make flow-matching stable for real-world online RL? 
+
+We evaluate VINE on a real-world socket insertion task as shown in Figure 3, where the robot must pick up a plug and insert it into a fixed socket under tight contact tolerances. We compare against baselines under human-in-the-loop real-world RL setting [7, 24]. Human-in-the-loop means human operator intervenes and provides corrections during autonomous execution. We report success rate, training time, and human-intervention ratio in Table 2. VINE achieves the highest success rate with the shortest fine-tuning time and the lowest human-intervention ratio among the online methods. 
+
+5.4 Why VINE Helps? 
+
+We use ablations to isolate two design choices in VINE: per-step stochastic interpolation and itera-tive endpoint-prediction. Both are evaluated under the same actor-critic training protocol as the full method, changing only the component under study. 
+
+VINE stabilizes value-gradient backpropagation. We compare the standard Euler sampler used by flow matching with VINE. The Euler sampler samples noise only once at initialization and fol-lows a fixed deterministic denoising trajectory throughout inference, whereas VINE reconstructs a noisy interpolation state by injecting fresh Gaussian noise, at every denoising step. As shown in Fig. 4, VINE consistently achieves substantially higher success rates across all five OGbench tasks. Moreover, VINE maintains significantly smaller and more stable backpropagated gradients through-out training, whereas the Euler sampler exhibits frequent large gradient spikes that correlate with unstable optimization. These results demonstrate that VINE stabilizes end-to-end value-gradient propagation through the denoising chain, leading to both more robust optimization and stronger policy performance. 
+
+Iterative generation improves action quality from coarse to fine. We evaluate different interme-diate denoising steps with K = 1 , 4, 6, 8, 10 . Figure 5 shows that early intermediate actions are 80
+
+> 25
+> 50
+> 75
+> 100
+> Success (%)
+
+Task 1 Task 2 Task 3 Task 4 Task 5                         
+
+> 00.25 0.5 0.75 1
+> 0.0
+> 0.5
+> 1.0
+> Grad norm
+> 00.25 0.5 0.75 100.25 0.5 0.75 100.25 0.5 0.75 100.25 0.5 0.75 1
+> VINE Flow Matching BPTT
+
+Figure 4: Sampling ablation. We compare VINE against the vanilla Euler solver for flow-matching on OGBench. VINE consistently achieves higher success rates and more stable backpropagated gradients. 1 Iteration steps: 0/10 2 Iteration steps: 0/10 4 Iteration steps: 0/10   
+
+> 6 Iteration steps: 2/10 8 Iteration steps: 7/10 10 Iteration steps: 9/10
+
+Figure 5: Preserving the Iterative Refinement. We generate the final action using different num-bers of denoising steps K and evaluate the resulting policies on the AntMaze task. As the number of refinement iterations increases, the generated action quality improves, leading to higher task success rates. insufficient for solving the long-horizon AntMaze task. With only 1 or 4 denoising steps, the agent largely remains near the start region and fails to reach the goal. VINE does not merely produce a good action in the first few iterations; instead, the later refinement steps are essential for transform-ing an initially poor action proposal into a task-completing action. 
+
+6 Conclusion 
+
+In this paper, we identify the training instability of value-gradient RL with expressive generative policies originates in part from the sampler and proposed VINE, an RL-oriented sampling method that enables stable value-gradient optimization toward expressive policies. VINE remains compati-ble with pretrained flow-matching policies. Empirically, VINE achieves stable policy improvement with a 10 -step denoising process and consistently outperforms state-of-the-art baselines on both OGBench and real-robot task. A promising future direction is to extend VINE to large foundation models and adapt variant RL algorithms for broader validation. 9References 
+
+[1] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn. Learning fine-grained bimanual manipulation with low-cost hardware. In Robotics: Science and Systems , 2023. [2] C. Chi, S. Feng, Y. Du, Z. Xu, E. Cousineau, B. Burchfiel, R. Tedrake, and S. Song. Diffusion policy: Visuomotor policy learning via action diffusion. The International Journal of Robotics Research , 2023. [3] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman, B. Ichter, et al. π0: A vision-language-action flow model for general robot control. arXiv preprint arXiv:2410.24164 , 2024. [4] Physical Intelligence, A. Amin, R. Aniceto, A. Balakrishna, K. Black, K. Conley, G. Connors, J. Darpinian, K. Dhabalia, J. DiCarlo, et al. π∗
+
+> 0.6
+
+: a vla that learns from experience. arXiv preprint , arXiv:2511.14759, 2025. arXiv preprint arXiv:2511.14759. [5] K. Chen, Z. Liu, T. Zhang, Z. Guo, S. Xu, H. Lin, H. Zang, X. Li, Q. Zhang, Z. Yu, et al. 
+
+πrl : Online rl fine-tuning for flow-based vision-language-action models. arXiv preprint ,arXiv:2510.25889, 2025. arXiv preprint arXiv:2510.25889. [6] T. Zhang, C. Yu, S. Su, and Y. Wang. Reinflow: Fine-tuning flow matching pol-icy with online reinforcement learning. In D. Belgrave, C. Zhang, H. Lin, R. Pas-canu, P. Koniusz, M. Ghassemi, and N. Chen, editors, Advances in Neural Informa-tion Processing Systems , volume 38, pages 106282–106319. Curran Associates, Inc., 2025. URL https://proceedings.neurips.cc/paper_files/paper/2025/file/ 98d6f928497d9eaad9f320fb2db3040d-Paper-Conference.pdf .[7] J. Luo, C. Xu, J. Wu, and S. Levine. Precise and dexterous robotic manipulation via human-in-the-loop reinforcement learning. Science Robotics , 10(105):eads5033, 2025. [8] R. Yang, H. Wang, Z. Wu, C. Liu, X. Yan, X. Du, S. Yue, C. Zhang, Y. Wang, Y. Liu, L. Qi, Y. Chen, W. Shan, and M. Yao. ALOE: Action-level off-policy evaluation for vision-language-action model post-training, 2026. URL https://arxiv.org/abs/2602.12691 .[9] R. Yang, Z. Feng, T. Zhang, K. Wang, C. Zhang, L. Zhao, X. Su, Y. Chen, and J. Bian. Discover, learn, and reinforce: Scaling vision-language-action pretraining with diverse RL-generated trajectories, 2025. URL https://arxiv.org/abs/2511.19528 .[10] R. Yang, H. Wei, R. Zhang, Z. Feng, X. Chen, T. Li, C. Zhang, L. Zhao, J. Bian, X. Su, and Y. Chen. Beyond human demonstrations: Diffusion-based reinforcement learning to generate data for VLA training, 2025. URL https://arxiv.org/abs/2509.19752 .[11] Y. Zhang, S. Yu, T. Zhang, M. Guang, H. Hui, K. Long, Y. Wang, C. Yu, and W. Ding. Sac flow: Sample-efficient reinforcement learning of flow-based policies via velocity-reparameterized sequential modeling, 2026. URL https://arxiv.org/abs/2509.25756 .[12] Q. Li and S. Levine. Q-learning with adjoint matching. International Conference on Learning Representations , 2026. [13] S. Park, Q. Li, and S. Levine. Flow q-learning. In A. Singh, M. Fazel, D. Hsu, S. Lacoste-Julien, F. Berkenkamp, T. Maharaj, K. Wagstaff, and J. Zhu, editors, Proceedings of the 42nd International Conference on Machine Learning , volume 267 of Proceedings of Ma-chine Learning Research , pages 48104–48127. PMLR, 13–19 Jul 2025. URL https: //proceedings.mlr.press/v267/park25f.html .[14] M. Psenka, A. Escontrela, P. Abbeel, and Y. Ma. Learning a diffusion model policy from rewards via Q-score matching. In International Conference on Machine Learning , 2024. 10 [15] P. Dhariwal and A. Nichol. Diffusion models beat gans on image synthesis. In M. Ran-zato, A. Beygelzimer, Y. Dauphin, P. Liang, and J. W. Vaughan, editors, Advances in Neural Information Processing Systems , volume 34, pages 8780–8794. Curran As-sociates, Inc., 2021. URL https://proceedings.neurips.cc/paper_files/paper/ 2021/file/49ad23d1ec9fa4bd8d77d02681df5cfa-Paper.pdf .[16] H. Xu, K. Hu, S. Sojoudi, and A. Zhang. Reinforcement learning via value gradient flow. In 
+
+The Fourteenth International Conference on Learning Representations , 2026. URL https: //openreview.net/forum?id=JLL4VNVhM9 .[17] Z. Liu, T. Z. Xiao, C. Domingo-Enrich, W. Liu, and D. Zhang. Value gradient guidance for flow matching alignment. In NeurIPS 2025 Workshop on Structured Probabilistic Inference & Generative Modeling , 2025. URL https://openreview.net/forum?id=3oCOEL13OT .[18] A. Wagenmaker, M. Nakamoto, Y. Zhang, S. Park, W. Yagoub, A. Nagabandi, A. Gupta, and S. Levine. Steering your diffusion policy with latent space reinforcement learning. Conference on Robot Learning , 2025. [19] L. Fang, R. Liu, J. Zhang, W. Wang, and B. Jing. Diffusion actor-critic: Formulating con-strained policy iteration as diffusion noise regression for offline reinforcement learning. In The Thirteenth International Conference on Learning Representations , 2025. [20] P. Dong, Q. Li, D. Sadigh, and C. Finn. EXPO: Stable reinforcement learning with expressive policies. arXiv preprint arXiv:2507.07986 , 2025. [21] X. B. Peng, A. Kumar, G. Zhang, and S. Levine. Advantage weighted regression: Simple and scalable off-policy reinforcement learning, 2020. URL https://openreview.net/forum? id=H1gdF34FvS .[22] P. Hansen-Estruch, I. Kostrikov, M. Janner, J. G. Kuba, and S. Levine. IDQL: Implicit Q-learning as an actor-critic method with diffusion policies. arXiv preprint arXiv:2304.10573 ,2023. [23] P. Dong, C. Zheng, C. Finn, D. Sadigh, and B. Eysenbach. Value flows. In The Fourteenth International Conference on Learning Representations , 2026. URL https://openreview. net/forum?id=2VyNYUVF2k .[24] C. Xu, J. T. Springenberg, M. Equi, A. Amin, A. Esmail, S. Levine, and L. Ke. Rl token: Bootstrapping online rl with vision-language-action models. arXiv preprint arXiv:2604.23073 ,2026. [25] C. Zhang, Z. Wan, F. Chen, X. Yu, I. Tsang, and B. An. Gorl: An algorithm-agnostic framework for online reinforcement learning with generative policies. arXiv preprint arXiv:2512.02581 , 2025. [26] S. Zhang, Y. Lou, H. Cheng, Y. Guo, C. Fu, Y. Lyu, X. Zhang, H. Li, P. Wang, Z. Wang, et al. Force: Efficient vla reinforcement fine-tuning via value-calibrated warm-up and self-distillation. arXiv preprint arXiv:2606.26006 , 2026. [27] Y. Wu, G. Tucker, and O. Nachum. Behavior regularized offline reinforcement learning. arXiv preprint arXiv:1911.11361 , 2019. [28] S. Fujimoto and S. S. Gu. A minimalist approach to offline reinforcement learning. Advances in Neural Information Processing Systems , 2021. [29] D. Tarasov, A. Nikulin, D. Akimov, V. Kurenkov, and S. Kolesnikov. Corl: Research-oriented deep offline reinforcement learning library. Advances in Neural Information Processing Sys-tems , 2023. 11 [30] R. Yang, C. Bai, H. Guo, S. Li, B. Zhao, Z. Wang, P. Liu, and X. Li. Behavior contrastive learning for unsupervised skill discovery. In A. Krause, E. Brunskill, K. Cho, B. Engelhardt, S. Sabato, and J. Scarlett, editors, Proceedings of the 40th International Conference on Ma-chine Learning , volume 202 of Proceedings of Machine Learning Research , pages 39183– 39204. PMLR, 23–29 Jul 2023. URL https://proceedings.mlr.press/v202/yang23a. html .[31] C. Bai, R. Yang, Q. Zhang, K. Xu, Y. Chen, T. Xiao, and X. Li. Constrained ensem-ble exploration for unsupervised skill discovery. In R. Salakhutdinov, Z. Kolter, K. Heller, A. Weller, N. Oliver, J. Scarlett, and F. Berkenkamp, editors, Proceedings of the 41st Inter-national Conference on Machine Learning , volume 235 of Proceedings of Machine Learning Research , pages 2418–2442. PMLR, 21–27 Jul 2024. URL https://proceedings.mlr. press/v235/bai24d.html .[32] Y. Lipman, R. T. Q. Chen, H. Ben-Hamu, and M. Nickel. Flow matching for generative mod-eling. International Conference on Learning Representations , 2023. [33] X. Liu, C. Gong, and Q. Liu. Flow straight and fast: Learning to generate and transfer data with rectified flow. International Conference on Learning Representations , 2023. [34] M. S. Albergo and E. Vanden-Eijnden. Building normalizing flows with stochastic interpolants. 
+
+International Conference on Learning Representations , 2023. [35] J. Ho, A. Jain, and P. Abbeel. Denoising diffusion probabilistic models. Advances in Neural Information Processing Systems , 2020. [36] Y. Song, J. Sohl-Dickstein, D. P. Kingma, A. Kumar, S. Ermon, and B. Poole. Score-based generative modeling through stochastic differential equations. International Conference on Learning Representations , 2021. [37] D. P. Kingma and R. Gao. Understanding diffusion objectives as the elbo with simple data augmentation. Advances in Neural Information Processing Systems , 2024. [38] K. Shi, J. Shi, P. Hebbar, Z. Zhao, T. Amarnath, Y. Su, S. Bahl, and D. Pathak. Flowdpg: Deterministic policy gradient on flow matching policies for real-world manipulation, 2026. URL https://arxiv.org/abs/2606.22303 .[39] D. Silver, G. Lever, N. Heess, T. Degris, D. Wierstra, and M. Riedmiller. Deterministic policy gradient algorithms. In E. P. Xing and T. Jebara, editors, Proceedings of the 31st International Conference on Machine Learning , volume 32 of Proceedings of Machine Learning Research ,pages 387–395, Bejing, China, 22–24 Jun 2014. PMLR. URL https://proceedings.mlr. press/v32/silver14.html .[40] S. Fujimoto, D. Meger, and D. Precup. Off-policy deep reinforcement learning without explo-ration. In K. Chaudhuri and R. Salakhutdinov, editors, Proceedings of the 36th International Conference on Machine Learning , volume 97 of Proceedings of Machine Learning Research ,pages 2052–2062. PMLR, 09–15 Jun 2019. URL https://proceedings.mlr.press/v97/ fujimoto19a.html .[41] A. Kumar, J. Fu, M. Soh, G. Tucker, and S. Levine. Stabilizing off-policy q-learning via bootstrapping error reduction. In H. Wallach, H. Larochelle, A. Beygelzimer, F. d'Alch´ e-Buc, E. Fox, and R. Garnett, editors, Advances in Neural Information Processing Systems , vol-ume 32. Curran Associates, Inc., 2019. URL https://proceedings.neurips.cc/paper_ files/paper/2019/file/c2073ffa77b5357a498057413bb09d3a-Paper.pdf .[42] Z. Ding and C. Jin. Consistency models as a rich and efficient policy class for reinforce-ment learning. In B. Kim, Y. Yue, S. Chaudhuri, K. Fragkiadaki, M. Khan, and Y. Sun, editors, International Conference on Learning Representations , volume 2024, pages 53047– 53066, 2024. URL https://proceedings.iclr.cc/paper_files/paper/2024/file/ e9e1a0abc1a5b19a4aeb80dab19c82ae-Paper-Conference.pdf .12 [43] T. Chen, Z. Wang, and M. Zhou. Diffusion policies creating a trust region for offline reinforce-ment learning. Advances in Neural Information Processing Systems , 2024. [44] N. Espinosa-Dice, Y. Zhang, Y. Chen, B. Guo, O. Oertell, G. Swamy, K. Brantley, and W. Sun. Scaling offline RL via efficient and expressive shortcut models. arXiv preprint arXiv:2505.22866 , 2025. [45] T. Chen, H. Ma, N. Li, K. Wang, and B. Dai. One-step flow policy mirror descent. arXiv preprint arXiv:2507.23675 , 2025. [46] Y. Ze, G. Zhang, K. Zhang, C. Hu, M. Wang, and H. Xu. 3d diffusion policy: Generalizable visuomotor policy learning via simple 3d representations. In 2nd Workshop on Dexterous Manipulation: Design, Perception and Control (RSS) , 2024. URL https://openreview. net/forum?id=KwwJuZIBXH .[47] J. Barreiros, A. Beaulieu, A. Bhat, R. Cory, E. Cousineau, H. Dai, C.-H. Fang, K. Hashimoto, M. Z. Irshad, M. Itkina, et al. A careful examination of large behavior models for multitask dexterous manipulation. Science Robotics , 11(113):eaea6201, 2026. doi:10.1126/scirobotics. aea6201. URL https://www.science.org/doi/abs/10.1126/scirobotics.aea6201 .[48] Z. Zhu, H. Zhao, H. He, Y. Zhong, S. Zhang, H. Guo, T. Chen, and W. Zhang. Diffusion models for reinforcement learning: A survey, 2024. URL https://arxiv.org/abs/2311.01223 .[49] M. Uehara, Y. Zhao, T. Biancalani, and S. Levine. Understanding reinforcement learning-based fine-tuning of diffusion models: A tutorial and review, 2024. URL https://arxiv. org/abs/2407.13734 .[50] S. Zhang, W. Zhang, and Q. Gu. Energy-weighted flow matching for offline reinforcement learning. In International Conference on Learning Representations , 2025. [51] B. Kang, X. Ma, C. Du, T. Pang, and S. Yan. Efficient diffusion policies for offline reinforce-ment learning. In Neural Information Processing Systems , 2023. [52] S. Ding, K. Hu, Z. Zhang, K. Ren, W. Zhang, J. Yu, J. Wang, and Y. Shi. Diffusion-based reinforcement learning via Q-weighted variational policy optimization. In Neural Information Processing Systems , 2024. [53] C. Lu, H. Chen, J. Chen, H. Su, C. Li, and J. Zhu. Contrastive energy prediction for exact energy-guided diffusion sampling in offline reinforcement learning. In International Confer-ence on Machine Learning , 2023. [54] K. Frans, S. Park, P. Abbeel, and S. Levine. Diffusion guidance is a controllable policy im-provement operator. arXiv preprint arXiv:2505.23458 , 2025. [55] C. Domingo-Enrich, W. Chen, and B. Amos. Adjoint matching: Fine-tuning flow and diffusion generative models with memoryless stochastic optimal control. arXiv preprint arXiv:2409.03698 , 2025. [56] M. Uehara, Y. Zhao, K. Black, E. Hajiramezanali, G. Scalia, N. L. Diamant, A. M. Tseng, T. Biancalani, and S. Levine. Fine-tuning of continuous-time diffusion models as entropy-regularized control. arXiv preprint arXiv:2402.15194 , 2024. [57] A. Bergmeister, S. Jegelka, N. N¨ usken, C. Domingo-Enrich, and J. Pidstrigach. Reinforce ad-joint matching: Scaling rl post-training of diffusion and flow-matching models. arXiv preprint ,2025. [58] Z. Guo, J. Sheng, D. D. Yao, and W. Tang. Improved techniques for fine-tuning flow models via adjoint matching: A deterministic control pipeline. arXiv preprint arXiv:2605.06583 , 2026. 13 [59] J. Shin, D. Shin, J. Lee, J. Choi, and J. Choi. Efficient adjoint matching for fine-tuning diffusion models. arXiv preprint arXiv:2605.11480 , 2026. [60] L. Ankile, A. Simeonov, I. Shenfeld, M. Torne, and P. Agrawal. From imitation to refinement– residual rl for precise assembly. arXiv preprint arXiv:2407.16677 , 2024. [61] X. Yuan, T. Mu, S. Tao, Y. Fang, M. Zhang, and H. Su. Policy decorator: Model-agnostic online refinement for large policy model. arXiv preprint arXiv:2412.13630 , 2024. [62] M. S. Mark, T. Gao, G. G. Sampaio, M. K. Srirama, A. Sharma, C. Finn, and A. Kumar. Policy-agnostic RL: Offline RL and online RL fine-tuning of any class and backbone. In Robot Learning Workshop , 2025. [63] Z. Wang, J. J. Hunt, and M. Zhou. Diffusion policies as an expressive policy class for offline reinforcement learning. In International Conference on Learning Representations , 2023. [64] L. He, L. Shen, L. Zhang, J. Tan, and X. Wang. DiffCPS: Diffusion model based constrained policy search for offline reinforcement learning. arXiv preprint arXiv:2310.05333 , 2023. [65] R. Zhang, Z. Luo, J. Sj¨ olund, T. B. Sch¨ on, and P. Mattsson. Entropy-regularized diffusion policy with Q-ensembles for offline reinforcement learning. In Neural Information Processing Systems , 2024. [66] D. Hendrycks and K. Gimpel. Gaussian error linear units (gelus), 2016. URL https:// arxiv.org/abs/1606.08415 .[67] J. L. Ba. Layer normalization. arXiv preprint arXiv:1607.06450 , 2016. [68] D. P. Kingma and J. Ba. Adam: A method for stochastic optimization. In International Conference on Learning Representations (ICLR) , 2015. URL https://arxiv.org/abs/ 1412.6980 .14 A Appendix 
+
+A.1 Compatibility with Pretrained Flow Policies 
+
+A natural question is whether VINE can leverage an existing flow-matching pretrained policy. The following theorem justifies that the same iterative procedure would also apply if a pretrained FM field were used as the velocity model. 
+
+Theorem 1 (FM-VINE Consistency) . Let v∗(x, t ; s) be the pointwise minimizer of the conditional flow matching loss LFM (Eq. 4). Then for any query point x ∈ Rd and time t ∈ (0 , 1) ,
+
+x + (1 − t) v∗(x, t ; s) = E[a | xt = x, t, s ], (9) 
+
+regardless of how x was constructed. In particular, our endpoint prediction ˆak = ˆxk + (1 −
+
+tk) v∗(ˆ xk, t k; s) = E[a | ˆxk, t k, s ] is the Bayes-optimal action estimate given the noisy intermediate 
+
+ˆxk, even though ˆxk was not generated by the FM ODE. 
+
+This theorem implies that a flow-matching pretrained policy can be used as the velocity field in VINE—for both inference (using VINE’s iterative generation) and post-training (fine-tuning with value gradients via BPTT )without changing the generation rule. 
+
+Corollary 1 (Contraction under Deterministic VINE) . Suppose p(a | s) = N (μs, σ 2
+
+> a
+
+I). Under deterministic VINE ( zk = 0 , ˆa0 = 0 ) with optimal velocity v∗, the action estimates satisfy the recursion ˆak = λk ˆak−1 + (1 − λk) μs with contraction factor 
+
+λk = t2
+
+> k
+
+σ2
+
+> a
+
+t2
+
+> k
+
+σ2 
+
+> a
+
++ (1 − tk)2 ∈ (0 , 1) , (10) 
+
+giving ∥ˆak − μs∥ = Qkj=1 λj · ∥ μs∥ → 0.
+
+Since λk < 1 for all tk < 1, deterministic VINE contracts monotonically to μs. The bulk of convergence occurs at early steps where tk is small and (1 −tk)2 dominates the denominator, making 
+
+λk ≈ 0.
+
+A.2 Proof of Theorem 1 
+
+Proof. Under the conditional flow matching objective with linear interpolation paths, the training input at time t is xt = (1 − t) z + t a , where z ∼ N (0 , I ) and a ∼ p(a | s). The conditional velocity target is a − z = a−xt 
+
+> 1−t
+
+.The FM loss is a pointwise squared error: 
+
+LFM (θ) = Et,z,a 
+
+"
+
+vθ (xt, t ; s) − a − xt
+
+1 − t
+
+> 2
+
+#
+
+. (11) For any fixed query point x and time t, the pointwise minimizer of the squared loss is the conditional expectation: 
+
+v∗(x, t ; s) = E
+
+ a − xt
+
+1 − t xt = x, t, s 
+
+
+
+= E[a | xt = x, t, s ] − x
+
+1 − t . (12) Therefore: 
+
+x + (1 − t) v∗(x, t ; s) = x + E[a | xt = x, t, s ] − x = E[a | xt = x, t, s ]. (13) This holds for any x ∈ Rd, regardless of its origin. In particular, setting x = ˆ xk = tk ˆak−1 + (1 −
+
+tk) zk gives 
+
+ˆak = ˆ xk + (1 − tk) v∗(ˆ xk, t k; s) = E[a | xtk = ˆ xk, t k, s ], (14) which is the Bayes-optimal action estimate under squared error loss, conditioned on the noisy inter-mediate ˆxk.15 A.3 Proof of Corollary 1 
+
+Proof. Let p(a | s) = N (μs, σ 2
+
+> a
+
+I) and consider deterministic VINE with zk = 0 and ˆa0 = 0 . The noisy intermediate is ˆxk = tk ˆak−1.Under the linear interpolation xt = (1 − t) z + t a with z ∼ N (0 , I ) and a ∼ N (μs, σ 2
+
+> a
+
+I), the joint 
+
+(xt, a ) is Gaussian. The conditional posterior is: 
+
+p(a | xt = x, t ) = N
+
+ t σ 2 
+
+> a
+
+x + (1 − t)2 μs
+
+t2σ2 
+
+> a
+
++ (1 − t)2 , Σpost 
+
+
+
+, (15) where we used Var[ xt] = t2σ2 
+
+> a
+
++ (1 − t)2 (isotropic components) and the standard linear-Gaussian conditioning formula. The posterior covariance Σpost is irrelevant for the mean. By Theorem 1, endpoint prediction with optimal velocity gives: 
+
+ˆak = E[a | xtk = ˆ xk, t k] = tk σ2 
+
+> a
+
+ˆxk + (1 − tk)2 μs
+
+t2
+
+> k
+
+σ2 
+
+> a
+
++ (1 − tk)2 . (16) Substituting ˆxk = tk ˆak−1:
+
+ˆak = t2 
+
+> k
+
+σ2
+
+> a
+
+t2
+
+> k
+
+σ2 
+
+> a
+
++ (1 − tk)2 ˆak−1 + (1 − tk)2
+
+t2
+
+> k
+
+σ2 
+
+> a
+
++ (1 − tk)2 μs. (17) Define λk := t2    
+
+> kσ2
+> a
+> t2
+> kσ2
+> a+(1 −tk)2
+
+. Then ˆak = λk ˆak−1 + (1 − λk) μs.Since 0 < λ k < 1 for all tk ∈ (0 , 1) , this is a contraction toward μs. With ˆa0 = 0 , the error evolves as: 
+
+ˆak − μs = λk (ˆ ak−1 − μs) = · · · =
+
+
+
+> k
+
+Y
+
+> j=1
+
+λj
+
+ (ˆ a0 − μs) = −
+
+
+
+> k
+
+Y
+
+> j=1
+
+λj
+
+ μs. (18) Hence ∥ˆak − μs∥ = Qkj=1 λj · ∥ μs∥ → 0 since each λj < 1.
+
+A.4 Implementation Details 
+
+In this section, we describe the full implementation details of VINE. We use a step count of K=10 
+
+across all tasks, with the fixed MIP grid t ∈ { 0.0, 0.1, . . . , 0.9}. Following the implementations in FQL, we train two Q functions to improve stability. We take the mean of the two Q values for the Q loss term in the actor objective. For the critic target, we use the minimum of the two Q values (clipped double Q-learning) on all reported OGBench domains. The actor is an MLP with hidden sizes [512 , 512 , 512 , 512] and GELU activations [66]. The critic is a twin ResNet value network with width 512 (depth 4 by default; depth 2 on humanoidmaze and cube domains), with layer normalization [67] to stabilize training. This critic backbone matches our FQL baseline for fair comparison. We train offline VINE with 1M gradient steps for state-based OGBench tasks, and evaluate the agent every 20k steps using 50 episodes. We report the average success rates following the official evaluation scheme [12], 
+
+Hyperparameters. We refer to Tables 3 and 4 for the complete list of hyperparameters. 16 Table 3: Hyperparameters for VINE. 
+
+Hyperparameter Value 
+
+Learning rate 0.0003 Optimizer Adam [68] Gradient steps 1000000 (default) Minibatch size 512 Actor MLP dimensions [512 , 512 , 512 , 512] 
+
+Critic architecture ResNet (width 512 ; depth 4 / 2)Nonlinearity GELU [66] Target network smoothing coefficient 0.005 Discount factor γ 0.995 Flow steps K 10 MIP time grid {0.0, 0.1, . . . , 0.9}
+
+Clipped double Q-learning True Actor noise std (train) 1.0 BC coefficient α Table 4 Table 4: VINE BC coefficient α for each task.           
+
+> Task VINE α
+> antmaze-large 10
+> antmaze-giant 10
+> humanoidmaze-medium 30
+> humanoidmaze-large 20
+> scene-sparse 300
+> puzzle-3x3-sparse 1000
+> cube-double 300
+> cube-triple 300
+
+17 antmaze-large 0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0
+
+25 
+
+50 
+
+75 
+
+100 
+
+> success (%)
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+antmaze-giant 0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0
+
+25 
+
+50 
+
+75 
+
+100 
+
+> success (%)
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+humanoidmaze-medium 0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0
+
+25 
+
+50 
+
+75 
+
+100 
+
+> success (%)
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+humanoidmaze-large 0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0
+
+25 
+
+50 
+
+75 
+
+100 
+
+> success (%)
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+Figure 6: VINE training curves (success rate vs. training steps), maze navigation domains. Each row is one domain; the five columns are task1–task5. Curves show the mean over seeds with a 95% confidence band. 18 scene-sparse 0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0
+
+25 
+
+50 
+
+75 
+
+100 
+
+> success (%)
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+puzzle-3x3-sparse 0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0
+
+25 
+
+50 
+
+75 
+
+100 
+
+> success (%)
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+cube-double 0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0
+
+25 
+
+50 
+
+75 
+
+100 
+
+> success (%)
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+cube-triple 0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0
+
+25 
+
+50 
+
+75 
+
+100 
+
+> success (%)
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+0 0.25 0.5 0.75 1
+
+training step (M) 
+
+Figure 7: VINE training curves (success rate vs. training steps), manipulation domains. Each row is one domain; the five columns are task1–task5. Curves show the mean over seeds with a 95% confidence band. 19 ReBRAC FBRAC BAM FQL FAWAC CGQL CGQL-M CGQL-L DAC QSM DSRL FEdit IFQL QAM VINE 
+
+[97 ,99] 
+
+98 [0 ,0] 
+
+0 [88 ,93] 
+
+90 [89 ,96] 
+
+93 [3 ,9] 
+
+6 [49 ,75] 
+
+63 [49 ,62] 
+
+56 [31 ,47] 
+
+39 [82 ,92] 
+
+88 [81 ,95] 
+
+89 [53 ,70] 
+
+62 [60 ,73] 
+
+67 [26 ,54] 
+
+41 [67 ,85] 
+
+77 [100 ,100] 
+
+100 
+
+[85 ,91] 
+
+88 [0 ,0] 
+
+0 [54 ,65] 
+
+60 [83 ,89] 
+
+86 [0 ,2] 
+
+1 [64 ,79] 
+
+73 [45 ,54] 
+
+49 [47 ,55] 
+
+51 [67 ,75] 
+
+71 [80 ,88] 
+
+84 [68 ,82] 
+
+75 [64 ,70] 
+
+67 [10 ,19] 
+
+14 [76 ,83] 
+
+80 [97 ,99] 
+
+98 
+
+[97 ,99] 
+
+98 [5 ,20] 
+
+12 [92 ,96] 
+
+94 [48 ,68] 
+
+59 [32 ,48] 
+
+40 [89 ,94] 
+
+91 [87 ,93] 
+
+90 [75 ,82] 
+
+79 [97 ,99] 
+
+98 [96 ,99] 
+
+98 [77 ,85] 
+
+81 [53 ,77] 
+
+65 [44 ,63] 
+
+54 [86 ,93] 
+
+89 [100 ,100] 
+
+100 
+
+[92 ,95] 
+
+94 [0 ,0] 
+
+0 [83 ,88] 
+
+85 [41 ,68] 
+
+54 [15 ,20] 
+
+18 [74 ,83] 
+
+78 [75 ,81] 
+
+78 [73 ,80] 
+
+76 [89 ,94] 
+
+91 [87 ,93] 
+
+90 [5 ,33] 
+
+18 [20 ,36] 
+
+28 [20 ,29] 
+
+25 [52 ,81] 
+
+69 [96 ,100] 
+
+98 
+
+[94 ,96] 
+
+95 [0 ,0] 
+
+0 [86 ,91] 
+
+88 [83 ,88] 
+
+86 [17 ,29] 
+
+22 [69 ,81] 
+
+75 [76 ,84] 
+
+80 [75 ,81] 
+
+78 [90 ,94] 
+
+92 [91 ,95] 
+
+93 [65 ,73] 
+
+69 [56 ,69] 
+
+63 [34 ,54] 
+
+45 [86 ,91] 
+
+89 [99 ,100] 
+
+99 
+
+antmaze-large agg. (5 tasks) [94 ,95] 
+
+94 [1 ,4] 
+
+2 [82 ,85] 
+
+84 [72 ,79] 
+
+76 [15 ,19] 
+
+17 [73 ,80] 
+
+76 [68 ,73] 
+
+71 [62 ,67] 
+
+65 [86 ,90] 
+
+88 [89 ,93] 
+
+91 [56 ,66] 
+
+61 [53 ,62] 
+
+58 [32 ,39] 
+
+36 [78 ,84] 
+
+81 [98 ,100] 
+
+99 
+
+[31 ,41] 
+
+36 [0 ,0] 
+
+0 [0 ,9] 
+
+3 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,8] 
+
+2 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [45 ,61] 
+
+53 [57 ,82] 
+
+72 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [5 ,9] 
+
+7 [44 ,71] 
+
+60 
+
+[68 ,78] 
+
+73 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [2 ,6] 
+
+4 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [83 ,92] 
+
+87 
+
+[9 ,18] 
+
+13 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,2] 
+
+1 [0 ,1] 
+
+0 [40 ,62] 
+
+51 
+
+[59 ,84] 
+
+74 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [6 ,19] 
+
+12 [3 ,17] 
+
+10 [1 ,4] 
+
+2 [25 ,44] 
+
+34 [81 ,91] 
+
+86 
+
+[85 ,92] 
+
+89 [0 ,0] 
+
+0 [0 ,3] 
+
+1 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [6 ,40] 
+
+22 [0 ,26] 
+
+11 [6 ,47] 
+
+25 [0 ,4] 
+
+1 [1 ,3] 
+
+2 [0 ,0] 
+
+0 [0 ,5] 
+
+2 [29 ,68] 
+
+49 [92 ,97] 
+
+95 
+
+antmaze-giant agg. (5 tasks) [53 ,60] 
+
+57 [0 ,0] 
+
+0 [0 ,2] 
+
+1 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,2] 
+
+0 [1 ,8] 
+
+4 [1 ,6] 
+
+3 [11 ,21] 
+
+16 [11 ,17] 
+
+15 [1 ,4] 
+
+3 [1 ,3] 
+
+2 [0 ,2] 
+
+1 [14 ,22] 
+
+18 [68 ,83] 
+
+76 
+
+[27 ,50] 
+
+38 [21 ,30] 
+
+26 [47 ,52] 
+
+49 [20 ,50] 
+
+34 [15 ,20] 
+
+18 [26 ,34] 
+
+30 [1 ,17] 
+
+8 [52 ,59] 
+
+55 [77 ,93] 
+
+87 [68 ,90] 
+
+81 [32 ,64] 
+
+49 [0 ,0] 
+
+0 [84 ,88] 
+
+86 [29 ,49] 
+
+40 [90 ,94] 
+
+92 
+
+[80 ,98] 
+
+91 [75 ,82] 
+
+78 [62 ,76] 
+
+69 [91 ,98] 
+
+95 [40 ,48] 
+
+44 [75 ,82] 
+
+78 [98 ,100] 
+
+99 [91 ,95] 
+
+93 [94 ,97] 
+
+96 [94 ,97] 
+
+96 [88 ,93] 
+
+91 [30 ,48] 
+
+39 [90 ,95] 
+
+92 [96 ,99] 
+
+97 [98 ,99] 
+
+99 
+
+[62 ,98] 
+
+83 [19 ,35] 
+
+28 [72 ,79] 
+
+75 [95 ,98] 
+
+96 [18 ,23] 
+
+20 [65 ,87] 
+
+78 [0 ,1] 
+
+0 [39 ,84] 
+
+62 [84 ,96] 
+
+92 [89 ,96] 
+
+93 [22 ,50] 
+
+36 [0 ,0] 
+
+0 [91 ,95] 
+
+93 [93 ,98] 
+
+96 [77 ,97] 
+
+87 
+
+[20 ,54] 
+
+37 [1 ,5] 
+
+3 [18 ,25] 
+
+22 [4 ,26] 
+
+14 [0 ,2] 
+
+1 [19 ,28] 
+
+23 [0 ,0] 
+
+0 [1 ,3] 
+
+2 [34 ,52] 
+
+43 [38 ,54] 
+
+47 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [55 ,65] 
+
+60 [0 ,6] 
+
+3 [36 ,75] 
+
+56 
+
+[94 ,98] 
+
+96 [49 ,68] 
+
+59 [79 ,86] 
+
+83 [98 ,100] 
+
+99 [32 ,41] 
+
+36 [88 ,91] 
+
+89 [99 ,100] 
+
+100 [97 ,100] 
+
+98 [98 ,99] 
+
+99 [99 ,100] 
+
+99 [86 ,93] 
+
+90 [61 ,74] 
+
+68 [96 ,99] 
+
+98 [98 ,100] 
+
+99 [98 ,100] 
+
+99 
+
+humanoidmaze-medium agg. (5 tasks) [65 ,74] 
+
+69 [37 ,41] 
+
+39 [58 ,62] 
+
+60 [63 ,73] 
+
+68 [22 ,26] 
+
+24 [57 ,62] 
+
+60 [40 ,43] 
+
+42 [57 ,67] 
+
+62 [81 ,85] 
+
+83 [80 ,86] 
+
+83 [48 ,57] 
+
+53 [20 ,23] 
+
+22 [85 ,87] 
+
+86 [64 ,69] 
+
+67 [79 ,93] 
+
+87 
+
+[28 ,43] 
+
+36 [0 ,0] 
+
+0 [1 ,9] 
+
+5 [5 ,11] 
+
+8 [0 ,0] 
+
+0 [1 ,4] 
+
+2 [0 ,1] 
+
+0 [1 ,4] 
+
+2 [0 ,1] 
+
+0 [7 ,14] 
+
+10 [8 ,20] 
+
+14 [6 ,9] 
+
+8 [31 ,41] 
+
+36 [3 ,9] 
+
+6 [63 ,78] 
+
+71 
+
+[0 ,2] 
+
+1 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [12 ,20] 
+
+16 
+
+[23 ,42] 
+
+32 [0 ,1] 
+
+0 [3 ,9] 
+
+6 [15 ,23] 
+
+19 [0 ,1] 
+
+1 [9 ,12] 
+
+11 [2 ,6] 
+
+4 [14 ,21] 
+
+18 [0 ,0] 
+
+0 [19 ,29] 
+
+24 [0 ,2] 
+
+1 [2 ,5] 
+
+3 [50 ,60] 
+
+55 [9 ,24] 
+
+16 [69 ,85] 
+
+77 
+
+[4 ,16] 
+
+10 [0 ,0] 
+
+0 [2 ,10] 
+
+6 [6 ,13] 
+
+9 [0 ,0] 
+
+0 [4 ,6] 
+
+5 [5 ,12] 
+
+8 [2 ,6] 
+
+4 [0 ,0] 
+
+0 [5 ,13] 
+
+9 [0 ,0] 
+
+0 [0 ,2] 
+
+1 [1 ,3] 
+
+2 [12 ,20] 
+
+16 [25 ,60] 
+
+43 
+
+[3 ,12] 
+
+7 [0 ,0] 
+
+0 [5 ,17] 
+
+11 [5 ,13] 
+
+9 [0 ,0] 
+
+0 [3 ,6] 
+
+5 [6 ,27] 
+
+16 [6 ,11] 
+
+9 [0 ,2] 
+
+1 [5 ,10] 
+
+7 [0 ,4] 
+
+2 [0 ,3] 
+
+1 [15 ,42] 
+
+29 [11 ,26] 
+
+19 [7 ,43] 
+
+25 
+
+humanoidmaze-large agg. (5 tasks) [15 ,20] 
+
+17 [0 ,0] 
+
+0 [4 ,8] 
+
+5 [7 ,11] 
+
+9 [0 ,0] 
+
+0 [4 ,5] 
+
+5 [3 ,8] 
+
+6 [5 ,8] 
+
+6 [0 ,0] 
+
+0 [9 ,11] 
+
+10 [2 ,5] 
+
+3 [2 ,3] 
+
+3 [21 ,27] 
+
+24 [9 ,14] 
+
+11 [36 ,56] 
+
+46 
+
+[96 ,99] 
+
+98 [55 ,77] 
+
+66 [100 ,100] 
+
+100 [99 ,100] 
+
+99 [57 ,67] 
+
+62 [73 ,85] 
+
+79 [100 ,100] 
+
+100 [100 ,100] 
+
+100 [99 ,100] 
+
+100 [100 ,100] 
+
+100 [100 ,100] 
+
+100 [92 ,97] 
+
+95 [91 ,95] 
+
+93 [100 ,100] 
+
+100 [97 ,99] 
+
+98 
+
+[87 ,93] 
+
+90 [73 ,87] 
+
+80 [98 ,100] 
+
+99 [65 ,76] 
+
+71 [11 ,18] 
+
+15 [79 ,94] 
+
+88 [98 ,100] 
+
+99 [97 ,100] 
+
+98 [98 ,100] 
+
+99 [76 ,87] 
+
+82 [100 ,100] 
+
+100 [95 ,98] 
+
+97 [58 ,69] 
+
+63 [97 ,100] 
+
+98 [86 ,94] 
+
+90 
+
+[42 ,59] 
+
+51 [21 ,60] 
+
+41 [97 ,100] 
+
+99 [96 ,98] 
+
+97 [12 ,17] 
+
+14 [20 ,27] 
+
+23 [90 ,95] 
+
+92 [88 ,94] 
+
+91 [74 ,84] 
+
+79 [95 ,98] 
+
+97 [95 ,99] 
+
+97 [53 ,68] 
+
+61 [66 ,75] 
+
+71 [99 ,100] 
+
+100 [84 ,88] 
+
+86 
+
+[48 ,72] 
+
+60 [26 ,72] 
+
+49 [94 ,98] 
+
+96 [90 ,94] 
+
+92 [66 ,77] 
+
+71 [0 ,1] 
+
+0 [1 ,11] 
+
+6 [71 ,96] 
+
+86 [2 ,15] 
+
+8 [98 ,100] 
+
+99 [100 ,100] 
+
+100 [28 ,42] 
+
+35 [97 ,99] 
+
+98 [99 ,100] 
+
+100 [81 ,92] 
+
+87 
+
+[11 ,44] 
+
+27 [7 ,31] 
+
+17 [95 ,97] 
+
+96 [29 ,37] 
+
+33 [21 ,33] 
+
+27 [0 ,1] 
+
+0 [61 ,84] 
+
+74 [63 ,70] 
+
+66 [41 ,62] 
+
+53 [44 ,56] 
+
+50 [100 ,100] 
+
+100 [18 ,30] 
+
+24 [93 ,97] 
+
+95 [84 ,90] 
+
+87 [2 ,8] 
+
+5
+
+scene-sparse agg. (5 tasks) [61 ,69] 
+
+65 [43 ,57] 
+
+50 [97 ,99] 
+
+98 [77 ,80] 
+
+78 [35 ,41] 
+
+38 [36 ,40] 
+
+38 [72 ,76] 
+
+74 [85 ,91] 
+
+88 [65 ,70] 
+
+68 [84 ,87] 
+
+86 [99 ,100] 
+
+99 [60 ,65] 
+
+62 [83 ,85] 
+
+84 [96 ,98] 
+
+97 [60 ,85] 
+
+73 
+
+[98 ,100] 
+
+99 [0 ,2] 
+
+1 [9 ,48] 
+
+26 [98 ,100] 
+
+99 [6 ,9] 
+
+8 [78 ,94] 
+
+87 [100 ,100] 
+
+100 [96 ,99] 
+
+98 [96 ,100] 
+
+98 [89 ,98] 
+
+94 [58 ,100] 
+
+83 [100 ,100] 
+
+100 [100 ,100] 
+
+100 [95 ,100] 
+
+98 [100 ,100] 
+
+100 
+
+[61 ,92] 
+
+77 [0 ,0] 
+
+0 [51 ,100] 
+
+75 [59 ,96] 
+
+79 [1 ,4] 
+
+2 [38 ,70] 
+
+55 [100 ,100] 
+
+100 [83 ,98] 
+
+92 [42 ,89] 
+
+66 [46 ,86] 
+
+67 [58 ,100] 
+
+83 [100 ,100] 
+
+100 [100 ,100] 
+
+100 [100 ,100] 
+
+100 [97 ,100] 
+
+99 
+
+[81 ,89] 
+
+85 [0 ,0] 
+
+0 [54 ,98] 
+
+78 [58 ,100] 
+
+83 [0 ,2] 
+
+1 [16 ,33] 
+
+24 [100 ,100] 
+
+100 [79 ,94] 
+
+87 [35 ,71] 
+
+54 [2 ,9] 
+
+5 [58 ,100] 
+
+83 [97 ,99] 
+
+98 [100 ,100] 
+
+100 [100 ,100] 
+
+100 [90 ,95] 
+
+93 
+
+[46 ,76] 
+
+62 [0 ,0] 
+
+0 [80 ,100] 
+
+92 [61 ,100] 
+
+84 [0 ,2] 
+
+1 [19 ,30] 
+
+25 [100 ,100] 
+
+100 [74 ,94] 
+
+85 [66 ,78] 
+
+72 [40 ,69] 
+
+54 [58 ,100] 
+
+83 [94 ,99] 
+
+97 [100 ,100] 
+
+100 [100 ,100] 
+
+100 [86 ,92] 
+
+89 
+
+[51 ,88] 
+
+70 [0 ,2] 
+
+1 [1 ,26] 
+
+9 [2 ,9] 
+
+6 [0 ,3] 
+
+1 [37 ,58] 
+
+47 [100 ,100] 
+
+100 [80 ,96] 
+
+88 [29 ,73] 
+
+51 [32 ,57] 
+
+46 [100 ,100] 
+
+100 [99 ,100] 
+
+100 [100 ,100] 
+
+100 [99 ,100] 
+
+100 [93 ,98] 
+
+96 
+
+puzzle-3x3-sparse agg. (5 tasks) [73 ,84] 
+
+79 [0 ,1] 
+
+0 [48 ,64] 
+
+56 [60 ,78] 
+
+70 [2 ,3] 
+
+3 [39 ,55] 
+
+48 [100 ,100] 
+
+100 [83 ,96] 
+
+90 [62 ,75] 
+
+68 [49 ,57] 
+
+53 [82 ,92] 
+
+87 [98 ,100] 
+
+99 [100 ,100] 
+
+100 [99 ,100] 
+
+100 [93 ,97] 
+
+95 
+
+[24 ,35] 
+
+29 [0 ,0] 
+
+0 [80 ,88] 
+
+84 [77 ,86] 
+
+81 [6 ,10] 
+
+8 [51 ,60] 
+
+55 [45 ,55] 
+
+50 [58 ,67] 
+
+62 [32 ,40] 
+
+36 [60 ,73] 
+
+67 [88 ,92] 
+
+90 [73 ,81] 
+
+77 [14 ,18] 
+
+16 [80 ,89] 
+
+85 [11 ,20] 
+
+16 
+
+[3 ,10] 
+
+6 [0 ,0] 
+
+0 [40 ,56] 
+
+49 [40 ,52] 
+
+46 [0 ,1] 
+
+0 [32 ,46] 
+
+39 [41 ,50] 
+
+46 [46 ,58] 
+
+52 [31 ,40] 
+
+35 [59 ,70] 
+
+65 [82 ,91] 
+
+87 [21 ,34] 
+
+28 [10 ,14] 
+
+12 [73 ,86] 
+
+79 [2 ,2] 
+
+2
+
+[1 ,4] 
+
+2 [0 ,0] 
+
+0 [31 ,45] 
+
+38 [35 ,49] 
+
+42 [0 ,0] 
+
+0 [36 ,50] 
+
+44 [46 ,55] 
+
+50 [49 ,57] 
+
+52 [26 ,36] 
+
+31 [50 ,63] 
+
+57 [82 ,89] 
+
+85 [36 ,51] 
+
+44 [8 ,12] 
+
+10 [47 ,61] 
+
+54 [0 ,2] 
+
+1
+
+[0 ,2] 
+
+1 [0 ,0] 
+
+0 [5 ,12] 
+
+8 [8 ,12] 
+
+10 [0 ,0] 
+
+0 [10 ,16] 
+
+13 [8 ,14] 
+
+11 [16 ,21] 
+
+18 [13 ,18] 
+
+16 [17 ,25] 
+
+21 [28 ,37] 
+
+32 [11 ,16] 
+
+14 [2 ,6] 
+
+4 [18 ,25] 
+
+22 [0 ,0] 
+
+0
+
+[2 ,7] 
+
+4 [0 ,0] 
+
+0 [46 ,64] 
+
+56 [44 ,56] 
+
+50 [0 ,1] 
+
+0 [36 ,47] 
+
+42 [44 ,52] 
+
+48 [36 ,46] 
+
+41 [51 ,61] 
+
+56 [64 ,74] 
+
+69 [72 ,80] 
+
+76 [34 ,44] 
+
+39 [8 ,14] 
+
+11 [78 ,85] 
+
+82 [0 ,0] 
+
+0
+
+cube-double agg. (5 tasks) [8 ,10] 
+
+9 [0 ,0] 
+
+0 [44 ,50] 
+
+47 [43 ,49] 
+
+46 [2 ,2] 
+
+2 [36 ,41] 
+
+38 [39 ,43] 
+
+41 [43 ,47] 
+
+45 [33 ,36] 
+
+35 [53 ,58] 
+
+56 [72 ,76] 
+
+74 [37 ,43] 
+
+40 [10 ,12] 
+
+11 [62 ,66] 
+
+64 [1 ,6] 
+
+4
+
+[2 ,5] 
+
+4 [0 ,3] 
+
+2 [8 ,19] 
+
+14 [10 ,19] 
+
+15 [0 ,1] 
+
+0 [33 ,46] 
+
+39 [34 ,46] 
+
+40 [33 ,47] 
+
+40 [17 ,31] 
+
+24 [13 ,18] 
+
+16 [4 ,10] 
+
+7 [8 ,13] 
+
+11 [1 ,2] 
+
+2 [10 ,17] 
+
+14 [2 ,5] 
+
+4
+
+[0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,1] 
+
+0 [0 ,1] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,1] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,1] 
+
+0 [0 ,0] 
+
+0 [0 ,2] 
+
+1 [0 ,0] 
+
+0
+
+[0 ,0] 
+
+0 [0 ,0] 
+
+0 [1 ,5] 
+
+3 [0 ,1] 
+
+1 [0 ,0] 
+
+0 [0 ,1] 
+
+1 [0 ,1] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,1] 
+
+0 [0 ,1] 
+
+0 [0 ,1] 
+
+0 [0 ,0] 
+
+0 [2 ,3] 
+
+2 [0 ,0] 
+
+0
+
+[0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,1] 
+
+0 [0 ,0] 
+
+0 [0 ,1] 
+
+0 [0 ,0] 
+
+0
+
+[0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0 [0 ,0] 
+
+0
+
+cube-triple agg. (5 tasks) [0 ,1] 
+
+1 [0 ,1] 
+
+0 [2 ,5] 
+
+3 [2 ,4] 
+
+3 [0 ,0] 
+
+0 [7 ,9] 
+
+8 [7 ,9] 
+
+8 [7 ,9] 
+
+8 [3 ,6] 
+
+5 [3 ,4] 
+
+3 [1 ,2] 
+
+1 [2 ,3] 
+
+2 [0 ,0] 
+
+0 [3 ,4] 
+
+3 [0 ,1] 
+
+1
+
+all agg. (40 tasks) [37 ,60] 
+
+49 [5 ,20] 
+
+12 [32 ,56] 
+
+44 [31 ,56] 
+
+44 [6 ,16] 
+
+10 [24 ,44] 
+
+34 [30 ,56] 
+
+43 [34 ,57] 
+
+46 [33 ,57] 
+
+45 [37 ,62] 
+
+50 [35 ,61] 
+
+48 [24 ,48] 
+
+36 [31 ,55] 
+
+43 [42 ,68] 
+
+55 [55 ,65] 
+
+60 
+
+Table 5: Offline results, 8 domains. 
+
+20

@@ -1,0 +1,669 @@
+Title: Model-Based Diffusion Optimal Control for Multi-Robot Motion Planning
+
+URL Source: https://arxiv.org/pdf/2607.12423v1
+
+Published Time: Wed, 15 Jul 2026 12:01:02 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# Model-Based Diffusion Optimal Control for Multi-Robot Motion Planning 
+
+Zhilin He 1, Yorai Shaoul 1, Jiaoyang Li 1
+
+> 1
+
+Carnegie Mellon University, Pittsburgh, PA, USA 
+
+{hectorh, yshaoul, jiaoyanl }@andrew.cmu.edu 
+
+Abstract —Multi-Robot Motion Planning in continuous envi-ronments, where robots must generate dynamically feasible, collision-free trajectories, is challenging due to the combina-torial growth of the joint trajectory space and the difficulty of enforcing dynamic feasibility and hard safety constraints. Recent approaches recast trajectory planning as probabilistic inference, sampling from a posterior over trajectories using diffusion models whose score functions are learned from demon-stration data. While showing promising performance, these approaches are limited: they often rely on sizable demonstration datasets and struggle to rigorously enforce dynamics and hard safety constraints during sampling. To this end, we introduce Model-Based Diffusion Optimal Control (MDOC), a model-based diffusion planner that efficiently produces dynamically feasible trajectories without relying on data. Crucially, we show that MDOC’s safety mechanism—combining known dynamics models with Control Barrier Function-constrained projections— naturally scales to multi-robot planning settings through Conflict-Based Search. Across simulation experiments, this integrated method consistently outperforms representative baseline planners in sample efficiency, geometric smoothness, and success rate, while reducing computation time and producing collision-free trajectories. Code: https://github.com/hhhhzl/mdoc 
+
+I. I NTRODUCTION 
+
+Consider a warehouse environment with numerous robots, where each robot attempts to reach a specified region while being subject to kinematic and dynamic constraints, such as acceleration limits and turning radius, and must avoid collisions with obstacles and other robots. The challenge lies in efficiently coordinating movements to avoid collisions while navigating long, continuous trajectories under the com-binatorial growth of the joint trajectory space in different environments. Given the complexity of the full Multi-Robot Motion Planning (MRMP) problem, researchers have often resorted to solving simpler problems that approximate MRMP. One reformulation of the MRMP problem is known as Multi-Agent Path-Finding (MAPF) [43], where robots move in a discretized space (often a regular grid) and discrete time [33, 34]. In particular, the Conflict-Based Search (CBS) [39] family of algorithms [4, 6, 29] has been influential due to its strong scalability and safety guarantees. However, this MAPF-based abstraction relies on discretization assumptions, such as con-stant velocities, rectilinear and grid-based motions, which limit their applicability to continuous MRMP settings with dynamic feasibility and robot interactions. More recent work has explored motion planning through probabilistic inference, sampling trajectory posteriors with diffusion planners [7]. These planners leverage the strong generative capacity of diffusion models to learn a score function from expert demonstrations and represent complex, multimodal trajectory distributions in continuous spaces [17, 51]. By stochastically denoising trajectory priors, diffusion planners can produce smoother trajectories and avoid the restrictive assumptions imposed by grid-based simplifications. Building on these single-robot advances, recent work extends diffusion planners to MRMP [11, 30] and integrates them as low-level continuous-space planners within CBS for multi-robot settings [38]. However, existing diffusion planners remain fundamentally model-free, requiring large expert datasets to learn the score function and struggling to rigorously enforce dynamics during denoising the expert trajectories. As a result, they often rely on extensive learning from demonstrations and neglect existing model information, yielding trajectories that are not genuinely dynamics-aware. Additionally, current diffusion planners han-dle inter-robot collisions through soft constraints, where the hard safety constraints cannot be guaranteed, or through post-hoc safety projections [37, 48, 50, 10], which massively increase computational planning cost on the full trajectory, making planners fail in large-scale multi-robot congested settings. We propose Model-Based Diffusion Optimal Control (MDOC), a training-free diffusion planner that enforces colli-sion avoidance and scales to MRMP without any demonstra-tion data. Building on Model-Based Diffusion (MBD) [35], MDOC analytically estimates diffusion scores via Monte Carlo score ascent under a known dynamics model, interpreting denoising as stochastic optimal control so avoiding demon-stration learning. Crucially, MDOC extends MBD to enforce rigorous collision avoidance through Control Barrier Func-tion (CBF)-constrained projections directly inside the model-based diffusion rollouts. Capitalizing on these properties, we further propose MDOC-CBS, a scalable MRMP algorithm that resolves inter-robot collisions through the same safety mechanism while retaining the efficiency of high-level CBS. The contributions of this work are threefold:  
+
+> ‚
+
+We develop MDOC, a model-based diffusion planner that enforces safety during sampling via CBF-constrained projections inside model-based rollouts, yielding dynam-ically feasible and collision-free trajectories.  
+
+> ‚
+
+We propose MDOC-CBS, a CBS-based coordination that scales to 20 robots (40 in larger maps) while resolving arXiv:2607.12423v1 [cs.RO] 14 Jul 2026 inter-robot collisions via the same CBF-constrained pro-jection by MDOC as the low-level planner.  
+
+> ‚
+
+We evaluate our methods across diverse environments, start-goal configurations, constraint settings, and horizons and show that it improves success rate and trajectory qual-ity while reducing computation and maintaining collision-free execution compared to representative baselines. II. R ELATED WORK 
+
+We review prior work on single-robot motion planning and multi-robot motion planning. 
+
+A. Single-Robot Motion Planning 
+
+Arguably, the most popular paradigm for single-robot mo-tion planning is sampling. Sampling-based motion planning has been extensively studied through methods such as proba-bilistic roadmaps (PRM) [21, 22, 26] and rapidly exploring random trees (RRT) [27, 25, 23]. Although they provide probabilistic completeness [18, 42] and finite sampling guar-antees [12], those methods struggle as problem geometry be-comes more constrained and dynamics become more involved. Trajectory optimization, mostly from control theory, formu-lates nonlinear robot motion planning problems directly over trajectories with constraints and dynamics. Sequential Linear Quadratic methods [41, 13] have been successfully used for legged robots [20, 14], while other works directly embed kine-matic and dynamic limits for trajectory optimization [8, 31]. These methods can generate dynamically feasible trajectories, but solving large nonlinear programs becomes computationally demanding in cluttered environments. Diffusion-based methods mitigate expensive optimization by learning a trajectory distribution and sampling candidates via Denoising Diffusion Probabilistic Models (DDPMs) [15, 17, 9]. Following these developments, Motion Planning Dif-fusion (MPD) [7] proposes learning and sampling diffusion models as prior and posterior trajectories for robot motion planning. Despite their efficiency, MPD still requires learning from large collections of expert trajectories. More recent methods combine diffusion models with control on Model Pre-dictive Control [53], Model-Based Diffusion (MBD) [35] for trajectory optimization, and diffusion-based constraints [37]. However, safety mechanisms in those methods are either underexplored or enforced via inefficient projections. 
+
+B. Multi-Robot Motion Planning 
+
+Early works address the PSPACE-hardness of MRMP [16] by extending single-robot sampling-based planners into the composite configuration space, where each sample lies in the high-dimensional joint configuration space of all robots. Although those methods provide asymptotic optimality [40], they struggle in multi-robot settings because their search space grows exponentially with the number of robots. To improve scalability, recent works utilized the Conflict-Based Search (CBS) framework [39] and decoupled the multi-robot planning problem into low-level single-robot planning and high-level conflict resolution. For example, KCBS [24] and db-CBS [33] design sampling-based low-level planners with kinodynamic constraints, aiming for dynamic feasibility but still suffering from sampling inefficiency of kinodynamic, sampling-based tree expansion. Multi-Robot Motion Planning with Diffusion Models (MMD) [38] combines MPD with CBS to provide collision-free paths in scalable multi-robot environments. Model-based approaches aim for trajectory optimization within three-dimensional holonomic cases [52] and annealing legs [49] without learning, but these methods still optimize all robots with a joint cost function, which limits scalability and makes hard safety constraints difficult to enforce. 
+
+Summary. We are the first to propose CBF-constrained projection with model-based diffusion as a single-robot plan-ner, yielding dynamically feasible trajectories and ensuring safety during diffusion sampling, and to scale it to multi-robot settings through CBS. III. P RELIMINARIES 
+
+Let us turn to formally defining the problem at hand and cover the relevant background. In what follows, we use a lower right index i to denote the robot identity, an upper right index 
+
+h for the time step within the planning horizon, and an upper left index k for the diffusion step (e.g., kτ hi ). 
+
+A. Problem Statement 
+
+In Multi-Robot Motion Planning (MRMP), we aim to convey a team of N robots from their start states to goal states while respecting each robot’s dynamics and avoiding collisions with obstacles and each other. Let si encode the state of robot i, such as its configuration and velocity, and 
+
+ui encode its control input. A trajectory can be represented as a sequence of state and control input pairs over a finite time horizon H as τi “ “ps1 
+
+> i
+
+, u 1 
+
+> i
+
+q, ps2 
+
+> i
+
+, u 2 
+
+> i
+
+q . . . , psHi , u Hi q‰. We denote by sh :“ t shi uNi“1 and uh :“ t uhi uNi“1 the joint state and control of all robots at time h. Let τ 1: H :“ t τ 1: Hi uNi“1
+
+denote a multi-robot joint trajectory over time horizon 1 to 
+
+H. We define the problem objective as 
+
+J pτ 1: H q :“
+
+> N
+
+ÿ
+
+> i“1
+
+´
+
+γiHÿ
+
+> h“1
+
+cpτ hi q
+
+¯
+
+`
+
+> N
+
+ÿ
+
+> i“1
+
+βi cf psHi q, (1) where J indicates the objective function, c and cf denote the intermediate and terminal cost functions (e.g., distance traveled between consecutive states and terminal distance to the goal), and γi and βi are their associated positive weighting coefficients. Then, the MRMP problem is 
+
+τ ˚ P arg min  
+
+> τ1: H
+
+J pτ 1: H q
+
+s.t. sh`1 
+
+> i
+
+“ f pshi , u hi q, @i, h “ 1, . . . , H ´ 1,ghpsh, uhq ď 0, h “ 1, . . . , H, 
+
+(2) with sh`1 
+
+> i
+
+“ f pshi , u hi q representing the discrete-time dynam-ics, and ghpsh, uhq ď 0 generically collecting all obstacle-avoidance and inter-robot collision-avoidance constraints at time h to ensure safety. B. Model-Based Diffusion for Trajectory Sampling 
+
+The trajectory for robot i, τ 1: Hi , can be treated as a random variable and sampled by iterative denoising from Gaussian noise. Since this subsection focuses on single-robot motion planning, we omit the robot index i for brevity from now on. We follow the standard DDPMs and denote by kτ 1: H the noisy trajectory at diffusion step k:
+
+> k`1
+
+τ 1: H “ ?¯αk 1τ 1: H ` ?1 ´ ¯αk ϵ, ϵ „ N p0, Iq, (3) where αk :“ 1 ´ βk controls the amount of signal preserved at diffusion step k under the noise-schedule coefficient βk,
+
+¯αk :“ śkn“1 αn, and K is the total number of diffusion steps. The noise schedule is chosen such that the final noisy trajectory K τ 1: H is close to standard Gaussian noise and can be initialized from N p0, Iq. Let 1pp1τ 1: H q denote the target distribution over clean trajectories. We define the noisy marginals using the forward noising kernel q:
+
+> k
+
+ppkτ 1: H q :“
+
+ż
+
+qpkτ 1: H | 1τ 1: H q 1pp1τ 1: H q d1τ 1: H . (4) Based on this noisy marginal, a standard result in score-based diffusion is that the optimal reverse-time drift depends on the score function, Skpkτ 1: H q :“ ∇k τ 1: H log kppkτ 1: H q,
+
+where ∇k τ 1: H denotes the gradient with respect to kτ 1: H . The score guides denoising toward higher-density regions of the noisy marginal kp at diffusion step k while removing noise. Consequently, the reverse update can be written in the score-guided form 
+
+> k´1
+
+τ 1: H “ 1
+
+?αk
+
+´kτ 1: H ` p 1 ´ ¯αkq ˆSk
+
+¯
+
+, (5) where ˆSk « Sk is a score estimate at step k. In stan-dard DDPMs, ˆSk is obtained from a learned noise predictor 
+
+ϵθ pkτ 1: H , k q, yielding the approximation 
+
+Skpkτ 1: H q « ´ 1
+
+?1 ´ ¯αk
+
+ϵθ pkτ 1: H , k q. (6) Learning ϵθ (or a score network) typically requires a large amount of expert trajectories. When a dynamic model is available, MBD [35] avoids learning ϵθ by sampling control sequences k ¯u1: H´1 and using the known dynamics to roll them out into state trajectories kτ 1: H , then analytically constructing 
+
+ˆSk with denoised rollouts. Concretely, at reverse step k, we first sample denoised candidates from the Gaussian proposal induced by the forward kernel 
+
+˜τ 1: H „ Ωk :“ N
+
+ˆ kτ 1: H
+
+?¯αk
+
+,
+
+ˆ 1¯αk
+
+´ 1
+
+˙
+
+I
+
+˙
+
+. (7) Let t˜τ 1: Hm uMm“1 be M samples from Ωk. We then evaluate each candidate under a target density 1pp¨q and form the importance-weighted average  
+
+> k
+
+¯τ 1: H “
+
+řMm“1 1pp˜τ 1: Hm q ˜τ 1: Hm
+
+řMm“1 1pp˜τ 1: Hm q , (8) which yields the Monte Carlo Score-Ascent (MCSA) estimator 
+
+ˆSk « ´ 
+
+> k
+
+τ 1: H
+
+1 ´ ¯αk
+
+`?¯αk
+
+1 ´ ¯αkk ¯τ 1: H . (9) Together with Eqs (5)–(9), this yields a training-free diffusion sampler that iteratively ( 1) proposes candidates, ( 2) reweights them by 1ppkτ 1: H q, and ( 3) updates kτ 1: H toward high-density trajectories. The remaining question is how to instantiate 
+
+> 1
+
+ppkτ 1: H q so that high-probability samples correspond to low-cost, dynamically feasible, and collision-free trajectories. This can be answered through a planning-as-inference target distribution. 
+
+C. Planning as Inference 
+
+In the following, we omit both robot index i and diffusion step k for brevity. That is, we write the trajectory for robot i
+
+at diffusion step k, kτ 1: Hi , as τ 1: H .A standard relaxation of deterministic optimal control is to model soft optimality through a Boltzmann distribution, extensively studied in [44, 28, 36, 46, 45]: 
+
+pJ pτ 1: H q9 exp 
+
+ˆ
+
+´ J pτ 1: H q
+
+λ
+
+˙
+
+, (10) where λ ą 0 is a temperature parameter. As λ Ñ 0, pJ
+
+concentrates around minimizers of J .Dynamic feasibility and safety can be encoded by a feasibil-ity prior pfeas pτ 1: H q, so that 1ppτ 1: H q 9 pfeas pτ 1: H q pJ pτ 1: H q,
+
+whose support is restricted to dynamically feasible and collision-free trajectories. Conceptually, a hard-feasibility prior can be written as an indicator product 
+
+pfeas pτ 1: H q9 pdpτ 1: H q pg pτ 1: H q, (11a) 
+
+pdpτ 1: H q :“
+
+> H´1
+
+ź
+
+> h“1
+
+1`sh`1 “ f psh, u hq˘ , (11b) 
+
+pg pτ 1: H q :“
+
+> H
+
+ź
+
+> h“1
+
+1`ghpsh, u hq ď 0˘ . (11c) However, directly using hard indicators is brittle in con-strained environments: most candidates receive zero weight (“dead samples”), providing no useful score guidance for MCSA [32]. This motivates handling feasibility explicitly rather than through hard rejection. In practice, it is desirable to work with candidates that lie in the feasible set D X C,where D denotes dynamic feasibility by rollouts and C :“tτ 1: H | ghpsh, u hq ď 0, @h “ 1, . . . , H u denotes the safety set induced by the inequality constraints. When trajectories are feasible, the MCSA importance weights in Eq. (8) can be computed using only the optimality term, wm9pJ p˜τ 1: Hm q,
+
+without assigning zero weights to infeasible samples. IV. M ETHODOLOGY 
+
+We present our Model-Based Diffusion Optimal Control (MDOC) planner and its multi-robot extension, MDOC-CBS. Given a known dynamics model, diffusion rollouts maintain dynamic feasibility, yielding trajectories in D. Our contri-bution is to enforce safety during sampling, then scales to Algorithm 1 Model-Based Diffusion Optimal Control  
+
+> 1:
+
+Input: Single robot start state s1, goal state sH , dynamics f p¨q ,safety set C, and finite time horizon H. 
+
+> 2:
+
+Output: Clean denoised trajectory 1τ 1: H . 
+
+> 3:
+
+Sample an initial noisy trajectory K τ 1: H „ N p0, I q. 
+
+> 4:
+
+for k “ K to 1 do  
+
+> 5:
+
+for m “ 1 to M do  
+
+> 6:
+
+Sample a candidate trajectory: 
+
+˜τ 1: Hm „ N
+
+´ k τ 1: H  
+
+> ?¯αk
+
+,
+
+´ 1¯αk ´ 1
+
+¯
+
+I
+
+¯
+
+. 
+
+> 7:
+
+Recover a dynamically feasible and safe trajectory: 
+
+τ 1: Hm Ð ROLLOUT WITH CBF p˜τ 1: Hm , s 1, s H , f p¨q , Cq. 
+
+> 8:
+
+end for  
+
+> 9:
+
+Calculate Monte Carlo mean ¯τ 1: H via Eq. (16).  
+
+> 10:
+
+Estimate score ˆSk via Eq. (9).  
+
+> 11:
+
+Compute Monte Carlo score ascent via (5): 
+
+> k´1
+
+τ 1: H Ð 1
+
+?αk
+
+´k τ 1: H ` p 1 ´ ¯αk qˆSk
+
+¯
+
+. 
+
+> 12:
+
+end for  
+
+> 13:
+
+return 1τ 1: H .
+
+MRMP, by introducing a feasibility operator F that maps each candidate into D X C. Specifically, F applies CBF-constrained projections on controls within the model-based diffusion rollouts. 
+
+A. Model-Based Diffusion Optimal Control (MDOC) 
+
+MDOC is a single-robot motion planner, and thus we omit the robot index i for brevity in the following. MDOC follows the diffusion paradigm. At each diffusion step k, it invokes a sampler that proposes a nominal control sequence k ¯u1: H´1
+
+(with k ¯uh at time h), which may violate safety constraints. To maintain safety, MDOC projects k ¯u1: H´1 to a safe sequence 
+
+> k
+
+u1: H´1 that satisfies C via a feasibility operator F, which enforces a discrete-time CBF condition during the model-based rollout. Concretely, we require a barrier function bpkshq (e.g., 
+
+bpkshq “ } ksh ´ sobs }2 ´ r2, so bpkshq ě 0 enforces a minimum separation r from the obstacle) that satisfies the discrete-time CBF condition bpksh`1q ě p 1 ´ γ∆hq bpkshq,where ∆h is the time step size, meaning that the safety margin 
+
+bp¨q should not decay faster than rate γ. We locally linearize the dynamics and the barrier function around pksh, k ¯uhq:
+
+> k
+
+sh`1 « k ˆsh`1 ` kBhpkuh ´ k ¯uhq, k ˆsh`1 :“ f pksh, k ¯uhq,
+
+(12) where kBh :“ Bf ps,u qBu
+
+ˇˇˇpk sh,k ¯uhq
+
+is the Jacobian that locally maps control deviations to changes in the next state. Applying the same first-order approximation to bp¨q yields the control– affine inequality [1, 2, 3] 
+
+∇bpk ˆsh`1qJkBhk uh ěp1 ´ γ∆hq bpkshq ´ bpk ˆsh`1q ` ∇bpk ˆsh`1qJkBhk ¯uh, (13) which is equivalent to kahJkuh ě kdh, where 
+
+> k
+
+ahJ :“ ∇bpk ˆsh`1qJkBh,
+
+> k
+
+dh :“ p 1 ´ γ∆hqbpkshq ´ bpk ˆsh`1q ` kahJk ¯uh. (14) 
+
+Algorithm 2 MDOC-CBS  
+
+> 1:
+
+Input: N robots with their start states s1, goal states sH ,dynamics f p¨q , safety set Cobs that encode obstacle-avoidance constraints, and finite time horizon H. 
+
+> 2:
+
+Output: Trajectories τ 1: H . 
+
+> 3:
+
+Create CT root node Vroot . 
+
+> 4:
+
+CT Ð t Vroot u. 
+
+> 5:
+
+for i “ 1 to N do  
+
+> 6:
+
+Vroot .Ci Ð Cobs . 
+
+> 7:
+
+Vroot .τ 1: Hi Ð MDOC ps1 
+
+> i
+
+, s Hi , f p¨q , V root .Ci, H q. 
+
+> 8:
+
+if Vroot .τ 1: Hi is not feasible then  
+
+> 9:
+
+return “no solution”.  
+
+> 10:
+
+end if  
+
+> 11:
+
+end for  
+
+> 12:
+
+while CT ‰ H do  
+
+> 13:
+
+V Ð arg min  
+
+> V1PCT
+> NUM
+
+CONFLICTS pV 1.τ 1: H q. 
+
+> 14:
+
+Remove V from CT.  
+
+> 15:
+
+if V. τ 1: H is conflict-free then  
+
+> 16:
+
+return V. τ 1: H . 
+
+> 17:
+
+end if  
+
+> 18:
+
+shi , s hj , h, i, j Ð GET ONE CONFLICT PAIR pV. τ 1: H q. 
+
+> 19:
+
+for z P t i, j u do  
+
+> 20:
+
+Vz Ð V. copy pq . 
+
+> 21:
+
+Vz .Cz Ð Vz .Cz Y tx z, Sphere pshi`j´z q, h yu . 
+
+> 22:
+
+Vz .τ 1: Hz Ð MDOC ps1 
+
+> z
+
+, s Hz , f p¨q , V z .Cz , H q. 
+
+> 23:
+
+if Vz .τ 1: Hz is feasible then  
+
+> 24:
+
+Add Vz to CT.  
+
+> 25:
+
+end if  
+
+> 26:
+
+end for  
+
+> 27:
+
+end while  
+
+> 28:
+
+return “no solution”. 
+
+These inequalities define a safe-control set in the control space 
+
+> k
+
+Kh :“ tu | kAhu ě kDhu, where kDh is the vector collecting all scalar offsets kdh.Stacking the half-spaces from all obstacles yields the poly-hedral safe-control set kKh “ ␣u ˇˇ kAhu ě kDh( , where each row kahJ 
+
+> j
+
+of kAh and entry kdhj of kDh correspond to one linearized CBF constraint. For speed inside diffusion sampling, we enforce each violated half-space via a closed-form projection. Given a single constraint kahJkuh ě kdh,the projection for nominal control k ¯uh is 
+
+> k
+
+uh Ð
+
+$&% 
+
+> k
+
+¯uh, kahJk ¯uh ě kdh, 
+
+> k
+
+¯uh `
+
+> k
+
+dh ´ kahJk ¯uh
+
+}kah}2
+
+> k
+
+ah, otherwise .
+
+(15) The correction term moves k ¯uh along the constraint normal 
+
+> k
+
+ah by the minimal amount so that kahJkuh “ kdh, which is the Euclidean projection onto the corresponding half-space and solves min k uh 12 }kuh ´k ¯uh}2 subject to kahJkuh ě kdh.Therefore, given k ¯u1: H´1, we compute a feasible rollout by projecting per step k ¯uh to kuh through the half-space projec-tion implied by Eq. (15). In MDOC, F is thus implemented by iterating over H: ( 1) projecting each proposed control k ¯uh
+
+onto kKh to enforce safety and ( 2) rolling out the known dynamics one step to obtain ksh`1, so dynamic feasibility is not broken. We now combine ( 1) the MCSA sampler from Section III-B and ( 2) the feasibility operator F. At each diffusion step k,MDOC samples M potentially unsafe candidates t˜τ 1: Hm uMm“1
+
+from the Gaussian proposal with Eq. (7) parameterized by con-trols k ¯u1: H´1, then recovers dynamically feasible and CBF-constrained trajectories t˜τ 1: Hm uMm“1 by rolling out ku1: H´1
+
+> m
+
+through the known dynamics and applying the projection with Eq. (15), namely τ 1: Hm “ Fp˜τ 1: Hm q, computes Monte Carlo mean with  
+
+> k
+
+¯τ 1: H “
+
+řMm“1 1ppτ 1: Hm q τ 1: Hm
+
+řMm“1 1ppτ 1: Hm q , (16) and forms the score estimate from Eq. (9) to update the noisy trajectory through Eq. (5), as summarized in Algorithm 1. As a result, all trajectories used to compute the Monte Carlo estimate in Eq. (9) satisfy the dynamics and constraints. 
+
+B. MDOC-CBS 
+
+We now show how the mechanisms in MDOC can directly generalize to support planning for multi-robot settings via CBS [39]. Briefly, the CBS algorithm decomposes the MRMP problem into two levels: a low-level where each robot plans for itself, and a high-level, where the planned trajectories are surveyed, conflicts (i.e., inter-robot collisions) are identified, and constraints are imposed on colliding robots such that they will avoid the collision configurations upon replanning. Specifically, MDOC-CBS, as shown in Algorithm 2, first creates a root node Vroot and stores it in a priority queue termed the constraint tree (CT). The root node includes ( 1) an constraint set Vroot .Ci for each robot i, initialized with obstacle-avoidance constraints, and ( 2) a joint trajectory Vroot .τ 1: H ,constructed by planning for each robot with MDOC over the horizon H.CBS iteratively selects the least-cost node V from the CT (in our case, the one with the fewest conflicts) and evaluates it. If V. τ 1: H is conflict-free, it returns it as a solution. Otherwise, if a conflict is found between robots i and j at time h, CBS branches node V into two new CT nodes, Vi and Vj , for robots i and j: each child node copies the constraint sets and trajectories from V and adds a new constraint forbidding robot 
+
+i (resp. j) from entering a small workspace sphere centered at robot j’s state shj at time h, with a safe margin r. CBS then replans the trajectories of robots i and j using the low-level MDOC planner under the updated constraint sets Vi.Ci and 
+
+Vj .Cj , enforced by the single-robot feasibility operator F via CBF-constrained projections within the model-based diffusion rollouts, as illustrated in Algorithm 1. When replanning robot 
+
+i, each CBS constraint generated from a conflict with robot 
+
+j is represented as a time-indexed forbidden sphere centered at the conflicting state of robot j. We convert the pairwise CBF bij psi, s j q into a single-robot barrier by fixing the second argument to this sphere center, that bhi|j pshi q “ bij pshi , s hj q ,where shj is fixed by the CBS constraint. If bij pshi , s hj q “ }shi ´ shj }2 ´ r2, then bhi|j pshi q “ } shi ´ shj }2 ´ r2 ě 0, enforced by F with bh`1 
+
+> i|j
+
+ě p 1 ´ γ∆hqbhi|j during diffusion rollouts. The two new CT nodes, with updated trajectories Vi.τ 1: H and 
+
+Fig. 1: Illustrations of Narrow map, Empty map, Conveyor map (Top Row), Drop-Region map, Random map, and Empty Large map (Below) used in MRMP experiments where gray objects represent obstacles. Colorful squares and spheres indi-cate the start and goal of robots. For the Empty and Conveyor maps, we consider a dual swap (Circle Setup and Weave Setup) between two robots positioned on squares of the same color. 
+
+Vj .τ 1: H , are added to the CT priority queue. CBS then pops the node with the fewest conflicts for further expansion. V. E XPERIMENTAL ANALYSIS 
+
+We aim to explore the performance of our method through various environments to address the following three questions:  
+
+> ‚
+
+What advantages does MDOC offer over state-of-the-art (SOTA) single-robot planners?  
+
+> ‚
+
+How does MDOC-CBS compare to SOTA MRMP plan-ners in terms of success rate, trajectory smoothness, and the ability to ensure constraints?  
+
+> ‚
+
+Is MDOC-CBS robust and scalable with respect to map size, planning horizon, and number of robots? 
+
+Experimental Setup. We evaluate our method MDOC and its MRMP version MDOC-CBS on various map types (illustrated in Fig. 1): ( 1) we use the Narrow map of size 
+
+2 ˆ 2 to evaluate MDOC in single-robot settings; ( 2) we use the Empty map, Conveyor map [38], Drop-Region map [38], and Random Map (with an obstacle density of 13.7%), all of size 2 ˆ2, to evaluate MDOC-CBS in multi-robot settings; ( 3)we use Empty Large maps of size 4 ˆ4 and 6 ˆ6 for multi-robot scalability evaluation. The robot radius is fixed at 0.05 for all maps. We consider three start-goal pairs setups: ( 1) Circle Setup requires robots to symmetrically swap positions between oppo-site points on the perimeter; ( 2) Weave Setup requires robots to exchange positions along uniformly spaced boundary points; (3) Random Setup randomly generates start-goal pairs in maps. Setup demonstrations are shown 
+
+Baselines. We compare our method, MDOC , with SOTA trajectory optimization and planning methods: ( 1) CEM [5], a sampling-based trajectory optimizer using importance-weighted elite selection; ( 2) MPPI [47], a stochastic model-Fig. 2: Results of MDOC and baseline methods on Narrow map (top row) and More-Constrained Narrow map (bottom row). The left panels plot, for each planner, the collision-free trajectory with the highest success probability. Right panels depict MDOC rollouts at 90%, 50%, and 10% of the diffusion denoising process, showing how the distribution converges toward successful passages. 
+
+CEM MPPI RRT* MDOC Top 2.1 ˘ 0.2 3.2 ˘ 0.3 66.1 ˘ 6.0 100.0 
+
+Bottom 0.2 ˘ 0.1 0.4 ˘ 0.1 41.7 ˘ 3.4 100.0 
+
+TABLE I: “Pass&Free”-Yield (%) ( Ò) of MDOC and baseline methods, which is defined as the percentage of candidate trajectories that both traverse the bottleneck (Pass) and re-main collision-free (Free) under a fixed proposal sample size 
+
+M “ 128 per planning step. predictive control method based on path integral sampling; and ( 3) RRT* [19], a sampling-based asymptotically optimal motion planner. We also compare MDOC-CBS with SOTA CBS-based MRMP methods: ( 4) CBS [39] and its variant Enhanced CBS (ECBS) [4], multi-agent path finding planners with grid-based A* in the discretized configuration space as its low-level planner; ( 5) KCBS [24], a continuous-space variant of CBS with kinematic RRT* as its lower-level planner; ( 6)MMD-CBS [38], a continuous-space variant of CBS with model-free diffusion, trained on RRT* trajectories, as its low-level planner. Note that we mainly focus on CBS-based MRMP planners, since MMD-CBS outperforms “composite” methods, which directly optimize joint constraints and objec-tives without CBS [38]. 
+
+A. Experimental Results 
+
+We conduct experiments on an NVIDIA RTX A4500 GPU with 20 GB of memory and 12 CPU cores. We run 10 trials Fig. 3: Results on Empty map (Top Row) and Conveyor map (Below) with 6 robots on Circle setup. Columns display 3 algorithms: KCBS (Left), MMD-CBS (Mid), and our MDOC-CBS (Right). We show trajectories without post-smoothness. 
+
+Map Method PÓ G (1e-4) Ó
+
+Empty KCBS 2.2 ˘ 0.07 20.5 ˘ 2.75 MMD-CBS 2.9 ˘ 0.06 60.6 ˘ 5.33 MDOC-CBS 1.8 ˘ 0.03 6.7 ˘ 0.05 
+
+Conveyor KCBS 2.7 ˘ 0.10 20.7 ˘ 2.12 MMD-CBS 3.9 ˘ 0.11 85.0 ˘ 5.45 MDOC-CBS 2.8 ˘ 0.04 12.9 ˘ 1.40 
+
+TABLE II: Comparison of methods in terms of average path length P and geometric (Laplacian) smoothness G over success trails of all agent numbers, evaluated on the Empty map and Conveyor map in the Circle setup. per method and map, each with a different random seed, under identical map conditions. We use a single-integrator model in the main experiments for clarity. 
+
+Why Model-Based Diffusion in Motion Planning? As illustrated in the right panel of Fig. 2, we showcase the sample distribution at 90%, 50%, and 10% of the diffusion denoising process. We observe that the early-stage (90%) distribution is wide, covering multiple homotopy classes and exploring diverse passages. As iterations progress (50%), the distribution is denoised towards feasible and low-cost paths by score guidance augmented with dynamics and constraint projections, traversing the bottleneck in both maps and safely avoiding obstacles in More-Constrained Narrow (bottom row), and finally converges to a high-quality feasible trajectory at the late stage (10%). CEM and MPPI refine the control sequence through importance weighting or elite resampling, but mainly rely on repeated stochastic resampling, which often leads to getting stuck in wrong homotopy classes or failing in highly multimodal or constrained environments. MDOC establishes a well-conditioned gradient structure over the trajectory dis-tribution and explicitly incorporates dynamics and constraints into the denoising process, so that every reverse step is model-informed guidance rather than a blind perturbation. Together, these properties turn motion planning into a model-based Circle Setup 
+
+Weave Setup 
+
+Fig. 4: Performance of MRMP methods on Empty map (top row) and Conveyor map (bottom row) with a 500-second time limit. For each subfigure, the top plot shows the Circle Setup (circular markers with solid lines), and the bottom plot shows the Weave Setup (diamond markers with dashed lines). The planning time and CT expansions are averaged on successful trials, and outliers are included in the averages but omitted beyond the 95th percentile for better visualization, especially in CT expansions. diffusion process, where the dynamics model and constraints shape the score instead of relying solely on sampled rollouts. This allows each candidate trajectory to become progressively more feasible and cost-efficient within a single multi-step refinement procedure, achieving higher effectiveness under the same sampling budget compared to other optimizers that de-pend purely on random perturbation resampling. “Pass&Free”-Yield (PF-Yield) from Table I further verifies that MDOC achieves a 100.0% effective sample rate, while CEM and MPPI remain significantly lower on both narrow maps. As a tree-search-based geometric planner, RRT* explores reachable paths by randomly sampling states and incremen-tally expanding a search tree, but it does not directly optimize trajectory cost or enforce dynamic feasibility. To quantify its effective sampling efficiency in narrow passages, we compute PF-Yield for RRT* as the fraction of expanded nodes whose associated paths both traverse the bottleneck and remain collision-free (Pass & Free) over all expanded nodes. Com-paring PF-Yield across RRT* and MDOC therefore places a geometric planner and a trajectory optimizer on the same footing, by asking: out of all samples or rollouts under a fixed budget, how many actually produce useful, bottleneck-traversing, collision-free candidates? Under this metric, RRT* attains PF-Yield values of 66.1% and 41.7% on the two maps, substantially lower than MDOC’s 100%. This indicates that, under a limited sample budget, while RRT* possesses global reachability and probabilistic completeness, it still wastes many samples in unproductive homotopy classes and struggles to efficiently converge to a feasible and smooth solution in bot-tlenecked environments. In contrast, MDOC, through diffusion denoising in trajectory space, achieves continuous convergence from global exploration to local refinement guided by dy-namics and constraints, thereby completing path selection and trajectory optimization within a single model-based diffusion process. Therefore, we consider MDOC as a model-based diffusion planner that inherits the global exploration behavior of RRT* while also enjoying the optimization capabilities of MPPI and CEM, using the underlying dynamics model and hard constraints to steer the diffusion updates, thereby achieving higher feasibility and convergence efficiency. 
+
+Performance for MRMP on 2 ˆ2 Maps. We first evaluate the scalability of MDOC-CBS on the Empty map and Con-veyor map with the Circle and Weave setups up to 20 robots (Fig. 4). The experiment uses a fixed horizon H “ 64 . Overall, the results show that MDOC-CBS (blue lines) outperforms baseline methods under the same map and start-goal conditions in most cases. In contrast, MMD-CBS fails beyond 10 robots in the Empty Circle setup and 12 in the Conveyor Circle setup, while KCBS’s success rate steadily degrades after 5 robots. At the same time, MDOC-CBS achieves 5 ˆ–10 ˆ lower planning time than MMD-CBS at comparable CT expansion levels, since it computes the trajectory score analytically through MCSA with model-based rollouts rather than repeatedly in-voking a large diffusion network. Moreover, our MDOC-CBS consistently produces shorter and smoother trajectories than KCBS and MMD-CBS (Ta-ble II). This improvement stems from the model-based dif-fusion objective with MCSA, which drives rich exploration directly in the continuous state space while regularizing dynamic coherence. KCBS, which relies on discrete RRT* Drop-Region Map 
+
+Random Map 
+
+Fig. 5: Performance of MRMP methods on Drop-Region map with the Weave Setup (top row) and Random map with the Random Setup(bottom row) with a 500-second time limit. The planning time and CT expansions are averaged on successful trials, and outliers are included in the averages but omitted beyond the 95th percentile for better visualization, especially in CT expansions. 
+
+Empty Map 4 ˆ4
+
+Empty Map 6 ˆ6
+
+Fig. 6: Performance of MRMP methods on the larger 4 ˆ4 (top row) and 6 ˆ6 (bottom row) Empty maps with a 500-second time limit, both with the Random Setup. The planning time and CT expansions are averaged on successful trials, and outliers are included in the averages but omitted beyond the 95th percentile for better visualization, especially in CT expansions. primitives, tends to generate irregular, jittery motions, and MMD-CBS inherits these artifacts because its denoising ob-jective is trained to imitate RRT*-generated demonstrations. In contrast, MDOC-CBS actively exploits open free space and promotes dynamically coordinated motion across agents (Fig. 3), yielding trajectories that are globally more symmetric and better synchronized. The difference is most pronounced in the Conveyor map, as shown in the bottom row of Fig. 3. MMD-CBS inherits the demonstration’s “queue-through-the-corridor” behavior: all 6 robots enter the narrow passage, causing oscillation and congestion at the bottleneck, which inflates path length and degrades geometric smoothness. In contrast, MDOC-CBS does not force all robots into the same homotopy. Through model-based score ascent and continuous-space exploration, only 2 robots choose the corridor, while the remaining robots naturally distribute themselves around the outer free space. This leads to significantly shorter average path lengths, fewer high-level CT expansions, and substan-tially smoother continuous trajectories while ensuring a safety margin. These gains arise from combining diffusion-based exploration with a model-based low-level objective within CBS, thereby improving scalability in dense settings. We further evaluate MDOC-CBS on a Drop-Region map with four tightly packed central obstacles and a Random map with uniformly sampled start-goal pairs (Fig. 5). In both settings, MDOC-CBS and MMD-CBS achieve similar suc-cess rates and clearly outperform KCBS, while MDOC-CBS consistently attains lower planning time at comparable CT expansion levels, indicating robustness across different map structures. However, MDOC-CBS exhibits higher variability: its success rate does not always reach 100% in random maps, and most failures occur when a robot collides with an obstacle and no valid rollout is returned, reflecting higher Monte Carlo score ascent variance in compressed free space with tight ran-dom constraints. This suggests a nontrivial trade-off between open-space exploration and aggressive safety tightening within the CBF-constrained projection during model-based diffusion rollouts. Even so, MDOC-CBS solves instances with up to 15 robots, and we expect stability to improve with better variance control and constraint projections in future work. 
+
+Longer-Horizon MRMP on Larger Maps. We present a robustness study of MDOC-CBS on larger maps with longer horizons ( H “ 128 for larger 4 ˆ 4 and H “ 196 for larger 
+
+6 ˆ 6). As shown in Fig. 6, MDOC-CBS remains robust as the problem size grows, achieving the highest success rate up to 40 robots. In contrast, MMD-CBS degrades sharply beyond 30 robots: increasing H directly lengthens the denoising chain and inflates the inference cost of its model-free single-robot diffusion model, so many runs hit the time limit before CBS can complete the high-level search. MDOC-CBS, by compari-son, scales much more gracefully with horizon length. Because MDOC performs model-based diffusion rollouts in parallel under known dynamics, the per-iteration cost grows sub-linearly with H compared to model-free denoising, and even when CBS introduces additional constraints on larger maps, the computation can be amortized across robots and time steps. This makes MDOC-CBS substantially more robust for long-horizon planning and explains its superior performance on the 
+
+6 ˆ 6 map. VI. C ONCLUSION 
+
+In this work, we propose MDOC, a CBF-constrained model-based diffusion planner that satisfies dynamical feasibility and safety constraints simultaneously. We also extend the planner to the multi-robot settings to solve MRMP. Results showcase the superior performance of our method in various environmental setups. Future directions include optimizing Monte Carlo variance and constraint projection efficiency, adapting the planner to online tasks with receding-horizon methods, and exploring richer dynamics models and multi-robot variants such as Prioritized Planning. ACKNOWLEDGMENTS 
+
+This work was partially supported by the National Science Foundation under Grants # 2328671 and # 2441629 .REFERENCES 
+
+[1] Ayush Agrawal and Koushil Sreenath. Discrete control barrier functions for safety-critical control of discrete systems with application to bipedal robot navigation. In 
+
+Robotics: Science and Systems , pages 1–10, 2017. [2] Aaron D Ames, Jessy W Grizzle, and Paulo Tabuada. Control barrier function based quadratic programs with application to adaptive cruise control. In Conference on Decision and Control , pages 6271–6278, 2014. [3] Aaron D Ames, Samuel Coogan, Magnus Egerstedt, Gen-naro Notomista, Koushil Sreenath, and Paulo Tabuada. Control barrier functions: Theory and applications. In 
+
+European Control Conference , pages 3420–3431, 2019. [4] Max Barer, Guni Sharon, Roni Stern, and Ariel Felner. Suboptimal variants of the conflict-based search algo-rithm for the multi-agent pathfinding problem. In In-ternational Symposium on Combinatorial Search , pages 19–27, 2014. [5] Zdravko I Botev, Dirk P Kroese, Reuven Y Rubinstein, and Pierre L’ecuyer. The cross-entropy method for optimization. In Handbook of statistics , volume 31, pages 35–59. Elsevier, 2013. [6] Eli Boyarski, Ariel Felner, Roni Stern, Guni Sharon, Oded Betzalel, David Tolpin, and Eyal Shimony. ICBS: The improved conflict-based search algorithm for multi-agent pathfinding. In International Symposium on Com-binatorial Search , pages 223–225, 2015. [7] Joao Carvalho, An T Le, Mark Baierl, Dorothea Koert, and Jan Peters. Motion planning diffusion: Learning and planning of robot motions with diffusion models. In International Conference on Intelligent Robots and Systems , pages 1916–1923, 2023. [8] Yufan Chen, Mark Cutler, and Jonathan P How. Decou-pled multiagent path planning via incremental sequential convex programming. In International Conference on Robotics and Automation , pages 5954–5961, 2015. [9] Cheng Chi, Zhenjia Xu, Siyuan Feng, Eric Cousineau, Yilun Du, Benjamin Burchfiel, Russ Tedrake, and Shuran Song. Diffusion policy: Visuomotor policy learning via action diffusion. International Journal of Robotics Research , 44(10-11):1684–1704, 2025. [10] Jacob K Christopher, Stephen Baek, and Ferdinando Fioretto. Constrained synthesis with projected diffusion models. In Advances in Neural Information Processing Systems , pages 89307–89333, 2024. [11] Apan Dastider, Hao Fang, and Mingjie Lin. APEX: Am-bidextrous dual-arm robotic manipulation using collision-free generative diffusion models. In International Con-ference on Intelligent Robots and Systems , pages 9526– 9533, 2024. [12] Dror Dayan, Kiril Solovey, Marco Pavone, and Dan Halperin. Near-optimal multi-robot motion planning with finite sampling. IEEE Transactions on Robotics , 39(5): 3422–3436, 2023. [13] Farbod Farshidian, Edo Jelavic, Asutosh Satapathy, Markus Giftthaler, and Jonas Buchli. Real-time motion planning of legged robots: A model predictive control approach. In International Conference on Humanoid Robotics , pages 577–584, 2017. [14] Ruben Grandia, Fabian Jenelten, Shaohui Yang, Farbod Farshidian, and Marco Hutter. Perceptive locomotion through nonlinear model-predictive control. IEEE Trans-actions on Robotics , 39(5):3402–3421, 2023. [15] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising diffusion probabilistic models. In Advances in Neural Information Processing Systems , pages 6840–6851, 2020. [16] John E Hopcroft and Gordon T. Wilfong. Reducing multiple object motion planning to graph searching. 
+
+SIAM Journal on Computing , 15(3):768–785, 1986. [17] Michael Janner, Yilun Du, Joshua B Tenenbaum, and Sergey Levine. Planning with diffusion for flexible behavior synthesis. arXiv preprint arXiv:2205.09991 ,2022. [18] Sertac Karaman and Emilio Frazzoli. Sampling-based algorithms for optimal motion planning. International Journal of Robotics Research , 30(7):846–894, 2011. [19] Sertac Karaman, Matthew R Walter, Alejandro Perez, Emilio Frazzoli, and Seth Teller. Anytime motion plan-ning using the RRT. In International Conference on Robotics and Automation , pages 1478–1483, 2011. [20] Sotaro Katayama, Masaki Murooka, and Yuichi Tazaki. Model predictive control of legged and humanoid robots: Models and algorithms. Advanced Robotics , 37(5):298– 315, 2023. [21] Lydia E Kavraki, Petr Svestka, J-C Latombe, and Mark H Overmars. Probabilistic roadmaps for path planning in high-dimensional configuration spaces. IEEE Transac-tions on Robotics and Automation , 12(4):566–580, 1996. [22] Lydia E Kavraki, Mihail N Kolountzakis, and J-C Latombe. Analysis of probabilistic roadmaps for path planning. IEEE Transactions on Robotics and automa-tion , 14(1):166–171, 1998. [23] Michal Kleinbort, Kiril Solovey, Zakary Littlefield, Kostas E Bekris, and Dan Halperin. Probabilistic completeness of RRT for geometric and kinodynamic planning with forward propagation. IEEE Robotics and Automation Letters , 4(2):277–283, 2019. [24] Justin Kottinger, Shaull Almagor, and Morteza Lahi-janian. Conflict-based search for multi-robot motion planning with kinodynamic constraints. In International Conference on Intelligent Robots and Systems , pages 13494–13499, 2022. [25] James J Kuffner and Steven M LaValle. RRT-connect: An efficient approach to single-query path planning. In 
+
+International Conference on Robotics and Automation ,pages 995–1001, 2000. [26] Steven M La Valle. Motion planning. IEEE Robotics & Automation Magazine , 18(2):108–118, 2011. [27] Steven LaValle. Rapidly-exploring random trees: A new tool for path planning. Research Report 9811 , 1998. [28] Sergey Levine. Reinforcement learning and control as probabilistic inference: Tutorial and review. arXiv preprint arXiv:1805.00909 , 2018. [29] Jiaoyang Li, Wheeler Ruml, and Sven Koenig. EECBS: A bounded-suboptimal search for multi-agent path find-ing. In AAAI conference on artificial intelligence , pages 12353–12362, 2021. [30] Jinhao Liang, Jacob K Christopher, Sven Koenig, and Ferdinando Fioretto. Simultaneous multi-robot motion planning with projected diffusion models. In Interna-tional Conference on Machine Learning , pages 37162– 37180, 2025. [31] Carlos E Luis, Marijan Vukosavljev, and Angela PSchoellig. Online trajectory generation with distributed model predictive control for multi-robot motion planning. 
+
+IEEE Robotics and Automation Letters , 5(2):604–611, 2020. [32] Raghav Mishra and Ian R Manchester. EB-MBD: Emerging-barrier model-based diffusion for safe trajec-tory optimization in highly constrained environments. 
+
+arXiv preprint arXiv:2510.07700 , 2025. [33] Akmaral Moldagalieva, Joaquim Ortiz-Haro, Marc Tou-ssaint, and Wolfgang H¨ onig. db-CBS: Discontinuity-bounded conflict-based search for multi-robot kinody-namic motion planning. In International Conference on Robotics and Automation , pages 14569–14575, 2024. [34] Keisuke Okumura. LaCAM: Search-based algorithm for quick multi-agent pathfinding. In AAAI Conference on Artificial Intelligence , pages 11655–11662, 2023. [35] Chaoyi Pan, Zeji Yi, Guanya Shi, and Guannan Qu. Model-based diffusion for trajectory optimization. In 
+
+Advances in Neural Information Processing Systems ,pages 57914–57943, 2024. [36] Jan Peters, Katharina Mulling, and Yasemin Altun. Rel-ative entropy policy search. In AAAI Conference on Artificial Intelligence , pages 1607–1612, 2010. [37] Ralf R¨ omer, Alexander von Rohr, and Angela P. Schoel-lig. Diffusion predictive control with constraints. In Necmiye Ozay, Laura Balzano, Dimitra Panagou, and Alessandro Abate, editors, Learning for Dynamics & Control Conference , pages 791–803, 2025. [38] Yorai Shaoul, Itamar Mishani, Shivam Vats, Jiaoyang Li, and Maxim Likhachev. Multi-robot motion planning with diffusion models. In International Conference on Learning Representations , 2025. [39] Guni Sharon, Roni Stern, Ariel Felner, and Nathan R Sturtevant. Conflict-based search for optimal multi-agent pathfinding. Artificial intelligence , 219:40–66, 2015. [40] Rahul Shome, Kiril Solovey, Andrew Dobson, Dan Halperin, and Kostas E Bekris. dRRT*: Scalable and in-formed asymptotically-optimal multi-robot motion plan-ning. Autonomous Robots , 44(3):443–467, 2020. [41] Athanasios Sideris and James E Bobrow. An efficient sequential linear quadratic algorithm for solving non-linear optimal control problems. In American Control Conference , pages 2275–2280, 2005. [42] Kiril Solovey, Oren Salzman, and Dan Halperin. Finding a needle in an exponential haystack: Discrete RRT for exploration of implicit roadmaps in multi-robot motion planning. International Journal of Robotics Research , 35 (5):501–513, 2016. [43] Roni Stern, Nathan R. Sturtevant, Ariel Felner, Sven Koenig, Hang Ma, Thayne T. Walker, Jiaoyang Li, Dor Atzmon, Liron Cohen, T. K. Satish Kumar, Roman Bart´ ak, and Eli Boyarski. Multi-agent pathfinding: Definitions, variants, and benchmarks. In International Symposium on Combinatorial Search , pages 151–158, 2019. [44] Marc Toussaint. Robot trajectory optimization using approximate inference. In International Conference on Machine Learning , pages 1049–1056, 2009. [45] Joe Watson and Jan Peters. Inferring smooth control: Monte carlo posterior policy iteration with gaussian processes. In Conference on Robot Learning , pages 67– 79, 2023. [46] Joe Watson, Hany Abdulsamad, and Jan Peters. Stochas-tic optimal control as approximate input inference. In 
+
+Conference on Robot Learning , pages 697–716, 2020. [47] Grady Williams, Paul Drews, Brian Goldfain, James M Rehg, and Evangelos A Theodorou. Information-theoretic model predictive control: Theory and appli-cations to autonomous driving. IEEE Transactions on Robotics , 34(6):1603–1622, 2018. [48] Wei Xiao, Tsun-Hsuan Wang, Chuang Gan, Ramin Hasani, Mathias Lechner, and Daniela Rus. Safediffuser: Safe planning with diffusion probabilistic models. In 
+
+International Conference on Learning Representations ,2023. [49] Haoru Xue, Chaoyi Pan, Zeji Yi, Guannan Qu, and Guanya Shi. Full-order sampling-based MPC for torque-level locomotion control via diffusion-style annealing. In 
+
+International Conference on Robotics and Automation ,pages 4974–4981, 2025. [50] Jichen Zhang, Liqun Zhao, Antonis Papachristodoulou, and Jack Umenberger. Constrained diffusers for safe planning and control. In Advances in Neural Information Processing Systems , pages 34965–34998, 2026. [51] Xiaohan Zhang, Xudong Mou, Rui Wang, Tianyu Wo, Ningbo Gu, Tiejun Wang, Cangbai Xu, and Xudong Liu. Robotdiffuse: Motion planning for redundant ma-nipulator based on diffusion model. arXiv preprint arXiv:2412.19500 , 2024. [52] Yuhao Zhang, Keisuke Okumura, Heedo Woo, Ajay Shankar, and Amanda Prorok. D4orm: Multi-robot trajectories with dynamics-aware diffusion denoised de-formations. In International Conference on Intelligent Robots and Systems , pages 14118–14123, 2025. [53] Guangyao Zhou, Sivaramakrishnan Swaminathan, Rajku-mar Vasudeva Raju, J. Swaroop Guntupalli, Wolfgang Lehrach, Joseph Ortiz, Antoine Dedieu, Miguel L´ azaro-Gredilla, and Kevin Patrick Murphy. Diffusion model predictive control. Transactions on Machine Learning Research , 2025. ISSN 2835-8856.
