@@ -6,38 +6,56 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-15
-- 运行时间：2026-07-15 20:31:44 UTC
+- 最新运行日期：2026-07-16
+- 运行时间：2026-07-16 21:05:17 UTC
 - 运行状态：成功
-- 本次总论文数：6
-- 精读区：1
-- 速读区：5
+- 本次总论文数：12
+- 精读区：6
+- 速读区：6
 
 ### 今日简报（AI）
-今日共推荐6篇论文，其中精读1篇、速读5篇。最值得关注的是《Action Map Policy》提出的3D闭环操作像素分类方法，以及《Learning More from Less》中的后见强化学习思路。建议优先精读高分论文，并关注速读中多机器人运动规划与移动机器人导航的潜在应用。
-- 详情：[/202607/15/README](/202607/15/README)
+今日聚焦视觉-语言-动作（VLA）推理效率与泛化，精读两篇高分论文分别提出减少时间冗余和表征锚定微调方法。最值得关注的方向是VLA模型如何在减少计算开销的同时保持对复杂任务的适应性，以及逆向任务迁移学习在策略学习中的潜力。建议普通读者优先阅读《Reducing Temporal Redundancy》学习高效推理技巧，再通过《Reverse to Advance》了解如何利用简单任务加速复杂策略训练。
+- 详情：[/202607/16/README](/202607/16/README)
 
 ### 精读区论文标签
-1. [Action Map Policy: Learning 3D Closed-loop Manipulation via Pixel Classification](/202607/15/2607.10706v1-action-map-policy-learning-3d-closed-loop-manipulation-via-pixel-classification)  
-   标签：评分：8.0/10、query:imitation
-   evidence：通过像素分类进行机器人操作模仿学习
+1. [Reducing Temporal Redundancy for Efficient Vision-Language-Action Inference](/202607/16/2607.12287v1-reducing-temporal-redundancy-for-efficient-vision-language-action-inference)  
+   标签：评分：9.0/10、query:imitation
+   evidence：提出针对扩散策略的加速方法，直接关联扩散策略在机器人控制中的应用
+2. [Generalizable VLA Finetuning via Representation Anchoring and Language-Action Alignment](/202607/16/2607.13429v1-generalizable-vla-finetuning-via-representation-anchoring-and-language-action-alignment)  
+   标签：评分：9.0/10、query:imitation
+   evidence：通过表征锚定和语言-动作对齐改善行为克隆微调VLA策略的泛化性
+3. [Distributionally Robust and Safe Imitation Learning](/202607/16/2607.13436v1-distributionally-robust-and-safe-imitation-learning)  
+   标签：评分：9.0/10、query:imitation
+   evidence：分布鲁棒且安全的模仿学习
+4. [Learning Forward & Reverse Skills from a Single Unfinished Demonstration for Constrained Manipulation Tasks](/202607/16/2607.13882v1-learning-forward--reverse-skills-from-a-single-unfinished-demonstration-for-constrained-manipulation-tasks)  
+   标签：评分：9.0/10、query:imitation
+   evidence：从单次不完整演示中学习
+5. [Discriminative Barrier Functions for Safe Adversarial Imitation Learning from Observation](/202607/16/2607.13938v1-discriminative-barrier-functions-for-safe-adversarial-imitation-learning-from-observation)  
+   标签：评分：9.0/10、query:imitation
+   evidence：通过障碍函数实现安全的对抗模仿学习
+6. [Industrial Dexterity Benchmark: A Hardware-Software Benchmarking Platform for Industrial Dexterous Manipulation](/202607/16/2607.14021v1-industrial-dexterity-benchmark-a-hardware-software-benchmarking-platform-for-industrial-dexterous-manipulation)  
+   标签：评分：9.0/10、query:imitation
+   evidence：面向工业灵巧操作的多模态扩散策略框架
 
 ### 速读区论文标签
-1. [Learning More from Less: Reinforcement Learning from Hindsight](/202607/15/2607.09042v1-learning-more-from-less-reinforcement-learning-from-hindsight)  
+1. [PAKE: Learning Whole-Body Loco-Manipulation with Partial Kinematic Embeddings](/202607/16/2607.11041v1-pake-learning-whole-body-loco-manipulation-with-partial-kinematic-embeddings)  
+   标签：评分：8.0/10、query:imitation
+   evidence：在全身移动操作框架中使用模仿控制
+2. [Worlds in One Demo: A Synthetic Data Engine for Learning Open-World Mobile Manipulation](/202607/16/2607.13154v1-worlds-in-one-demo-a-synthetic-data-engine-for-learning-open-world-mobile-manipulation)  
+   标签：评分：8.0/10、query:imitation
+   evidence：从一次演示合成数据学习移动操作，属于模仿学习在机器人操作中的最新进展
+3. [Reverse to Advance: Teleoperation-Cost Effective Hard Policy Learning from Reversed Easy Tasks](/202607/16/2607.13455v1-reverse-to-advance-teleoperation-cost-effective-hard-policy-learning-from-reversed-easy-tasks)  
+   标签：评分：8.0/10、query:imitation
+   evidence：通过反转易任务轨迹进行模仿学习，降低遥操作成本
+4. [Joint On-and-Off Policy Learning for Vision-and-Language Navigation](/202607/16/2607.13461v1-joint-on-and-off-policy-learning-for-vision-and-language-navigation)  
+   标签：评分：8.0/10、query:imitation
+   evidence：结合模仿学习和强化学习进行具身导航
+5. [CoDiMAD: Diffusion-Based Privileged Distillation for Communication-Free Multi-Robot Coordination](/202607/16/2607.09587v1-codimad-diffusion-based-privileged-distillation-for-communication-free-multi-robot-coordination)  
    标签：评分：7.0/10、query:imitation
-   evidence：对视觉-语言-动作模型进行后训练的遗憾重标记强化学习
-2. [Model-Based Diffusion Optimal Control for Multi-Robot Motion Planning](/202607/15/2607.12423v1-model-based-diffusion-optimal-control-for-multi-robot-motion-planning)  
+   evidence：基于扩散的蒸馏用于多机器人协调
+6. [Learning Roller-Skating Motions of Humanoid Robots Based on Adversarial Motion Priors](/202607/16/2607.10815v1-learning-roller-skating-motions-of-humanoid-robots-based-on-adversarial-motion-priors)  
    标签：评分：7.0/10、query:imitation
-   evidence：基于模型的扩散最优控制用于多机器人运动规划
-3. [PIER-Flow: Physics-Informed Efficient Rectified Flow for Real-Time Mobile Robot Navigation](/202607/15/2607.10288v1-pier-flow-physics-informed-efficient-rectified-flow-for-real-time-mobile-robot-navigation)  
-   标签：评分：6.0/10、query:imitation
-   evidence：采用整流流（与扩散策略相关）用于移动机器人导航策略，捕捉多模态行为
-4. [VINE: Taming Generative Control Policies for Reinforcement Learning](/202607/15/2607.10369v1-vine-taming-generative-control-policies-for-reinforcement-learning)  
-   标签：评分：6.0/10、query:imitation
-   evidence：生成式控制策略（类似于扩散策略）用于机器人学习
-5. [UR-VC: Unsupervised Robotic Value Correction for Time-Derived Progress Proxies](/202607/15/2607.12892v1-ur-vc-unsupervised-robotic-value-correction-for-time-derived-progress-proxies)  
-   标签：评分：6.0/10、query:imitation
-   evidence：用于机器人演示学习的无监督价值修正
+   evidence：使用对抗运动先验（AMP）和人类运动捕捉数据学习人形机器人运动，涉及模仿学习方法
 
 
 <div class="dpr-home-promo-card">

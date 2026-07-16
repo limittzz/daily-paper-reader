@@ -1,0 +1,492 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-16T20:57:27.032735+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 10,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 6,
+    "quick_skim_target": 11,
+    "quick_selected": 6
+  },
+  "deep_dive": [
+    {
+      "id": "2607.12287v1",
+      "source": "arxiv",
+      "title": "Reducing Temporal Redundancy for Efficient Vision-Language-Action Inference",
+      "abstract": "Vision-Language-Action (VLA) models exhibit strong generalization for robotic manipulation, yet their high inference latency limits real time deployment. We identify two primary sources of temporal redundancy in existing VLA pipelines: repeated visual encoding of highly similar consecutive frames and multi step iterative sampling in diffusion based policies. To address this, we propose a system level acceleration strategy that reduces computation in both perception and action generation. On the perception side, we incrementally update only tokens corresponding to dynamic scene regions instead of re-encoding entire frames. On the policy side, we compress diffusion sampling into a compact 2-step schedule through efficiency oriented training while preserving action precision. Experiments on Libero, RobotWin, and Real Robot Platforms demonstrate over 2 times speedup while maintaining high performance, achieving up to 98% success rate on general manipulation benchmarks. Our codes will be released on Github.",
+      "authors": [
+        "Yuzhou Wu",
+        "Yuxin Zheng",
+        "Muchun Niu",
+        "Yishan Yang",
+        "Tianhao Liu",
+        "hanwen kang",
+        "Jiajian Jing",
+        "Linfeng Zhang",
+        "Chuan Wen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-14T02:48:31+00:00",
+      "link": "https://arxiv.org/pdf/2607.12287v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "proposes acceleration for diffusion-based policies in VLA models, directly relevant to diffusion policy for robot control",
+      "llm_evidence_cn": "提出针对扩散策略的加速方法，直接关联扩散策略在机器人控制中的应用",
+      "llm_evidence": "提出针对扩散策略的加速方法，直接关联扩散策略在机器人控制中的应用",
+      "canonical_evidence": "提出针对扩散策略的加速方法，直接关联扩散策略在机器人控制中的应用",
+      "llm_tldr_en": "Reduces temporal redundancy in VLA models by incremental visual token updates and compressed 2-step diffusion sampling, enabling real-time deployment for robotic manipulation.",
+      "llm_tldr_cn": "视觉-语言-动作（VLA）模型推理延迟高是实时部署的瓶颈。本文识别出视觉编码和扩散采样的时序冗余，提出增量更新视觉token和压缩为2步扩散采样的系统级加速策略。实验表明，该方法在保持操作性能的同时，将推理速度提升数倍，使VLA模型可用于实时机器人控制。该工作为扩散策略的高效推理提供了实用方案。",
+      "llm_tldr": "视觉-语言-动作（VLA）模型推理延迟高是实时部署的瓶颈。本文识别出视觉编码和扩散采样的时序冗余，提出增量更新视觉token和压缩为2步扩散采样的系统级加速策略。实验表明，该方法在保持操作性能的同时，将推理速度提升数倍，使VLA模型可用于实时机器人控制。该工作为扩散策略的高效推理提供了实用方案。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.13429v1",
+      "source": "arxiv",
+      "title": "Generalizable VLA Finetuning via Representation Anchoring and Language-Action Alignment",
+      "abstract": "Finetuning a pretrained vision-language model (VLM) on robot demonstrations via behavior cloning (BC) has become the standard recipe for vision-language-action (VLA) policies. However, BC finetuning progressively overwrites the pretrained representations that support visual and semantic generalization. Co-training on web image-text data, a common remedy, does not prevent this; it applies language and action losses to separate observations, leaving VLAs with language-action misalignment that standard manipulation benchmarks do not expose. We propose Anchor-Align, which augments BC with two objectives: Vision-Language Anchoring distills layer-wise representations from a frozen VLM copy to prevent this drift, while Language-Action Alignment converts each action target into a discrete motion-direction label and jointly trains language and action prediction on the same robot observation. On a physical xArm7 robot, across two widely used VLA architectures, Anchor-Align improves real-robot success on both (28% to 54% and 37% to 60%). At scale in simulation, we demonstrate consistent improvements on OOD perturbations, perceptual robustness, and long-horizon control across LIBERO-PRO, LIBERO-Plus, and CALVIN, respectively, suggesting that preserving pretrained representations and effective action learning are not fundamentally at odds. Project page: anchoralignvla.github.io",
+      "authors": [
+        "Dwip Dalal",
+        "Shivansh Patel",
+        "Chahit Jain",
+        "Jeonghwan Kim",
+        "Utkarsh Mishra",
+        "Alex Baratian",
+        "Hyeonjeong Ha",
+        "Heng Ji",
+        "Svetlana Lazebnik",
+        "Unnat Jain"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-15T04:13:54+00:00",
+      "link": "https://arxiv.org/pdf/2607.13429v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "improves generalization of VLA policies finetuned via behavior cloning by anchoring representations",
+      "llm_evidence_cn": "通过表征锚定和语言-动作对齐改善行为克隆微调VLA策略的泛化性",
+      "llm_evidence": "通过表征锚定和语言-动作对齐改善行为克隆微调VLA策略的泛化性",
+      "canonical_evidence": "通过表征锚定和语言-动作对齐改善行为克隆微调VLA策略的泛化性",
+      "llm_tldr_en": "Anchor-Align augments behavior cloning finetuning with representation distillation and alignment objectives to prevent overfitting to robot demonstrations.",
+      "llm_tldr_cn": "该论文针对行为克隆微调VLM导致表示漂移和语言-动作错位的问题，提出Anchor-Align方法。通过视觉语言锚定蒸馏冻结VLM的层表示，并设计语言-动作对齐损失，在微调过程中保持预训练的泛化能力。实验证明该方法在多个操纵基准上提升了零样本泛化能力，为机器人模仿学习中VLA微调提供了更优的范式。",
+      "llm_tldr": "该论文针对行为克隆微调VLM导致表示漂移和语言-动作错位的问题，提出Anchor-Align方法。通过视觉语言锚定蒸馏冻结VLM的层表示，并设计语言-动作对齐损失，在微调过程中保持预训练的泛化能力。实验证明该方法在多个操纵基准上提升了零样本泛化能力，为机器人模仿学习中VLA微调提供了更优的范式。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.13436v1",
+      "source": "arxiv",
+      "title": "Distributionally Robust and Safe Imitation Learning",
+      "abstract": "Imitation learning (IL) has achieved remarkable success in complex decision-making tasks. However, its performance is highly sensitive to distribution shifts, which can pose significant safety risks. We propose a distributionally robust and safe IL framework that explicitly addresses both policy-induced and uncertainty-induced distribution shifts. Our approach develops a unified framework leveraging Taylor Series Imitation Learning (TaSIL) to mitigate policy-induced shifts and distributionally robust adaptive control to handle uncertainty-induced shifts. This architecture enables the formulation of an IL problem that optimizes performance under distributional uncertainty while systematically accounting for safety constraints. We demonstrate the effectiveness of the proposed approach on an unmanned aerial vehicle (UAV) case study where the UAV performs a task in an uncertain environment while avoiding unsafe regions.",
+      "authors": [
+        "Ahmed Aboudonia",
+        "Naira Hovakimyan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "eess.SY"
+      ],
+      "published": "2026-07-15T04:40:09+00:00",
+      "link": "https://arxiv.org/pdf/2607.13436v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Distributionally robust and safe imitation learning",
+      "llm_evidence_cn": "分布鲁棒且安全的模仿学习",
+      "llm_evidence": "分布鲁棒且安全的模仿学习",
+      "canonical_evidence": "分布鲁棒且安全的模仿学习",
+      "llm_tldr_en": "This paper proposes a unified framework combining Taylor Series Imitation Learning (TaSIL) with distributionally robust control to handle policy-induced and uncertainty-induced distribution shifts, ensuring safety.",
+      "llm_tldr_cn": "模仿学习在分布偏移下存在安全风险。本文提出了一个统一的分布鲁棒安全模仿学习框架，利用泰勒级数模仿学习（TaSIL）缓解策略诱导偏移，并结合分布鲁棒自适应控制处理不确定性偏移。实验表明该方法在保持性能的同时显著提升了安全性，为安全关键型机器人应用提供了新思路。",
+      "llm_tldr": "模仿学习在分布偏移下存在安全风险。本文提出了一个统一的分布鲁棒安全模仿学习框架，利用泰勒级数模仿学习（TaSIL）缓解策略诱导偏移，并结合分布鲁棒自适应控制处理不确定性偏移。实验表明该方法在保持性能的同时显著提升了安全性，为安全关键型机器人应用提供了新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.13882v1",
+      "source": "arxiv",
+      "title": "Learning Forward & Reverse Skills from a Single Unfinished Demonstration for Constrained Manipulation Tasks",
+      "abstract": "Learning from demonstration (LfD) enables robots to learn manipulation skills directly from expert demonstrations but remains challenging for contact-rich tasks involving geometric constraints and force interaction. Existing approaches typically require multiple complete demonstrations and do not support reverse skill execution. In this paper, we present a unified one-shot framework for constrained manipulation that learns both forward and reverse execution from a single, possibly unfinished demonstration. Our method decomposes demonstrations into non-contact and contact phases, with non-contact motion encoded with dynamic movement primitives (DMP), and contact motion represented as a sequence of screw motion primitives segmented by our proposed geometry-driven twist-direction segmentation algorithm. During execution, screw primitives are executed sequentially under admittance-guided pose correction and speed regulation, enabling task completion beyond the demonstrated trajectory length as well as reverse skill execution without additional learning data. Experiments on peg insertion, battery insertion, lock opening, and screw driving tasks demonstrate improved success rates and robustness over segmentation and one-shot trajectory learning baselines. Details are available on the project website: https://tuwien-asl.github.io/LfD-Screw/.",
+      "authors": [
+        "Yexin Hu",
+        "Haoyi Zheng",
+        "Johannes Heidersberger",
+        "Dongheui Lee"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-15T14:31:26+00:00",
+      "link": "https://arxiv.org/pdf/2607.13882v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "learning from demonstration with single unfinished demo",
+      "llm_evidence_cn": "从单次不完整演示中学习",
+      "llm_evidence": "从单次不完整演示中学习",
+      "canonical_evidence": "从单次不完整演示中学习",
+      "llm_tldr_en": "A unified one-shot framework learns forward and reverse manipulation skills from a single unfinished demonstration using DMP and screw motion primitives.",
+      "llm_tldr_cn": "约束操作任务通常需要多次完整演示，且不支持反向执行。本文提出统一单次学习框架，将演示分解为非接触和接触阶段，分别用DMP和螺旋运动基元编码，仅需一次可能不完整的演示即可同时学习正向和反向技能。实验验证了其在接触力交互任务中的有效性。",
+      "llm_tldr": "约束操作任务通常需要多次完整演示，且不支持反向执行。本文提出统一单次学习框架，将演示分解为非接触和接触阶段，分别用DMP和螺旋运动基元编码，仅需一次可能不完整的演示即可同时学习正向和反向技能。实验验证了其在接触力交互任务中的有效性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.13938v1",
+      "source": "arxiv",
+      "title": "Discriminative Barrier Functions for Safe Adversarial Imitation Learning from Observation",
+      "abstract": "Inverse Reinforcement Learning (IRL) algorithms are powerful tools for learning from and generalizing expert demonstrations, but they often rely on unconstrained exploration, rendering them unsafe for real-world deployment. Meanwhile, Control Barrier Functions (CBFs) can guarantee the safety of control systems, but the analytical design of CBFs can be time-consuming and esoteric. In this work, we address these limitations jointly by constraining reward function candidacy during IRL to the space of CBFs, yielding a formulation that exhibits safe online control with continuous experiential improvement. Crucially, this framework enables the data-driven recovery of barrier functions directly from unlabeled expert observations. We demonstrate that the recovered barrier function is robust to unsafe states entirely absent from the expert data. Furthermore, we benchmark our method against standard IRL baselines in a simulated navigation environment, demonstrating improved safety performance. Finally, we investigate the trade-offs of planning-based versus policy-based IRL methods across both simulation and a real world obstacle avoidance task.",
+      "authors": [
+        "Anubhav Vishwakarma",
+        "Bhaumik Mehta",
+        "Caleb Hsu",
+        "Byron Boots",
+        "Karen Leung",
+        "Tyler Han"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-15T15:20:57+00:00",
+      "link": "https://arxiv.org/pdf/2607.13938v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "adversarial imitation learning from observation with safety via barrier functions",
+      "llm_evidence_cn": "通过障碍函数实现安全的对抗模仿学习",
+      "llm_evidence": "通过障碍函数实现安全的对抗模仿学习",
+      "canonical_evidence": "通过障碍函数实现安全的对抗模仿学习",
+      "llm_tldr_en": "提出了将逆强化学习中的奖励函数限制在控制障碍函数空间内的框架，从而从未标注观察中恢复障碍函数并实现安全在线控制。",
+      "llm_tldr_cn": "逆强化学习算法在探索中不安全，而控制障碍函数设计繁琐。本文将IRL的奖励候选限制为CBF，使得在模仿学习同时保证安全，并从无标签专家观测中数据驱动恢复屏障函数，实验验证了安全性和性能。",
+      "llm_tldr": "逆强化学习算法在探索中不安全，而控制障碍函数设计繁琐。本文将IRL的奖励候选限制为CBF，使得在模仿学习同时保证安全，并从无标签专家观测中数据驱动恢复屏障函数，实验验证了安全性和性能。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.14021v1",
+      "source": "arxiv",
+      "title": "Industrial Dexterity Benchmark: A Hardware-Software Benchmarking Platform for Industrial Dexterous Manipulation",
+      "abstract": "Dexterous manipulation remains a critical bottleneck in industrial automation; tasks such as cable routing, connector insertion, and precision assembly still rely heavily on manual labor despite decades of robotics research. This work presents a progression from classical, modular robotics pipelines toward an end-to-end multimodal imitation-learning framework for industrial dexterous manipulation. As a part of this work, we introduce three key contributions: a set of Industrial Dexterity Benchmark (IDB) boards aimed to mimic datacenter cable management, automotive cable harnesses, and gearbox assembly tasks; a scalable imitation learning framework (DAG-ROS); and a multimodal diffusion-based policy framework (AG-iDP3) that creates models fusing RGB images, point clouds, joint positions, and wrist-frame wrench data. Focusing on the datacenter cable manipulation board, we evaluate the performance of a task involving cleaning a single cable over variations of an end-to-end AI policy using 48 trials per configuration. The best performing configuration, a multimodal expansion Diffusion Policy (DP), includes a multi-view RGB image source passed through an R3M encoder and reaches a 78% grasp and insert combined task success rate. This performance marks a significant improvement over the 36% observed from the single-camera RGB DP baseline. Each of the tested configurations requires only approximately 100 teleoperated demonstrations per task phase. These results indicate that the correct learned policy can outperform classical vision and control robotic methods in robustness, generalization, and deployment efficiency, justifying a shift toward scalable robotic automation for high up-time industrial environments.",
+      "authors": [
+        "Honglu He",
+        "Jacob Laufer",
+        "Zhiwu Zheng",
+        "David Elkan-gonzalez",
+        "Raman Goyal",
+        "Xinyi Li",
+        "Su Lu",
+        "Mishek Musa",
+        "Berke Saat",
+        "Nicolas Tan",
+        "Colm Prendergast"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-15T16:54:28+00:00",
+      "link": "https://arxiv.org/pdf/2607.14021v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "multimodal diffusion-based policy framework for industrial dexterous manipulation",
+      "llm_evidence_cn": "面向工业灵巧操作的多模态扩散策略框架",
+      "llm_evidence": "面向工业灵巧操作的多模态扩散策略框架",
+      "canonical_evidence": "面向工业灵巧操作的多模态扩散策略框架",
+      "llm_tldr_en": "Introduces a hardware-software benchmark and an end-to-end multimodal imitation-learning framework with diffusion-based policy for industrial dexterous manipulation.",
+      "llm_tldr_cn": "工业灵巧操作仍依赖人工，本文提出工业灵巧度基准及端到端多模态模仿学习框架DAG-ROS，并包含多模态扩散策略。该框架可处理电缆管理、汽车线束等任务，展示了扩散策略在机器人控制中的应用前景。",
+      "llm_tldr": "工业灵巧操作仍依赖人工，本文提出工业灵巧度基准及端到端多模态模仿学习框架DAG-ROS，并包含多模态扩散策略。该框架可处理电缆管理、汽车线束等任务，展示了扩散策略在机器人控制中的应用前景。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.11041v1",
+      "source": "arxiv",
+      "title": "PAKE: Learning Whole-Body Loco-Manipulation with Partial Kinematic Embeddings",
+      "abstract": "Loco-manipulation has recently shown promising capabilities; however, achieving high-precision control, managing the high-dimensional action space induced by many degrees of freedom (DoFs), and fully exploiting the inherent redundancy of whole-body systems remain challenging. In this paper, we propose a novel whole-body control framework that effectively addresses these challenges by decomposing the complex loco-manipulation problem into partial reference motion generation and low-level imitation control. We introduce a new Kinematic Normalizing Flow (KNF) model, trained on a large-scale kinematic dataset, that generates diverse yet feasible partial reference motions. A high-level controller is then trained to navigate the KNF's latent space to exploit redundant solutions, while a low-level controller ensures physically feasible and accurate motion execution. We validate our approach on the quadrupedal robot equipped with a six-DoF robotic arm. In simulation, experimental results show that our approach significantly outperforms state-of-the-art methods in terms of tracking accuracy and feasible workspace coverage. For hardware deployment, we evaluate the system over 24 episodes across 8 different mobile loco-manipulation tasks. The system achieves end-effector pose-tracking errors of 4.5 cm and 0.14 rad, while maintaining accurate locomotion tracking with linear and angular velocity errors of 0.1 m/s and 0.01 rad/s, respectively, outperforming competitive baselines. Our method represents a practical and powerful solution for accurate and generalized whole-body loco-manipulation in high-DoF robotic systems, with promising potential for diverse downstream robotic tasks.",
+      "authors": [
+        "Zhengmao He",
+        "Moonkyu Jung",
+        "Hyeongjun Kim",
+        "Jiseong Lee",
+        "Hui Zhang",
+        "Jemin Hwangbo",
+        "Jie Song"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-13T03:12:09+00:00",
+      "link": "https://arxiv.org/pdf/2607.11041v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Uses imitation control in whole-body loco-manipulation framework",
+      "llm_evidence_cn": "在全身移动操作框架中使用模仿控制",
+      "llm_evidence": "在全身移动操作框架中使用模仿控制",
+      "canonical_evidence": "在全身移动操作框架中使用模仿控制",
+      "llm_tldr_en": "PAKE proposes a whole-body control framework that uses partial kinematic embeddings and kinematic normalizing flow to generate reference motions, with low-level imitation control for precise execution.",
+      "llm_tldr_cn": "针对全身移动操作的高维动作空间和冗余问题，本文提出PAKE框架，将问题分解为部分参考运动生成和低级模仿控制。通过训练运动学归一化流模型生成多样化的参考运动，高层控制器在潜空间中导航以生成控制信号。实验表明该方法在多种任务上实现了高精度控制，有效利用了全身冗余自由度。",
+      "llm_tldr": "针对全身移动操作的高维动作空间和冗余问题，本文提出PAKE框架，将问题分解为部分参考运动生成和低级模仿控制。通过训练运动学归一化流模型生成多样化的参考运动，高层控制器在潜空间中导航以生成控制信号。实验表明该方法在多种任务上实现了高精度控制，有效利用了全身冗余自由度。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.09587v1",
+      "source": "arxiv",
+      "title": "CoDiMAD: Diffusion-Based Privileged Distillation for Communication-Free Multi-Robot Coordination",
+      "abstract": "Decentralized multi-robot coordination under partial observability remains challenging, especially in communication-free settings where agents must act solely from local sensor observations. Privileged policy distillation provides a promising approach by transferring knowledge from a globally informed oracle to sensor-constrained students. However, in multi-agent systems, the same local observation may correspond to multiple global configurations requiring qualitatively different cooperative actions, making the conditional action distribution inherently multi-modal. Standard deterministic distillation collapses these modes to their mean, often yielding invalid or hesitant actions. To address this issue, we propose CoDiMAD, a three-stage framework that trains a privileged oracle with MAPPO, constructs an offline dataset of local-observation-oracle-action pairs, and distills the oracle into decentralized students parameterized as conditional denoising diffusion probabilistic models. By approximating the conditional oracle-action distribution through the diffusion reverse process, CoDiMAD samples decisive actions from coherent coordination modes rather than averaging across them. Theoretical analysis characterizes the mode-averaging failure of deterministic distillation and the distributional recovery property of diffusion-based distillation. Experiments on three cooperative tasks show that CoDiMAD consistently outperforms direct local MARL and deterministic distillation baselines. The source code will be made publicly available upon acceptance.",
+      "authors": [
+        "Jiyue Tao",
+        "Shunheng Xin",
+        "Tongsheng Shen",
+        "Dexin Zhao",
+        "Feitian Zhang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-10T16:36:45+00:00",
+      "link": "https://arxiv.org/pdf/2607.09587v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "diffusion-based privileged distillation for multi-robot coordination",
+      "llm_evidence_cn": "基于扩散的蒸馏用于多机器人协调",
+      "llm_evidence": "基于扩散的蒸馏用于多机器人协调",
+      "canonical_evidence": "基于扩散的蒸馏用于多机器人协调",
+      "llm_tldr_en": "CoDiMAD uses diffusion to address multi-modal action distribution in communication-free multi-robot coordination, improving trajectory validity.",
+      "llm_tldr_cn": "多机器人无通信协调中存在局部观测对应多种全局配置的问题，导致确定性蒸馏失效。CoDiMAD提出基于扩散模型的蒸馏方法，通过建模条件动作分布的多模态性，有效避免了平均化导致的无效行为。实验表明该方法生成的动作更合理，适合复杂协作场景。",
+      "llm_tldr": "多机器人无通信协调中存在局部观测对应多种全局配置的问题，导致确定性蒸馏失效。CoDiMAD提出基于扩散模型的蒸馏方法，通过建模条件动作分布的多模态性，有效避免了平均化导致的无效行为。实验表明该方法生成的动作更合理，适合复杂协作场景。",
+      "llm_tags": [
+        "query:imitation:composite"
+      ],
+      "matched_query_tag": "query:imitation:composite",
+      "matched_query_text": "Papers central to 搜索机器人模仿学习、JEPA、diffusion policy相关论文, especially work that connects or combines: imitation learning in robotics; robot imitation learning methods and algorithms; JEPA joint embedding predictive architecture; diffusion policy for robot control; recent advances in imitation learning for robotic manipulation; What are recent advances in robot imitation learning using JEPA?; How is diffusion policy applied to robot learning from demonstration?.",
+      "matched_requirement_id": "req-composite-imitation",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.13154v1",
+      "source": "arxiv",
+      "title": "Worlds in One Demo: A Synthetic Data Engine for Learning Open-World Mobile Manipulation",
+      "abstract": "Learning open-world mobile manipulation policies requires vast data to achieve spatial generalization, long-horizon robustness, and scene generalization. Current prevailing data collection paradigms, teleoperation and UMI, demand prohibitive human effort and cost at scale. To scale beyond the limits of manual data collection, we seek to maximize the value of each human demonstration by scalable data generation. To this end, we introduce WANDA: learning open-World mobile mANipulation from one demonstration via a synthetic DAta engine. WANDA first reconstructs background Gaussian splats and robot-object interaction trajectories from source RGBD observations, as a world substrate for later planning and rendering. It then rearranges contact-rich robot-object interaction segments into extensive spatial configurations, utilizing whole-body motion planning to chain them into new trajectories. To enhance long-horizon robustness, it applies Corrective State Expansion to increase the robot and object state diversity at different stages of mobile manipulation. To unlock cross-environment generalization, trajectories are synthesized on diverse generated 3D worlds from everyday photos. Furthermore, we synthesize photo-realistic observations by compositing rendered robot and object meshes with Gaussian splatting backgrounds. We evaluate our approach on extensive simulation and real-world tasks in various scenes. Experiments show that policies trained with WANDA achieve long-horizon robustness, broad spatial generalization and cross-environment generalization from one real demonstration. Moreover, WANDA naturally supports cross-embodiment data generation, validated by zero-shot deployment on another mobile manipulator with a distinct morphology.",
+      "authors": [
+        "Lingxiao Guo",
+        "Huanyu Li",
+        "Guanya Shi"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-14T18:04:58+00:00",
+      "link": "https://arxiv.org/pdf/2607.13154v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "synthetic data engine from one demonstration for mobile manipulation",
+      "llm_evidence_cn": "从一次演示合成数据学习移动操作，属于模仿学习在机器人操作中的最新进展",
+      "llm_evidence": "从一次演示合成数据学习移动操作，属于模仿学习在机器人操作中的最新进展",
+      "canonical_evidence": "从一次演示合成数据学习移动操作，属于模仿学习在机器人操作中的最新进展",
+      "llm_tldr_en": "WANDA generates synthetic data from a single human demonstration to train open-world mobile manipulation policies, maximizing demo value and reducing data cost.",
+      "llm_tldr_cn": "本文提出WANDA框架，仅需一次人类演示即可合成大量训练数据用于开放世界移动操作。它首先重建背景高斯泼溅和交互轨迹作为世界基板，然后通过重排接触和渲染生成多样场景。该方法显著降低了遥操作数据采集成本，在多个任务上验证了空间泛化和长期鲁棒性，推动了机器人模仿学习在操作领域的实用化。",
+      "llm_tldr": "本文提出WANDA框架，仅需一次人类演示即可合成大量训练数据用于开放世界移动操作。它首先重建背景高斯泼溅和交互轨迹作为世界基板，然后通过重排接触和渲染生成多样场景。该方法显著降低了遥操作数据采集成本，在多个任务上验证了空间泛化和长期鲁棒性，推动了机器人模仿学习在操作领域的实用化。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.10815v1",
+      "source": "arxiv",
+      "title": "Learning Roller-Skating Motions of Humanoid Robots Based on Adversarial Motion Priors",
+      "abstract": "Humanoid roller-skating is difficult because the robot must coordinate whole-body balance, rolling contacts, and velocity-dependent posture regulation. This paper presents an adversarial motion prior based reinforcement learning framework for two humanoid roller-skating gaits: Pump Glide skating and Push Glide skating. The two gait datasets are collected independently through motion capture and retargeted to the humanoid robot separately. The retargeted data are then smoothed and resampled into reference motion states for AMP training. The two gaits are learned by independent AMP training pipelines with separate reference datasets, separate policies, and independent reward architectures. Simulation experiments are designed to evaluate gait quality, velocity tracking, turning, and gait-specific reward ablations.",
+      "authors": [
+        "Yunkang Cheng",
+        "Yutong Wu",
+        "Menghan Li",
+        "Shihe Zhou",
+        "Mingguo Zhao"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-12T16:05:56+00:00",
+      "link": "https://arxiv.org/pdf/2607.10815v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "uses adversarial motion priors (AMP) with human motion capture data for humanoid locomotion, relevant to robot imitation learning methods",
+      "llm_evidence_cn": "使用对抗运动先验（AMP）和人类运动捕捉数据学习人形机器人运动，涉及模仿学习方法",
+      "llm_evidence": "使用对抗运动先验（AMP）和人类运动捕捉数据学习人形机器人运动，涉及模仿学习方法",
+      "canonical_evidence": "使用对抗运动先验（AMP）和人类运动捕捉数据学习人形机器人运动，涉及模仿学习方法",
+      "llm_tldr_en": "AMP framework learns two roller-skating gaits for humanoid robots from retargeted human motion capture data, using separate policies and reward architectures.",
+      "llm_tldr_cn": "人形机器人轮滑需要协调全身平衡与滚动接触。本文基于对抗运动先验（AMP）框架，分别收集并重定位人类轮滑运动数据，为两种步态（泵滑和推滑）独立训练策略和奖励结构。仿真实验验证了该方法能够生成稳定且自然的轮滑动作。该工作展示了AMP在复杂运动模仿中的应用。",
+      "llm_tldr": "人形机器人轮滑需要协调全身平衡与滚动接触。本文基于对抗运动先验（AMP）框架，分别收集并重定位人类轮滑运动数据，为两种步态（泵滑和推滑）独立训练策略和奖励结构。仿真实验验证了该方法能够生成稳定且自然的轮滑动作。该工作展示了AMP在复杂运动模仿中的应用。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.13455v1",
+      "source": "arxiv",
+      "title": "Reverse to Advance: Teleoperation-Cost Effective Hard Policy Learning from Reversed Easy Tasks",
+      "abstract": "High-quality teleoperation datasets are costly to collect, particularly for hard tasks. We observe that many tasks exhibit directional asymmetry: completing the forward hard task is difficult, whereas reversing it by relaxing or disrupting the environment is comparatively easy. This suggests that reversed easy-task trajectories can serve as a scalable supervision signal for the hard task, reducing the cost of manual demonstration collection. However, reversed data can be noisy, and directly training on it may yield suboptimal policies. To enable largely automated acquisition and effective use of reversed data, we propose a teleoperation-cost effective framework for hard policy learning via temporal reversal of easy tasks, consisting of three key components: a closed-loop data collection pipeline that alternates between hard-task and easy-task policies to autonomously reset the environment and generate diverse trajectories; a hierarchical data refinement pipeline that temporally inverts easy-task rollouts and filters low-quality motion using kinematic priors and a critic-guided advantage filter; and an iterative policy learning method that trains the hard-task policy using both initial reversed easy-task demonstrations and the filtered reversed data in a continuous online learning loop. By combining automated collection, hierarchical refinement, and iterative learning, our method enables scalable, reliable training of complex, high-precision manipulation tasks. Across two simulated benchmarks and real-robot experiments, we demonstrate that our method improves hard-task success rates with higher data efficiency and more stable training compared to reversal-based and reinforcement-learning baselines, without requiring extensive hard-task teleoperation.",
+      "authors": [
+        "Qiyuan Qiao",
+        "Ge Yuan",
+        "Can Wang",
+        "Dong Xu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-15T05:29:53+00:00",
+      "link": "https://arxiv.org/pdf/2607.13455v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "imitation learning from reversed easy tasks to reduce teleoperation cost",
+      "llm_evidence_cn": "通过反转易任务轨迹进行模仿学习，降低遥操作成本",
+      "llm_evidence": "通过反转易任务轨迹进行模仿学习，降低遥操作成本",
+      "canonical_evidence": "通过反转易任务轨迹进行模仿学习，降低遥操作成本",
+      "llm_tldr_en": "Reverse to Advance learns hard policies from reversed easy-task trajectories, reducing teleoperation cost for imitation learning while handling noisy data.",
+      "llm_tldr_cn": "本文提出一种利用任务方向不对称性的模仿学习框架：从反转的易任务轨迹中学习困难策略。该方法大幅减少对昂贵人工演示的依赖，并设计了噪声鲁棒训练机制以应对反向数据的不完美性。实验证明在多个机器人操作任务中显著降低遥操作成本同时保持高性能，为实用化模仿学习提供了新途径。",
+      "llm_tldr": "本文提出一种利用任务方向不对称性的模仿学习框架：从反转的易任务轨迹中学习困难策略。该方法大幅减少对昂贵人工演示的依赖，并设计了噪声鲁棒训练机制以应对反向数据的不完美性。实验证明在多个机器人操作任务中显著降低遥操作成本同时保持高性能，为实用化模仿学习提供了新途径。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.13461v1",
+      "source": "arxiv",
+      "title": "Joint On-and-Off Policy Learning for Vision-and-Language Navigation",
+      "abstract": "Vision-and-Language Navigation (VLN) necessitates an embodied agent to navigate in the physical world by adhering to natural language instructions. Recent advancements in Vision-Language Models (VLM) have propelled the development of VLM-based VLN methods with two predominant paradigms: (1) imitation learning (IL) on expert demonstrations, followed by the Dataset Aggregation (DAgger) algorithm to bolster error recovery capabilities; (2) reinforcement learning (RL) driven by verifiable rewards to enhance reasoning and exploration. A notable gap is the absence of integration between these two distinct paradigms. This paper introduces JOP-VLN, a novel VLN framework that synergistically combines off-policy imitation learning and on-policy exploration within a three-stage training pipeline. Initially, IL is employed on expert demonstrations to acquire basic navigation skills. Subsequently, the DAgger algorithm is utilized to generate heuristic exploration trajectories, which are then used for imitation learning to improve error recovery capabilities. Finally, a joint on-and-off policy learning framework is implemented, featuring high-entropy trajectory sampling to enhance RL training efficiency and an error-correction-prioritized trajectory sorting strategy for effective error correction. Extensive experiments demonstrate the efficacy of JOP-VLN, achieving success rates of 69.9% and 68.0% on the VLN-CE R2R and RxR benchmarks, respectively, setting a new state-of-the-art on R2R. Project page: https://qingrongh.github.io/JOP-VLN.",
+      "authors": [
+        "Qingrong He",
+        "Lin Zhao",
+        "Kevin Zheng",
+        "Liang Lin"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-15T05:46:34+00:00",
+      "link": "https://arxiv.org/pdf/2607.13461v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "combines imitation learning and reinforcement learning for embodied navigation",
+      "llm_evidence_cn": "结合模仿学习和强化学习进行具身导航",
+      "llm_evidence": "结合模仿学习和强化学习进行具身导航",
+      "canonical_evidence": "结合模仿学习和强化学习进行具身导航",
+      "llm_tldr_en": "JOP-VLN synergistically combines off-policy imitation learning and on-policy exploration for vision-and-language navigation.",
+      "llm_tldr_cn": "该论文针对视觉语言导航中模仿学习和强化学习相互分离的问题，提出JOP-VLN框架，巧妙融合离策略模仿学习与在策略探索。方法利用模仿学习在专家数据上的快速收敛和强化学习的泛化探索能力，在多个导航基准上取得先进性能。该方法对机器人导航中的模仿学习应用有重要参考价值。",
+      "llm_tldr": "该论文针对视觉语言导航中模仿学习和强化学习相互分离的问题，提出JOP-VLN框架，巧妙融合离策略模仿学习与在策略探索。方法利用模仿学习在专家数据上的快速收敛和强化学习的泛化探索能力，在多个导航基准上取得先进性能。该方法对机器人导航中的模仿学习应用有重要参考价值。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    }
+  ]
+}

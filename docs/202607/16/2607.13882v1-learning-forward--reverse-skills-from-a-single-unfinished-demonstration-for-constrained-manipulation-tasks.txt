@@ -1,0 +1,559 @@
+Title: Learning Forward     Reverse Skills from a Single Unfinished Demonstration for Constrained Manipulation Tasks
+
+URL Source: https://arxiv.org/pdf/2607.13882v1
+
+Published Time: Thu, 16 Jul 2026 01:27:41 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# Learning Forward & Reverse Skills from a Single Unfinished Demonstration for Constrained Manipulation Tasks 
+
+Yexin Hu 1, Haoyi Zheng 1, Johannes Heidersberger 1 and Dongheui Lee 1,2
+
+Abstract — Learning from demonstration (LfD) enables robots to learn manipulation skills directly from expert demon-strations but remains challenging for contact-rich tasks in-volving geometric constraints and force interaction. Existing approaches typically require multiple complete demonstrations and do not support reverse skill execution. In this paper, we present a unified one-shot framework for constrained manipu-lation that learns both forward and reverse execution from a single, possibly unfinished demonstration. Our method decom-poses demonstrations into non-contact and contact phases, with non-contact motion encoded with dynamic movement primitives (DMP), and contact motion represented as a sequence of screw motion primitives segmented by our proposed geometry-driven twist-direction segmentation algorithm. During execution, screw primitives are executed sequentially under admittance-guided pose correction and speed regulation, enabling task completion beyond the demonstrated trajectory length as well as reverse skill execution without additional learning data. Experiments on peg insertion, battery insertion, lock opening, and screw driving tasks demonstrate improved success rates and robustness over segmentation and one-shot trajectory learning baselines. Details are available on the project website: https://tuwien-asl. github.io/LfD-Screw/ .
+
+I. I NTRODUCTION 
+
+Learning robot manipulation skills from human demon-strations is a promising paradigm that enables robots to op-erate in unstructured environments [1], [2]. However, many real-world tasks, such as insertion, fastening and unlocking, are inherently contact-rich and governed by geometric con-straints. These tasks involve intermittent contact, changes in motion direction, and tight tolerances, which significantly challenge learning from demonstration methods. Most existing LfD methods require multiple complete demonstrations to capture task variability. However, in contact-rich manipulation, such data can be expensive to collect, and demonstrations are frequently limited to single trial and may be unfinished due to safety constraints, phys-ical limitation, or the repetitive sub-motions. Furthermore, skill learning is typically directional, preventing robots from learning reverse skills (e.g. learning locking from unlocking) without giving the additional demonstrations. These limita-tions motivate a one-shot framework that could learn from a potentially unfinished demonstration that supports both forward and reverse execution.            
+
+> 1Yexin Hu, Haoyi Zheng, Johannes Heidersberger and Dongheui Lee are with the Autonomous Systems Lab, Technische Universit¨ at Wien (TU Wien), Austria. Emails: {yexin.hu, haoyi.zheng, johannes.heidersberger, dongheui.lee }@tuwien.ac.at
+> 2Dongheui Lee is with the Institute of Robotics and Mechatronics, German Aerospace Center (DLR), Germany. This work was partially supported by the European Union project INVERSE under grant agreement No. 101136067.
+> Fig. 1. Tackled constrained manipulation tasks: peg insertion, battery insertion, lock opening and screw driving. Each task can be decomposed into sequences of screw motions, with red line indicating screw axis.
+
+However, enabling such one-shot learning in contact-rich settings is challenging due to its strong geometric constraints. While free-space motion can usually be effectively encoded using a trajectory-based method such as Dynamic Move-ment Primitives (DMP) [3], [4], contact motion exhibits structured geometric behavior that is poorly captured alone by those methods. Classic control approaches address this through impedance or force-based control [5]–[7], but typ-ically require task-specific modeling, limiting their learning efficiency and generalizability across diverse tasks. We observe that many contact-rich manipulation tasks can be naturally decomposed into sequences of constrained motions exhibiting consistent screw-like motion behavior, such as insertion, rotation and coupled translation-rotation (see Fig. 1). These geometric structures are invariant to the execution length and provide a principled basis for generalization beyond the demonstrated trajectory. Leveraging this insight, we propose a unified one-shot learning framework which decomposes the demonstration into non-contact and contact phases, with non-contact phase encoded with DMP; contact phase modeled as screw primi-tives [8]–[10] executed under wrench-aware control, enabling task completion learned from unfinished demonstration and supporting reverse execution without additional data. We val-idate the proposed framework on four representative contact-rich manipulation tasks: peg insertion, battery insertion, lock opening and screw driving as shown in Fig. 1. Across all tasks, our method achieves higher success rates compared to other one-shot trajectory-based baselines. The contributions of this paper are:  
+
+> •
+
+A unified one-shot learning framework for constrained contact-rich manipulation, enabling task completion and arXiv:2607.13882v1 [cs.RO] 15 Jul 2026 execution of both forward and reverse skills learned from a single demonstration.  
+
+> •
+
+A geometry-driven twist-direction trajectory segmenta-tion algorithm for contact phase decomposition.  
+
+> •
+
+A screw-primitive representation with interaction-aware execution combining 6D admittance pose correction and 1D admittance progress control. II. R ELATED WORKS 
+
+A. Learning from Demonstration for Manipulation 
+
+Learning from demonstration has been widely studied for transferring manipulation skills from humans to robots [1], [2]. Recent vision-based and multimodal learning approaches [11]–[13] have shown powerful performance, but typically rely on large-scale datasets or extensive pretraining. In con-trast, kinesthetic representations such as Dynamic movement primitives (DMP) and Gaussian Mixture Models (GMM) [3], [4], [14]–[17] enable smooth trajectory reproduction and generalization in free-space manipulation tasks learning from a single demonstration. However, these methods usually struggle in contact-rich tasks, where motion is governed by geometric constraints, and generally assume complete demonstrations without supporting reverse execution. Re-verse execution has been studied at higher levels of ab-straction, including reversible robot programs for error re-covery [18] and assembly-by-disassembly over part-level se-quences [19], while reversibility of continuous skills learned from a single demonstration remains less explored. 
+
+B. Contact-Rich Manipulation and Force-Based Control 
+
+Classical force and impedance control methods [5]–[7] en-able robust physical interaction in constrained tasks such as peg-in-hole and surface following [20]–[24]. However, these methods typically rely on task-specific constraint definitions or prior geometric knowledge [20], and do not directly infer the contact motion structure from demonstrations. As a result, they are not sufficient themselves alone for one-shot learning of general contact-rich skills. 
+
+C. Screw Motion Primitives and Geometric Representations 
+
+Screw theory [25], [26] provides compact representa-tions of rigid-body motion suitable for most constrained tasks. However, existing screw-based approaches typically focus on free-space motion reproduction [10], [27], [28], or representing the entire motion as a single global screw motion [9], [29]. Such formulations do not fully capture multi-phase contact-rich manipulation involving sequential geometric constraints. 
+
+D. Trajectory Segmentation and Skill Decomposition 
+
+Trajectory-based segmentation decomposes demonstra-tions into reusable skills with kinematic heuristics or prob-abilistic models such as GMM [10], [30], [31]. Segmenta-tion methods with other modalities have also been applied widely to infer skill boundaries [32]–[34]. However, these approaches are often sensitive to occlusions and discontin-uous behaviors such as dwell, which do not mark true task transitions. In contact-rich manipulation, however, motion segments are often short, where kinematic noise can be amplified and speed changes are unreliable indicators of skill boundaries, such approaches are less reliable. In summary, prior work reveals a gap in contact-rich manipulation learning. Trajectory-based LfD methods are data-efficient but lack explicit geometric constraints under-standing; force controllers enable robust interaction but re-quire task-specific knowledge; screw-based methods usually model free-space motion or single global primitives; and reversible-execution methods mainly operate at the robot-program or part-sequence level. Together with the difficulty of segmenting short constrained motions, these limitations motivate our geometry-driven, wrench-aware framework for one-shot contact-rich manipulation. III. P RELIMINARIES : S CREW THEORY 
+
+Screw theory provides a unified geometric framework for representing rigid-body motion in three-dimensional space. According to the Mozzi–Chasles theorem [35], any instan-taneous rigid-body motion can be represented as a rotation about, and a translation along, a single spatial line known as a screw axis. Such an instantaneous motion is represented by a twist ξ = ( ω, v) ∈ R6, where ω ∈ R3 denotes the angular velocity and v ∈ R3 denotes the linear velocity. The matrix representation of the twist in the Lie algebra 
+
+se (3) is given by ˆξ =
+
+[ω]× v0⊤ 0
+
+
+
+, (1) where [ω]× is the skew-symmetric matrix. In the general case where ω̸ = 0, the motion corresponds to a screw motion defined by a unit axis direction ˆ s, a point q
+
+on the axis, and a pitch h ∈ R, which specifies the translation along the axis per unit rotation. Let ˙ θ denote the rotational speed, the twist can be then written as 
+
+ξ =
+
+ω
+
+v
+
+
+
+=
+
+ ˙θ ˆs
+
+− ˙θ ˆs × q + h ˙θ ˆs
+
+
+
+. (2) Pure translation is a special case with ω = 0, which can be interpreted as a screw motion with infinite pitch ( h → ∞) and no rotation. Then the twist reduces to ξ = ( 0, v), and motion is fully modeled by the translation direction and magnitude. Given a constant twist ξ and a scalar motion magnitude θ ,the corresponding finite rigid-body displacement is obtained through the exponential map: 
+
+T(θ ) = exp ( ˆξ θ ) ∈ SE (3), (3) which yields a rotation of angle θ about the screw axis together with a translation of magnitude hθ along the same axis. In the case of pure translation, the exponential map reduces to a translational displacement with no rotation. IV. M ETHOD 
+
+A. Overview of the Learning and Execution Pipeline 
+
+We consider a single human-guided demonstration consist-ing of an end-effector trajectory from the robot’s initial grasp of the object until its final release. The proposed framework decomposes the demonstrated trajectory into non-contact and Human Demonstration    
+
+> Offline Learning  Non-Contact
+> DMP Learning
+> Unfinished OK!
+> Contact
+> Twist-Direction Segmentation
+> S1 S2 Sn …
+> Screw Primitive Fitting
+> DMP Motion
+> Geometric Consistent? No
+> Yes
+> Spiral Search
+
+π1 π2 … πN
+
+> …
+
+Screw Primitives Execution 
+
+> 6D Admittance Pose Correction
+> …
+
+π̃ 1π̃ 2…π̃ N
+
++
+
+> Contact Release Detection
+> Reversed DMP Motion No
+> Yes
+> Contact Detect
+> Contact Index
+> 1D Admittance Speed Regulation
+> Edit Screw Parameters
+> Forward Execution
+> Reverse Execution
+
+Reverse Screw Primitives Execution Fig. 2. Overview of the proposed framework. A single forward demonstration is first encoded with a DMP. During execution, the DMP reproduces free-space motion until contact is detected. The contact phase is segmented using the proposed twist-direction method, and each segment is modeled as a screw primitive. Screw primitives are executed sequentially with 6D admittance-based pose correction and 1D admittance-based speed regulation. Reverse execution reuses the learned primitives with edited parameters and reversed order, followed by reversed DMP reproduction after contact release. 
+
+contact phases, and applies different learning and execution strategies to each phase (see Fig. 2). The full demonstration trajectory is first encoded using a DMP, but is then only executed until contact is detected via wrench feedback. Then the demonstrated trajectory after this contact point is segmented using the proposed twist-direction-based method, which partitions motion based on the directional consistency in the twist space. Each segment is subsequently fitted with a screw motion primitive, gener-ating a geometric representation of the constrained behavior. At contact onset, the system checks whether local align-ment is required by comparing short-window motion direc-tions before and after the detected contact point in demon-stration trajectory. If the directions remain consistent (i.e., high cosine similarity) while significant contact force is measured, the intended motion is considered blocked by misalignment. A basic sampled spiral search is then triggered after re-aligning the end-effector approach axis with the insertion direction while preserving rotation about that axis. This search is a common strategy in constrained tasks [22] and the implement details are available in the website. After that, the learned screw primitives are executed se-quentially under wrench-aware admittance control, allowing contact-phase motion to extend beyond the demonstrated tra-jectory length when required. For an unfinished demonstra-tion, each task-critical contact phase must be at least partially observed; the method extrapolates observed primitives but does not infer absent phases. Our framework also supports reverse execution from the same demonstration. Learned screw primitives are reused, auto-edited, and executed in reverse order to follow the same geometric constraints in the opposite direction without relearning. After completing the reversed contact phases, the remaining free-space motion is executed with a DMP relearned from the time-reversed forward demonstration tra-jectory. Transitions from contact to free space are determined via wrench-based contact release detection. 
+
+B. Twist-direction-based Trajectory Segmentation 
+
+We segment the contact-phase trajectory into a sequence of motion segments with constant twist directions. Unlike many segmentation methods that rely on time, velocity or dwell behavior, our segmentation uses only geometric motion directions, which is robust to short, noisy contact motions. Prior to segmentation, the demonstrated pose trajectory is smoothed in SE (3) by filtering incremental twists. 
+
+1) Direction-only twist features : Given the smoothed trajectory {Ti}N−1 
+
+> i=0
+
+∈ SE (3), we compute the per-step rel-ative motion ∆Ti = T−1 
+
+> i
+
+Ti+1. And the corresponding twist is obtained using the logarithmic map ˆξ i∆θi = log (∆Ti),from which we extract the rotation axis direction dω 
+
+> i
+
+and translation direction dvi , expressed in local frame, forming a 6D direction feature, fi = ( dω 
+
+> i
+
+, dvi ) ∈ R6. Negligible rotations and translations are treated as directionless and set to zero. 
+
+2) Block-wise dominant direction estimation : Given the per-step direction features fi, we partition the sequence into fixed-length blocks with length B. Within each block, we estimate the dominant rotation axis μω and translation direction μv separately by computing the principal direction of the unit direction samples with PCA. The sign ambiguity of PCA eigenvectors is resolved by aligning their direction with reference directions computed from the block endpoints. 
+
+3) Block scanning and boundary detection : Blocks are scanned sequentially to form segments. For the current seg-ment, dominant rotation and translation directions (gω , gv)
+
+are estimated using the same procedure as for individual blocks. In each block j, the block-level directions (μω 
+
+> j
+
+, μvj)
+
+are compared to the current segment directions using cosine similarity ⟨·⟩ . A candidate boundary is detected if either the rotation direction or translation direction deviates beyond predefined thresholds τω and τv: ⟨μω 
+
+> j
+
+, gω ⟩ < τω ∨ ⟨ μvj, gv⟩ <
+
+τv. To suppress false positives caused by short-term fluctua-tions, we additionally require that the subsequent block j + 1should not remain consistent dominant rotational and trans-lational direction with the current segment: ¬(⟨μω
+
+> j+1
+
+, gω ⟩ >
+
+τω ∧ ⟨ μvj+1, gv⟩ > τv). If both conditions hold, block j is treated as a transition region; otherwise, it is absorbed into the current segment. 
+
+4) In-block boundary refinement : When a transition is detected, we refine the changepoint within the transition block to obtain a sample-level boundary. Let (gω , gv) denote the dominant directions of the current segment, and let 
+
+(μω
+
+> j+1
+
+, μvj+1) denote those of the subsequent block. For each candidate split index k within the transition block, we minimize a direction-consistency cost that measures how well samples before k align with the current segmentation direction, and how well samples after k align with the new direction. The optimal boundary index k⋆ is obtained by: 
+
+k⋆ = arg min  
+
+> k∈{ 0,..., B−1}
+
+# ∑
+
+> i<k
+
+ℓ(fi; gω , gv) + ∑
+
+> i≥k
+
+ℓ(fi; μω
+
+> j+1
+
+, μvj+1), (4) where the per-sample cost ℓ(·) is defined as 
+
+ℓ(fi; aω , av) = wω
+
+ 1 − ⟨ dω 
+
+> i
+
+, aω ⟩ + wv
+
+ 1 − ⟨ dvi , av⟩, (5) with weights wω and wv balancing the contributions of rotation and translation and ⟨·⟩ representing cosine similarity. 
+
+5) Global geometric refinement : Although block-level boundary detection produces locally consistent segments, short-term fluctuations in human demonstrations may intro-duce spurious boundaries. To enforce global geometric con-sistency, we compare each pair of adjacent segments by re-computing their dominant rotation and translation directions. If the cosine similarity of both rotational and translational directions exceeds the predefined same thresholds τω and 
+
+τv, the segments are merged. 
+
+6) Short-motion (dwell) cleanup : Human demonstrations often contain brief pauses or micro-corrections that gen-erate segments with negligible net motion. Such segments do not represent meaningful contact-mode transitions. We therefore identify segments whose accumulated translation and rotation fall below predefined magnitude thresholds and merge them into adjacent segments. After this cleanup step, the segmentation algorithm outputs a set of segment indices {(sn, en)}Nn=1 that partition the trajectory and are subsequently used for screw fitting. 
+
+C. Screw Primitive Learning 1) Screw primitive parameterization : Given a contact-motion segment {Ti}N−1 
+
+> i=0
+
+∈ SE (3) obtained from segmen-tation, we model the segment as a constant screw motion primitive. Let T0 denote the first pose of the segment and then the relative pose of each sample is Trel i = T−10 Ti. The objective is to estimate a consistent twist ξ together with scalar progress variables θi, such that: 
+
+Trel i ≈ exp ( ˆξ θ i). (6) For the general screw case, we parameterize twist ξ using screw coordinates (ˆs, q, h) as defined in (2). Pure translation is treated as a special case described in sec. IV-C.3. 
+
+2) Screw parameters optimization : We estimate a screw primitive by minimizing residuals in Lie algebra se (3). For each sample i, the residual is defined as the logarithm of the pose discrepancy between the predicted screw transformation and the demonstrated relative pose, mapped to a 6D twist error in tangent space: 
+
+ri = log 
+
+
+
+exp 
+
+ ˆξ θ i
+
+−1
+
+Trel i
+
+
+
+∈ R6. (7) Each residual is decomposed into rotational and transla-tional components rω 
+
+> i
+
+, rvi , respectively. We solve the follow-ing weighted least-squares problem: min    
+
+> ˆs,q,h,{θi}
+> N−1
+
+# ∑
+
+> i=0
+
+ρ
+
+  wR rω
+
+> i
+
+wT rvi
+
+
+
+> 2
+
+
+
+, (8) where wR and wT balance rotational and translational errors, and ρ(·) denotes Huber loss. Before optimization, each segment is resampled to achieve approximately uniform progress in SE (3) space to reduce the sensitivity of the spatial imbalance in demonstration data. Compared with averaging per-step twists, this optimization enforces global 
+
+SE (3) consistency over the entire segment and jointly esti-mates the screw axis, pitch, and progress scale. To ensure robustness and computational efficiency in one-shot setting, we adopt a reduced-parameter optimizing strategy. Instead of optimizing an independent progress vari-able θi for each sample, we initialize a monotone progress sequence θ ∗ 
+
+> i
+
+with a global scale s such that θi = sθ ∗ 
+
+> i
+
+.This yields a low-dimensional optimization over (ˆs, q, h, s),substantially improving the computational efficiency. 
+
+3) Pure translation segments : If the accumulated rotation within a segment is negligible, a direction ˆ d is estimated with PCA and the twist is defined as ω = 0, v = ˆd. The progress 
+
+θi corresponds to the displacement along the axis ˆ d. This case captures the insertion- or push-like geometric structures that are common in constrained tasks. 
+
+4) Primitive representation : Each segment is represented as a screw primitive πn = {ˆsn, qn, hn, θ end n }. The terminal progress value θ end n is only used as a reference to initialize execution speed and is not used as a termination condition. 
+
+D. Execution with Admittance-Guided Screw Primitives 
+
+Each learned screw primitive πn = {ˆsn, qn, hn, θ end n } de-fines a constrained motion parameterized by the progress variable θ in the primitive’s local frame. At each control cycle, a nominal pose is generated as 
+
+Tdes (θ ) = T0 exp ( ˆξ n θ ), (9) where T0 is the initial robot end-effector pose at the start of primitive and ˆξ n is the twist associated with πn.To enable robust interaction with the constrained envi-ronment, the nominal pose is modulated online with a 6D admittance correction defined in the end-effector (EE) frame. The small pose correction ∆xee = [ ∆pee , ∆θ ee ] is generated by the measured wrench wee = [ Fee , τee ] through standard admittance dynamics 
+
+M∆¨xee + B∆˙xee + K∆xee = wee . (10) In addition to pose correction, wrench feedback is also used to regulate execution speed along the screw. Before that, the screw axis direction ˆ sn and the point qn on this axis, originally from local frame T0, are transformed into current EE frame as ˆ see and qee . We decompose the measured wrench relative to the screw axis with axial components defined as 
+
+F∥ = F⊤ 
+
+> ee
+
+ˆsee , τ∥ = ( τee − qee × Fee )⊤ ˆsee , (11) and the perpendicular components defined as the magnitude of the residual wrench without their projections onto ˆ see ,denoted as F⊥ and τ⊥. A scalar load is then computed as 
+
+L = k∥ 
+
+> F
+
+F∥ + k∥ 
+
+> T
+
+τ∥ + k⊥ 
+
+> F
+
+F⊥ + k⊥ 
+
+> T
+
+τ⊥, (12) where k⊥ 
+
+> F
+
+, k⊥ 
+
+> T
+
+, k∥ 
+
+> F
+
+, k∥ 
+
+> T
+
+are weight factors to balance each component. The scalar load L is then used to regulate the progress velocity ˙ θ through a 1D admittance model: 
+
+Mθ ˙vθ + Bθ vθ = −L, ˙θ = ˙θ0 + vθ , (13) where ˙ θ0 is the nominal execution speed assigned based on 
+
+θ end n . As contact resistance increases, ˙ θ is smoothly reduced. A screw primitive is considered complete when the effective progress velocity remains below a threshold for a sustained duration, after which the next primitive is executed until all the screw primitives are finished. Here axial terms are assigned significantly larger weights, i.e., k⊥ 
+
+> F
+
+, k⊥ 
+
+> T
+
+≪ k∥ 
+
+> F
+
+, k∥ 
+
+> T
+
+, ensuring that speed regulation is pri-marily governed by resistance along the intended screw direction, while lateral interaction is mainly handled by 6D pose admittance. 
+
+E. Reverse Skill Learning and Execution 
+
+The proposed framework enables reverse task execu-tion from a single forward demonstration. During forward learning, the contact phase is decomposed into an ordered sequence of screw primitives {πn}Nn=1. Reverse execution directly reuses these learned primitives to obtain ˜ πn by edit-ing the learned screw parameters, i.e., (ω, v) 7 → (−ω, −v).The reverse task is then executed by applying the sequence 
+
+{ ˜πN , . . . , ˜π1} under the same admittance control. Reverse execution begins in contact. For each reversed primitive ˜ πn, contact release is evaluated every short period using an active wrench-based probing test. Specifically, a small circular dither motion orthogonal to the screw axis is executed, and the load is monitored during this interval. The median absolute load is compared to a predefined threshold to determine whether the contact constraint has been released. Upon release, execution transitions to the next primitive or exits the contact phase. The remaining free-space motion is then reproduced using the DMP learned from the time-reversed trajectory of the forward demonstration. V. E XPERIMENTS AND RESULTS 
+
+A. Experimental Setup 
+
+All experiments are conducted on a Franka Emika Panda robot equipped with a wrist-mounted SCHUNK FT-AXIA80 force/torque sensor. Demonstrations are provided via kines-thetic teaching. For each task, only one single demonstration is used to learn both forward and reverse skills. During exe-cution, only the end-effector pose and wrench measurements are used. AprilTags [36] are used solely for initial object pose estimation; no visual feedback is used during task execution. Wrench safety limits are enforced to all tasks. 4 methods are evaluated on 5 randomized trials per task in both forward and reverse settings learned from both complete and unfinished demonstrations. With 4 tasks, this results in 80 trials per method in total. Segmentation parameters are fixed across all tasks; only safety threshold and scalar load weight in Eq. 12 are task-dependent due to contact properties. Full values are listed on the website. 
+
+B. Tasks and Success Criteria 
+
+We evaluate four representative contact-rich manipulation tasks. Unfinished demonstrations are generated by directly truncating the contact phase of the full demonstration as shown in Fig. 5: 
+
+1) Peg-in-hole insertion : A rectangular peg is grasped and inserted into a fixed hole with approximately 1 mm di-mensional clearance. Success criteria : (1) forward: insertion depth > 2.3cm (max 2.5cm); (2) reverse: complete extraction without exceeding wrench limits. 
+
+2) Battery insertion : The battery insertion involves three sequential contact phases as Fig. 3: (1) sliding along a spring channel; (2) tilting to contact the bottom surface; (3) final seating translation. Success criteria: (1) forward: ≥ 75% of the battery left surface lies inside the bed; (2) reverse: complete extraction. 
+
+3) Lock opening : A pre-grasped key is inserted and rotated until fully opening the fixed lock with less than 0.5 mm clearance. Success criteria: (1) forward: lock fully opened; (2) reverse: complete key extraction. 
+
+4) Screw driving : The screw is pre-inserted and partially threaded into the hole with approximately 1 mm clearance, and with two threads remaining before full tightening, and is then rotated until tight. During evaluation, trials are initialized with 1–3 threads remaining before full tightening. Execution begins directly in the contact phase. Due to the wrist joint limits of the Panda robot, continuous rotation beyond a full revolution is not feasible without re-grasping. During demonstration, human operator periodically releases, reorients and regrasps multiple times (see Fig. 3). To obtain a continuous SE (3) trajectory suitable for screw primitive fitting, grasped rotation segments are stitched by chaining relative motions across regrasp intervals: 
+
+∆Tk = T−10 Tk, T′ 
+
+> k
+
+= T′ 
+
+> last
+
+∆Tk, (14) Task Human Demonstration Fig. 3. Expert demonstrations for the battery insertion and screw driving tasks. For battery insertion, key states along the full trajectory are shown. For screw driving, one representative cycle of grasp–rotate–release–reorient–regrasp is illustrated. 
+
+where T0 is the first pose of the current grasp segment and 
+
+T′ 
+
+> last
+
+is the last pose of the previous stitched segment, Tk
+
+and T′ 
+
+> k
+
+are the raw pose and the stitched pose within the segments at index k. The resulting stitched demonstration represents a single continuous screw-driving motion and is directly used for screw primitive fitting. During execution, a similar regrasp-aware policy is adopted. We track the accumulated rotation about the learned screw axis. When the accumulated rotation exceeds approx-imately 90 ◦, the robot (1) opens the gripper, (2) rotates the tool back by 90 ◦ about the screw axis, (3) regrasps before continuing execution. This periodical execution enables arbi-trary long screw rotations without violating the Panda robot’s wrist joint limits. 
+
+Success criteria: (1) forward: reach the screw tightening point, and stop by method’s own mechanism; (2) reverse: back out the screw until final thread where the screw loses self-supporting stability and can no longer remain upright without external support. 
+
+C. Baselines 
+
+We compare against three one-shot learning baselines to evaluate the contribution of geometric screw modeling and interaction-aware execution: 
+
+1) DMP only : The entire demonstrated trajectory (non-contact and contact), is reproduced using a single DMP. Contact detection, spiral search and wrench safety limits are identical to those used in our method. 
+
+2) DMP + admittance : The entire demonstrated trajec-tory is reproduced with a DMP under 6D Cartesian admit-tance correction, other settings are the same as DMP only. 
+
+3) DMP + twist + admittance : Non-contact phases apply DMP. Contact phases are segmented with our method, but each segment is represented by a constant twist computed from start–end displacement. Execution uses the same ad-mittance correction and speed regulation as our method. For reverse tasks, both our method and DMP + twist + admittance baseline assume that extraction must be achieved through contact-phase primitives; extraction achieved by DMP motion is not considered successful. 
+
+D. Task Performance with Complete Demonstrations 
+
+Table I reports task success rates for complete demonstra-tions. Our method achieves 20/20 success in both forward Free Space Spiral Search Insertion Rotation                                                                
+
+> Fig. 4. Each phase of lock opening task learned from unfinished demonstration, together with pose and wrench collected from execution. TABLE I SUCCESS RATE LEARNED FROM COMPLETE DEMONSTRATIONS
+> Forward Reverse
+> Method Peg Bat Lock Scr Total Peg Bat Lock Scr Total
+> Ours 5/5 5/5 5/5 5/5 20/20 5/5 5/5 5/5 5/5 20/20
+> DMP 5/5 3/5 5/5 2/5 15/20 5/5 5/5 4/5 0/5 14/20 DMP+Adm 5/5 5/5 0/5 2/5 12/20 5/5 5/5 5/5 0/5 15/20 DMP+Twist+Adm 5/5 5/5 5/5 0/5 15/20 5/5 5/5 0/5 0/5 10/20
+
+and reverse settings. DMP only performs well in insertion-dominant tasks but degrades in screw driving, where success depends on matching the demonstrated remaining thread length. DMP + Admittance improves some contact interac-tion but fails in highly constrained tasks such as lock opening and screw driving, where admittance-induced deviations can prevent the required geometric configurations to initialize next primitive. DMP + Twist + Admittance performs com-petitively in peg and battery tasks but fails in screw driving and reverse lock opening because start–end twists do not cap-ture accumulated rotational structure or the correct reverse extraction geometry. These results highlight the importance of explicit screw primitive fitting for maintaining geometric consistency in constrained manipulation. 
+
+E. Task Performance with Unfinished Demonstrations 
+
+Table II evaluates truncated demonstrations. Fig. 4 shows lock opening learned from an unfinished demonstration, where wrench feedback regulates insertion and rotation progress through 1D admittance. DMP only and DMP + Admittance terminate at the demonstrated endpoint, lacking 0.480    
+
+> 0.485
+> 0.490
+> 0.495
+> 0.500
+> x0.080
+> 0.085
+> 0.090
+> 0.095
+> 0.100
+> y
+> 0.080
+> 0.085
+> 0.090
+> 0.095
+> 0.100
+> z
+> PEG
+> Complete (segmented)
+> Unfinished
+> 0.594
+> 0.596
+> 0.598
+> 0.600
+> 0.602
+> 0.604 x0.094
+> 0.096
+> 0.098
+> 0.100
+> 0.102
+> 0.104
+> y
+> 0.050
+> 0.052
+> 0.054
+> 0.056
+> 0.058
+> 0.060
+> z
+> BATTERY
+> Complete (segmented)
+> Unfinished
+> 0.378
+> 0.380
+> 0.382
+> 0.384 x
+> 0.084
+> 0.086
+> 0.088
+> 0.090
+> y
+> 0.074
+> 0.076
+> 0.078
+> 0.080
+> z
+> LOCK
+> Complete (segmented)
+> Unfinished
+> 0.364
+> 0.366
+> 0.368
+> 0.370
+> 0.372
+> 0.374
+> 0.376
+> 0.378
+> x0.264
+> 0.266
+> 0.268
+> 0.270
+> 0.272
+> 0.274
+> 0.276
+> 0.278
+> y
+> 0.128
+> 0.130
+> 0.132
+> 0.134
+> 0.136
+> 0.138
+> 0.140
+> z
+> SCREW
+> Complete (segmented)
+> Unfinished
+
+Fig. 5. Segmentation of 4 tasks on complete demonstrations in contact phase with colored solid line, unfinished demonstration shown as black dot line. 
+
+Fig. 6. Generalization to novel objects of different dimension and target position for each task. TABLE II SUCCESS RATE LEARNED FROM UNFINISHED DEMONSTRATIONS 
+
+Forward Reverse 
+
+Method Peg Bat Lock Scr Total Peg Bat Lock Scr Total 
+
+Ours 5/5 5/5 5/5 3/5 18/20 5/5 5/5 5/5 3/5 18/20 
+
+DMP 0/5 0/5 0/5 2/5 2/20 5/5 5/5 5/5 0/5 15/20 DMP+Adm 0/5 0/5 0/5 2/5 2/20 5/5 5/5 5/5 0/5 15/20 DMP+Twist+Adm 5/5 5/5 4/5 0/5 14/20 5/5 5/5 0/5 0/5 10/20 
+
+the mechanism to extend forward contact motion. DMP + Twist + Admittance extends motion but degrades in screw and reverse tasks due to the same geometric inconsistencies observed with complete demonstrations. Our method achieves 18/20 success in both forward and reverse settings. Failures occur only in screw driving and are mainly caused by initial pose errors and pitch deviations from trajectory stitching, which accumulate over multiple rotations and lead to axis misalignment. Overall, results demonstrate that screw primitive modeling enables reliable task completion from partial demonstrations under geometric constraints. 
+
+F. Segmentation Evaluation 
+
+For segmentation evaluation, 5 demonstrations are col-lected for each task, resulting in 20 trajectories in total. Fig. 5 shows representative segmentation results for the four tasks used in execution experiments. For screw task, the segmentation is applied to each grasped rotation segment before stitching. We compare our twist-direction segmentation against Human-Guided Screw Planning (HGS) [10], Kernel Tem-poral Segmentation (KTS) [33], and Automatic Waypoint Extraction (AWE) [31], which are based on screw-motion reconstruction error, temporal signal variation, and waypoint reconstruction error, respectively. 
+
+TABLE III SEGMENTATION PERFORMANCE ON FOUR TASKS 
+
+Method F1@.2 F1@.5 F1@.8 VI Cnt. 
+
+Ours 0.67 ±0.44 0.92 ±0.24 0.98 ±0.07 0.29 ±0.32 0.05 ±0.22 HGS 0.6 ±0.48 0.75 ±0.41 0.91 ±0.25 0.39 ±0.43 0.00 ±0.00 
+
+KTS 0.65 ±0.46 0.90 ±0.26 0.94 ±0.23 0.32 ±0.36 0.05 ±0.22 AWE 0.56 ±0.38 0.67 ±0.31 0.79 ±0.23 0.72 ±0.56 2.50 ±3.68 
+
+Performance is evaluated using boundary F1 score [34] at tolerances τ ∈ 0.2, 0.5, 0.8s, Variation of Information (VI) [37], and segment count error (Cnt.). For fair compari-son, all methods are applied with dwell clean-up to remove spurious micro-segments (see Sec. IV-B.6). Table III reports segmentation performance on four tasks. Our method achieves an overall better performance. AWE relies primarily on waypoints reconstruction error, making it brittle in rotation-dominant scenarios. HGS incorporates screw-geometry reasoning and is therefore more aligned with geometric interpretation, achieving the lowest segment count error, but is less stable in boundary detection. KTS achieves the best performance among all three baselines, yet still underperforms compared to ours. In contrast, our method detects transitions based on twist-direction consistency in SE(3), considering both local directional changes and global twist coherence, yielding more stable boundaries for short and highly constrained motions. 
+
+G. Generalization to Novel Objects 
+
+We further applied our learned screw primitives to a novel object with different dimension as shown in Fig 6 for each task. All four tasks are successfully completed with the screw primitives learned from previous same demonstration but only provided a target position under admittance control, which indicates that our proposed method captures task-consistent motion structure and exhibits transferability across objects with similar constraints. VI. C ONCLUSIONS 
+
+In this paper, we present a unified one-shot learning frame-work for constrained, contact-rich manipulation that enables both forward and reverse task execution from a single, potentially unfinished demonstration. By decomposing mo-tion into non-contact DMP reproduction and contact-phase screw primitives, the proposed approach captures geometric constraints while regulating execution through wrench-aware admittance control. We introduce a twist-direction-based segmentation that enables task-agnostic decomposition of contact motion, from which screw primitives are learned to allow interaction-driven progress and termination beyond the demonstrated trajectory length. Experimental results across four real-world manipulation tasks demonstrate improved robustness and generalization compared to trajectory-based one-shot base-lines. Execution speed was not optimized and could be improved with faster alignment and primitive-speed selection. Remain-ing limitations include possible axis/pitch misalignment from sustained Cartesian admittance offsets during screw-driving motions with regrasping, and generalization mainly to objects with similar contact topology; future work will explore screw-aware admittance and online primitive adaptation. Overall, this work highlights the benefits of integrating geometric screw representations with interaction-aware exe-cution, providing a practical and data-efficient solution for constrained robot manipulation task learning. REFERENCES [1] H. Ravichandar, A. S. Polydoros, S. Chernova, and A. Billard, “Recent advances in robot learning from demonstration,” Annual review of control, robotics, and autonomous systems , vol. 3, no. 1, pp. 297– 330, 2020. [2] A. Correia and L. A. Alexandre, “A survey of demonstration learning,” 
+
+Robotics and Autonomous Systems , vol. 182, p. 104812, 2024. [3] A. Fabisch, “movement primitives: Imitation learning of cartesian motion with movement primitives,” Journal of Open Source Software , vol. 9, no. 97, p. 6695, 2024. [Online]. Available: https://doi.org/10.21105/joss.06695 [4] M. Saveriano, F. J. Abu-Dakka, A. Kramberger, and L. Peternel, “Dynamic movement primitives in robotics: A tutorial survey,” The International Journal of Robotics Research , vol. 42, no. 13, pp. 1133– 1184, 2023. [5] N. Hogan, “Impedance control: An approach to manipulation,” in 1984 American control conference . IEEE, 1984, pp. 304–313. [6] A. Albu-Schaffer, C. Ott, U. Frese, and G. Hirzinger, “Cartesian impedance control of redundant robots: Recent results with the dlr-light-weight-arms,” in IEEE International conference on robotics and automation , vol. 3, 2003, pp. 3704–3709. [7] M. T. Mason, “Compliance and force control for computer controlled manipulators,” IEEE Transactions on Systems, Man, and Cybernetics ,vol. 11, no. 6, pp. 418–432, 2007. [8] J. K. Davidson, K. H. Hunt, and G. R. Pennock, “Robots and screw theory: applications of kinematics and statics to robotics,” J. Mech. Des. , vol. 126, no. 4, pp. 763–764, 2004. [9] A. Bahety, P. Mandikal, B. Abbatematteo, and R. Mart´ ın-Mart´ ın, “Screwmimic: Bimanual imitation from human videos with screw space projection,” arXiv preprint arXiv:2405.03666 , 2024. [10] D. Mahalingam and N. Chakraborty, “Human-guided planning for complex manipulation tasks using the screw geometry of motion,” 
+
+arXiv preprint arXiv:2209.05672 , 2022. [11] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” The International Journal of Robotics Research , vol. 44, no. 10-11, pp. 1684–1704, 2025. [12] A. Zeng, P. Florence, J. Tompson, S. Welker, J. Chien, M. Attarian, T. Armstrong, I. Krasin, D. Duong, V. Sindhwani, et al. , “Transporter networks: Rearranging the visual world for robotic manipulation,” in 
+
+Conference on Robot Learning . PMLR, 2021, pp. 726–747. [13] B. Zitkovich, T. Yu, S. Xu, P. Xu, T. Xiao, F. Xia, J. Wu, P. Wohlhart, S. Welker, A. Wahid, et al. , “Rt-2: Vision-language-action models transfer web knowledge to robotic control,” in Conference on Robot Learning . PMLR, 2023, pp. 2165–2183. [14] A. J. Ijspeert, J. Nakanishi, H. Hoffmann, P. Pastor, and S. Schaal, “Dynamical movement primitives: learning attractor models for motor behaviors,” Neural computation , vol. 25, no. 2, pp. 328–373, 2013. [15] S. Calinon, F. D’halluin, E. L. Sauser, D. G. Caldwell, and A. G. Billard, “Learning and reproduction of gestures by imitation,” IEEE Robotics & Automation Magazine , vol. 17, no. 2, pp. 44–54, 2010. [16] S. Calinon, “A tutorial on task-parameterized movement learning and retrieval,” Intelligent service robotics , vol. 9, no. 1, pp. 1–29, 2016. [17] A. Pervez and D. Lee, “Learning task-parameterized dynamic move-ment primitives using mixture of gmms,” Intelligent Service Robotics ,vol. 11, no. 1, pp. 61–78, 2018. [18] J. S. Laursen, L.-P. Ellekilde, and U. P. Schultz, “Modelling reversible execution of robotic assembly,” Robotica , vol. 36, no. 5, pp. 625–654, 2018. [19] Y. Tian, K. D. Willis, B. Al Omari, J. Luo, P. Ma, Y. Li, F. Javid, E. Gu, J. Jacob, S. Sueda, et al. , “Asap: Automated sequence planning for complex robotic assembly with physical feasibility,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2024, pp. 4380–4386. [20] H.-C. Song, Y.-L. Kim, and J.-B. Song, “Guidance algorithm for complex-shape peg-in-hole strategy based on geometrical information and force control,” Advanced Robotics , vol. 30, no. 8, pp. 552–563, 2016. [21] K. Zhang, M. Shi, J. Xu, F. Liu, and K. Chen, “Force control for a rigid dual peg-in-hole assembly,” Assembly Automation , vol. 37, no. 2, pp. 200–207, 2017. [22] K. Van Wyk, M. Culleton, J. Falco, and K. Kelly, “Comparative peg-in-hole testing of a force-based manipulation controlled robotic hand,” 
+
+IEEE Transactions on Robotics , vol. 34, no. 2, pp. 542–549, 2018. [23] J. E. Solanes, L. Gracia, P. Munoz-Benavent, A. Esparza, J. V. Miro, and J. Tornero, “Adaptive robust control and admittance control for contact-driven robotic surface conditioning,” Robotics and Computer-Integrated Manufacturing , vol. 54, pp. 115–132, 2018. [24] I. Mohsin, K. He, Z. Li, and R. Du, “Path planning under force control in robotic polishing of the complex curved surfaces,” Applied Sciences ,vol. 9, no. 24, p. 5489, 2019. [25] R. S. Ball, A Treatise on the Theory of Screws . Cambridge university press, 1998. [26] S. Stramigioli and H. Bruyninckx, “Geometry and screw theory for robotics,” 2001. [27] A. Verduyn, M. Vochten, and J. De Schutter, “Enhancing motion trajectory segmentation of rigid bodies using a novel screw-based trajectory-shape representation,” in IEEE International Conference on Robotics and Automation (ICRA) , 2024, pp. 7179–7185. [28] D. Das, A. Patankar, N. Chakraborty, C. Ramakrishnan, and I. Ra-makrishnan, “Screw geometry meets bandits: Incremental acquisition of demonstrations to generate manipulation plans,” arXiv preprint arXiv:2410.18275 , 2024. [29] A. Pettinger, F. Alambeigi, and M. Pryor, “A versatile affordance modeling framework using screw primitives to increase autonomy during manipulation contact tasks,” IEEE Robotics and Automation Letters , vol. 7, no. 3, pp. 7224–7231, 2022. [30] S. Krishnan, A. Garg, S. Patil, C. Lea, G. Hager, P. Abbeel, and K. Goldberg, “Transition state clustering: Unsupervised surgical tra-jectory segmentation for robot learning,” The International journal of robotics research , vol. 36, no. 13-14, pp. 1595–1618, 2017. [31] L. X. Shi, A. Sharma, T. Z. Zhao, and C. Finn, “Waypoint-based imitation learning for robotic manipulation,” in Conference on Robot Learning . PMLR, 2023, pp. 2195–2209. [32] Z. Zhang, Y. Li, O. Bastani, A. Gupta, D. Jayaraman, Y. J. Ma, and L. Weihs, “Universal visual decomposer: Long-horizon manipulation made easy,” in IEEE International Conference on Robotics and Automation (ICRA) , 2024, pp. 6973–6980. [33] D. Potapov, M. Douze, Z. Harchaoui, and C. Schmid, “Category-specific video summarization,” in European conference on computer vision . Springer, 2014, pp. 540–555. [34] D. Sliwowski and D. Lee, “M2r2: Multimodal robotic representation for temporal action segmentation,” arXiv preprint arXiv:2504.18662 ,2025. [35] K. M. Lynch and F. C. Park, Modern robotics . Cambridge University Press, 2017. [36] E. Olson, “Apriltag: A robust and flexible visual fiducial system,” in 
+
+IEEE international conference on robotics and automation , 2011, pp. 3400–3407. [37] M. Meil˘ a, “Comparing clusterings by the variation of information,” in 
+
+Learning Theory and Kernel Machines: 16th Annual Conference on Learning Theory and 7th Kernel Workshop, COLT/Kernel, Washington, DC, USA, August 24-27. Proceedings . Springer, 2003, pp. 173–187.

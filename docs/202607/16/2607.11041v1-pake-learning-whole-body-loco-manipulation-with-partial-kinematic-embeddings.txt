@@ -1,0 +1,545 @@
+Title: PAKE: Learning Whole-Body Loco-Manipulation with Partial Kinematic Embeddings
+
+URL Source: https://arxiv.org/pdf/2607.11041v1
+
+Published Time: Tue, 14 Jul 2026 02:47:28 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+# PAKE: Learning Whole-Body Loco-Manipulation with Partial Kinematic Embeddings 
+
+Zhengmao He 1∗, Moonkyu Jung 2∗, Hyeongjun Kim 2, Jiseong Lee 2, Hui Zhang 3, Jemin Hwangbo 2, Jie Song 1,3,4
+
+Abstract — Loco-manipulation has recently shown promising capabilities; however, achieving high-precision control, man-aging the high-dimensional action space induced by many degrees of freedom (DoFs), and fully exploiting the inherent redundancy of whole-body systems remain challenging. In this paper, we propose a novel whole-body control framework that effectively addresses these challenges by decomposing the complex loco-manipulation problem into partial reference motion generation and low-level imitation control. We introduce a new Kinematic Normalizing Flow (KNF) model, trained on a large-scale kinematic dataset, that generates diverse yet feasible partial reference motions. A high-level controller is then trained to navigate the KNF’s latent space to exploit redundant solutions, while a low-level controller ensures phys-ically feasible and accurate motion execution. We validate our approach on the quadrupedal robot equipped with a six-DoF robotic arm. In simulation, experimental results show that our approach significantly outperforms state-of-the-art methods in terms of tracking accuracy and feasible workspace coverage. For hardware deployment, we evaluate the system over 24 episodes across 8 different mobile loco-manipulation tasks. The system achieves end-effector pose-tracking errors of 4.5 cm and 0.14 rad, while maintaining accurate locomotion tracking with linear and angular velocity errors of 0.1 m/s and 0.01 rad/s, respectively, outperforming competitive baselines. Our method represents a practical and powerful solution for accurate and generalized whole-body loco-manipulation in high-DoF robotic systems, with promising potential for diverse downstream robotic tasks. 
+
+I. I NTRODUCTION 
+
+Mobile manipulation has garnered significant attention in recent years, primarily because it greatly expands the workspace available to robotic manipulators. Manipulators mounted on legged chassis have shown unique advantages due to their enhanced capability to overcome obstacles. A floating-base platform, in particular, introduces additional degrees of freedom (DoF), allowing robotic arms to sig-nificantly extend their workspace and perform whole-body control tasks. Furthermore, by fully utilizing the redundancy provided by these extra DoFs, the robotic arm can assist with locomotion tasks even while tracking target objects. 
+
+> 1The Hong Kong University of Science and Technology (Guangzhou). zhe037@connect.hkust-gz.edu.cn
+> 2Korea Advanced Institute of Science and Technology.
+> 3ETH Zurich.
+> 4The Hong Kong University of Science and Technology.
+> *Equal Contribution. This work has been submitted to the IEEE for possible publication. Copyright may be transferred without notice, after which this version may no longer be accessible.
+
+Fig. 1: Real-world deployments of the proposed framework across diverse tasks, including pulling a heavy cart, sweeping the floor, plugging in a charger, and hanging a clothes hanger. 
+
+Recently, model-free Reinforcement Learning (RL) has become increasingly popular in the fields of both locomotion [1], [2] and manipulation [3], [4], as it effectively facilitates control policy learning through extensive interaction within simulated environments. However, loco-manipulation poses several challenges that differentiate it from simpler fixed-base manipulation tasks or pure locomotion scenarios. These challenges make it difficult for RL approaches to achieve high-precision solutions or fully leverage the redundant so-lutions inherent in high-DoF systems. These challenges include: (i) Search space: High degrees of freedom create an extremely large search space, complicating the reinforcement learning process of identifying meaningful and coordinated actions for both manipulation and locomotion. Consequently, many existing methods are often evaluated or applied in scenarios where the robot remains stationary during manip-ulation [5], [6]. (ii) Coordination complexity: Locomotion and manipula-tion involve distinct and sometimes conflicting objectives. If coordination is not managed properly, movements intended for one purpose may adversely impact the other. For instance, even minor vibrations in the robot’s torso can be greatly magnified at the end-effector, compromising precision tasks. Similarly, shifts in the robot’s center of mass (CoM) and momentum due to manipulator motion can negatively affect locomotion stability. To address these challenges, numerous approaches have been proposed; however, most existing works [6]–[10] have arXiv:2607.11041v1 [cs.RO] 13 Jul 2026 primarily focused on position tracking. Although some stud-ies [6], [11] attempted to track both position and orientation simultaneously, their methods resulted in significant errors. Other research [5], [12] has achieved higher-precision pose tracking, but at the cost of chassis mobility by transforming the robot into a fixed-base manipulator or by adding extra wheels to minimize leg movement, thereby simplifying ex-ploration. More importantly, existing approaches often tackle the complex, high-dimensional action space by searching for just a single feasible solution. These approaches overlook the system’s inherent redundancy—a vast space of alterna-tive solutions that could be exploited to address complex coordination challenges and enhance tracking precision. In this work, we propose a hierarchical framework for whole-body loco-manipulation that decouples redundancy-aware kinematic reference generation from dynamically fea-sible execution. We first learn a Kinematic Normalizing Flow (KNF) from a kinematic dataset. The learned KNF provides a compact latent embedding of the robot’s kine-matic redundancy, mapping a desired end-effector pose to a distribution of candidate partial reference motions. These partial references specify only upper-body configurations, while leaving the remaining full-body DoFs, especially the leg DoFs required for locomotion, to be recovered by the controller. The high-level controller (HLC) outputs actions in the KNF latent space, which are interpreted as latent variables conditioned on the desired end-effector pose. These latent variables are then decoded by the KNF into partial reference motions, such as torso and arm reference tra-jectories. In this way, the HLC selects among redundant kinematic solutions encoded by the KNF, allowing it to generate references that facilitate end-effector tracking and can be effectively realized by the LLC. Since these KNF-generated references are obtained from kinematic data alone, they may violate physical constraints such as joint limits, leg reachability, or locomotion stability. To bridge this gap, the low-level controller (LLC) tracks the selected partial references and converts them into physically consistent full-DoF actuator commands. In this way, the HLC exploits the redundancy encoded by the KNF, while the LLC serves as a dynamic feasibility layer that filters infeasible references and produces stable whole-body motions. In summary, our main contributions are: (i) A decoupled control framework that simplifies the exploration for loco-manipulation by separating high-level, redundancy-aware kinematic planning and low-level dynamic execution. (ii) The Kinematic Normalizing Flow (KNF), a data-driven model that learns a distribution over inverse kinematic solu-tions to effectively leverage system redundancy for improved coordination of locomotion and manipulation. (iii) Extensive sim-to-real validation that demonstrates state-of-the-art tracking performance and showcases the ro-bustness and applicability of our method. II. R ELATED WORK 
+
+A. Locomotion 
+
+Research on robotic locomotion has significantly matured in recent years. Early efforts primarily focused on model-based approaches, which utilized simplified robot models to enable real-time computation using Model Predictive Control (MPC). These methods addressed issues such as model inconsistencies arising from contact and off-ground states by defining explicit contact sequences [13]–[16]. However, such approaches often lack flexibility and struggle to manage unexpected contacts or slippage. More recently, reinforce-ment learning (RL) methods have demonstrated substantial potential by training controllers to achieve specific loco-motion tasks through extensive interaction data collected in simulation environments [17], [18], subsequently enabling effective transfer to real robots via sim-to-real techniques. RL approaches have successfully accomplished tasks such as velocity tracking [1], fall recovery [1], [19], gait diversity learning [20], [21], and parkour-style movements in complex terrains combined with visual perception [22]–[24], signifi-cantly improving the robustness of controllers. Nonetheless, using reinforcement learning to achieve precise end-effector target tracking for high-DoF locomotion systems remains an open challenge. 
+
+B. Whole-body control 
+
+In recent years, significant research has focused on loco-manipulation, particularly emphasizing whole-body control (WBC). Model-based approaches allow robots to leverage their full degrees of freedom (DoF) for precise target tracking by accurately modeling the robotic system dynamics [25]– [27]. However, these methods depend heavily on accurate system modeling and predefined contact sequences, leading to limited flexibility. Recently, reinforcement learning (RL)-based methods have demonstrated considerable promise for high-DoF legged robotic systems [1], [28]. For instance, Ma et al. [29] combined RL-based locomotion control with model-based arm manipulation; however, the decoupled na-ture of their approach restricts whole-body coordination. Fu et al. [6] tackled whole-body control through end-to-end RL with a mixed-advantage and curriculum learning strategy but achieved only position tracking with the robot stationary. Liu et al. [7] proposed a hierarchical approach, combining RL-based leg control with an inverse Jacobian controller for arm motion; nevertheless, joint limitations caused local minima issues, significantly constraining the arm’s operational workspace. Portela et al. [8] developed a loco-manipulation approach for force control, but their method exhibited limited position-tracking accuracy. Ha et al. [30] implemented task-specific pose tracking relative to the world frame but lacked independent chassis movement control. Portela et al. [5] achieved high-precision 6D pose tracking, although their solution was restricted to fixed-base configurations and relied heavily on supplementary locomo-tion controllers. More recently, Jung et al. [31] proposed a hierarchical RL framework enabling quadrupedal mobile manipulators to perform adaptive, dynamic pick-and-place with heavier payloads and extended workspaces. Most notably, none of the above-mentioned works fully exploit the redundant solutions inherent in high-dimensional systems . Given the redundancy available in such high-DoF systems, multiple valid solutions exist for achieving a spe-cific 6D pose. Utilizing these redundant solutions effectively can improve the motion performance of robot, as well as enable more sophisticated downstream tasks such as collision avoidance. III. M ETHOD 
+
+A. Overview 
+
+In this section, we introduce our proposed method, Partial Kinematic Embeddings ( PAKE ), designed to achieve general-ized, high-precision, dynamic whole-body loco-manipulation for high DoF robotic systems by leveraging easily accessible partial kinematic data. An overview of our framework is illustrated in Figure 2. The training process comprises three distinct stages: First, we generate a comprehensive kinematic dataset using parallel forward kinematics. The joint space sampled includes 6 DoF from the robotic arm and 3 DoF from the torso, while the end-effector poses are represented within the heading frame [6], [7], defined by the robot’s xy-position and yaw angle (see Figure 3). We then fit this dataset using Normalizing Flows (NF) to obtain a kinematic embedding with [32], which later serves as the abstract action space for the high-level controller. Next, we pretrain a low-level imitation policy designed to track partial reference motions and recover physically con-sistent actuator commands for the full robot DoF. This step is necessary because the KNF-generated reference motions are partial and do not inherently consider kinematic and dynamic feasibility constraints (e.g., torso references may exceed leg length constraints, joint limits, or compromise walking stability). Finally, we train a high-level policy to navigate the latent space of the KNF, fully exploiting the redundancy captured by the KNF model to generate suitable partial reference motions. Concurrently, we fine-tune the low-level imitation policy to effectively follow dynamically changing torso refer-ence trajectories, ensuring it can reliably filter out physically infeasible motions from the kinematic data and produce realistic full-DoF joint commands. 
+
+B. Partial Kinematic Embedding 1) Partial Kinematic Dataset: Our partial reference mo-tion, denoted by qi, includes the torso’s roll ξ, pitch θ, height 
+
+h, and the 6 DoF of the robotic arm (see Figure 3). We intentionally exclude the torso’s x, y, and yaw components to maintain the robot’s mobility. Our dataset M = qi, χ ie comprises 170 million data pairs. To rapidly generate a large-scale dataset, we use forward kinematics rather than inverse kinematics, allowing data generation within seconds. Specifically, we uniformly sample joint configurations qi within their predefined joint limits and subsequently use parallel forward kinematics ( χe = χe(q))to compute the corresponding end-effector poses χe.
+
+Note: To facilitate whole-body control and adaptability to downstream tasks, the torso’s roll ξ, pitch θ, height h, end-effector pose χe, and the 3D velocity command vvel are all represented in the heading frame of the quadrupedal robot. 
+
+2) Learning Kinematic Motion Embedding: Given the kinematic dataset M, we train a Normalizing Flow (NF) model to generate a distribution of feasible solutions condi-tioned on the target end-effector pose. NF is a generative model capable of representing mul-timodal distributions with complex nonlinear relationships between variables, mapping a simple base distribution to the desired target distribution. The NF framework employs invertible coupling layers, enabling mapping from the target distribution back to the base distribution during training, conditioned upon specific information. At inference time, the invertible mapping quickly generates samples from the target distribution based on samples drawn from the base dis-tribution. Our proposed KNF model utilizes the framework introduced by Ames et al. [32] as its backbone, incorporating additional stabilizing techniques from Kim et al. [33]. This integration enables KNF to efficiently represent most of the solution space with minimal reconstruction error. The KNF adopts a normal distribution as its base distri-bution, simplifying both the computation of the maximum-likelihood loss function and the action space selection for the high-level controller. We implement coupling layers following the Glow architecture proposed by Kingma and Dhariwal [34], employing three-layer fully connected neural networks with a hidden width of 1024 neurons as coefficient functions. These coupling layers encode both input variables and conditional information. Our KNF comprises 12 cou-pling layers, each with a dimensional width of 12, which exceeds the dimension of the solution space, facilitating the effective modeling of multimodal target distributions. 
+
+C. Pretraining Low-level Imitation Policy 
+
+In this section, we describe the training process for the low-level controller policy πllc , enabling the robot to track 3D torso reference motions and velocity commands. We formulate the partial motion imitation problem as a Markov Decision Process (MDP), training the robot to follow arbi-trary 3D body velocity commands cvel = ( vx, v y , w z ) as well as 3D torso commands cbase , including desired torso roll ξ,pitch θ, and height h.
+
+1) Network Architecture: We employ the Proximal Policy Optimization (PPO) algorithm to train the low-level imitation policy, using an asymmetric actor-critic architecture similar to the one proposed by Brakel et al. [35]. Both actor and critic networks utilize fully connected layers, with sizes 
+
+[256 × 128] for the actor and [512 × 256 × 128] for the critic. The actor maps proprioceptive observations to action outputs, while the critic estimates value functions based on the current state. The actor network outputs action values representing the offset from nominal joint positions for 12 actuators, which 1. Training KNF with Normalizing Flow   
+
+> Parallel Partial FK
+> ℒ
+> Buffer
+> KNF
+> 2. Training Mimic Controller 𝜋 𝑙𝑙𝑐
+> 𝑎 𝑡
+> 𝑜 𝑡
+> 𝑝
+> Actor
+
+𝜋 𝑙𝑙𝑐  
+
+> Critic
+
+𝜋 𝑙𝑙𝑐   
+
+> 𝑠 𝑡
+> 𝑝
+> PD
+> 𝑐 𝑏𝑎𝑠𝑒 ,𝑐 𝑣𝑒𝑙
+> 𝑟 𝑡
+> Env
+> Curriculum
+> Sampler
+> 3. Training
+
+𝜋 ℎ𝑙𝑐 and Finetuning 𝜋 𝑙𝑙𝑐        
+
+> 𝑐 𝑒𝑒 ,𝑐 𝑣𝑒𝑙 Command
+> Sampler
+> Frozen
+> 𝑜 𝑡
+> 𝑙𝑙𝑐 ,𝑜 𝑡
+> ℎ𝑙𝑐 Train/Finetune
+> 𝜏 𝑡
+> 𝑟 𝑡
+> 𝑙𝑙𝑐 ,𝑟 𝑡
+> ℎ𝑙𝑐 PD PD controller
+> 𝑧 𝑡
+> Env
+> PD 𝜏 𝑡
+> 𝑎 𝑡
+> 𝑙𝑒𝑔
+> 𝑎 𝑡
+> 𝑎𝑟𝑚
+
+𝜋 𝑙𝑙𝑐 
+
+𝜋 ℎ𝑙𝑐            
+
+> KNF 𝑐 𝑏𝑎𝑠𝑒
+> 𝑐 𝑏𝑎𝑠𝑒 :𝜍 ,𝜃 ,ℎ
+> 𝑐 𝑣𝑒𝑙 :𝑣 𝑥 ,𝑣 𝑦 ,𝑤 𝑧
+> 𝑐 𝑝𝑜𝑠𝑒 : Target Pose
+> 6DoF of Arm
+> 3DoF of Base
+
+Fig. 2: (1) We uniformly sample 6 DoF for the robotic arm and 3 DoF for the torso, collecting 170 million pairs of joint configurations and corresponding end-effector poses using parallel forward kinematics. We then model the partial inverse kinematics problem using Normalizing Flows (NF), training the resulting KNF model with this dataset. (2) We utilize an asymmetric actor-critic structure to train low-level imitation controllers, aiming to track random 3D velocity commands cvel and 3D torso references cbase . Commands are sampled using curriculum learning, with difficulty progressively increasing over training iterations. (3) We train a high-level controller that explores the latent space of the KNF. The partial kinematic references produced by the KNF are passed to the low-level imitation controller, which filters for physically feasible motions and generates appropriate actuator commands for all robot DoFs. 
+
+Fig. 3: A schematic illustration of the partial reference motion model used in PAKE . The partial reference motion comprises the torso’s height h, roll ξ, pitch θ, and the 6 DoF of the robotic arm. Both the reference configuration and the end-effector pose are expressed within the heading frame. 
+
+are then added to the nominal positions to obtain target joint positions. These target positions are tracked using a proportional-derivative (PD) controller with gains set as kp =100 and kd = 1 . The actor runs at 100 Hz both in simulation and on the real robot, whereas the PD controller operates at 500 Hz in simulation and 4000 Hz on real hardware. Nominal leg joint positions are defined by the robot’s stance during initialization, while nominal arm positions are sampled from a small normal distribution. 
+
+2) Curriculum-Based Command Sampler: The commands 
+
+cvel and cbase are sampled at the beginning of each episode and remain fixed throughout. Desired torso roll ξ and pitch θ
+
+are sampled uniformly within intervals centered at zero, with ranges increasing progressively during training iterations, up to a maximum interval of (−0.26 rad , +0 .26 rad ). The torso height h is similarly sampled uniformly within a range whose lower bound gradually decreases as training progresses, ulti-mately spanning from 0.3 m to 0.5 m. The velocity command 
+
+cvel components are sampled uniformly from intervals cen-tered at zero, with their ranges progressively expanding over iterations to maximum values: vx ∈ (−1.0 m/s , 2.0 m/s ),
+
+vy ∈ (−1.0 m/s , 1.0 m/s ), and wz ∈ (−1.0 rad/s , 1.0 rad/s ).
+
+3) Policy Input: The actor network observes proprio-ceptive states op, which include a 10-step history of leg, arm, and torso observations, a 3-step history of previous controller actions, a 10-step history of end-effector targets, and a 9-dimensional partial reference motion. Gaussian noise is added to these proprioceptive inputs to simulate realistic sensor data. The critic receives privileged state information sp, which consists of noise-free proprioceptive states op, along with additional privileged information obtained directly from simulation. This privileged state includes histories of end-effector states and foot-contact states (each over 10 steps), linear torso velocity, torso height, roll, pitch, as well as foot-end time-of-flight and stance durations. 
+
+4) Reward: The reward encourages command tracking, end-effector pose tracking, stable contact behavior, and TABLE I: Compact reward terms.                                                                             
+
+> Term Expression Velocity tracking exp
+> 
+> −∥ vxy −vdxy ∥2−1.5∥ωz−ωdz∥2
+> EE pose tracking ∥ppos −pdpos ∥2+∥pori, 6D−pdori, 6D∥2
+> Airtime P
+> irair ,i (Ts,i , T a,i )
+> Foot contact P
+> iλc∥(Rc,i vf,i )xy ∥2
+> Foot clearance P
+> i(pf,i,z −htar )2∥(RTbvf,i )xy ∥
+> Torso posture s(h−cb, 0)2+ ( ξ−cb, 1)2+ ( θ−cb, 2)2
+> Nominal pose sλ c
+> B+ 1
+> 
+> ∥qleg −q0
+> leg ∥+∥qarm −q0
+> arm ∥
+> 
+> Base regularization v2
+> z+ 0 .02 |ωx|+ 0 .02 |ωy|
+> Leg/Arm regularization ∥τ∥2, λ c∥˙q∥2, λ c∥¨q−˙qprev ∥2, λ cS(a)
+> Note: htar = 0 .10 .s= 10 when standing and 1otherwise.
+> B= 10
+> q
+> (0 .5−cb, 0)2+c2
+> b, 2.
+> S(a) = 0 .5∥at−3+at−1−2at−2∥2+∥at−1−at−2∥2. Leg-wise terms are summed over four legs.
+
+smooth whole-body motion. It follows common locomotion RL designs [36], with additional terms for end-effector pose tracking, torso posture tracking, and arm-motion regulariza-tion. To avoid penalty terms dominating the task rewards, we compute r = rpos ×exp (0 .1×rneg ) where most penalties are scaled by curriculum factors. The command curriculum for 
+
+cvel and cbase is described in Section III-C.2. The compact reward specification is given in Table I. 
+
+5) Domain Randomization: To facilitate effective zero-shot sim-to-real transfer, we apply domain randomization by varying key simulation parameters. Specifically, ground friction, joint friction, and observation noise parameters are randomized at the beginning of each training episode, sampling values from normal distributions within predefined ranges. 
+
+D. Training High-level Controller Policy 
+
+In this section, we introduce the third training phase, which combines the trained KNF model with the training of a high-level controller πhlc . The high-level controller is trained to explore the latent space of the KNF, fully leveraging the re-dundancy captured by the KNF model, while simultaneously fine-tuning the low-level imitation controller πllc . The goal of this combined approach is to achieve accurate, generalized 6D end-effector pose tracking for high-degree-of-freedom systems, fully utilizing the available redundancy, even during highly dynamic motions. 
+
+1) Implementation Details: The high-level controller em-ploys the same asymmetric actor-critic architecture as the low-level controller πllc , with identical network structures. Furthermore, the observation and reward designs are fun-damentally similar, reflecting a simple philosophy: both controllers are designed to collaboratively achieve the same goal. a) Action Space: The high-level controller explores the latent space of the KNF, generating latent variables z from its actions through the following transformation: 
+
+zt = λlatent_scale × tanh (ahlc t ) (1) Here, the hyperparameter λlatent _scale is set to 0.7, balancing the diversity and quality of the generated solutions [32]. 
+
+b) Rewards: In addition to the rewards defined in Section III-C.4, the high-level controller also receives a smoothness reward based on the difference between partial reference motions at consecutive timesteps. This encourages the generation of smooth reference trajectories. 
+
+2) Command Sampling: a) End-Effector Trajectory Parameters Sampling: Un-like most previous works [6], [7], [30] that interpolate sam-pled points to define manipulation trajectories, we directly sample the end-effector target trajectory using third-order rational Bézier curves [9], [37]. These curves effectively represent complex trajectories, including varying velocities and accelerations, more closely resembling real-world ma-nipulation tasks. The parameters defining each rational Bézier curve include control point positions and their corresponding weights. The control point positions are uniformly sampled within the kinematic range defined by forward kinematics (as described in Section III-B.1), while the control point weights are uni-formly sampled within the range [1, 2000]. The orientation trajectory is derived through spherical linear interpolation (slerp) between the orientations of the initial and final control points. 
+
+b) Base Command Sampling: The torso velocity com-mands are uniformly sampled from the maximum ranges defined in Section III-C.2, with all curriculum scaling factors initialized at their maximum value (set to 1). However, the torso reference motions cbase are no longer sampled independently; instead, these motions are generated directly by the KNF model. IV. E XPERIMENTS 
+
+In this chapter, we present a series of experiments designed to address the following key research questions:  
+
+> •
+
+Q1 : Can PAKE enable highly accurate, generalized end-effector tracking while simultaneously maintaining precise chassis locomotion?  
+
+> •
+
+Q2 : How significantly does PAKE improve whole-body tracking accuracy compared to previous methods?  
+
+> •
+
+Q3 : Does PAKE effectively utilize the redundant solu-tions provided by high-DoF systems? The chapter is structured as follows: We first detail imple-mentation specifics, then compare the tracking performance of PAKE against state-of-the-art methods through quantita-tive analysis, followed by a thorough assessment of tracking error distributions and feasible workspace volumes. Finally, we present case studies demonstrating the practical capabil-ities of PAKE in dynamic loco-manipulation scenarios. 
+
+A. Implementation Detail 
+
+To efficiently generate large-scale, high-precision data closely resembling real-world interactions, we use RaiSim [17] as our simulation environment and implement our algorithms with PyTorch [38]. Our experiments are conducted on an in-house quadruped platform integrated with a Unitree Z1 manipulator, providing 18 actuators in total with joint position encoders. Training was performed using an AMD Ryzen 9 7950X CPU and an NVIDIA GeForce RTX 4080 GPU. Pretraining the low-level controller required approximately 14 hours and utilized around 9 billion simulation timesteps, whereas training the high-level controller along with fine-tuning the low-level policy took approximately 15 hours, covering about 1 billion simulation timesteps. 
+
+B. Performance Comparison 
+
+To comprehensively evaluate the tracking performance of 
+
+PAKE , we visualize the error distributions of four primary tracking targets—position, orientation, linear velocity, and angular velocity—using violin plots. We further analyze the feasible workspace and spatial tracking errors in 3D. For comparative evaluation, we consider two state-of-the-art methods as baselines: VBC [7] and Umi-on-Legs [30]. In addition, we conduct an ablation study to assess the contribution of the high-level controller in our framework, and further investigate how different network sizes of the high-level controller affect performance. The implementation details for all experiments are provided below.  
+
+> •
+
+(-)HLC (without High-Level Controller): The net-work structure remains unchanged, except the high-level controller in the third training stage is removed. This is equivalent to setting the latent scale factor λlatent_scale 
+
+(defined in Equation 1) to zero. Thus, KNF always samples latent vectors as zero, eliminating solution diversity.  
+
+> •
+
+VBC [7]: A commonly used decoupled method in which robotic arm motions are computed via the Ja-cobian pseudo-inverse method and leg motions are controlled through RL.  
+
+> •
+
+Umi-on-Legs [30]: An end-to-end RL-based method that encourages the robot to track 6D end-effector poses through reward shaping, without the capability to track specific chassis velocities. We use its randomized trajectory variant and perform tracking in the body coordinate frame. In our evaluation, each method tracks 4000 randomly sampled 6D end-effector pose targets and 3D base velocity targets. Targets are uniformly sampled within predefined bounds using forward kinematics for pose targets (as defined in Section III-B.1), and the velocity commands follow the maximum range described in Section III-C.2. Each command remains fixed throughout an episode, ensuring consistent comparisons across methods. 
+
+1) Mean Tracking Performance Comparison: We first compare the mean and standard deviation of the tracking errors across the evaluated methods (Table II). Results clearly show that PAKE achieves the lowest mean tracking errors across all four metrics. In comparison, VBC exhibits higher end-effector position and velocity tracking errors. Umi-on-Legs achieves comparatively better end-effector position ac-curacy but significantly larger orientation errors, confirming previous findings that orientation tracking poses difficulties for vanilla RL-based methods. 
+
+TABLE II: PAKE and the baseline’s average tracking error across the four metrics.                                
+
+> Approach
+> Units
+> Pos. mean err.
+> [m]↓
+> Ori. mean err.
+> [rad ]↓
+> Planar vel. mean err.
+> [m/s ]↓
+> Ang vel. mean err.
+> [rad/s ]↓Redundancy
+> Ours (HLC-large) 0.0402 ±0.0255 0.0609 ±0.0747 0.1502 ±0.0989 0.0563 ±0.0538 !
+> HLC-small 0.0479 ±0.0398 0.0735 ±0.0960 0.1977 ±0.1134 0.0615 ±0.0520 !
+> (-) HLC 0.0515 ±0.0362 0.0884 ±0.0726 0.1883 ±0.1030 0.0627 ±0.0545 %
+> VBC [7] 0.4431 ±0.2781 1.0816 ±0.7765 0.5070 ±0.4795 0.4499 ±0.3793 %
+> Umi-on-Legs [30] 0.2883 ±0.2934 1.9722 ±0.7122 %%%Ours
+> Ours (W/O HLC)
+> Umi-on-Legs
+> VBC
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> Error
+> Position Error [m]
+> Ours
+> Ours (W/O HLC)
+> Umi-on-Legs
+> VBC
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> Orientation Error [rad]
+> Ours
+> Ours (W/O HLC)
+> Umi-on-Legs
+> VBC
+> 0
+> 1
+> 2
+> 3
+> Linear Velocity Error [m/s]
+> Ours
+> Ours (W/O HLC)
+> Umi-on-Legs
+> VBC
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> Angular Velocity Error [rad/s]
+
+Fig. 4: Violin plot distributions comparing tracking errors of differ-ent methods across four metrics. 
+
+Remarkably, the tracking accuracy achieved by PAKE is competitive with concurrent approaches [5], [12] (0.022 m, 0.041 rad and 0.026 m, 0.064 rad, respectively). However, these methods are developed under different platform or task assumptions, such as wheeled-legged locomotion or end-effector pose tracking with a stationary base. In contrast, 
+
+PAKE maintains fully legged mobility while coordinating locomotion and manipulation, making it more applicable to loco-manipulation scenarios that require simultaneous leg motion and accurate end-effector tracking. Ablation experiments highlight that removing the high-level controller significantly degrades end-effector tracking accuracy and moderately affects velocity tracking perfor-mance. This demonstrates that the high-level controller ef-fectively leverages redundant solutions, validating our archi-tectural choices. 
+
+2) Tracking Error Distribution Comparison: The violin plots in Figure 4 shows that PAKE significantly outperforms both baseline methods in terms of end-effector position and orientation tracking, exhibiting more centralized error distributions with lower mean errors, while still preserving excellent torso velocity tracking capabilities. Umi-on-Legs (RL-based) achieves lower end-effector position errors com-pared to VBC, but its orientation errors cluster in high-error regions, as expected from prior analysis. Conversely, VBC (decoupled method) shows orientation errors concentrated in lower-error regions due to the analytical Jacobian method, but its position errors are widely distributed, reflecting issues related to local minima. In contrast, PAKE successfully mit-igates both problems, demonstrating consistently low error distributions across all metrics. 
+
+3) Feasible Workspace Comparison: While whole-body control significantly enlarges the robot’s operational workspace, constraints inherent to floating-base robots (e.g., tipping risk) and the trade-off between chassis movement and arm manipulation can limit precise tracking throughout the workspace. We extend criteria from [6] to define the feasible workspace as the minimal convex hull of reachable points meeting specific error thresholds. We evaluate the feasible workspace under four stringent conditions: position error < 0.1 m, position error < 0.05 m, orientation error < 0.2 rad, and combined position error <
+
+0.1 m with orientation error < 0.2 rad. Workspace volumes TABLE III: Volume of feasible workspace for different methods at 4 selected thresholds. 
+
+Feasible Workspace (m3) ↑ Pos Err<0.1 Pos Err<0.05 Ori Err<0.2 Pos Err<0.1 Ori Err<0.2 
+
+Ours 2.3883 2.2170 2.4082 2.3867 
+
+(-) HLC 2.3017 2.0748 2.3759 2.2999 
+
+VBC [7] 0.6796 0.3618 1.6113 0.4228 
+
+Umi-on-Legs [30] 2.0628 1.9505 0.0584 0.0174 X [m]                         
+
+> 0.5 0.0 0.5 1.0
+> Y [m]
+> 0.5
+> 0.0
+> 0.5
+> Z [m]
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> Ours
+> X [m]
+> 0.5 0.0 0.5 1.0
+> Y [m]
+> 0.5
+> 0.0
+> 0.5
+> Z [m]
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> Ours (W/O HLC)
+> X [m]
+> 0.5 0.0 0.5 1.0
+> Y [m]
+> 0.5
+> 0.0
+> 0.5
+> Z [m]
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> Umi-on-Legs
+> X [m]
+> 0.5 0.0 0.5 1.0
+> Y [m]
+> 0.5
+> 0.0
+> 0.5
+> Z [m]
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> VBC
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Position Error [m] X [m]
+> 0.5 0.0 0.5 1.0
+> Y [m]
+> 0.5
+> 0.0
+> 0.5
+> Z [m]
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> Ours
+> X [m]
+> 0.5 0.0 0.5 1.0
+> Y [m]
+> 0.5
+> 0.0
+> 0.5
+> Z [m]
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> Ours (W/O HLC)
+> X [m]
+> 0.5 0.0 0.5 1.0
+> Y [m]
+> 0.5
+> 0.0
+> 0.5
+> Z [m]
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> Umi-on-Legs
+> X [m]
+> 0.5 0.0 0.5 1.0
+> Y [m]
+> 0.5
+> 0.0
+> 0.5
+> Z [m]
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> VBC
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> Orientation Error [rad]
+
+Fig. 5: 3D visualization of position and orientation tracking effects of four methods, the color becomes lighter as the tracking error rises. 
+
+are approximated by the convex hull, excluding regions intersecting the torso. As detailed in Table III and visualized in Figure 5, PAKE demonstrates superior feasible workspace coverage, highlighting its potential for complex downstream tasks. 
+
+C. Case Study: High dynamic tracking with simultaneous movement 
+
+We evaluate PAKE under highly dynamic conditions, commanding the robot to track rapidly varying chassis velocity commands alongside dynamic end-effector trajec-tories. Three distinct end-effector trajectories are sampled, while torso velocity commands follow Lissajous equations designed to comprehensively test the robot’s mobility capa-bilities. Results (Figure 6) confirm that the robot effectively follows both the torso velocity and partial reference motion (height, roll, pitch), validating the low-level controller’s per-formance. Furthermore, the end-effector tracking error con-verges within 5 cm and 5 degrees approximately 2 seconds after introducing new trajectory commands, confirming the robustness and effectiveness of the complete PAKE pipeline. 
+
+D. Hardware Experiments 
+
+To demonstrate that PAKE maintains high-precision track-ing across diverse workloads, we evaluate it on a real-world task set comprising 24 episodes (Table IV). The task set includes cart_pull , hanger , sweep_broom , plug_in (Figure 1), as well as four pick-and-place tasks involving trash disposal, hammer storage, toy pickup, and foam transport. All episodes are evaluated using motion-capture-based end-effector track-ing and base-velocity tracking. Across the full task set, PAKE 
+
+achieves a mean end-effector position error of 0.0449 m, a mean orientation error of 0.1437 rad, and a mean planar base-velocity error of 0.0961 m/s. These results show that PAKE preserves stable whole-body behavior across varied object interactions, motion patterns, and mobile manipulation demands. This suggests that its performance reflects robust task-level control rather than 0 5 10 15 20 25 30                                        
+
+> Time [s]
+> 1
+> 0
+> 1
+> Velocity [m/s]
+> Velocity Tracking
+> real x [m/s]
+> command x [m/s]
+> real y [m/s]
+> command y [m/s]
+> real w [rad/s]
+> command w [rad/s]
+> 0510 15 20 25 30
+> Time [s]
+> 0.25
+> 0.00
+> 0.25
+> 0.50
+> Tracking Error
+> Base Command (Height/Roll/Pitch) Tracking
+> real Z [m]
+> command Z [m]
+> real Roll [rad]
+> command Roll [rad]
+> real Pitch [rad]
+> command Pitch [rad]
+> 0510 15 20 25 30
+> Time [s]
+> 0
+> 5
+> 10
+> 15
+> 20
+> End-Effector Error  End-Effector Tracking
+> real Position Error [cm]
+> real Orientation Error [degree]
+> Reference y=5.0
+> 0510 15 20 25 30
+> Time [s]
+> 0.0
+> 0.5
+> 1.0
+> Position [m]
+> End Effector Position Tracking
+> real X [m]
+> command X [m]
+> real Y [m]
+> command Y [m]
+> real Z [m]
+> command Z [m]
+> 0510 15 20 25 30
+> Time [s]
+> 1
+> 0
+> 1
+> 6D Value
+> End Effector Orientation (6D) Tracking
+> real 6D-1
+> command 6D-1
+> real 6D-2
+> command 6D-2
+> real 6D-3
+> command 6D-3
+> real 6D-4
+> command 6D-4
+> real 6D-5
+> command 6D-5
+> real 6D-6
+> command 6D-6
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+
+Fig. 6: The tracking performance of having the robot move at high changing speed while tracking a changing end-effector 6D pose target in 30 seconds. TABLE IV: Aggregate real-world hardware tracking performance across 24 episodes of 8 tasks. 
+
+Task group Pos. mean err. Ori. mean err. Planar vel. mean err. Ang vel. mean err. [m] ↓ [rad] ↓ [m/s] ↓ [rad/s] ↓
+
+All 0.0449 ±0.0100 0.1437 ±0.0164 0.0961 ±0.0355 0.0145 ±0.0123 
+
+cart_pull 0.0618 ±0.0079 0.1734 ±0.0149 0.1422 ±0.0295 0.0276 ±0.0085 
+
+hanger 0.0366 ±0.0014 0.1318 ±0.0046 0.0723 ±0.0279 0.0160 ±0.0047 
+
+plug_in 0.0503 ±0.0034 0.1492 ±0.0099 0.0461 ±0.0099 0.0053 ±0.0055 
+
+sweep_broom 0.0406 ±0.0006 0.1342 ±0.0004 0.1245 ±0.0253 0.0049 ±0.0048 
+
+trash disposal 0.0460 ±0.0083 0.1380 ±0.0205 0.1015 ±0.0240 0.0028 ±0.0118 
+
+hammer storage 0.0433 ±0.0054 0.1508 ±0.0146 0.1028 ±0.0135 0.0229 ±0.0171 
+
+toy pickup 0.0350 ±0.0005 0.1315 ±0.0036 0.1038 ±0.0376 0.0161 ±0.0135 
+
+foam transport 0.0452 ±0.0150 0.1407 ±0.0032 0.0753 ±0.0115 0.0205 ±0.0092 
+
+overfitting to a single curated demonstration, unloaded oper-ation, or a narrow task template. V. C ONCLUSION AND FUTURE WORKS 
+
+In this thesis, we presented a novel control framework for high-degree-of-freedom (high-DoF) robotic systems, en-abling full utilization of whole-body degrees of freedom. Our approach maintains omni-directional chassis mobility, significantly expands the manipulator’s reachable workspace by leveraging redundant DoFs, and effectively exploits re-dundancy to enhance end-effector pose tracking accuracy as well as chassis velocity tracking performance. Our proposed framework follows a straightforward yet effective approach by rationally decomposing the complex problem of whole-body control into two complementary sub-problems: partial reference motion generation and low-level motion imitation. Specifically, we treat critical torso DoFs (height, roll, pitch)—which significantly extend workspace capabilities—as additional arm degrees of freedom, allowing the robot to perform highly dynamic, precise, and versatile 6D end-effector pose tracking while simultaneously main-taining accurate chassis velocity control through optimal use of redundant solutions. The effectiveness of our method has been thoroughly demonstrated through extensive experimental evaluations from multiple perspectives. We believe our framework can serve as a robust whole-body control foundation, facilitat-ing future research and applications in more advanced and diverse downstream robotic tasks. REFERENCES [1] J. Hwangbo, J. Lee, A. Dosovitskiy, D. Bellicoso, V. Tsounis, V. Koltun, and M. Hutter, “Learning agile and dynamic motor skills for legged robots,” Science Robotics , vol. 4, no. 26, p. eaau5872, 2019. [2] S. Choi, G. Ji, J. Park, H. Kim, J. Mun, J. H. Lee, and J. Hwangbo, “Learning quadrupedal locomotion on deformable terrain,” Science Robotics , vol. 8, no. 74, p. eade2256, 2023. [3] H. Zhang, Z. Wu, L. Huang, S. Christen, and J. Song, “RobustDex-Grasp: Robust dexterous grasping of general objects from single-view perception,” arXiv preprint arXiv:2504.05287 , 2025. [4] L. Huang, H. Zhang, Z. Wu, S. Christen, and J. Song, “FunGrasp: Functional grasping for diverse dexterous hands,” 2025. [5] T. Portela, A. Cramariuc, M. Mittal, and M. Hutter, “Whole-body end-effector pose tracking,” 2024. [Online]. Available: https: //arxiv.org/abs/2409.16048 [6] Z. Fu, X. Cheng, and D. Pathak, “Deep whole-body control: Learning a unified policy for manipulation and locomotion,” in Conference on Robot Learning (CoRL) , 2022. [7] M. Liu, Z. Chen, X. Cheng, Y. Ji, R. Qiu, R. Yang, and X. Wang, “Visual whole-body control for legged loco-manipulation,” The 8th Conference on Robot Learning , 2024. [8] T. Portela, G. B. Margolis, Y. Ji, and P. Agrawal, “Learning force con-trol for legged manipulation,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) , 2024, pp. 15 366–15 372. [9] Z. He, K. Lei, Y. Ze, K. Sreenath, Z. Li, and H. Xu, “Learning visual quadrupedal loco-manipulation from demonstrations,” in 2024 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2024, pp. 9102–9109. [10] P. Arm, M. Mittal, H. Kolvenbach, and M. Hutter, “Pedipulate: Enabling manipulation skills using a quadruped robot’s leg,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) ,2024, pp. 5717–5723. [11] G. Pan, Q. Ben, Z. Yuan, G. Jiang, Y. Ji, S. Li, J. Pang, H. Liu, and H. Xu, “Roboduet: Learning a cooperative policy for whole-body legged loco-manipulation,” IEEE Robotics and Automation Letters ,vol. 10, no. 5, pp. 4564–4571, 2025. [12] K. Jiang, Z. Fu, J. Guo, W. Zhang, and H. Chen, “Learning whole-body loco-manipulation for omni-directional task space pose tracking with a wheeled-quadrupedal-manipulator,” IEEE Robotics and Automation Letters , vol. 10, no. 2, pp. 1481–1488, 2025. [13] C. Dario Bellicoso, C. Gehring, J. Hwangbo, P. Fankhauser, and M. Hutter, “Perception-less terrain adaptation through whole body control and hierarchical optimization,” in 2016 IEEE-RAS 16th In-ternational Conference on Humanoid Robots (Humanoids) , 2016, pp. 558–564. [14] J. Di Carlo, P. M. Wensing, B. Katz, G. Bledt, and S. Kim, “Dynamic locomotion in the mit cheetah 3 through convex model-predictive control,” in 2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2018, pp. 1–9. [15] D. Kim, J. Di Carlo, B. Katz, G. Bledt, and S. Kim, “Highly dynamic quadruped locomotion via whole-body impulse control and model predictive control,” arXiv preprint arXiv:1909.06586 , 2019. [16] R. Grandia, F. Jenelten, S. Yang, F. Farshidian, and M. Hutter, “Perceptive locomotion through nonlinear model-predictive control,” 
+
+IEEE Transactions on Robotics , vol. 39, no. 5, pp. 3402–3421, 2023. [17] J. Hwangbo, J. Lee, and M. Hutter, “Per-contact iteration method for solving contact dynamics,” IEEE Robotics and Automation Letters ,vol. 3, no. 2, pp. 895–902, 2018. [Online]. Available: www.raisim.com [18] V. Makoviychuk, L. Wawrzyniak, Y. Guo, M. Lu, K. Storey, M. Mack-lin, D. Hoeller, N. Rudin, A. Allshire, A. Handa, and G. State, “Isaac gym: High performance GPU based physics simulation for robot learning,” in Thirty-fifth Conference on Neural Information Processing Systems Datasets and Benchmarks Track (Round 2) , 2021. [19] Y. Ma, F. Farshidian, and M. Hutter, “Learning arm-assisted fall damage reduction and recovery for legged mobile manipulators,” in 
+
+2023 IEEE International Conference on Robotics and Automation (ICRA) , 2023, pp. 12 149–12 155. [20] C. Yang, K. Yuan, Q. Zhu, W. Yu, and Z. Li, “Multi-expert learning of adaptive legged locomotion,” Science Robotics ,vol. 5, no. 49, p. eabb2174, 2020. [Online]. Available: https: //www.science.org/doi/abs/10.1126/scirobotics.abb2174 [21] G. B. Margolis and P. Agrawal, “Walk these ways: Tuning robot control for generalization with multiplicity of behavior,” in 6th Annual Conference on Robot Learning , 2022. [Online]. Available: https://openreview.net/forum?id=52c5e73SlS2 [22] D. Hoeller, N. Rudin, D. Sako, and M. Hutter, “Anymal parkour: Learning agile navigation for quadrupedal robots,” Science Robotics , vol. 9, no. 88, p. eadi7566, 2024. [Online]. Available: https://www.science.org/doi/abs/10.1126/scirobotics.adi7566 [23] X. Cheng, K. Shi, A. Agarwal, and D. Pathak, “Extreme parkour with legged robots,” in Towards Generalist Robots: Learning Paradigms for Scalable Skill Acquisition @ CoRL2023 , 2023. [24] Z. Zhuang, Z. Fu, J. Wang, C. Atkeson, S. Schwertfeger, C. Finn, and H. Zhao, “Robot parkour learning,” in Conference on Robot Learning (CoRL) , 2023. [25] J.-P. Sleiman, F. Farshidian, M. V. Minniti, and M. Hutter, “A unified mpc framework for whole-body dynamic locomotion and manipula-tion,” IEEE Robotics and Automation Letters , vol. 6, no. 3, pp. 4688– 4695, 2021. [26] C. D. Bellicoso, K. Krämer, M. Stäuble, D. Sako, F. Jenelten, M. Bjelonic, and M. Hutter, “Alma - articulated locomotion and manipulation for a torque-controllable robot,” in 2019 International Conference on Robotics and Automation (ICRA) , 2019, pp. 8477– 8483. [27] H. Ferrolho, V. Ivan, W. Merkt, I. Havoutis, and S. Vijayakumar, “Roloma: Robust loco-manipulation for quadruped robots with arms,” 
+
+Autonomous Robots , vol. 47, no. 8, pp. 1463–1481, 2023. [28] J. Lee, J. Hwangbo, L. Wellhausen, V. Koltun, and M. Hutter, “Learning quadrupedal locomotion over challenging terrain,” Science robotics , vol. 5, no. 47, p. eabc5986, 2020. [29] Y. Ma, F. Farshidian, T. Miki, J. Lee, and M. Hutter, “Combining learning-based locomotion policy with model-based manipulation for legged mobile manipulators,” IEEE Robotics and Automation Letters ,vol. 7, no. 2, pp. 2377–2384, 2022. [30] H. Ha, Y. Gao, Z. Fu, J. Tan, and S. Song, “UMI-on-legs: Making manipulation policies mobile with manipulation-centric whole-body controllers,” in 8th Annual Conference on Robot Learning , 2024. [Online]. Available: https://openreview.net/forum?id=3i7j8ZPnbm [31] M. Jung, J. Lee, Z. He, D. Youm, J. Mun, H. Kim, H. Oh, D. Choi, J. Hur, J. Song, and J. Hwangbo, “Learning dynamic pick-and-place for a legged manipulator,” IEEE Robotics and Automation Letters ,vol. 11, no. 6, pp. 7652–7659, 2026. [32] B. Ames, J. Morgan, and G. Konidaris, “Ikflow: Generating diverse inverse kinematics solutions,” IEEE Robotics and Automation Letters ,vol. 7, no. 3, pp. 7177–7184, 2022. [33] H. Kim, H. Lee, W. H. Kang, J. Y. Lee, and N. S. Kim, “Softflow: Probabilistic framework for normalizing flow on manifolds,” in Advances in Neural Information Processing Systems ,H. Larochelle, M. Ranzato, R. Hadsell, M. Balcan, and H. Lin, Eds., vol. 33. Curran Associates, Inc., 2020, pp. 16 388–16 397. [Online]. Available: https://proceedings.neurips.cc/paper_files/paper/ 2020/file/bdbca288fee7f92f2bfa9f7012727740-Paper.pdf [34] D. P. Kingma and P. Dhariwal, “Glow: Generative flow with invertible 1x1 convolutions,” in Advances in Neural Information Processing Systems , S. Bengio, H. Wallach, H. Larochelle, K. Grauman, N. Cesa-Bianchi, and R. Garnett, Eds., vol. 31. Curran Associates, Inc., 2018. [Online]. Available: https://proceedings.neurips.cc/paper_ files/paper/2018/file/d139db6a236200b21cc7f752979132d0-Paper.pdf [35] P. Brakel, S. Bohez, L. Hasenclever, N. Heess, and K. Bousmalis, “Learning coordinated terrain-adaptive locomotion by imitating a cen-troidal dynamics planner,” in 2022 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2022, pp. 10 335–10 342. [36] G. Ji, J. Mun, H. Kim, and J. Hwangbo, “Concurrent training of a control policy and a state estimator for dynamic and robust legged locomotion,” IEEE Robotics and Automation Letters , vol. 7, no. 2, pp. 4630–4637, 2022. [37] Y. Ji, Z. Li, Y. Sun, X. B. Peng, S. Levine, G. Berseth, and K. Sreenath, “Hierarchical reinforcement learning for precise soccer shooting skills using a quadrupedal robot,” in 2022 IEEE/RSJ International Confer-ence on Intelligent Robots and Systems (IROS) , 2022, pp. 1479–1486. [38] A. Paszke, S. Gross, F. Massa, A. Lerer, J. Bradbury, G. Chanan, T. Killeen, Z. Lin, N. Gimelshein, L. Antiga, A. Desmaison, A. Kopf, E. Yang, Z. DeVito, M. Raison, A. Tejani, S. Chilamkurthy, B. Steiner, L. Fang, J. Bai, and S. Chintala, “Pytorch: An imperative style, high-performance deep learning library,” in 
+
+Advances in Neural Information Processing Systems , H. Wallach, H. Larochelle, A. Beygelzimer, F. d'Alché-Buc, E. Fox, and R. Garnett, Eds., vol. 32. Curran Associates, Inc., 2019. [Online]. Available: https://proceedings.neurips.cc/paper_files/paper/ 2019/file/bdbca288fee7f92f2bfa9f7012727740-Paper.pdf
