@@ -1,0 +1,1216 @@
+Title: Motion Planning with Model-Based Diffusion via Constraint Optimization and Adaptive Scheduling
+
+URL Source: https://arxiv.org/pdf/2607.14455v1
+
+Published Time: Fri, 17 Jul 2026 00:34:59 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# Motion Planning with Model-Based Diffusion via Constraint Optimization and Adaptive Scheduling 
+
+Zhilin He 1, Bowei Li 1, Jianlin Dou 1, Yuner Zhang 2, Changliu Liu 1
+
+> 1
+
+Carnegie Mellon University, 2University of Pennsylvania 
+
+{hectorh, boweili, jdou2, cliu6}@andrew.cmu.edu , {yunerzh}@seas.upenn.edu 
+
+Code: https://github.com/hhhhzl/genedynamics 
+
+Abstract —Single-Robot Motion Planning (SRMP) in highly non-convex constrained environments, where robots must satisfy collision-free guarantees, dynamic feasibility, and task-related constraints, is challenging under complex constraints and compu-tational limits. Recent Model-Based Diffusion (MBD) approaches recast the SRMP as trajectory optimization that samples from a posterior over trajectories, using known dynamics, and analytically estimates the score function from rollout samples to guide diffusion denoising toward a low-cost, clean trajectory without demonstration learning. While existing works further adapt MBD to constrained environments and showcase promising performance, they are still limited by (1) enforcing safety either via soft feasibility diffusion priors or hard projection operators, but lack a unified framework to integrate both, and (2) fixing safety enforcement to neglect the changing of diffusion scheduling. Therefore, we introduce Model-Based Diffusion via Constraint Optimization and Adaptive Scheduling (MD-COAS) for SRMP that unifies the inexact Augmented Lagrangian Method (iALM) soft diffusion prior with a Convex Feasible Set (CFS)-based hard projection operator, and adaptively schedules and co-optimizes safety enforcement, along with diffusion scheduling. Experiments demonstrate that our method achieves higher safety & success rates, faster convergence, and lower final costs than baseline planners on randomly generated highly non-convex 2D benchmarks and a 7-DoF robot arm avoidance task. 
+
+I. I NTRODUCTION 
+
+Single-Robot Motion Planning (SRMP) aims to generate a feasible trajectory from the initial to the goal in complex environments that satisfies obstacle-avoidance, collision-free guarantees, dynamic feasibility, and task-related constraints. Given these requirements, the challenge lies in solving for a collision-free trajectory under complex constraints and computational limits to optimize the task objective. Recent approaches recast SRMP as probabilistic inference, sampling from a posterior over trajectories using diffusion mod-els [1]–[3], whose score functions are learned from demonstra-tion data, and then steering the diffusion denoising process to recover a clean trajectory. Instead of constructing probabilistic roadmaps (PRM) [4], [5] or rapidly exploring random trees (RRT) [6]–[8], diffusion models exploit demonstration-driven priors to bypass the global geometric search used in sampling-based planners, which typically degrades as environments grow larger and constraints become tighter. However, such diffusion-based methods depend on large-scale demonstration datasets for training and do not rigorously enforce dynamics within the pretrained generative model. Model-Based Diffusion (MBD) [9] addresses this limitation by incorporating explicit dynamics and casting SRMP as a trajectory optimization problem; it can analytically estimate the score from rollout samples and drive the denoising process toward low-cost trajectories. Unlike conventional trajectory optimization methods [10], [11], which tend to collapse to a single suboptimal solution, MBD retains multimodality through stochastic sampling. Building on MBD, more recent works introduce safety enforcement mechanisms to ensure the generated trajectory satisfies constraints [12]–[15]. However, they typically either encode constraints as soft feasibility via a diffusion prior or enforce them as a hard post-projection operator, but lack a unified framework that combines both; as a result, they struggle in highly non-convex constrained environments; moreover, they ignore annealing of diffusion scheduling by keeping the safety enforcement fixed from noisy (early) to clean (late) trajectories. We propose a novel motion planning method, Model-Based 
+
+Diffusion via Constraint Optimization and Adaptive Scheduling (MD-COAS), formulating the SRMP problem as optimizing 
+
+τ ⋆ ∈ arg min  
+
+> τ1: T
+
+J (τ 1: T )
+
+s.t. st+1 = f (st, u t), gt(st, u t) ≤ 0,
+
+(1) where J (τ 1: T ) is the task objective and trajectory τ 1: T =(st, u t)Tt=1 with states and controls over time horizon T . f (·)
+
+denotes the discrete-time dynamics, and g(·) ≤ 0 encodes constraints. Following MBD, we interpret reverse diffusion as a solver for (1) , in which noisy trajectory samples are progressively refined toward low-cost solutions using dynamic models. Our contributions can be summarized as two-fold: 
+
+C1: We develop a constraint-optimization framework for model-based diffusion that integrates an inexact Augmented Lagrangian Method (iALM) soft feasibility prior with aConvex Feasible Set (CFS)-based hard projection operator, thereby preserving informative diffusion guidance and capturing multimodality while certifying safety in highly non-convex constrained environments. C2: We further propose MD-COAS ,in which safety enforcement is adaptively scheduled and co-optimized along with the diffusion scheduling, in a primal–dual view, to account for diffusion annealing and adaptively regulate arXiv:2607.14455v1 [cs.RO] 16 Jul 2026 Model-Based      
+
+> Dif fusion
+> Schedule
+> Constraint
+> Schedule
+> Constraint
+> Optimization (CO)
+> Adaptive Scheduling (AS)
+> Proj Gate Proj Params
+> CFS-based Hard Pr ojection Operator
+> iALM Soft Feasibility
+> Diffusion Prior
+> CFS Pr ojection Pr ojected Trajectory
+> local convex
+> feasible set
+> quadratic
+> objective
+> violating
+> waypoints feasible
+> Refer ence Trajectory
+
+Fig. 1: Overview of Constraint Optimization (CO) and Adaptive Scheduling (AS) (Bottom Left) and Model-Based Diffusion for Motion Planning (Bottom Right). Top Left: an example CFS projection correcting a violated reference trajectory. Top Right: an illustration of MD-COAS denoising from noisy samples to a clean trajectory. constraint enforcement under constrained environments. II. R ELATED WORKS 
+
+A. Diffusion-Based Motion Planning 
+
+Existing works on diffusion models for motion planning aim to obtain a clean trajectory by learning the score from demonstration data and then sampling from a posterior over trajectory distributions. Motion Planning Diffusion (MPD) [16] formulates trajectory generation as a Denoising Diffusion Probabilistic Models (DDPMs) denoising process [1]–[3] for recovering a clean trajectory, without explicitly modeling constraints. Building on those methods, more works develop penalty terms, or augmented Lagrangian techniques for soft constraint enforcement [17], [18], and correct constraint violation by implementing explicit feasibility projection at each denoising step [19]–[22]. While such methods improve safety, they still rely on large-scale demonstrations and do not rigorously enforce dynamics. Model-Based Diffusion (MBD) [9] refines trajectories through model rollouts to enforce dynamics, driving the denoised trajectories toward low-cost solutions. More recent works ensure safety through an Emerging Barrier (EB), a Control Lyapunov Barrier Function (CLBF), or Control Barrier Function (CBF)-based projections inside the model-based diffusion rollouts [12]–[15]. However, those methods either lack a unified framework that combines soft feasibility priors with hard post-projection operators or neglect annealing of the diffusion denoising process by keeping safety enforcement fixed throughout the denoising process. 
+
+B. Safe Planning via Constraint Optimization 
+
+Constraint optimization has long been a principled approach for safe motion planning, often relying on Quadratic Program-ming (QP)-based trajectory optimization, formulating it as a sequence of convex subproblems via Sequential convexifica-tion [23], [24] often implemented in a Sequential Quadratic Programming (SQP) framework [25]. Convex Feasible Set (CFS) methods and related QP-based formulations [26] further improve computational efficiency and widely adapt to real-time planning and Model Predictive Control (MPC) [27]. Safety filtering frameworks such as Control Barrier Function (CBF)-based QPs [28] provide certified safety by enforcing barrier constraints through a QP. While these deterministic approaches offer feasibility guarantees, they are typically local, sensitive to initialization, fixed hyperparameters, and can converge to suboptimal solutions in highly non-convex environments. Primal–dual methods [29] regulate feasibility in constrained optimization via adaptive updates of multipliers and penalty parameters, spanning augmented Lagrangian methods [30]–[32] and Alternating Direction Method of Multipliers (ADMM)-style residual-driven penalty adaptation [33], [34]. However, none of these methods have been applied to diffusion-based planning to adaptively schedule safety-enforcement parameters throughout the denoising process. 
+
+Summary. We are the first to propose a constraint optimiza-tion framework that treats the inexact Augmented Lagrangian Method (iALM) as a soft diffusion prior, unifies it with a Convex Feasible Set (CFS)-based hard projection to enforce safety within a stochastic model-based diffusion, and adopts a primal–dual adaptive scheduling strategy that co-optimizes safety enforcement with the diffusion schedule. III. P RELIMINARIES 
+
+In this section, we cover the relevant background. In what follows, we use a right upper index t for time steps, a right lower index k for reverse diffusion steps, subscript m for the 
+
+m-th Monte Carlo sample, and subscript j for obstacle indices (e.g., τ tk,m : the trajectory at time t of the m-th sample at reverse step k, and ϕj : the signed-distance function of obstacle j). 
+
+A. Model-Based Diffusion for Trajectory Sampling 
+
+We treat τ 1: T as a random variable and generate samples by iteratively denoising from Gaussian noise. Let {τ 1: Tk }Kk=1 
+
+denote the diffusion variables, where τ 1: T 
+
+> 1
+
+is a clean trajectory and τ 1: TK is approximately pure noise N (0 , I). For the rest of the work, we omit the time index 1 : T for brevity. Following DDPMs, the forward process admits the closed-form reparameterization τk+1 = √¯αk τk + √1 − ¯αk ϵ, where 
+
+ϵ ∼ N (0 , I) with ¯αk := Qkj=1 αj and αk ∈ (0 , 1] . Let pk(τk)
+
+denote the noisy marginal induced by the forward kernel qpk(τk) := 
+
+Z
+
+q(τk | τ1) p1(τ1) dτ 1. (2) A standard result in score-based diffusion is that the op-timal reverse-time drift depends on the score Sk(τk) =
+
+∇τk log pk(τk), yielding a reverse update form 
+
+τk−1 = 1
+
+√αk
+
+
+
+τk + (1 − ¯αk) ˆSk
+
+
+
+, (3) where ˆSk ≈ Sk is an estimator of the score. In DDPMs, ˆSk is computed via a trained noise prediction network. In contrast, Model-Based Diffusion (MBD) [9] samples control sequences u1: T −1, propagating them through known dynamics to obtain nominal trajectories ˜τ 1: T , and analytically estimating ˆSk from the resulting denoised rollouts. Concretely, at reverse step k, we sample denoised candidates from the Gaussian proposal induced by the forward kernel 
+
+˜τ ∼ Ωk := N
+
+ τk
+
+√¯αk
+
+,
+
+ 1¯αk
+
+− 1
+
+
+
+I
+
+
+
+, (4) and form a batch sample Bk = {˜τk,m }Mm=1 . Each candidate is evaluated under the target density p1(·), yielding the importance-weighted average 
+
+¯τk =
+
+PMm=1 p1(˜ τk,m ) ˜ τk,m 
+
+PMm=1 p1(˜ τk,m ) , (5) which produces the Monte Carlo Score Ascent (MCSA) estimator 
+
+ˆSk ≈ − τk
+
+1 − ¯αk
+
++
+
+√¯αk
+
+1 − ¯αk
+
+¯τk. (6) Together, (3) – (6) define a training-free, guided reverse diffusion process that steers samples toward regions of higher likelihood under p1. The critical step is therefore to construct p1(τ )
+
+such that its high-density regions coincide with low-cost and dynamically feasible trajectories. 
+
+B. Inexact Augmented Lagrangians as Feasibility Priors 
+
+A common way to soften deterministic optimal control is to introduce a Boltzmann distribution [35], [36] over trajectories: 
+
+pJ (τ ) ∝ exp( −J (τ )/β ) , where β > 0 denotes a soft-optimality temperature. Dynamic feasibility and safety can be encoded by a feasibility prior pF (τ ) ∝ pD (τ ) pG (τ ), where a hard (indicator) form is 
+
+pD (τ ) :=  
+
+> T−1
+
+Y
+
+> t=1
+
+1 st+1 = f (st, u t) , (7a) 
+
+pG (τ ) := 
+
+> T
+
+Y
+
+> t=1
+
+1 gt(st, u t) ≤ 0 . (7b) The resulting target distribution is p1(τ ) ∝ pJ (τ ) pF (τ ),
+
+whose support is restricted to dynamically feasible and collision-free trajectories. However, employing the hard-indicator prior in (7) leads to a highly sparse weighting landscape, where infeasible trajectories do not contribute signals to the Monte Carlo update. As a result, the sampler lacks meaningful gradient or score information and becomes statistically inefficient, a phenomenon also observed in EB-MBD [12]. To retain the inference formulation while avoiding weight col-lapse, we replace the hard feasibility prior by a soft feasibility kernel pS (τ ) that assigns continuous, nonzero weights to mildly infeasible trajectories. Concretely, we parameterize the kernel using an inexact Augmented Lagrangian Method (iALM) [30] form: we first aggregate per-step inequality violations via a horizon-normalized quantity ¯g(τ ) = 1
+
+> T
+
+PTt=1 [gt(st, u t)] +, and define the softened objective 
+
+˜J (τ ) = J (τ ) + λ⊤ ¯g(τ ) + ρ
+
+2 ∥¯g(τ )∥2, (8) where λ ≥ 0 and ρ > 0 are dual and penalty parameters. This yields the target distribution 
+
+p(τ ) ∝ exp 
+
+
+
+− ˜J (τ )/β 
+
+
+
+= pJ (τ ) · pS(τ ), (9) and thus an explicit soft feasibility kernel 
+
+pS (τ ) ∝ exp 
+
+
+
+−(λ⊤ ¯g(τ ) + ρ
+
+2 ∥¯g(τ )∥2)/β 
+
+
+
+. (10) The iALM soft feasibility prior in (9) – (10) mitigates dead samples by assigning continuous weights to mildly infeasible trajectories. However, (i) in highly constrained nonconvex environments, purely soft guidance may still stall near tight passages, and it does not provide strict feasibility; (ii) the static values of λ and ρ do not adapt to the diffusion denoise process. IV. M ETHODOLOGY 
+
+We present our Model-Based Diffusion via Constraint Optimization and Adaptive Scheduling (MD-COAS) which makes two contributions: ( 1) optimize on the soft prior through a Convex Feasible Set (CFS) [26]-based hard projection to maintain safety, ( 2) develop adaptive constraint scheduling that co-optimizes on both soft prior and hard operator along with diffusion denoising process. 
+
+A. Problem Statement 
+
+Definition 1 (Single-Robot Motion Planning with Constraints) .
+
+We consider a discrete-time system over the horizon T with state st ∈ Rns and control ut ∈ Rnu . The trajectory is τ 1: T =
+
+{(st, u t)}Tt=1 and evolves as 
+
+st+1 = f (st, u t), t = 1 , . . . , T − 1, (11) 
+
+where f (·) is known. Let qt = Π q (st) ∈ Rd denote the workspace position extracted from st. Given Nobs convex obstacles, we define collision-avoidance constraints using a signed-distance function ϕj : Rd → R for each obstacle jϕj (qt) ≥ 0, ∀t = 1 , . . . , T, ∀j = 1 , . . . , N obs , (12) 
+
+The safe set is Γ ≜
+
+n
+
+{qt}Tt=1 : ϕj (qt) ≥ 0, ∀t, ∀j
+
+o
+
+. The objective is to minimize J (τ 1: T ) subject to (11) –(12) .B. Convex Feasible Set as Hard Projection Operator 
+
+We introduce a hard feasibility operator PI, H(·), parameter-ized by an inner-iteration budget I and an active-set size H, as a proximal correction step that enforces local safety by projecting nominal diffusion proposals onto a convex inner approximation of the safe set. Given an MBD nominal proposal ˜τk,m at reverse diffusion step k from (4) , the hard-corrected trajectory is 
+
+˜τk− 12 ,m = PIk ,Hk (˜ τk,m ), where PIk ,Hk (·) is implemented by the Convex Feasible Set (CFS) method [26], which iteratively convexifies the collision-avoidance constraints and solves a structured QP over the full control sequence. 
+
+Definition 2 (CFS-based Hard Projection PIk ,Hk ). Let ˜τk,m =
+
+{(stk,m , u tk,m )}Tt=1 be a nominal trajectory proposal and qtk,m 
+
+be the workspace position extracted from stk,m . At a CFS inner iteration with the current nominal uk,m , we compute a corrected control sequence u⋆k,m = {utk,m }T −1 
+
+> t=1
+
+by solving 
+
+u⋆k,m ∈ arg min 
+
+> u
+
+12 ∥u − uk,m ∥2
+
+> R
+
+s.t. (atj,k,m )⊤u ≥ btj,k,m , ∀(j, t ) ∈ A k,m ,
+
+(13) 
+
+where we obtain (atj,k,m , b tj,k,m ) by first-order rollout lineariza-tion around uk,m . R ≻ 0 weights proximity to the nominal control sequence, and Ak,m is an optional active set of obstacle– time pairs with |A k,m | ≤ H k, the top-Hk most violated pairs ranked by the magnitude of ϕj (qtk,m ).
+
+Around the current nominal point qtk,m , CFS constructs the convex inner approximation as a supporting half-space 
+
+Ftj (qtk,m ) = 
+
+n
+
+q : ϕj (qtk,m ) + ˆ∇ϕj (qtk,m )⊤(q − qtk,m ) ≥ 0
+
+o
+
+.
+
+(14) The convex feasible set used by CFS is then 
+
+F(qk,m ) ≜ \
+
+> (j,t )∈A k,m
+
+Ftj (qtk,m ) ⊂ Γ. (15) To obtain linear inequalities in the decision variable u, we linearize the rollout map around uk,m 
+
+qt(u) ≈ qtk,m + Jtq,k,m (u − uk,m ), J tq,k,m = ∂q t
+
+∂u uk,m 
+
+. (16) Here Jtq,k,m is the sensitivity of qt with respect to the stacked control sequence, obtained by differentiating the rollout through dynamics (11) . Substituting (16) into the CFS constraint in (13) yields linear constraints (atj,k,m )⊤u ≥ btj,k,m with 
+
+atj,k,m = ( Jtq,k,m )⊤ ˆ∇ϕj (qtk,m ),btj,k,m = −ϕj (qtk,m ) + ( atj,k,m )⊤uk,m . (17) Stacking constraints over (j, t ) ∈ Ak,m yields a convex QP with linear constraints Au ≥ b, producing a minimal-perturbation correction that enforces F(qk,m ). Therefore, CFS runs an inner loop for Ik iterations: it forms F(qk,m ) by intersecting the half-spaces in (14) – (15) , then solves the QP in (13) to update u and re-rollout, repeating until convergence or the iteration budget is reached without breaking the dynamics. 
+
+C. Adaptive Scheduling in Reverse Diffusion Process 
+
+Fixing constraint enforcement parameters [12], [17], [19] ignores that the required correction varies due to diffusion an-nealing. We therefore introduce adaptive constraint scheduling mechanisms that ( 1) adaptively optimize the iALM soft prior 
+
+Algorithm 1 Model-Based Diffusion via Constraint Optimiza-tion and Adaptive Scheduling (MD-COAS)  
+
+> 1:
+
+Input: τ 1: TK ∼ N (0 , I ), s1, sT , dynamics f (·), constraints g(·) ≤
+
+0, diffusion schedule {αk , ¯αk }Kk=1 , candidates M , λK ≥ 0, ρK >
+
+0, νK ≥ 0, tolerance ξ, budget B 
+
+> 2:
+
+Output: Clean trajectory τ 1: T 
+
+> 1
+> 3:
+
+for k = K to 1 do  
+
+> 4:
+
+Sample M nominal candidates {˜τk,m }Mm=1 from (4).  
+
+> 5:
+
+Compute ˜rk and ˜g(·) on {˜τk,m }Mm=1 . 
+
+> 6:
+
+Update soft-prior parameters λk−1, ρ k−1 (20)–(21).  
+
+> 7:
+
+Set CFS schedule (pk , I k , Hk ) using (˜ rk , ν k ) (IV-C).  
+
+> 8:
+
+Update νk−1 using ck = c(pk , I k , Hk ) via (23).  
+
+> 9:
+
+Sample Bernoulli mask δk,m ∼ BERNOULLI (pk ) 
+
+> 10:
+
+˜τk− 12 ,m ← δk,m PIk ,Hk (˜ τk,m ) + (1 − δk,m ) ˜ τk,m  
+
+> 11:
+
+˜τk− 12 ,m ← ROLLOUT WITH DYNAMICS (˜ τk− 12 ,m , s 1, f (·))  
+
+> 12:
+
+Compute Monte Carlo mean ¯τk− 12
+
+via (5).  
+
+> 13:
+
+Estimate Score ˆSk by ¯τk− 12
+
+via (6).  
+
+> 14:
+
+Monte Carlo Score Ascent update via (3): 
+
+τk−1 ← 1
+
+√αk
+
+
+
+τk + (1 − ¯αk ) ˆSk
+
+ 
+
+> 15:
+
+end for 
+
+across diffusion steps and ( 2) invoke the hard operator only when necessary under a compute budget in a primal–dual view. At reverse diffusion step k, MD-COAS draws M candidate trajectories {˜τk,m }Mm=1 . We summarize feasibility by a robust batch statistic of constraint violation 
+
+rk = Quantile 0.9
+
+∥¯g(˜ τk,m )∥ Mm=1 
+
+
+
+, (18) and introduce a tolerance ξ > 0 to avoid over-enforcing negligible violations by defining the violation vector 
+
+˜g(˜ τk,m ) := [ ¯ g(˜ τk,m ) − ξ1 ]+, ˜rk := [ rk − ξ ]+. (19) Intuitively, ˜rk acts as a step-wise feasibility signal: it is zero when constraints are satisfied up to tolerance, and grows with persistent violations. We generalize the iALM prior parameters to be diffusion-step dependent and update them using damped projected ascent and stall-driven penalty adjustment 
+
+λk−1 = Π R+ ((1 − ηλ)λk + ρk ˜rk) , η λ ∈ (0 , 1) , (20) 
+
+ρk−1 =
+
+
+
+min( γ↑ρk, ρ max ), ˜rk > ¯r, 
+
+max( ρk/γ ↓, ρ min ), ˜rk < r, ρk, otherwise ,
+
+(21) where 0 < r < ¯r are residual thresholds for penalty hysteresis. These updates non-monotonically adapt the soft feasibility kernel during reverse diffusion based on the ˜rk with a scaling factor γ: feasibility pressure increases when ˜rk persists or worsens, and relaxes once ˜rk falls below the tolerance, adjusting to the current diffusion step’s violation. Likewise, we treat the hard operator as a corrector that is invoked only when needed across diffusion steps. Given a nominal proposal ˜τk,m at step k, we apply 
+
+˜τk− 12 ,m =
+
+(
+
+PIk ,Hk (˜ τk,m ), with probability pk,
+
+˜τk,m , otherwise , (22) MBD 
+
+> MD-COAS-A
+> EB-MBD
+> MD-COAS-F
+> MDOC
+> MD-COAS
+
+Fig. 2: Illustrations of the diffusion process of model-based methods for 2D Constrained Obstacle environment at L10 (Union Map) and Seed 8. For each method, the left 3 columns denote rollouts at 90%, 50%, and 10% of the denoising process (early 
+
+→ mid → late), respectively, and the rightmost column indicates the final clean trajectories of 20 candidates. We use blue color to represent (sample) trajectories; Orange circles represent static Emerging Barrier in EB-MBD, while hard QP correction margin and boundary in MDOC, MD-COAS-F, and MD-COAS. where pk ∈ [0 , 1] is the projection probability. We adapt 
+
+(pk, Hk, I k) using a batch violation statistic vk: we increase projection effort by raising pk, Hk, and Ik as vk increases, and shrinking them as vk decreases. To bound the average computation, we constrain the expected per-diffusion-step effort by 1
+
+> K
+
+PK−1 
+
+> k=0
+
+E[ck(pk, I k, Hk)] ≤ B. Here ck denotes the expected projection computed at step k, which scales with both how often we project ( pk, I k) and the per-QP size controlled by Hk (e.g., ck ≈ pkIkHk), and B is a fixed budget. We regulate this budget using a compute dual νk ≥ 0 with damped projected ascent 
+
+νk−1 = Π R+ (νk + ην (ck − B)) , ην ∈ (0 , 1) . (23) When the realized effort ck exceeds the fixed budget B, νk
+
+increases, discouraging aggressive projection; when the effort remains below the budget, νk decreases, allowing more frequent or stronger corrections. We couple feasibility and compute via an augmented Lagrangian surrogate at diffusion step k
+
+Lk(˜ τk, λ k, ρ k, ν k, p k, I k, Hk) = J (˜ τk)+ 
+
+λk ˜rk(˜ τk) + ρk
+
+2 ˜rk(˜ τk)2
+
+| {z }
+
+> Adaptive iALM Soft Diffusion Prior
+
++ νk
+
+ ck(pk, I k, Hk) − B| {z }
+
+> Adaptive CFS-based Hard Projection
+
+(24) Therefore, (24) integrates the iALM soft diffusion prior and the hard-operator schedule within a unified primal–dual view: the residual sequence {˜rk} adjusts (λk, ρ k) to modulate feasibility pressure across denoising, while the computed residual ck − B adjusts νk to regulate projection effort. As a result, MD-COAS co-optimizes safety enforcement and diffusion scheduling, enforcing constraints more aggressively only when violations persist and compute allows. 
+
+D. Putting Everything Together: MD-COAS 
+
+We now combine ( 1) the MCSA sampler in Section III-A , ( 2)the iALM soft diffusion prior in Section III-B , and ( 3) the CFS-based hard projection operator PIk ,Hk (·) in Section IV-B , with (4) adaptive scheduling in Section IV-C to form our method. As shown in Algorithm 1, at each reverse diffusion step 
+
+k, MD-COAS first draws M nominal candidates from the Gaussian proposal in (4) , evaluates the batch feasibility resid-ual ˜rk via (18) – (19) , and updates the soft-prior parameters 
+
+(λk−1, ρ k−1) using (20) – (21) . It then schedules the hard correction effort (pk, I k, Hk) under the compute dual νk using 
+
+ck = c(pk, I k, Hk) and through (23) , and selectively applies the CFS projection with the gate in (22) ; otherwise, it keeps 
+
+˜τk− 12 ,m = ˜ τk,m . Resulting candidates are rolled out through the known dynamics to obtain dynamically feasible trajectories, which are reweighted by the adaptive iALM target in (9) to compute the Monte Carlo mean and score ˆSk via (5) – (6) , and the noisy trajectory is updated by the reverse step in (3). V. E XPERIMENTAL ANALYSIS 
+
+We explore the performance of our method, MD-COAS, in SRMP by addressing the following questions:  
+
+> •
+
+What advantages does MD-COAS have over state-of-the-art (SOTA) model-based diffusion planners? Why are Constraints Optimization (CO) and Adaptive Scheduling (AS) important?  
+
+> •
+
+Can MD-COAS maintain performance when scaling to a higher-dimensional 7-DoF robot arm avoidance task? 
+
+Baselines. We compare our method, MD-COAS, with representative model-based and model-free diffusion motion planning baselines: ( 1) MBD [9], a vanilla model-based diffusion planner for trajectory optimization; ( 2) EB-MBD [12], a safety-enhanced variant of MBD that mitigates dead samples in highly constrained environments using an emerging barrier; (3) MDOC [15], which integrates Control Barrier Function (CBF)-based projection into each MBD rollout step; ( 4)SafeDiffuser [21], a model-free diffusion planner that embeds Safe & Success Rate (SSR) per Level  
+
+> Mean Cost over Reverse Diffusion steps Final-diffusion-step Mean Cost per Level
+> Mean Planning Time per Level
+
+Fig. 3: Overall performance comparison of model-based diffusion planners in the 2D constrained obstacle-avoidance benchmark. Top: Safe & Success Rate (SSR) per Level (avg. over seeds). Bottom: Mean Cost over Reverse Diffusion steps (avg. over levels and seeds); Final-diffusion-step Mean Cost per Level (avg. over seeds); Mean Planning Time per Level (avg. over seeds). Color regions indicate one standard deviation. CBF-based invariance into the denoising process by solving a per-step QP; ( 5) DPCC-C [19], a model-free diffusion predictive control baseline that enforces safety via constraint tightening and selects the trajectory with minimum cumulative projection cost. We further include two ablation variants: (i)MD-COAS-A, which applies adaptive iALM-based soft priors without QP projection; ( ii ) MD-COAS-F, which uses fixed constraint optimization parameters without adaptive scheduling. All experiments are conducted on a workstation equipped with a 48GB NVIDIA RTX A6000 GPU and 9 CPU cores. We solve the CFS-based projection on full samples in our method through jaxopt .
+
+A. 2D Constrained Obstacle Avoidance 
+
+We evaluate MD-COAS against model-based baselines on a 2D constrained obstacle-avoidance benchmark. The maps are grouped into three families: (1) Easy Maps (L1–L3), which contain randomly placed circles and squares, with obstacle density increasing from approximately 2% to 6% ;(2) Constrained Maps (L4–L6), with more circles and squares, where obstacle density ranges from approximately 10% to 
+
+16% ; and (3) Union Maps (L7–L10), where primitive shapes are merged into random non-convex obstacles, with density increasing from approximately 18% to 33% . For each level, Adaptive CFS-based Hard Operator Adaptive iALM Soft Diffusion Prior 
+
+Fig. 4: Adaptive scheduling of safety-enforcement variables over reverse diffusion steps in the 2D environment, averaged across all levels and seeds, for MD-COAS and two ablations. Left: residual-driven updates of the iALM dual variables 
+
+(λk, ρ k) based on rk. Right: scheduled CFS-based hard-projection parameters (pk, I k, Hk) and the compute dual νk.we evaluate 10 random seeds. For each seed, each method generates 20 trajectory multimodals. The robot starts near the bottom region of the map and aims for a goal near the top region. The robot radius is fixed at 0.05 in all experiments. As illustrated in Fig. 3, we report the Safe & Success Rate (SSR) at different levels. MD-COAS and its variant MD-COAS-F consistently achieve 1.00 SSR in all Easy and Constrained Maps. In contrast, other baselines degrade in Constrained Maps, with EB-MBD dropping to approximately 0.7 and MDOC to approximately 0.5. For the highly non-convex Union Maps, MD-COAS and MD-COAS-F maintain approximately 0.5 SSR, outperforming other baselines under the same settings. The cost maps further show that MD-COAS achieves the lowest planning cost across levels and exhibits the fastest convergence during the diffusion denoising process. To better interpret the denoising dynamics, we visualize samples at 90%, 50%, and 10% of the reverse process at L10 (Fig. 2). MBD continues to generate trajectories that penetrate obstacles in late denoising due to the lack of safety enforcement. EB-MBD uses a fixed soft barrier, which cannot adjust its parameters to the varying violation patterns across reverse steps, so most final samples still violate constraints. MDOC enforces safety through CBF projections, yet the induced feasible set is overly restrictive, slowing reverse convergence (trajectories remain partially refined around 50%), failing reaching target, and collapsing multimodality into one final mode in a constrained environment. In contrast, MD-COAS-F and MD-COAS maintain strong safety with faster convergence while preserving a larger effective feasible region during denoising, enabling broader multimodal exploration and producing diverse high-quality trajectories. 
+
+Why constraint optimization (CO)? Fig. 3 shows that model-based diffusion baselines struggle to sustain high SSR as constraint nonconvexity increases: their evaluation costs Fig. 5: 7-DoF arm obstacle-avoidance task in D3IL. Left: environment overview with a representative final trajectory produced by MD-COAS. Right Three: final planned end-effector trajectories over five seeds (100 trajectory multimodals in total) as the obstacle radius increases ( 0.03 → 0.04 → 0.05 ), visualized on the 2D workspace plane.                                                                        
+
+> Obstacle Radius = 0 .03 Obstacle Radius = 0 .04 Obstacle Radius = 0 .05
+> Method SSR (↑)V(↓)T(↓)P(↓)SSR (↑)V(↓)T(↓)P(↓)SSR (↑)V(↓)T(↓)P(↓)SafeDiffuser [21] 0.45 1.30 5.49 0.20 1.57 0.05 0.35 2.68 11.53 1.30 1.56 0.05 0.30 4.40 11.18 0.10 1.54 0.03
+> DPCC-C [19] 0.75 0.78 1528.91 571 .70 1.32 0.39 0.54 1.44 2561.96 1818 .70 1.51 0.53 0.64 2.10 3460.31 1568 .70 1.44 0.40
+> EB-MBD [12] 0.98 0.00 4.37 2.00 1.01 0.05 0.91 0.00 4.02 0.60 1.02 0.05 0.82 0.00 4.06 0.60 1.01 0.06
+> MDOC [15] 1.00 0.00 5.65 1.90 0.89 0.04 0.99 0.04 4.90 0.60 0.88 0.04 0.73 0.02 4.87 0.70 0.90 0.04
+> MD-COAS (Ours) 1.00 0.00 13.53 2.90 0.99 0.04 1.00 0.00 13.98 2.10 0.99 0.05 1.00 0.00 14.87 2.10 1.00 0.07
+
+TABLE I: Quantitative results for 7-DoF arm obstacle avoidance as obstacle radius increases ( 0.03 → 0.04 → 0.05 ). Columns report SSR (↑) (Safe & Success Rate), V(↓) (violation rate, %), T(↓) (planning time), and P(↓) (path length). Values are means across all seeds, and path-length means over safe & success trajectories, with standard deviations given as right superscripts. Note that CFS projection is applied to all unweighted trajectory samples, introducing a trade-off between planning performance and computation time. Nevertheless, our method still achieves a substantial planning-time advantage over DPCC-C, which also performs batch sample projection but does not fully exploit GPU parallelization. remain high at deeper difficulty levels, indicating frequent collisions or conservative, suboptimal trajectories. Among our variants, MD-COAS-A converges but consistently exhibits a higher terminal cost floor and reduced SSR in tight, highly nonconvex maps, suggesting that soft feasibility weighting alone may stall in more constrained environments and cannot ensure strict collision avoidance. In contrast, adding the CFS-based hard projection (MD-COAS-F and MD-COAS) provides an explicit feasibility correction that pulls proposals back into a feasible set, yielding lower costs and higher SSR. 
+
+Why adaptive scheduling (AS)? While hard projection improves robustness, applying it uniformly is computationally expensive. Fig. 3 indicates that MD-COAS-F attains strong safety and low cost but pays a higher runtime cost when the en-vironment becomes more constrained, whereas the MD-COAS achieves comparable terminal performance with improved efficiency. The reason is that AS treats safety enforcement as a controllable computing resource: it increases feasibility pressure when violations persist via soft-prior updates and invokes hard projection only when needed under a budget via scheduled (pk, I k, Hk). As in Fig. 4, MD-COAS dynamically modulates these variables across diffusion steps, concentrating the projection effort on the steps when most needed, thereby improving runtime without sacrificing final solution quality. 
+
+B. D3IL 7-DoF Arm Avoidance 
+
+We further evaluate the robustness of MD-COAS in a higher-dimensional 7-DoF robotic arm avoidance task built upon D3IL [37]. Unlike the 2D benchmark, which performs planning in a two-dimensional control space, this setting requires trajectory optimization in the 7-dimensional joint-space control of the robotic arm. Although the end-effector motion remains constrained to a 2D plane, its position is determined by joint variables through a nonlinear kinematic mapping, making the system dynamics non-linear. The CFS-based projection operator is directly applied in the 7-DoF joint space. The robotic arm must avoid cylindrical obstacles (shown in red) and reach a target line (green), as illustrated in Fig. 5. The obstacle radius is varied across three difficulty levels (0.03, 0.04, and 0.05), while the end-effector radius is fixed at 0.01. For each obstacle level, we evaluated performance on 5 random seeds, with 20 trajectory multimodals conducted per seed. Table I reports results with increasing obstacle radius. As the obstacle size increases, the feasible region progressively shrinks, making safe trajectory generation more challenging. Overall, the observed trends are consistent with those in the 2D benchmark. Both SafeDiffuser and DPCC-C show reduced robustness as task difficulty increases. EB-MBD maintains zero violations but exhibits a gradual decline in success rate under tighter constraints. MDOC performs competitively at lower difficulty levels, but exhibits both minor violations and a noticeable drop in success rate under tighter constraints. This behavior is further reflected in its path characteristics. The shorter paths of MDOC are attributable to its tighter feasible set, which enforces more deterministic behavior within each trajectory, whereas MD-COAS preserves greater stochasticity to maintain trajectory diversity, occasionally introducing mild detours and slightly increasing path length. In contrast, MD-COAS consistently achieves 100% success with zero violations at all obstacle levels, maintaining stable performance as task difficulty increases. These results align with the observations of the 2D Constrained Obstacle Avoidance experiment and further demonstrate the robustness of the proposed method in higher-dimensional settings. VI. C ONCLUSION 
+
+In this work, we propose MD-COAS, a constraint opti-mization framework that combines an iALM soft diffusion prior and a CFS-based hard projection operator. We also develop constraint scheduling to adaptively co-optimize for both soft diffusion prior and CFS hard projection computation, along with diffusion reverse scheduling. The results show the superior performance of our method in highly constrained 2D and 7-DoF environments. Future directions include improving sampling projection efficiency, adapting the planner to higher-dimensional tasks with richer dynamics models, and exploring under multi-robot coordination settings. REFERENCES [1] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,” 
+
+Advances in Neural Information Processing Systems , vol. 33, pp. 6840– 6851, 2020. [2] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” The International Journal of Robotics Research , vol. 44, no. 10-11, pp. 1684–1704, 2025. [3] M. Janner, Y. Du, J. B. Tenenbaum, and S. Levine, “Planning with dif-fusion for flexible behavior synthesis,” arXiv preprint arXiv:2205.09991 ,2022. [4] L. E. Kavraki, P. Svestka, J.-C. Latombe, and M. H. Overmars, “Proba-bilistic roadmaps for path planning in high-dimensional configuration spaces,” IEEE transactions on Robotics and Automation , vol. 12, no. 4, pp. 566–580, 1996. [5] S. M. La Valle, “Motion planning,” IEEE Robotics & Automation Magazine , vol. 18, no. 2, pp. 108–118, 2011. [6] J. J. Kuffner and S. M. LaValle, “Rrt-connect: An efficient approach to single-query path planning,” in Proceedings 2000 ICRA. Millennium conference. IEEE international conference on robotics and automation. Symposia proceedings (Cat. No. 00CH37065) , vol. 2. IEEE, 2000, pp. 995–1001. [7] M. Kleinbort, K. Solovey, Z. Littlefield, K. E. Bekris, and D. Halperin, “Probabilistic completeness of rrt for geometric and kinodynamic planning with forward propagation,” IEEE Robotics and Automation Letters , vol. 4, no. 2, pp. i–vii, 2018. [8] S. Karaman, M. R. Walter, A. Perez, E. Frazzoli, and S. Teller, “Anytime motion planning using the rrt,” in International Conference on Robotics and Automation . IEEE, 2011, pp. 1478–1483. [9] C. Pan, Z. Yi, G. Shi, and G. Qu, “Model-based diffusion for trajectory optimization,” Advances in Neural Information Processing Systems ,vol. 37, pp. 57 914–57 943, 2024. [10] Z. I. Botev, D. P. Kroese, R. Y. Rubinstein, and P. L’ecuyer, “The cross-entropy method for optimization,” in Handbook of statistics . Elsevier, 2013, vol. 31, pp. 35–59. [11] G. Williams, P. Drews, B. Goldfain, J. M. Rehg, and E. A. Theodorou, “Information-theoretic model predictive control: Theory and applications to autonomous driving,” IEEE Transactions on Robotics , vol. 34, no. 6, pp. 1603–1622, 2018. [12] R. Mishra and I. R. Manchester, “Eb-mbd: Emerging-barrier model-based diffusion for safe trajectory optimization in highly constrained environments,” arXiv preprint arXiv:2510.07700 , 2025. [13] N. Fishman, L. Klarner, V. De Bortoli, E. Mathieu, and M. Hutchin-son, “Diffusion models for constrained domains,” arXiv preprint arXiv:2304.05364 , 2023. [14] X. Cheng, X. Tang, and Y. Yang, “Safe and stable control via lyapunov-guided diffusion models,” arXiv preprint arXiv:2509.25375 , 2025. [15] Z. He, Y. Shaoul, and J. Li, “Model-based diffusion optimal control for multi-robot motion planning,” arXiv preprint arXiv:2607.12423 , 2026. [16] J. Carvalho, A. T. Le, M. Baierl, D. Koert, and J. Peters, “Motion planning diffusion: Learning and planning of robot motions with diffusion models,” in International Conference on Intelligent Robots and Systems . IEEE, 2023, pp. 1916–1923. [17] J. Zhang, L. Zhao, A. Papachristodoulou, and J. Umenberger, “Con-strained diffusers for safe planning and control,” arXiv preprint arXiv:2506.12544 , 2025. [18] J. Liang, J. K. Christopher, S. Koenig, and F. Fioretto, “Multi-agent path finding in continuous spaces with projected diffusion models,” arXiv preprint arXiv:2412.17993 , 2024. [19] R. Römer, A. von Rohr, and A. P. Schoellig, “Diffusion predictive control with constraints,” arXiv preprint arXiv:2412.09342 , 2024. [20] J. K. Christopher, S. Baek, and N. Fioretto, “Constrained synthesis with projected diffusion models,” Advances in Neural Information Processing Systems , vol. 37, pp. 89 307–89 333, 2024. [21] W. Xiao, T.-H. Wang, C. Gan, R. Hasani, M. Lechner, and D. Rus, “Safediffuser: Safe planning with diffusion probabilistic models,” in 
+
+International Conference on Learning Representations , 2023. [22] J. Liang, J. K. Christopher, S. Koenig, and F. Fioretto, “Simultaneous multi-robot motion planning with projected diffusion models,” arXiv preprint arXiv:2502.03607 , 2025. [23] J. Schulman, Y. Duan, J. Ho, A. Lee, I. Awwal, H. Bradlow, J. Pan, S. Patil, K. Goldberg, and P. Abbeel, “Motion planning with sequential convex optimization and convex collision checking,” The International Journal of Robotics Research , vol. 33, no. 9, pp. 1251–1270, 2014. [24] R. Bonalli, A. Cauligi, A. Bylard, and M. Pavone, “Gusto: Guaranteed sequential trajectory optimization via sequential convex programming,” in International Conference on Robotics and Automation . IEEE, 2019, pp. 6741–6747. [25] J. T. Betts, Practical methods for optimal control and estimation using nonlinear programming . SIAM, 2010. [26] C. Liu, C.-Y. Lin, and M. Tomizuka, “The convex feasible set algorithm for real time optimization in motion planning,” SIAM Journal on Control and optimization , vol. 56, no. 4, pp. 2712–2733, 2018. [27] H. Zhou and C. Liu, “Distributed motion coordination using convex feasible set based model predictive control,” in International Conference on Robotics and Automation . IEEE, 2021, pp. 8330–8336. [28] A. D. Ames, X. Xu, J. W. Grizzle, and P. Tabuada, “Control barrier function based quadratic programs for safety critical systems,” IEEE Transactions on Automatic Control , vol. 62, no. 8, pp. 3861–3876, 2016. [29] S. J. Wright, Primal-dual interior-point methods . SIAM, 1997. [30] M. F. Sahin, A. Alacaoglu, F. Latorre, V. Cevher et al. , “An inexact augmented lagrangian framework for nonconvex optimization with nonlinear constraints,” Advances in Neural Information Processing Systems , vol. 32, 2019. [31] T. A. Howell, B. E. Jackson, and Z. Manchester, “Altro: A fast solver for constrained trajectory optimization,” in International Conference on Intelligent Robots and Systems . IEEE, 2019, pp. 7674–7679. [32] W. Jallet, A. Bambade, N. Mansard, and J. Carpentier, “Constrained differential dynamic programming: A primal-dual augmented lagrangian approach,” in International Conference on Intelligent Robots and Systems .IEEE, 2022, pp. 13 371–13 378. [33] B. Wohlberg, “Admm penalty parameter selection by residual balancing,” 
+
+arXiv preprint arXiv:1704.06209 , 2017. [34] Y. Xu, M. Liu, Q. Lin, and T. Yang, “Admm without a fixed penalty parameter: Faster convergence with new adaptive penalization,” Advances in Neural Information Processing Systems , vol. 30, 2017. [35] J. Peters, K. Mulling, and Y. Altun, “Relative entropy policy search,” in AAAI conference on artificial intelligence , vol. 24, no. 1, 2010, pp. 1607–1612. [36] S. Levine, “Reinforcement learning and control as probabilistic inference: Tutorial and review,” arXiv preprint arXiv:1805.00909 , 2018. [37] X. Jia, D. Blessing, X. Jiang, M. Reuss, A. Donat, R. Lioutikov, and G. Neumann, “Towards diverse behaviors: A benchmark for imitation learning with human demonstrations,” arXiv preprint arXiv:2402.14606 ,2024. APPENDIX ATHEORETICAL ANALYSIS 
+
+A. Proof Objective 
+
+This appendix formalizes the safety-enforcement mechanism used by MD-COAS in the main text. The goal is to show that, under standard local regularity assumptions, the iALM prior in (8) – (9) provides an informative soft feasibility signal, the CFS-QP in (13) gives a local hard correction for the convexified constraints, and the batch-level gate in (22) yields an expected residual recursion whose contraction strength is controlled by the scheduled projection probability pk.At reverse step k, let Bk = {τk,m }Mm=1 denote the rollout batch. For each trajectory, define the same horizon-normalized violation used by the main method, 
+
+¯g(τk,m ) = 1
+
+T
+
+> T
+
+X
+
+> t=1
+
+[gt(stk,m , u tk,m )] +. (25) We track the same robust batch residual as (18), 
+
+R(Bk) = Quantile 0.9
+
+ {∥ ¯g(τk,m )∥2}Mm=1 
+
+ . (26) The iALM energy corresponding to (8) is 
+
+Φk(τ ) = J (τ ) + λ⊤ 
+
+> k
+
+¯g(τ ) + ρk
+
+2 ∥¯g(τ )∥22. (27) The induced sampling weights are therefore proportional to 
+
+exp( −Φk(τ )/β ), matching the target distribution in (9). 
+
+B. iALM Soft Feasibility Weighting 
+
+Lemma 1 (Monotonic soft feasibility weighting) . Let λk ≥ 0,
+
+ρk > 0, and β > 0. For any two rollouts τa and τb with 
+
+J (τa) = J (τb) and ¯g(τa) ⪰ ¯g(τb) ⪰ 0, the iALM target in 
+
+(27) assigns no larger weight to τa than to τb. If at least one violated component is strictly larger, then the weight of τa is strictly smaller. Proof. The unnormalized iALM weight is 
+
+Wk(τ ) = exp( −Φk(τ )/β ).
+
+Since the two rollouts have the same task cost, their log-weight ratio is 
+
+log Wk(τa)
+
+Wk(τb) = − 1
+
+β λ⊤
+
+> k
+
+ ¯g(τa) − ¯g(τb)
+
+− ρk
+
+2β
+
+ ∥¯g(τa)∥22 − ∥ ¯g(τb)∥22
+
+ .
+
+(28) Because ¯g(τa) ⪰ ¯g(τb) ⪰ 0 and λk ≥ 0, the linear term in (28) is non-positive. The norm difference is also non-negative, so the quadratic term is non-positive. Therefore Wk(τa) ≤ Wk(τb).If a violated component is strictly larger, then the quadratic norm strictly increases; since ρk > 0, the second term is strictly negative and Wk(τa) < W k(τb). Thus the iALM prior gives a continuous, nonzero, and monotone feasibility signal to the MCSA weights rather than discarding infeasible samples through a hard indicator. 
+
+C. Assumptions 
+
+Assumption 1 (Regular rollout model) . On the compact domain reached by the planner, the rollout map from the stacked control sequence to the trajectory is continuously differentiable. The task cost J and every component of ¯g are locally Lipschitz and have bounded first derivatives. 
+
+Assumption 2 (Inexact MCSA proposal) . Conditioned on the history Fk, the MBD/MCSA proposal batch ˜Bk = {˜τk,m }Mm=1 
+
+satisfies 
+
+E
+
+h
+
+R( ˜Bk) | F k
+
+i
+
+≤ R(Bk) + δm,k , (29) 
+
+where δm,k ≥ 0 captures finite-sample MCSA error, diffusion temperature bias, and numerical rollout error. 
+
+Assumption 3 (Local CFS correction) . For the scheduled CFS operator PIk ,Hk in (13) , the selected obstacle-time half-spaces are valid local inner approximations of the safe set, and the corresponding convex QPs are feasible. There exist αk ∈ (0 , 1] 
+
+and δq,k ≥ 0 such that 
+
+E
+
+h
+
+R
+
+
+
+PIk ,Hk ( ˜Bk)
+
+
+
+| F k
+
+i
+
+≤ (1 − αk)E
+
+h
+
+R( ˜Bk) | F k
+
+i
+
++ δq,k .
+
+(30) 
+
+The term δq,k is the inexactness floor from finite CFS itera-tions, finite QP tolerance, active-set truncation, and rollout linearization. D. CFS Local Hard Correction 
+
+Lemma 2 (Feasibility of the CFS-QP correction) . Consider one nominal trajectory ˜τk,m and the CFS-QP in (13) . If the half-spaces in (14) are valid inner approximations and the QP is solved exactly, then the corrected linearized rollout satisfies every selected convexified collision constraint in Ak,m . If the QP is solved with primal tolerance ϵqp , the violation of each selected linearized constraint is at most ϵqp . If the local CFS model error at the corrected control is bounded by et
+
+> cfs
+
+, then the corresponding nonlinear signed-distance violation is bounded by ϵqp + et
+
+> cfs
+
+.Proof. For a selected pair (j, t ) ∈ A k,m , CFS constructs the half-space 
+
+Ftj =
+
+n
+
+q : ϕj (qtk,m ) + ˆ∇ϕj (qtk,m )⊤(q − qtk,m ) ≥ 0
+
+o
+
+. (31) By the local-validity condition in Assumption 3, Ftj lies inside the local safe side of obstacle j. The rollout linearization in (16) defines the affine prediction 
+
+ℓt(u) = qtk,m + Jtq,k,m (u − uk,m ). (32) Substituting (32) into (31) yields the linear control-space constraint 
+
+(atj,k,m )⊤u ≥ btj,k,m , (33) with atj,k,m and btj,k,m defined as in (17) . The QP in (13) optimizes over the intersection of all such rows. Hence, an exact solution u⋆ satisfies (33) for every (j, t ) ∈ A k,m , so the corresponding linearized workspace point belongs to every selected half-space. Since each selected half-space is a local inner approximation, the corrected linearized rollout is locally safe for all selected constraints. If the solver returns an inexact solution satisfying 
+
+(atj,k,m )⊤u⋆ ≥ btj,k,m − ϵqp , (34) then the selected linearized constraint violation is 
+
+btj,k,m − (atj,k,m )⊤u⋆ 
+
+> +
+
+≤ ϵqp , (35) which proves the linearized tolerance statement. For the nonlinear rollout, define the local CFS model error 
+
+et 
+
+> cfs
+
+≥ ϕj (qt(u⋆)) − ϕj (qtk,m )
+
+− ˆ∇ϕj (qtk,m )⊤(ℓt(u⋆) − qtk,m ) .
+
+(36) Combining (36) with the ϵqp -feasible half-space constraint yields a nonlinear violation no larger than ϵqp + et
+
+> cfs
+
+. The accumulated effect of this local model error, finite iterations, and active-set truncation is the projection floor δq,k used in Assumption 3. 
+
+E. Batch-Gated Residual Recursion 
+
+The appendix uses the batch gate requested in the main discussion: one Bernoulli variable is sampled for the whole batch, 
+
+Zk ∼ Bernoulli( pk). (37) The corrected batch is 
+
+ˆBk =
+
+(
+
+PIk ,Hk ( ˜Bk), Zk = 1 ,
+
+˜Bk, Zk = 0 . (38) 
+
+Theorem 3 (Residual recursion under the batch gate) . Under Assumptions 1–3, one reverse step of MD-COAS satisfies 
+
+E[R( ˆBk)] ≤ (1 − αkpk)E[R(Bk)] + δm,k + pkδq,k . (39) 
+
+If, over a phase of denoising, αk ≥ α > 0, pk ≥ p > 0,
+
+δm,k ≤ ¯δm, and δq,k ≤ ¯δq , then the residual sequence in that phase obeys 
+
+lim sup 
+
+> ℓ→∞
+
+E[Rℓ] ≤
+
+¯δm + p ¯δq
+
+α p . (40) 
+
+Proof. Fix the history Fk and write 
+
+˜Rk = E
+
+h
+
+R( ˜Bk) | F k
+
+i
+
+.
+
+By Assumption 2, 
+
+˜Rk ≤ R(Bk) + δm,k . (41) Conditioning on the batch gate gives two cases. If Zk = 0 ,then ˆBk = ˜Bk, so the conditional expected residual is ˜Rk. If 
+
+Zk = 1 , then Assumption 3 gives 
+
+E
+
+h
+
+R( ˆBk) | F k, Z k = 1 
+
+i
+
+≤ (1 − αk) ˜Rk + δq,k . (42) Since the same Zk is applied to the whole batch, the law of total expectation over this single gate yields 
+
+E
+
+h
+
+R( ˆBk) | F k
+
+i
+
+= (1 − pk)E
+
+h
+
+R( ˆBk) | F k, Z k = 0 
+
+i
+
++ pkE
+
+h
+
+R( ˆBk) | F k, Z k = 1 
+
+i
+
+≤ (1 − pk) ˜Rk + pk
+
+ (1 − αk) ˜Rk + δq,k 
+
+
+
+= (1 − αkpk) ˜Rk + pkδq,k .
+
+(43) Substituting (41) into (43) gives 
+
+E
+
+h
+
+R( ˆBk) | F k
+
+i
+
+≤ (1 −αkpk)R(Bk)+(1 −αkpk)δm,k +pkδq,k .
+
+Because 0 ≤ 1 − αkpk ≤ 1, this implies 
+
+E
+
+h
+
+R( ˆBk) | F k
+
+i
+
+≤ (1 − αkpk)R(Bk) + δm,k + pkδq,k .
+
+Taking expectation over Fk proves (39). For the floor bound, define the progress index ℓ over the phase and let 
+
+C = ¯δm
+
+α p + ¯δq
+
+α .
+
+For every step in the phase, 
+
+αkpkC ≥ ¯δm + pk ¯δq ≥ δm,k + pkδq,k ,
+
+because αk ≥ α and pk ≥ p. Subtracting C from (39) gives 
+
+E[Rℓ+1 ] − C ≤ (1 − αℓpℓ) E[Rℓ] − C.
+
+Since 1 − αℓpℓ ≤ 1 − αp < 1, the positive part satisfies 
+
+E[Rℓ+1 ] − C 
+
+> +
+
+≤ (1 − αp )E[Rℓ] − C
+
+> +
+
+.
+
+Repeated application yields 
+
+E[Rℓ+n] − C 
+
+> +
+
+≤ (1 − αp )nE[Rℓ] − C
+
+> +
+
+.
+
+Taking the upper limit as n → ∞ proves (40) , because C =(¯δm + p ¯δq )/(α p ).
+
+a) Interpretation.: When pk = 0 , the bound reduces to the MCSA proposal error, so no hard projection contraction is claimed. When pk > 0, the scheduled projection contributes the multiplicative factor 1 − αkpk. Increasing Ik and Hk can reduce the projection floor δq,k , while increasing pk invokes the hard correction more frequently. This is exactly the role of the adaptive scheduler in (IV-C)–(23). 
+
+F. Approximate Primal-Dual Interpretation 
+
+The iALM update in the main text is 
+
+λk−1 = Π R+ ((1 − ηλ)λk + ρk ˜rk) , (44) with the hysteretic penalty update in (21) . Thus, λk increases when the batch residual persists and decays when the residual is inactive. The CFS schedule is regulated by the compute dual 
+
+νk−1 = Π R+ (νk + ην (ck − B)) . (45) Equations (44) – (45) are projected dual-ascent steps on the feasibility residual and the average compute residual, Benchmark Category Parameter Value Single2D Rollout model State s = [ x, y ]⊤                                                                                  
+
+> Control u= [ vx, v y]⊤
+> Dynamics st+1 = Π X(st+ ∆ t u t)
+> Time step ∆t0.05
+> Horizon H64
+> Control limit umax 1.0
+> Workspace projection X[−2,2] 2
+> Obstacles Map window [−1.5,1.0] ×[−2.0,0.5]
+> Robot radius 0.05
+> Level L0no obstacles Levels L1–L33,6,10 convex obstacles Levels L4–L618 ,24 ,28 dense convex obstacles Levels L7–L10 18 ,24 ,30 ,36 union obstacles Union obstacle size 2primitives each Evaluation Seeds 10
+> Modes per seed 20
+> Metrics SSR, cost, time, density, nonconvexity D3IL 7-DoF Rollout model State [xee , y ee , q 1, . . . , q 7]⊤
+> Control ˙q∈R7
+> Joint update qt+1 =qt+ ∆ t˙qt
+> End-effector update pt+1 ee =pt
+> ee + ∆ t J xy (qt) ˙ qt
+> Time step ∆t0.03
+> Horizon H64 for model-based planners Joint-velocity limit ∥˙q∥∞≤0.8
+> Obstacles and goal Obstacle centers six fixed centers in the workspace plane Obstacle radii 0.03 ,0.04 ,0.05
+> End-effector radius 0.01
+> Target set horizontal line at y= 0 .35
+> Success condition reaches target line and remains collision-free Evaluation Seeds 5
+> Modes per seed 20
+> Pretrained-baseline horizon 8with plan-once chunking Metrics SSR, violation, time, path length
+
+TABLE II: Experimental environment details for the two benchmarks. respectively. Theorem 3 connects these updates to the de-noising residual: persistent violations raise (λk, ρ k) and the scheduled hard-projection effort, whereas small residuals relax enforcement and save computation. The claim is local, because CFS gives a hard guarantee for the convexified constraints selected in Ak,m ; global nonconvex feasibility depends on the quality of the local half-spaces, active-set coverage, and repeated relinearization. APPENDIX BEXPERIMENTAL ENVIRONMENT DETAIL 
+
+A. 2D Constrained Obstacle Avoidance 
+
+The Single2D benchmark plans directly in the planar workspace. The state is the planar position st = [ xt, y t]⊤,and the action is velocity ut = [ vtx, v ty ]⊤. The rollout model is 
+
+st+1 = Π X
+
+ st + ∆ t clip( ut, −umax , u max ) , (46) where ∆t = 0 .05 , T = 64 , umax = 1 .0, and X = [ −2, 2] 2
+
+is the box projection used by the environment. Obstacles are generated inside the map window x ∈ [−1.5, 1.0] and y ∈
+
+[−2.0, 0.5] . The robot radius is 0.05 .The benchmark has levels L0–L10 . Level L0 has no obstacles. Levels L1–L3 contain 3, 6, and 10 convex circle/box obstacles. Levels L4–L6 contain 18 , 24 , and 28 denser convex obstacles, sampled from circles, boxes, and small circles. Levels L7–L10 contain 18 , 24 , 30 , and 36 non-convex union obstacles, each formed by two primitives. All maps enforce clearance around the start and target, and the non-convex levels additionally use connectivity and non-convexity checks during generation. These levels correspond to the Easy, Constrained, and Union families reported in the main text. For each level, we evaluate 10 random seeds. For each seed and method, the planner returns 20 trajectory modes. The reported metrics are Safe & Success Rate (SSR), final planning cost, planning time, obstacle density, and non-convexity statistics when applicable. 
+
+B. D3IL 7-DoF Arm Avoidance 
+
+The D3IL experiment uses a lifted planning state 
+
+st = [ xt
+
+> ee
+
+, y t
+
+> ee
+
+, q t
+
+> 1
+
+, . . . , q t
+
+> 7
+
+]⊤ ∈ R9,
+
+and the action is the joint velocity ut = ˙ qt ∈ R7. The model-based planners use the lifted planning dynamics 
+
+qt+1 = qt + ∆ t ˙qt,pt+1 ee = pt 
+
+> ee
+
++ ∆ t J xy (qt) ˙ qt, (47) where pee = [ xee , y ee ]⊤ and Jxy is the planar end-effector Jacobian. We use ∆t = 0 .03 , T = 64 , and joint-velocity limit 
+
+0.8 for the model-based planners. The obstacle layout matches the D3IL avoiding task: six cylindrical obstacles are projected to 2D circles with centers (0 .5, −0.1) , (0 .425 , 0.08) , (0 .575 , 0.08) , (0 .35 , 0.26) ,
+
+(0 .5, 0.26) , and (0 .65 , 0.26) . The obstacle radius is varied by level as 0.03 , 0.04 , and 0.05 in the main experiment, and the end-effector radius is 0.01 . The target is a horizontal line at 
+
+y = 0 .35 with four candidate target positions along the line. A trajectory is counted as successful when it reaches the target line within the success margin and remains collision-free. For D3IL, we evaluate 5 seeds and 20 modes per seed. SafeDiffuser and DPCC-C use the pretrained D3IL diffusion horizon 8 and plan-once chunking, while the model-based planners use horizon 64 with online rollouts. The metrics are SSR, violation rate, planning time, and path length over safe and successful executions. APPENDIX CBASELINES DETAIL 
+
+This section expands only the baselines that are actually evaluated in the main text: MBD, EB-MBD, MDOC, SafeDif-fuser, DPCC-C, and our two ablation variants MD-COAS-A and MD-COAS-F. 
+
+MBD. MBD [9] is the training-free model-based diffusion optimizer on which our model-based comparisons are built. At reverse step k, it samples M denoised candidates from the same proposal used in the main text, 
+
+˜τk,m ∼ Ωk ≜ N
+
+ τk
+
+√¯αk
+
+, 1 − ¯αk
+
+¯αk
+
+I
+
+
+
+, (48) rolls the corresponding controls out through the known dynam-ics, and computes weights from the task cost: 
+
+wk,m = exp( −J (˜ τk,m )/T k)
+
+PMℓ=1 exp( −J (˜ τk,ℓ )/T k) . (49) The weighted mean is then used in the MCSA score estimate, 
+
+¯τk =
+
+> M
+
+X
+
+> m=1
+
+wk,m ˜τk,m , ˆSk = − τk
+
+1 − ¯αk
+
++
+
+√¯αk
+
+1 − ¯αk
+
+¯τk. (50) MBD is therefore dynamics-aware, model-based, diffusion-based, and non-data-driven. It is a necessary baseline because it isolates the effect of adding safety enforcement. Its limitation in our experiments is that the target density contains only the task objective, so obstacle avoidance appears only indirectly through the task cost and is not guaranteed. 
+
+EB-MBD. EB-MBD [12] augments MBD with an emerging-barrier term. Let 
+
+dmin (τ ) = min 
+
+> t
+
+
+
+min  
+
+> j
+
+ϕj (qt) − rrobot 
+
+
+
+(51) be the minimum clearance along a rollout. EB-MBD uses a scheduled offset ok and adds a logarithmic barrier of the form 
+
+Bk(τ ) = 
+
+(
+
+−μ log(clip( dmin (τ ) + ok, ϵ, 1)) , dmin (τ ) + ok > 0,
+
+∞, otherwise .
+
+(52) The diffusion weights are then computed from J (τ ) + Bk(τ ),equivalently 
+
+pEB  
+
+> k
+
+(τ ) ∝ exp 
+
+
+
+− J (τ ) + Bk(τ )
+
+Tk
+
+
+
+. (53) This baseline is relevant because it represents a soft safety prior inside model-based diffusion. Unlike MD-COAS, EB-MBD keeps the barrier schedule fixed and does not solve a hard projection QP that can correct a rollout back into a local feasible set. 
+
+MDOC. MDOC [15] is the hard-filter model-based diffusion baseline. It keeps the MBD sampling and score update, but inserts a per-step CBF-QP safety filter inside the rollout. For a signed-distance barrier 
+
+hj (qt) = ϕj (qt) − rrobot , (54) the single-integrator CBF constraint can be written as 
+
+∇hj (qt)⊤ut ≥ − ηh j (qt), (55) and the filtered action is obtained from 
+
+ut 
+
+> safe
+
+∈ arg min 
+
+> u
+
+12 ∥u − ˜ut∥22
+
+s.t. ∇hj (qt)⊤u ≥ − ηh j (qt), ∀j ∈ J t.
+
+(56) In D3IL, the workspace gradient is lifted to joint velocity by 
+
+Jxy (qt):
+
+∇hj (pt
+
+> ee
+
+)⊤Jxy (qt) ˙ qt ≥ − ηh j (pt
+
+> ee
+
+). (57) MDOC is a strong baseline for testing whether hard safety filtering alone is sufficient. The key difference is that MDOC corrects each time step independently with a CBF-QP, while MD-COAS solves a trajectory-level CFS-QP over the full control sequence and combines this hard correction with the adaptive iALM soft prior. 
+
+SafeDiffuser. SafeDiffuser [21] is a model-free diffusion planner trained from data. A learned denoiser proposes the next trajectory/action sample, and a CBF-style QP modifies the denoising output to maintain safety. A representative correction has the form 
+
+at 
+
+> safe
+
+∈ arg min 
+
+> a
+
+12 ∥a − atθ ∥22
+
+s.t. h(st+1 ) ≥ (1 − κ)h(st), st+1 = f (st, a ).
+
+(58) This baseline is included because it represents pretrained safe diffusion planning with invariance-style correction. It differs from MD-COAS in two ways: its score comes from an offline-trained diffusion model rather than online MCSA rollouts, and its safety correction is not the adaptive iALM+CFS mechanism used by our model-based planner. 
+
+DPCC-C. DPCC-C [19] is a diffusion predictive control baseline for constrained planning with a pretrained diffusion prior. It handles constraints by tightening the feasible set, 
+
+Cδ = {τ : gi(τ ) ≤ − δ, ∀i}, (59) and projecting candidate denoising outputs onto the tightened set, 
+
+ΠCδ (τ ) = arg min 
+
+> z
+
+12 ∥z − τ ∥22 s.t. z ∈ C δ . (60) Method Paradigm Dynamics Aware Model-Based Non-Data Driven Smoothness Guarantee Constraint Handling                                                 
+
+> Model-Free
+> SafeDiffuser [21] Pretrained Diffusion + CBF ××××CBF-Based Correction DPCC-C [19] Pretrained Diffusion + Projection P×××Tightening + Projection
+> Model-Based Diffusion  MBD [9] MCSA Diffusion ✓✓✓×N/A EB-MBD [12] Diffusion + EB Prior ✓✓✓×Soft Emerging Barrier MDOC [15] Diffusion + CBF-QP ✓✓✓×Per-Step Hard CBF-QP
+> MD-COAS-A (Ours) Diffusion + Adaptive iALM ✓✓✓×Adaptive Soft Constraints
+> MD-COAS-F (Ours) Diffusion + Fixed CFS-QP ✓✓✓✓Adaptive Soft Constraints + Fixed Hard CFS-QP
+> MD-COAS (Ours) Diffusion + CO + AS ✓✓✓✓Adaptive iALM + Hard CFS-QP
+
+TABLE III: Comparison of the diffusion motion-planning baselines and our ablations. The table follows the visual style of the related-work template but only includes methods that are compared in the main experiments. P denotes partially aware. The “C” variant selects the candidate with minimum cumulative projection cost, 
+
+τ ⋆ = arg min  
+
+> τi
+
+X
+
+> k
+
+ΠCδ (τ ik) − τ ik 
+
+> 22
+
+. (61) DPCC-C is relevant because it combines diffusion sampling with explicit constraint correction. The difference is that it is data-driven and uses a fixed projection/tightening mechanism, while MD-COAS is training-free and adapts both soft and hard constraint enforcement across the reverse process. 
+
+MD-COAS-A (Ours). MD-COAS-A is our soft-prior abla-tion. It keeps the adaptive iALM target 
+
+pAk (τ ) ∝ exp − J (τ ) + λ⊤ 
+
+> k
+
+¯g(τ ) + ρk 
+
+> 2
+
+∥¯g(τ )∥22
+
+β
+
+!
+
+, (62) but disables the CFS-QP by setting pk = 0 and Ik = Hk = 0 .It tests whether adaptive soft feasibility alone can solve tight non-convex maps. The main-text results show that this helps convergence but cannot provide strict collision correction in the hardest maps. 
+
+MD-COAS-F (Ours). MD-COAS-F is our fixed-schedule hard-projection ablation. It uses the same iALM+CFS compo-nents as MD-COAS, but fixes 
+
+λk = λ, ρk = ρ, pk = 1 , Ik = I, Hk = H. (63) It tests whether adding CFS projection is enough without adaptive scheduling. It is safer than soft-only methods, but it spends projection effort uniformly even when the batch is already feasible. 
+
+MD-COAS (Ours). The full method uses both the adaptive iALM soft prior and the trajectory-level CFS hard operator. It updates (λk, ρ k) from the residual (20) – (21) and schedules 
+
+(pk, I k, Hk) under the compute dual (23) . Thus, MD-COAS is the only evaluated method that is simultaneously model-based, training-free, diffusion-based, equipped with a trajectory-level hard projection, and adaptive across the denoising process. APPENDIX DEXPERIMENT HYPERPARAMETERS 
+
+We summarize the experimental hyperparameters in four tables. Table IV reports the shared planning and diffusion settings, including state/action dimensions, horizon, reverse diffusion steps, rollout count, temperature, diffusion noise schedule, and evaluation seeds/modes. Table V lists the method-specific parameters for the evaluated baselines, including MBD, EB-MBD, MDOC, SafeDiffuser, and DPCC-C. Table VI reports the hyperparameters of our ablation variants and full MD-COAS, including the iALM initialization, CFS projection ranges, QP tolerance, and environment-specific margins. Finally, Table VII gives the adaptive scheduler parameters shared by MD-COAS across benchmarks. Benchmark Planner class State Act. H ∆t K M Tk β0 βT Seeds/Modes Single2D Model-based diffusion 2 2 64 0.05 100 64 0.5 10 −5 10 −2 10 /20 
+
+D3IL 7-DoF Arm Avoidance Model-based diffusion 9 7 64 0.03 100 64 0.1 10 −4 10 −2 5/20 
+
+Pretrained diffusion learned learned 8 1.0 20 – – pretrained 5/20 
+
+TABLE IV: Common planning and diffusion hyperparameters. H is the planning horizon, K is the number of reverse diffusion steps, and M is the number of model rollouts per reverse step. 
+
+Method Parameter Single2D D3IL arm 
+
+Model-based diffusion baselines 
+
+MBD Terminal weight wT 100 –Action noise σu 0.3 –Safety layer none –EB-MBD Barrier coefficient μ 50 .0 5.0
+
+Barrier exponent α 1.0 2.0
+
+Barrier bound 0.8 0.15 
+
+Barrier margin 0.05 0.01 
+
+Terminal weight wT 100 170 
+
+MDOC CBF-QP form per-step planar per-step joint-lift CBF activation τcbf 0.005 0.01 
+
+CBF gain ηcbf 1.5 1.0
+
+CBF margin 0.04 0.01 
+
+Base diffusion β 0.05 0.05 
+
+Terminal weight wT 100 160 
+
+Guide weight wg – 20 
+
+QP probability pQP 1.0 1.0
+
+QP iterations IQP 10 10 
+
+Pretrained diffusion baselines 
+
+SafeDiffuser Horizon – 8
+
+Reverse steps – 20 
+
+Batch size – 8
+
+Safety correction – all denoising steps Plan-once chunks – 25 
+
+DPCC-C Horizon – 8
+
+Reverse steps – 20 
+
+Batch size – 4
+
+Constraint handling – tightened projection Projection solver – SciPy Plan-once chunks – 25 
+
+TABLE V: Baseline hyperparameters. The dash indicates that the method is not evaluated on that benchmark. Method Parameter Single2D D3IL 7-DoF Arm Avoidance MD-COAS-A Initial dual λ0 0 –Initial penalty ρ0 1 –Projection probability pmin 0 –Projection probability pmax 0 –Active-set size Hmin 0 –Active-set size Hmax 0 –CFS iterations Imin 0 –CFS iterations Imax 0 –QP tolerance ϵmin , ϵ max 0, 0 –CFS margin 0.05 –MD-COAS-F Fixed dual λ 300 –Fixed penalty ρ 500 –Projection probability p 1.0 1.0
+
+Active-set size H 8 8
+
+CFS iterations I 5 5
+
+QP tolerance ϵ 10 −4 10 −4
+
+CFS margin 0.25 0.35 
+
+Max constraints per point 10 8
+
+Scheduler margin 0.05 0.02 
+
+MD-COAS Initial dual λ0 0 0
+
+Initial penalty ρ0 1 1
+
+Projection probability pmin 0 0
+
+Projection probability pmax 1 1
+
+Active-set size Hmin 1 1
+
+Active-set size Hmax 8 8
+
+CFS iterations Imin 1 1
+
+CFS iterations Imax 5 5
+
+QP tolerance ϵmin 10 −5 10 −5
+
+QP tolerance ϵmax 10 −2 10 −2
+
+CFS margin 0.05 0.35 
+
+Max constraints per point 5 8
+
+Scheduler margin 0.05 0.02 
+
+TABLE VI: Hyperparameters for our ablation variants and full MD-COAS. The dash indicates that the variant is not evaluated on that benchmark. 
+
+Scheduler block Parameter Value Main-text definition Residual signal Quantile level for rk 0.9 Eq. (18) Dead-zone tolerance ξ 5 × 10 −4 Eq. (19) iALM update Dual forgetting ηλ 0.02 Eq. (20) Penalty lower bound ρmin 0.5 Eq. (21) Penalty upper bound ρmax 500 Eq. (21) High residual threshold ¯r 5 × 10 −4 Eq. (21) Low residual threshold r 10 −4 Eq. (21) Penalty increase factor γ↑ 2.0 Eq. (21) Penalty decrease factor γ↓ 1.5 Eq. (21) Hard projection budget Projection probability pk scheduled in [0 , 1] Eq. (22) CFS iterations Ik scheduled Eq. (22) Active-set size Hk scheduled Eq. (22) Expected effort budget B 8.0 Eq. (IV-C) Cost proxy ck pk Ik Hk Eq. (IV-C) Compute dual Compute dual νk projected to R+ Eq. (23) Compute dual step ην 0.05 Eq. (23) 
+
+TABLE VII: Adaptive scheduler quantities used by MD-COAS and explicitly defined in the main text. Environment-specific CFS ranges and margins are listed in Table VI.

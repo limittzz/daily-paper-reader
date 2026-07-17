@@ -1,0 +1,324 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-17T19:43:44.275047+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 6,
+    "quick_skim_target": 11,
+    "quick_selected": 6
+  },
+  "deep_dive": [
+    {
+      "id": "2607.15275v1",
+      "source": "arxiv",
+      "title": "RoboTTT: Context Scaling for Robot Policies",
+      "abstract": "Recent robot foundation models operate with single-step or short-history visuomotor context. We introduce Test-Time-Training Robot Policies (RoboTTT), a robot model and training recipe that scale visuomotor context to 8K timesteps, three orders of magnitude beyond state-of-the-art policies, without growing inference latency. At this context length, we unlock new robot capabilities: one-shot in-context imitation from human video demonstrations, on-the-fly policy improvement, robustness to perturbations, and stronger performance on multi-stage, long-horizon tasks. We also observe, for the first time, steady gains in closed-loop performance as pretraining context length scales. At its core, RoboTTT integrates Test-Time Training into robot foundation models such as Vision-Language-Action policies, yielding a sequence model whose recurrent state consists of fast weights, parameters updated by gradient descent during both training and inference, compressing histories into weight space and retrieving contextual information for long-context conditioning. To scale training context length, the recipe combines sequence action forcing with truncated backpropagation through time. On challenging real-robot manipulation tasks, RoboTTT improves overall performance by 87% over the single-step context baseline and fully completes a five-minute, ten-stage assembly task, which no baseline ever does. RoboTTT trained with 8K-timestep context outperforms the same model pretrained with 1K timesteps by 62%, suggesting context length as a new scaling axis for robot foundation models. Videos are available at https://research.nvidia.com/labs/gear/robottt/",
+      "authors": [
+        "Yunfan Jiang",
+        "Yevgen Chebotar",
+        "Ruijie Zheng",
+        "Fengyuan Hu",
+        "Yunhao Ge",
+        "Jimmy Wu",
+        "Tianyuan Dai",
+        "Scott Reed",
+        "Li Fei-Fei",
+        "Yuke Zhu",
+        "Linxi \"Jim\" Fan"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-16T17:59:06+00:00",
+      "link": "https://arxiv.org/pdf/2607.15275v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "one-shot in-context imitation from human video for robot policies",
+      "llm_evidence_cn": "从人类视频实现一步上下文中模仿学习用于机器人策略",
+      "llm_evidence": "从人类视频实现一步上下文中模仿学习用于机器人策略",
+      "canonical_evidence": "从人类视频实现一步上下文中模仿学习用于机器人策略",
+      "llm_tldr_en": "RoboTTT scales visuomotor context to 8K timesteps via test-time training, enabling one-shot imitation from human video, on-the-fly policy improvement, and strong performance on long-horizon tasks, with steady gains as context length increases.",
+      "llm_tldr_cn": "针对机器人基础模型仅使用短历史上下文的限制，提出RoboTTT，通过测试时训练将视觉运动上下文扩展到8000步。在如此长上下文下实现了从人类视频演示的一步模仿、在线策略提升以及长时任务性能提升。首次观察到预训练上下文长度与封闭循环性能的稳定增益，展示了上下文缩放的重要价值。",
+      "llm_tldr": "针对机器人基础模型仅使用短历史上下文的限制，提出RoboTTT，通过测试时训练将视觉运动上下文扩展到8000步。在如此长上下文下实现了从人类视频演示的一步模仿、在线策略提升以及长时任务性能提升。首次观察到预训练上下文长度与封闭循环性能的稳定增益，展示了上下文缩放的重要价值。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.11427v1",
+      "source": "arxiv",
+      "title": "EDAR: Learning Environment-Dependent Action Representations for Robotic Manipulation",
+      "abstract": "Learning effective action representations is critical for robotic manipulation, where raw control trajectories are often noisy, redundant, and difficult to model directly. Existing methods mainly encode the structure of the action stream itself, treating the role of actions in the environment as implicit. Yet manipulation is about changing the world: the same action segment can induce different outcomes under different scene contexts, making action semantics inherently environment-dependent. We propose EDAR, an Environment-Dependent Action Representation that grounds action tokens in both executable control structure and expected visual consequences. By coupling motor commands with their environment-conditioned effects, EDAR encourages the learned action space to capture interaction semantics rather than merely command-level patterns. Experiments on simulated and real-robot manipulation benchmarks demonstrate that EDAR improves downstream policy learning, especially in long-horizon manipulation. These results highlight the importance of grounding action representations in executable control structure and environment-conditioned visual change.",
+      "authors": [
+        "Yuecheng Xu",
+        "Tong Yang",
+        "Jingkai Jia",
+        "Chi Zhang",
+        "Xuelong Li",
+        "Wenqiang Zhang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-13T11:31:53+00:00",
+      "link": "https://arxiv.org/pdf/2607.11427v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "learning environment-dependent action representations for robotic manipulation",
+      "llm_evidence_cn": "学习环境依赖的动作表示用于机器人操作",
+      "llm_evidence": "学习环境依赖的动作表示用于机器人操作",
+      "canonical_evidence": "学习环境依赖的动作表示用于机器人操作",
+      "llm_tldr_en": "EDAR proposes environment-dependent action representations that couple motor commands with expected visual consequences, improving manipulation policy learning.",
+      "llm_tldr_cn": "针对机器人操作中动作语义依赖环境的问题，提出EDAR，将动作令牌同时与可执行控制结构和预期视觉后果耦合，使动作表示具有环境依赖性。实验表明该方法能有效提升操作策略的学习效率和泛化能力。",
+      "llm_tldr": "针对机器人操作中动作语义依赖环境的问题，提出EDAR，将动作令牌同时与可执行控制结构和预期视觉后果耦合，使动作表示具有环境依赖性。实验表明该方法能有效提升操作策略的学习效率和泛化能力。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.09336v1",
+      "source": "arxiv",
+      "title": "Shortcut Trajectory Planning for Efficient Offline Reinforcement Learning",
+      "abstract": "Diffusion-based trajectory planners have shown strong performance in offline reinforcement learning, but their iterative denoising process often incurs high inference cost. Consistency-based planners reduce the number of sampling steps, yet they typically rely on a two-stage teacher--student distillation pipeline that increases training cost and may introduce instability. We propose Shortcut Trajectory Planning (STP), an offline model-based reinforcement learning framework that incorporates shortcut models as efficient trajectory generators. STP trains a conditional shortcut trajectory model in a single stage, supports adjustable one-step and few-step inference through step-size conditioning, and selects candidate plans using a critic augmented with feasibility-aware correction. Across standard D4RL benchmarks, including locomotion, navigation, manipulation, and dexterous control tasks, STP achieves strong performance while simplifying the training pipeline for fast generative planning.",
+      "authors": [
+        "Guanquan Wang",
+        "Yoshimasa Tsuruoka"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.RO"
+      ],
+      "published": "2026-07-10T12:17:43+00:00",
+      "link": "https://arxiv.org/pdf/2607.09336v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "diffusion-based trajectory planner for offline RL",
+      "llm_evidence_cn": "基于扩散的轨迹规划器用于离线强化学习",
+      "llm_evidence": "基于扩散的轨迹规划器用于离线强化学习",
+      "canonical_evidence": "基于扩散的轨迹规划器用于离线强化学习",
+      "llm_tldr_en": "Proposes Shortcut Trajectory Planning, an offline model-based RL framework with shortcut models for efficient one-step or few-step trajectory generation, avoiding iterative denoising.",
+      "llm_tldr_cn": "该论文针对离线强化学习中扩散轨迹规划器推理成本高的问题，提出捷径轨迹规划框架，训练单阶段条件捷径模型，支持一步或几步推理生成轨迹。该方法避免了传统蒸馏流程的不稳定性。实验证明在多个离线RL基准上以更少的采样步数达到或超越扩散规划器的性能。贡献在于提高了扩散模型在轨迹规划中的效率。",
+      "llm_tldr": "该论文针对离线强化学习中扩散轨迹规划器推理成本高的问题，提出捷径轨迹规划框架，训练单阶段条件捷径模型，支持一步或几步推理生成轨迹。该方法避免了传统蒸馏流程的不稳定性。实验证明在多个离线RL基准上以更少的采样步数达到或超越扩散规划器的性能。贡献在于提高了扩散模型在轨迹规划中的效率。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.14455v1",
+      "source": "arxiv",
+      "title": "Motion Planning with Model-Based Diffusion via Constraint Optimization and Adaptive Scheduling",
+      "abstract": "Single-Robot Motion Planning (SRMP) in highly non-convex constrained environments, where robots must satisfy collision-free guarantees, dynamic feasibility, and task-related constraints, is challenging under complex constraints and computational limits. Recent Model-Based Diffusion (MBD) approaches recast the SRMP as trajectory optimization that samples from a posterior over trajectories, using known dynamics, and analytically estimates the score function from rollout samples to guide diffusion denoising toward a low-cost, clean trajectory without demonstration learning. While existing works further adapt MBD to constrained environments and showcase promising performance, they are still limited by (1) enforcing safety either via soft feasibility diffusion priors or hard projection operators, but lack a unified framework to integrate both, and (2) fixing safety enforcement to neglect the changing of diffusion scheduling. Therefore, we introduce Model-Based Diffusion via Constraint Optimization and Adaptive Scheduling (MD-COAS) for SRMP that unifies the inexact Augmented Lagrangian Method (iALM) soft diffusion prior with a Convex Feasible Set (CFS)-based hard projection operator, and adaptively schedules and co-optimizes safety enforcement, along with diffusion scheduling. Experiments demonstrate that our method achieves higher safety \\& success rates, faster convergence, and lower final costs than baseline planners on randomly generated highly non-convex 2D benchmarks and a 7-DoF robot arm avoidance task.",
+      "authors": [
+        "Zhilin He",
+        "Bowei Li",
+        "Jianlin Dou",
+        "Yuner Zhang",
+        "Changliu Liu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-16T01:04:32+00:00",
+      "link": "https://arxiv.org/pdf/2607.14455v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "uses model-based diffusion for robot motion planning without demonstration learning",
+      "llm_evidence_cn": "使用基于模型扩散的机器人运动规划，无需演示学习",
+      "llm_evidence": "使用基于模型扩散的机器人运动规划，无需演示学习",
+      "canonical_evidence": "使用基于模型扩散的机器人运动规划，无需演示学习",
+      "llm_tldr_en": "This paper adapts model-based diffusion to constrained robot motion planning, using analytical score estimation from rollouts to guide denoising, without requiring demonstration data.",
+      "llm_tldr_cn": "本文将基于模型扩散方法应用于受限环境下的机器人运动规划，通过从规划轨迹中解析估计得分函数来引导扩散去噪，无需演示数据。实验表明该方法在复杂约束下能有效生成低成本轨迹，但对安全约束的处理仍有限。",
+      "llm_tldr": "本文将基于模型扩散方法应用于受限环境下的机器人运动规划，通过从规划轨迹中解析估计得分函数来引导扩散去噪，无需演示数据。实验表明该方法在复杂约束下能有效生成低成本轨迹，但对安全约束的处理仍有限。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.13960v1",
+      "source": "arxiv",
+      "title": "GigaWorld-Policy-0.5: A Faster and Stronger WAM Empowered by AutoResearch",
+      "abstract": "World Action Models (WAMs) improve robot policy learning by jointly modeling actions and future visual observations, using future scene evolution as dense supervision for physically grounded action generation. However, a common design in existing WAMs is to explicitly generate future videos at inference time, incurring substantial computational overhead and hindering real-time closed-loop deployment. GigaWorld-Policy addresses this issue with an action-centered formulation, where future visual dynamics are used during training while action-only decoding is used at inference time. Building upon this framework, we present GigaWorld-Policy-0.5, an enhanced action-centered WAM designed for more efficient robot control. During pretraining, GigaWorld-Policy-0.5 adopts a mixed Action-Conditioned World Modeling (AC-WM) and WAM training strategy. This strengthens the coupling between visual dynamics and robot actions and improves the transferability of action representations for downstream policy learning. For efficient inference, GigaWorld-Policy-0.5 introduces a Mixture-of-Transformers architecture that separates visual dynamics modeling and action generation into specialized experts, reducing active computation during action-only inference and achieving 85 ms inference latency on a local RTX 4090 setup. In addition, we employ an agent-based AutoResearch pipeline to systematically search training configurations, enabling more efficient identification of optimal experimental setups while reducing the time and manual intervention required for hyperparameter tuning. Experiments and ablations show that GigaWorld-Policy-0.5 preserves the training benefits of future visual dynamics while improving inference efficiency for robot control.",
+      "authors": [
+        "GigaWorld Team",
+        "Angen Ye",
+        "Angyuan Ma",
+        "Boyuan Wang",
+        "Chaojun Ni",
+        "Fangzheng Ye",
+        "Guan Huang",
+        "Guo Li",
+        "Guosheng Zhao",
+        "Haodong Yan",
+        "Hengtao Li",
+        "Jiwen Lu",
+        "Kai Wang",
+        "Mingming Yu",
+        "Qitang Hu",
+        "Qiuping Deng",
+        "Songling Liu",
+        "Xiaoyu Tian",
+        "Xiaofeng Wang",
+        "Xinyu Zhou",
+        "Xiuwei Xu",
+        "Xinze Chen",
+        "Yang Wang",
+        "Yejun Zeng",
+        "Yifan Chang",
+        "Yun Ye",
+        "Zhenyu Wu",
+        "Zhanqian Wu",
+        "Zheng Zhu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-15T15:46:42+00:00",
+      "link": "https://arxiv.org/pdf/2607.13960v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "action-centered world action model for robot policy learning with imitation-like supervision",
+      "llm_evidence_cn": "以动作为中心的世界动作模型，通过类似模仿的监督进行机器人策略学习",
+      "llm_evidence": "以动作为中心的世界动作模型，通过类似模仿的监督进行机器人策略学习",
+      "canonical_evidence": "以动作为中心的世界动作模型，通过类似模仿的监督进行机器人策略学习",
+      "llm_tldr_en": "GigaWorld-Policy-0.5 uses an action-centered formulation that leverages future visual dynamics during training but only action decoding at inference for efficient robot control.",
+      "llm_tldr_cn": "现有世界动作模型推理时生成未来视频导致计算开销大，GigaWorld-Policy-0.5采用以动作为中心的公式，训练时使用未来视觉动态，推理时仅动作解码，实现了更高效的机器人控制。",
+      "llm_tldr": "现有世界动作模型推理时生成未来视频导致计算开销大，GigaWorld-Policy-0.5采用以动作为中心的公式，训练时使用未来视觉动态，推理时仅动作解码，实现了更高效的机器人控制。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.15065v1",
+      "source": "arxiv",
+      "title": "DriftWorld: Fast World Modeling through Drifting",
+      "abstract": "Predictive world models enable robots to plan by imagining the outcomes of their actions, but their value for control hinges on generating many rollouts quickly. This creates a bottleneck for diffusion-based world models: multistep sampling makes each rollout expensive, limiting large-scale action search at inference time. We introduce DriftWorld, an action-conditioned world model based on drifting generative models. Rather than denoising iteratively at inference, DriftWorld learns an action-conditioned drift during training, allowing it to generate future frames from the current observation and a candidate action sequence in a single forward pass at 30+ fps, which is 17x faster on average than diffusion based baselines. We evaluate DriftWorld on standard vision-based robotic manipulation benchmarks, including Bridge-V2, RT-1, Language Table, Push-T, and Robomimic. By producing rollouts that are both accurate and fast, DriftWorld achieves state-of-the-art decision-making performance with far less inference time than diffusion-based world model baselines. Beyond online control, DriftWorld can also serve as an offline simulator for ranking real-world robot policies, with rollout-based scores correlating with ground truth at up to 0.99. These results show that drifting models are a strong fit for robot world modeling, where fast, high-quality imagination directly supports planning and policy evaluation.",
+      "authors": [
+        "Susie Lu",
+        "Haonan Chen",
+        "Weirui Ye",
+        "Yilun Du"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-07-16T14:37:43+00:00",
+      "link": "https://arxiv.org/pdf/2607.15065v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "proposes a drifting generative model for fast world modeling, addressing diffusion bottleneck",
+      "llm_evidence_cn": "提出漂移生成模型加速世界建模，解决扩散模型瓶颈",
+      "llm_evidence": "提出漂移生成模型加速世界建模，解决扩散模型瓶颈",
+      "canonical_evidence": "提出漂移生成模型加速世界建模，解决扩散模型瓶颈",
+      "llm_tldr_en": "DriftWorld introduces an action-conditioned drifting model that generates future frames in one forward pass, achieving 17x speedup over diffusion-based world models for robot planning.",
+      "llm_tldr_cn": "本文提出DriftWorld，一种基于漂移生成模型的动作条件世界模型，能够在单次前向传播中生成未来帧，速度比基于扩散的世界模型快17倍，解决了扩散模型多步采样导致的规划计算瓶颈。在标准视觉机器人任务上验证了其高效性。",
+      "llm_tldr": "本文提出DriftWorld，一种基于漂移生成模型的动作条件世界模型，能够在单次前向传播中生成未来帧，速度比基于扩散的世界模型快17倍，解决了扩散模型多步采样导致的规划计算瓶颈。在标准视觉机器人任务上验证了其高效性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.14424v1",
+      "source": "arxiv",
+      "title": "ConFlow: Constraints-Guided Learning with Flow Matching for Motion Generation",
+      "abstract": "In recent years Flow Matching has become a prominent method for generative modeling robot motion generation. In its generic form Flow Matching is an ODE-based neural sampler that is trained by regressing empirical flow fields associated with motion samples as data. However, in robot motion generation we often have additional constraints that might not be present in the collected data. The majority of current approaches train the flow on the available data and use inference-time guidance to enforce task-specific constraints. To address this mismatch, we propose \\textbf{ConFlow}, a constraint-guided flow matching framework that incorporates constraint information directly into the training objective via differentiable barrier or cost functions. To address design specifications such as smoothness and boundary conditions, we propose replacing the standard Gaussian source distribution used in flow matching training with a conditional Gaussian Process. Our approach also uses infeasible demonstrations as negative supervision, improving constraint satisfaction without requiring additional expert data. Experiments on a two-robot navigation task demonstrate that ConFlow achieves lower collision rates and higher trajectory quality than standard flow matching baselines, with or without inference-time guidance. These results validate training-time constraint integration as an effective approach to closing the training--inference gap in generative motion models.",
+      "authors": [
+        "Nutan Chen",
+        "Jianxiang Feng",
+        "Marvin Alles",
+        "Botond Cseke"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-15T23:27:04+00:00",
+      "link": "https://arxiv.org/pdf/2607.14424v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "constraint-guided flow matching for robot motion generation",
+      "llm_evidence_cn": "约束引导的流匹配用于机器人运动生成",
+      "llm_evidence": "约束引导的流匹配用于机器人运动生成",
+      "canonical_evidence": "约束引导的流匹配用于机器人运动生成",
+      "llm_tldr_en": "ConFlow incorporates task constraints into flow matching training via differentiable barrier functions, improving robot motion generation fidelity.",
+      "llm_tldr_cn": "针对流匹配在机器人运动生成中难以融入约束的问题，提出ConFlow，通过可微屏障函数将约束信息直接加入训练目标。实验表明该方法比推理时引导更有效地满足任务约束，生成运动质量更高。",
+      "llm_tldr": "针对流匹配在机器人运动生成中难以融入约束的问题，提出ConFlow，通过可微屏障函数将约束信息直接加入训练目标。实验表明该方法比推理时引导更有效地满足任务约束，生成运动质量更高。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
