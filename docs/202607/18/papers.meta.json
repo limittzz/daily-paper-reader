@@ -1,0 +1,69 @@
+{
+  "label": "2026-07-18",
+  "date": "2026-07-18",
+  "generated_at": "2026-07-18T20:02:28",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202607/18/2607.11962v1-contrastive-joint-embedding-prediction-for-representation-learning-in-structural-mri",
+      "section": "deep",
+      "title_en": "Contrastive Joint-Embedding Prediction for Representation Learning in Structural MRI",
+      "authors": "Fabian Mager, Lars Kai Hansen",
+      "date": "2026-07-12",
+      "pdf": "https://arxiv.org/pdf/2607.11962v1",
+      "score": "8.0",
+      "evidence": "对比联合嵌入预测架构（JEPA）用于医学成像",
+      "tldr": "医学影像标注数据稀缺，自监督学习是重要方向。COJEPA框架将联合嵌入预测架构与对比损失结合，用于3D脑MRI，采用前景感知块遮蔽、层次卷积补丁嵌入和世界空间正弦位置编码。在2286例T1加权MRI上训练，零样本双胞胎检索rank@1达0.84，年龄回归MAE为2.55年，脑肿瘤分割Dice与对比损失相当。该框架同时具备局部预测性和全局判别性，为医学影像表示学习提供了有效方案。",
+      "tags": "query:imitation",
+      "abstract_en": "Self-supervised learning offers a compelling approach for medical imaging, where labeled data are scarce and acquisition costs are high. We present COJEPA, a self-supervised framework for volumetric brain MRI that combines a joint-embedding predictive architecture (JEPA) with a contrastive loss (CO), targeting two complementary properties: local predictivity and global discriminability. The model is trained without labels on T1-weighted structural MRI from two cohorts (HCP-YA and AABC, $N{=}2286$, ages 22 to 90), extending I-JEPA to 3D with foreground-aware block masking, a hierarchical convolutional patch embedding, and world-space sinusoidal positional encodings. We evaluate all three objectives across zero-shot twin retrieval, brain tumor segmentation (BraTS 2024), and age regression (OpenBHB). COJEPA achieves the best monozygotic twin recall at rank@1 (0.84), the best finetuning age MAE (2.55 years on OpenBHB 3.0T), and matches CO on BraTS whole-tumor Dice, demonstrating that the combined objective yields representations that are simultaneously discriminative and locally structured.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/18/2607.14643v1-navcmpo-critic-guided-meanflow-policy-optimization-for-adaptive-navigation",
+      "section": "quick",
+      "title_en": "NavCMPO: Critic-Guided MeanFlow Policy Optimization for Adaptive Navigation",
+      "authors": "Junjie An, Yi Wu, Xiao Liu, Yiqun Zhou, Yuechen Wu, Xiaoqing Guan, You Wang, Guang Li",
+      "date": "2026-07-16",
+      "pdf": "https://arxiv.org/pdf/2607.14643v1",
+      "score": "7.0",
+      "evidence": "基于扩散的策略用于自适应视觉导航",
+      "tldr": "端到端扩散策略在无地图视觉导航中性能出色，但推理延迟高且行为克隆受限于专家数据。本文提出NavCMPO，一种两阶段自适应导航框架，结合少步MeanFlow轨迹生成、评论家引导的轨迹精炼和强化学习微调。在InternVLA-N1基准上达到74.7%成功率，比NavDP高6.4个百分点，推理延迟从85ms降至60ms，并在Unitree Go2上验证了高效的仿真到现实迁移。",
+      "tags": "query:imitation",
+      "abstract_en": "End-to-end diffusion-based policies have demonstrated strong performance in mapless visual navigation, but their iterative denoising process introduces substantial inference latency, while behavior cloning limits performance to the quality of expert demonstrations. We present NavCMPO, a two-stage adaptive navigation framework that combines few-step MeanFlow trajectory generation, critic-guided refinement, and reinforcement learning fine-tuning. During pre-training, an obstacle proximity prediction task encourages the visual representation to capture obstacle-aware spatial information. To compensate for the degradation in obstacle avoidance caused by few-step generation, Critic-Guided Trajectory Refinement (CGTR) uses gradients from a critic trained with obstacle-point-cloud supervision to refine intermediate trajectories. During adaptation, the MeanFlow policy is fine-tuned using Proximal Policy Optimization with behavior-cloning regularization, while the critic is updated to accommodate embodiment-specific observation changes. Under a matched training budget on the InternVLA-N1 benchmark, NavCMPO achieves an average success rate of 74.7\\%, exceeding the retrained NavDP baseline by 6.4 percentage points, while reducing inference latency from 85\\,ms to 60\\,ms. Experiments on a Unitree Go2 further demonstrate effective sim-to-real transfer.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/18/2607.09587v1-codimad-diffusion-based-privileged-distillation-for-communication-free-multi-robot-coordination",
+      "section": "quick",
+      "title_en": "CoDiMAD: Diffusion-Based Privileged Distillation for Communication-Free Multi-Robot Coordination",
+      "authors": "Jiyue Tao, Shunheng Xin, Tongsheng Shen, Dexin Zhao, Feitian Zhang",
+      "date": "2026-07-10",
+      "pdf": "https://arxiv.org/pdf/2607.09587v1",
+      "score": "6.0",
+      "evidence": "基于扩散的特权蒸馏用于多机器人协调",
+      "tldr": "分布式多机器人协调在通信受限且部分可观测场景中面临挑战，局部观测可能对应多种需不同协作动作的全局配置。现有确定性特权蒸馏会平均化多模态动作分布，导致无效或犹豫动作。本文提出CoDiMAD，采用条件扩散模型来近似特权oracle的动作分布，通过三步流程：训练全局信息oracle、构建局部观测-动作对、扩散蒸馏。实验证明该方法在三个协作任务中显著优于直接局部MARL和确定性蒸馏。",
+      "tags": "query:imitation",
+      "abstract_en": "Decentralized multi-robot coordination under partial observability remains challenging, especially in communication-free settings where agents must act solely from local sensor observations. Privileged policy distillation provides a promising approach by transferring knowledge from a globally informed oracle to sensor-constrained students. However, in multi-agent systems, the same local observation may correspond to multiple global configurations requiring qualitatively different cooperative actions, making the conditional action distribution inherently multi-modal. Standard deterministic distillation collapses these modes to their mean, often yielding invalid or hesitant actions. To address this issue, we propose CoDiMAD, a three-stage framework that trains a privileged oracle with MAPPO, constructs an offline dataset of local-observation-oracle-action pairs, and distills the oracle into decentralized students parameterized as conditional denoising diffusion probabilistic models. By approximating the conditional oracle-action distribution through the diffusion reverse process, CoDiMAD samples decisive actions from coherent coordination modes rather than averaging across them. Theoretical analysis characterizes the mode-averaging failure of deterministic distillation and the distributional recovery property of diffusion-based distillation. Experiments on three cooperative tasks show that CoDiMAD consistently outperforms direct local MARL and deterministic distillation baselines. The source code will be made publicly available upon acceptance.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/18/2607.14047v2-zero2skill-bootstrapping-robot-skills-through-autonomous-data-collection-training-and-deployment",
+      "section": "quick",
+      "title_en": "Zero2Skill: Bootstrapping Robot Skills through Autonomous Data Collection, Training, and Deployment",
+      "authors": "Boyuan Wang, Zhenyuan Zhang, Zhiqin Yang, Peijun Gu, Shuya Wang, Xiaofeng Wang, Xianghui Ze, Yifan Chang, Guosheng Zhao, Jiangnan Shao, Guan Huang, Hengyu Liu, Yonggang Zhang, Wei Xue, Chunyuan Guan, Chenglin Pu, Yike Guo, Xingang Wang, Zheng Zhu",
+      "date": "2026-07-15",
+      "pdf": "https://arxiv.org/pdf/2607.14047v2",
+      "score": "6.0",
+      "evidence": "自主数据收集支持机器人技能学习，为模仿学习流程赋能",
+      "tldr": "机器人策略学习的自主数据收集面临人类纠错重复成本高的问题。Zero2Skill提出人类-机器人共生代理系统，通过可复用的纠错记忆和自主收集循环，仅在重试预算耗尽时暂停请求远程操作员。在桌面清理任务中，Zero2Skill匹配遥操作成功率，人类工作时间降至16%，语言纠错将单次成功率从12.5%提升至47.5%。该方法显著降低数据收集的人力成本，同时保持策略性能。",
+      "tags": "query:imitation",
+      "abstract_en": "Autonomous data collection governs the volume and quality of real-world trajectories for manipulation policy learning. Existing pipelines reduce human effort via self-resetting, VLM verification, or language-guided correction, yet episode-scoped fixes must be reissued whenever the same failure recurs, so oversight cost grows with session length rather than with the number of distinct problems. We present Zero2Skill, a human-robot symbiotic agentic system in which corrections are retained and reused across rounds. The collection loop collects, verifies, and resets autonomously, pausing for a remote operator only when a phase exhausts an explicit retry budget. An LLM parser maps each natural-language utterance to a structured adjustment stored in Corrective Memory, so addressed failure modes typically need not be corrected again under the same conditions. On a real-robot desktop-clearing testbed, Zero2Skill matches teleoperation episode success while reducing human working time to 16%. Language corrections improve verifier-human agreement in all four evaluated settings and raise average single-attempt success from 12.5% to 47.5% (arm-selection: 20.0% to 50.0%). Policies fine-tuned on Zero2Skill data match teleoperation-trained policy success at a fraction of collection human cost.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

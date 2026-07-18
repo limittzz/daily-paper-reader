@@ -1,0 +1,476 @@
+Title: Contrastive Joint-Embedding Prediction for Representation Learning in Structural MRI
+
+URL Source: https://arxiv.org/pdf/2607.11962v1
+
+Published Time: Wed, 15 Jul 2026 11:56:08 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# Contrastive Joint-Embedding Prediction for Representation Learning in Structural MRI 
+
+Fabian Mager fmager@dtu.dk Department of Applied Mathematics and Computer Science Technical University of Denmark 
+
+Lars Kai Hansen lkai@dtu.dk Department of Applied Mathematics and Computer Science Technical University of Denmark 
+
+## Abstract 
+
+Self-supervised learning offers a compelling approach for medical imaging, where labeled data are scarce and acquisition costs are high. We present COJEPA, a self-supervised framework for volumetric brain MRI that combines a joint-embedding predictive architec-ture (JEPA) with a contrastive loss (CO), targeting two complementary properties: local predictivity and global discriminability. The model is trained without labels on T1-weighted structural MRI from two cohorts (HCP-YA and AABC, N =2286 , ages 22 to 90), extending I-JEPA (Assran et al., 2023) to 3D with foreground-aware block masking, a hierarchical convolutional patch embedding, and world-space sinusoidal positional encodings. We eval-uate all three objectives across zero-shot twin retrieval, brain tumor segmentation (BraTS 2024), and age regression (OpenBHB). COJEPA achieves the best monozygotic twin recall at rank 1 (0.84), the best finetuning age MAE (2.55 yr on OpenBHB 3.0T), and matches CO on BraTS whole-tumor Dice, demonstrating that the combined objective yields repre-sentations that are simultaneously discriminative and locally structured. Code is available at XXX .
+
+Self-Supervised Learning. Self-supervised learning (SSL) is a machine learning paradigm in which the model is trained without the need for labeled data. It leverages the data’s inherent structure to generate labels, making it possible to learn representations without the need for manually labeled datasets. Unlabeled data are widely available, reducing dependencies on extensive and costly data labeling. This is especially relevant in the biomedical domain, as large-scale clinical trials are extremely costly if not infeasible to obtain for some patient groups. 
+
+SSL in medical imaging. In computer vision, SSL is capable of learning meaningful representations, which generalize well and can be finetuned for a variety of downstream tasks (Assran et al., 2023; Baevski et al., 2023; Bao et al., 2021; Caron et al., 2021; Oquab et al., 2023; He et al., 2020). Despite rapid progress in the domain of natural images and video, SSL has not yet achieved a comparable impact in the medical domain, i.e. 3D structural magnetic resonance imaging (MRI). One constraint is the scarcity of large, diverse, and shareable datasets due to acquisition cost, time, privacy, and ethical restrictions. In the case of magnetic resonance imaging, the heterogeneity between scanners, sites, field strengths, and protocols further complicates the pooling of datasets (Dinsdale et al., 2021; Kushol et al., 2023). Another constraint is the computational burden. Many SSL recipes benefit from large batch sizes, heavy augmentations, and long schedules. For 3D MRI, high spatial resolution and volumetric memory footprints make these setups impractical. Nevertheless, recent works like Tak et al. (2026), a SimCLR-like model (Chen et al., 2020) trained on ≈50,000 brain MRIs, show excellent downstream performance on a variety of tasks. 
+
+Brain MRI foundation models. Recent brain MRI foundation models span three pretraining paradigms. Volumetric MAE models such as AMAES (Munk et al., 2024), BrainSegFounder (Cox et al., 2024), and BM-1arXiv:2607.11962v1 [cs.CV] 12 Jul 2026 MAE (Robinet et al., 2025) encode full 3D context but incur reconstruction costs that scale cubically with resolution. Contrastive approaches such as BrainIAC (Tak et al., 2026) and Kaczmarek et al. (2025) demon-strate strong label efficiency via volumetric SimCLR training on large-scale clinical data. Self-distillation methods such as BrainDINO (Wu et al., 2026) and BrainFound (Mazher et al., 2025) operate on 2D slices to reach otherwise prohibitive training scales, at the cost of volumetric context. The recent FOMO25 challenge (Munk et al., 2026), benchmarking 19 brain MRI foundation models across clinical tasks, confirms no single paradigm consistently dominates: MAE favors segmentation while contrastive objectives favor classification. To our knowledge, no existing brain MRI foundation model adopts joint-embedding predictive pretraining. 
+
+Contrastive vs. Masked Image Modelling. SSL in vision largely revolves around two paradigms: (i) Contrastive Learning (CL) and (ii) Masked Image Modelling (MIM). CL methods such as (Chen et al., 2020; Grill et al., 2020; Caron et al., 2020; He et al., 2020) align the embeddings for augmented views of the same image while separating the embeddings of different images, producing globally discriminative and view-invariant features. In contrast, MIM trains a model to predict the content of masked regions and has proven effective for transformers. Early methods such as (He et al., 2022b; Bao et al., 2021; Xie et al., 2022) reconstruct in pixel space , while more recent approaches (e.g., (Assran et al., 2023; Baevski et al., 2023; Caron et al., 2021; Oquab et al., 2023)) predict targets in token/representation space . This shift is associated with stronger semantics while avoiding unnecessary pixel decoding (Oquab et al., 2023; He et al., 2022b). 
+
+Design principles: predictivity and specificity. For 3D brain structure, we posit that useful repre-sentations should be (i) locally predictive and (ii) globally specific . Local predictivity denotes the ability to anticipate distinct anatomical content from context (capturing statistical dependencies of local structure), while global specificity denotes subject-level discriminability and the retention of unique identifiable fea-tures. Viewed through this lens, MIM-style objectives naturally promote predictivity, whereas contrastive objectives promote specificity by enforcing global separability among subjects. 
+
+Combining contrastive & predictive objectives. Pure CL faces several limitations when applied to 3D MRI. First, CL objectives typically require very large batch sizes to provide sufficient negative examples, which is computationally infeasible for high-resolution volumetric data. Second, the types of invariances used in natural images do not necessarily translate well to medical images. Joint-embedding prediction (e.g., I-JEPA) instead learns by predicting latent representations of masked regions from a contextual embedding, without pixel-space decoders (Assran et al., 2023). However, joint-embedding objectives can be susceptible to representation collapse, as the objective fails if the target embedding becomes constant. Yao et al. (2024) show that MIM benefits from a contrastive objective, learning reconstructions that resemble better global semantics. We make a similar claim for joint-embedding predictive architectures: incorporating a contrastive term injects an explicit discriminative bias that preserves semantic diversity and stabilizes training. 
+
+Contribution. We propose a fully self-supervised model of human brain structure trained on T1-weighted MRIs from the Human Connectome Project Young Adult cohort (Van Essen et al., 2013). Our method pairs a joint-embedding prediction objective with a contrastive loss, explicitly targeting the principles of predic-tivity and specificity. We show that our model learns efficiently on a relatively small pretraining dataset. We comprehensively assess the learned representation via (i) statistical exploration, (ii) reconstruction and segmentation, (iii) zero-shot retrieval, and (iv) linear probing. 
+
+## 1 Background 
+
+We investigate three self-supervised training objectives: (i) Contrastive learning (CO) trains a single encoder on two augmented views of the same subject and minimizes their embedding distance; (ii) a Joint Embedding Predictive Architecture (JEPA) predicts target patch embeddings from a context view, using an EMA-updated target encoder; and (iii) the Contrastive Joint Embedding Predictive Architecture (COJEPA) unifies both: a third augmented view drives the contrastive term on a global token, while the predictive term operates on the spatial tokens of the same context–target pair. 21.1 Contrastive Learning 
+
+The contrastive objective encourages view-invariance by pulling together representations of matching pairs while simultaneously pushing apart all non-matching samples in the minibatch (Wu et al., 2018; Chen et al.). Here we use the symmetric Information Noise Contrastive Estimation (InfoNCE) loss function defined by Radford et al. (2021). Given a minibatch {(xi, y i)}Ni=1 of paired views with representations zx, z y and pairwise cosine similarities 
+
+A ∈ RN ×N with elements aij ∈ [−1, 1] , the contrastive loss for x → y is 
+
+Lcontr (τ ) = E
+
+[
+
+− log exp( aii /τ )
+
+∑Nj=1 exp( aij /τ )
+
+]
+
+. (1) The negatives {aij } where j̸ = i correspond to the off-diagonal entries in row i of A. To obtain the equivalent loss for y → x, the indices i and j in eq. (1) are swapped. The final symmetric contrastive objective is given by the average of the two directional losses. 
+
+1.2 Joint Embedding Prediction 
+
+In a joint-embedding predictive architecture, the goal is to predict the latent representation of an unobserved target view given the latent representations of a context view and the target view location (Assran et al., 2023). The construction of the context and target views is crucial: the context view needs to capture sufficient global information, while the target should contain rich semantics that cannot be resolved by simple interpolation. The authors in (Assran et al., 2023) solve this via block masking: For a given image, sample K target blocks with scale strgt and aspect ratios rtrgt . Then, sample a context block with scale 
+
+sctxt , and remove overlapping regions. We denote patch-wise context and target region masks as {mctxt }
+
+and {mtrgt }k respectively. Note that in (Assran et al., 2023), K = 4 , strgt ∈ [0 .15 , 0.2] , rtrgt ∈ [0 .75 , 1.5] and 
+
+sctxt ∈ [0 .85 , 1.0] . Given a set of target and context patch masks {mtrgt } and {mctxt }, a context encoder 
+
+fθ : {x} ⊙ { mctxt } 7 → { zctxt }, target encoder f¯θ : {x} 7 → { z} and a predictor pϕ : {zctxt , m trgt } 7 → { ˆztrgt }, the average joint embedding prediction loss over the patches ({ztrgt }, {ˆztrgt }) is 
+
+Lpred = E [D ({ˆztrgt }, sg [{z} ⊙ { mtrgt }])] , (2) where D(·, ·) denotes a distance function and sg[ · ] a ’stop gradient’ operation. The target encoder weights are updated via an exponential moving average of the context encoder weights. 
+
+## 2 Contrastive Joint Embedding Prediction 
+
+We argue that JEPA combined with a contrastive loss promotes both specificity and predictivity of learned embeddings. The proposed COJEPA architecture introduces subtle modifications compared to the JEPA architecture in (Assran et al., 2023): After retrieving patch embeddings and before the transformer layers, we attach an additional token zglob , which then interacts with the spatial context tokens zctxt via various multi-head attention layers (Vaswani et al., 2017), and is then used for the contrastive loss. In addition, we introduce several 3D MRI adaptions to the vision transformer (Dosovitskiy et al., 2020) architecture used in (Assran et al., 2023). An overview of our pipeline is depicted in fig. 1. All hyperparameters are listed in the supplementary material. 
+
+Generating contrastive samples. Contrastive learning has been shown to perform best under heavy data augmentations and large batch sizes (Chen et al., 2020). As the contrastive loss merely serves as an auxiliary training objective, we restrict the augmentations to a simple subset: random cropping and scaling, as well as random Gaussian noise and random intensity rescaling. 
+
+Positional Encoding. We take advantage of the fact that the voxels in an MRI exist in a standardized space. Rather than using grid indices of random crops, we feed the model with the global, standardized 3Figure 1: The proposed 3D framework jointly optimizes a predictive objective and a contrastive objective by encoding masked sub-volumes, predicting target embeddings (red/blue), and enforcing global alignment (green), which encourages specificity as well as predictivity of the embeddings. Only the encoder and pre-dictor (red) are trainable. The weights of the offline target encoder (blue) are updated using an exponential moving average of the online encoder weights. coordinate of the center voxel. This solves the issue of symmetries in the brain and implicitly encodes the voxel resolution of an input image. Specifically, we assign each patch P ∈ Rp×p×p, where p is the patch size, a world space position using the image affine. We then encode the 3D coordinate using a sinusoidal positional embedding with the embedding dimension D split equally across the three spatial axes, resulting in a unique global positional encoding penc ∈ R1×D .
+
+Masking. We extend the block masking strategy in (Assran et al., 2023) to a 3D scenario: First, we sample a random scale s and a random aspect ratio r within the specified limits, which determines the height h and width w of the block mask. We specify the depth by d = ⌊h · u + w · (1 − u)⌋, where u ∼ U (0 , 1) . Following (Assran et al., 2023), we first sample K target masks. In order to avoid blocks with little or no information, we prioritize foreground patches in the sampling process. A foreground patch is defined as any patch p for which ∑ 
+
+> v∈p
+
+xv > t , where xv is the voxel intensity and t is a predefined threshold. When sampling target masks, we ensure that the center patch is a foreground patch. In case the randomly sampled mask sizes differ for elements in the batch, we first remove background patches before truncating all masks to the minimum mask size across the batch. fig. 2 shows five equally spaced slices through a sampled volume, with highlighted context, and target mask regions. 
+
+Patch Embeddings. The standard patch embedding layer in Vision Transformers (Dosovitskiy et al., 2020) projects non-overlapping patches directly into the token embedding space via a single linear projection. We instead use a hierarchical convolutional stem consisting of three sequential 3D convolutions with kernel size 3, which progressively expand the channel dimension from the input to the full embedding dimension 
+
+D, while their combined strides tile the volume into non-overlapping patches. This multi-stage design allows the network to learn local spatial features before projecting into the token space, rather than treating each patch as a flat vector. Each convolution is followed by batch normalization (Ioffe & Szegedy, 2015) and GELU activation. Batch normalization was found to stabilize training on volumetric MRI data. 4Figure 2: Volume slices with colored mask regions: Context mask mctxt in red and target masks mtrgt in blue, green and yellow. All mask regions are non-overlapping. For each sampled target mask, we ensure that the center patch is a foreground patch. All target regions are truncated to the minimum mask size across the batch. 
+
+Loss. The total loss combines a prediction term and an optional contrastive term: 
+
+Ltot = λpred Lpred + λcontr Lcontr . (3) 
+
+Lpred is the mean squared error between the predictor output and the target encoder representations. We only calculate Lpred over foreground tokens. Lcontr is an InfoNCE loss (Radford et al., 2021) computed on the cls token of the two random crops drawn per subject, with the temperature learned as a scalar parameter via τ = exp(log τ ), initialized at τ = 0 .07 . We set λpred = 1 .0 and λcontr = 0 .1. An ablation of the convolutional stem, global positional encoding and background loss masking is provided in table 5. 
+
+## 3 Experiments 
+
+Pretraining Datasets. For pretraining, we used minimally processed structural T1w magnetic resonance imaging data from the Aging Adult Brain Connectome (AABC) (Bookheimer et al., 2019) and Human Connectome Project Young Adult (Van Essen et al., 2013) (HCP-YA). Data have been preprocessed AC–PC orientation alignment, readout distortion correction, cross modal registration, bias-field correction, and brain extraction (Glasser et al., 2013). We include the cross-sectional data of AABC only ( N =1390 , ages 36–90+). The HCP-YA dataset comprises 1113 healthy subjects (ages 22-37). Among the 1113 subjects, 286 are genetically confirmed monozygotic (MZ) twins (143 pairs), including 10 incomplete pairs, resulting in 138 complete MZ twin pairs. In addition, 170 subjects are genetically confirmed duozygotic twins (DZ) (79 pairs), including 12 incomplete pairs, resulting in 79 complete DZ twin pairs. We divide subjects into a training and hold-out set, where one respective twin of both MZ and DZ is assigned to the hold-out set (N =217 ). All other subjects are used for training ( N =2286 , HCP-YA ∪ AABC). 
+
+Preprocessing. Raw T1w scans undergo a minimal preprocessing pipeline: The foreground is cropped tightly around the brain using the image intensity. After applying the random augmentations described in section 2, each volume is histogram-normalized to [0 , 1] using 128 bins. For each subject, we draw two random crops per iteration, providing positive pairs for the contrastive loss. We use MONAI (Consortium et al., 2022) for data loading and augmentation. 
+
+Encoder. We use a Vision Transformer Base (ViT-B) (Dosovitskiy et al., 2020) as both the context and target encoder, with an embedding dimension of 768, 12 transformer blocks, 12 attention heads, and an MLP ratio of 4. Volumes are tokenized using a patch size of 93 voxels via the convolutional patch embedding described in section 2. When trained with a contrastive loss, we attach a cls token. In addition, we add a single register token (Darcet et al., 2023). 
+
+Predictor. A lightweight ViT predictor takes context features together with target positional embeddings and predicts the target representations at masked locations. The predictor has an embedding dimension of 384, 12 transformer blocks, and 12 attention heads, giving it roughly one quarter the parameter count of the encoder. 5Optimization. The context and target encoders share the same ViT-Base architecture. The target receives no gradient updates and is updated via an exponential moving average (EMA) of the context encoder weights, with the momentum coefficient annealed from 0.996 to 1.0. We optimize with AdamW, using a cosine learning rate schedule with a linear warmup of 50 epochs, a peak learning rate of 10 −4, and a final learning rate of 
+
+10 −5. The weight decay is similarly annealed from 0.04 to 0.4 following a cosine schedule. The model is trained for 4000 epochs on 8 AMD MI250x GPUs using bfloat16 mixed precision, with a per-GPU batch size of 12 crops ×2 views per GPU. 
+
+3.1 Evaluation 
+
+To effectively assess the pretraining scheme we compare three variants: CO (contrastive only, InfoNCE on the cls token), JEPA (predictive only), and COJEPA (both objectives combined). Unless stated otherwise, encoder weights are frozen and a lightweight task head is trained on top. For segmentation and age regression we follow a label-efficiency protocol, training the probe at 5, 25, 50, and 100% of available labels, and additionally report end-to-end finetuning at 100% of labels. 
+
+Principal components of feature space. We extract patch-level representations from the target encoder and apply a Principal Component analysis (PCA) of foreground tokens. We inspect the energy in the principal components and visualize the first three components by mapping each component to a color channel, similar to (Oquab et al., 2023). 
+
+Zero shot retrieval. We evaluate whether the representations capture family structure in the dataset by measuring retrieval performance on MZ and DZ twin pairs; only one twin per pair was seen during training. We extract a single global token per subject: the cls token (appended to the sequence and updated via the contrastive loss) for CO and COJEPA, and the avg token (global average over all spatial tokens) for JEPA, which has no cls token. We calculate the cosine similarity between all hold-out subjects and rank them accordingly; the positive match is the co-twin. We report recall at ranks 1, 5, and 10 (R@1, R@5, R@10). 
+
+Segmentation. We train a lightweight decoder on top of frozen encoder features to perform whole-tumor segmentation on BraTS 2024 (de Verdier et al., 2024), an out-of-distribution dataset with varying scanners, sites, and pathological tissue. The decoder follows an MAE-style design (He et al., 2022b): a linear projection maps encoder tokens from dimension 768 to a decoder embedding dimension of 512, followed by 4 transformer blocks with 4 attention heads. The decoder is trained with a Dice loss on Ntrain =1135 subjects and evaluated on Ntest =729 subjects, following the label-efficiency protocol described above. 
+
+Age prediction. We train a linear probe on top of frozen encoder features to predict chronological age on the OpenBHB dataset (Dufumier et al., 2022) ( Ntrain =3227 , Ntest =395 ). We restrict evaluation to 3.0 T scans in the external test split ( N =339 , ages 6 to 48 yrs), matching the field strength of the pretraining data and providing a stringent out-of-distribution assessment across multiple sites. We evaluate three pooling strategies applied to the frozen encoder output: the cls token and the avg token (plus a single linear layer), as well as attn pooling. For the attn pooling, let X ∈ RN ×D be the spatial tokens and q ∈ R1×D a learned query; we compute attention scores α = softmax( Xq T /√D) and probe the weighted average ¯x = αT X using a single linear layer. 
+
+## 4 Results 
+
+Principal components of feature space. fig. 3 visualizes the first three principal components of fore-ground patches as RGB channels. Similar areas of the brain are represented by similar colors. The edges of the brain structure as well as the ventricles are clearly depicted by red or pink colors. COJEPA embeddings (fig. 3a) show a high dynamic range with clear color contrasts, indicating that anatomical structures are well-separated in the latent space. The cumulative explained variance (Figure 3b) confirms that COJEPA uses the latent space most efficiently: its spectrum is the flattest among the three methods, while CO and JEPA concentrate more variance in fewer dimensions. 6(a) PCA visualization of embeddings (b) Cumulative Explained Variance 
+
+Figure 3: Feature visualization: (a) Slices of the RGB encoded first three principal components of COJEPA. Brain structure contours in black for reference. Anatomical structures seem to be preserved in the principal components. (b) Mean cumulative explained variance for 10 random subjects and standard deviation of the 50 principial components for CO (blue), JEPA (green) and COJEPA (orange). COJEPA shows the most flat curve, indicating that it uses the space more efficiently than CO and JEPA. 
+
+Segmentation. Table 1 reports whole-tumor Dice on BraTS 2024 (de Verdier et al., 2024) at four label fractions and after end-to-end finetuning. In the frozen probe regime, CO and COJEPA perform similarly across all label fractions, while JEPA lags notably at 5% labels (Dice 0.43 vs. 0.52 for CO/COJEPA). After finetuning, all three methods converge to 0.70 to 0.71 Dice, demonstrating that the encoder features transfer well regardless of the pretraining objective. However, end-to-end finetuning increases Dice scores the most for JEPA (+0.08), while the benefit for CO and COJEPA is smaller (+0.04). Finetuning results close most of the gap to BrainIAC at 0.79 (Tak et al., 2026), despite BrainIAC being fine-tuned end-to-end on FLAIR sequences. Table 1: BraTS whole-tumor Dice ( ↑): probing at 5/25/50/100% training labels (N100% = 1135) and end-to-end finetuning at 100%. frozen probe f-tune Method 5% 25% 50% 100% 100% CO .52 ±.01 .61 ±.01 .64 ±.01 .67 ±.01 .71 ±.01 
+
+JEPA .43 ±.01 .56 ±.01 .59 ±.01 .62 ±.01 .70 ±.01 
+
+COJEPA .52 ±.01 .61 ±.01 .64 ±.01 .66 ±.01 .71 ±.01 
+
+Age prediction. Table 2 reports age MAE on the OpenBHB external test set (3.0 T, N =339 ). CO achieves the best frozen-probe MAE at 100% labels (3.44 yr using cls ), while COJEPA shows better data-efficiency at 5% labels (4.22 yr using avg vs. 5.23 yr using attn for CO) and the best finetuning MAE (2.55 yr using 
+
+> avg
+
+). COJEPA also shows more consistent performance across all pooling mechanisms compared to CO and JEPA. Section 4 shows a heatmap of the patches that contribute to age prediction, trilinearly interpolated to voxel space. The cerebellum appears to be the main source for age prediction. Per-site breakdowns are provided in tables 6 to 8. 7Table 2: OpenBHB age MAE ( ↓, yr) on 3.0T scans: frozen probe at 5/25/50/100% labels and end-to-end finetuning at 100%. frozen probe f-tune Method 5% 25% 50% 100% 100% CO  
+
+> cls
+
+5.85 ±.25 3.59 ±.18 3.49 ±.17 3.44 ±.17 2.87 ±.17  
+
+> avg
+
+9.20 ±.30 6.08 ±.25 6.86 ±.24 6.76 ±.24 2.90 ±.16  
+
+> attn
+
+5.23 ±.23 4.06 ±.19 3.88 ±.19 3.83 ±.19 3.48 ±.17 
+
+JEPA avg 5.77 ±.25 4.26 ±.19 4.33 ±.19 4.38 ±.19 3.04 ±.17  
+
+> attn
+
+8.37 ±.29 5.04 ±.22 4.09 ±.19 4.12 ±.19 2.93 ±.17 
+
+COJEPA  
+
+> cls
+
+4.84 ±.21 4.23 ±.20 4.21 ±.20 3.98 ±.20 2.64 ±.17  
+
+> avg
+
+4.22 ±.20 3.78 ±.19 3.64 ±.19 3.60 ±.18 2.55 ±.17  
+
+> attn
+
+4.37 ±.21 3.99 ±.19 3.93 ±.19 3.83 ±.19 2.73 ±.17 
+
+Figure 4: Probe attention z-scores: Sliced heatmap of positive z-scores contributing to the linear prediction of age. Z-scores originate from the attention score of the query vector and each spatial token. The cerebellum appears to be the main source for age prediction. 
+
+Retrieval. Table 3 reports zero-shot twin retrieval on the HCP hold-out. Pure JEPA fails at identity-style retrieval (MZ R@1 = 0.26), confirming that the predictive objective alone does not produce subject-discriminative global features. Both CO and COJEPA achieve strong MZ retrieval, with COJEPA reaching the best MZ R@1 (0.84). CO is competitive at higher ranks for DZ pairs. Figure 5 shows a UMAP (McInnes et al., 2018) plot of the COJEPA cls embeddings; except for a few outliers, twin pairs are mapped closer to each other than unrelated subjects. Table 3: Zero-shot twin retrieval on the HCP hold-out (MZ N =276 , DZ N =158 ). Method MZ twins ↑ DZ twins ↑
+
+R@1 R@5 R@10 R@1 R@5 R@10 CO cls .78 ±.03 .93 ±.02 .96 ±.01 .16 ±.03 .42 ±.04 .59 ±.04  
+
+> avg
+
+.76 ±.03 .90 ±.02 .94 ±.01 .10 ±.02 .31 ±.04 .46 ±.04 
+
+JEPA avg .26 ±.03 .47 ±.03 .58 ±.03 .07 ±.02 .18 ±.03 .29 ±.04 
+
+COJEPA cls .84 ±.02 .94 ±.02 .96 ±.01 .17 ±.03 .41 ±.04 .54 ±.04  
+
+> avg
+
+.84 ±.02 .94 ±.01 .97 ±.01 .17 ±.03 .37 ±.04 .54 ±.04 
+
+8(a) DZ Twins (b) MZ Twins 
+
+Figure 5: UMAP plot of COJEPA cls embeddings: (a) DZ twin pairs and (b) MZ twin pairs, connected via a line. Twin pairs are generally placed closer to each other than unrelated subjects. 
+
+## 5 Discussion 
+
+The most striking result is the substantial improvement in zero-shot twin retrieval from the contrastive objec-tive. JEPA, trained with a predictive objective alone, already encodes sufficient identity-relevant structure to retrieve MZ twins above chance (R@1 = 0.26), consistent with the well-established heritability of brain mor-phology (Yao et al., 2023). However, it largely fails on the more genetically distant DZ pairs (R@1 = 0.07), suggesting that the predictive objective alone does not produce sufficiently discriminative global representa-tions. CO achieves strong MZ retrieval (R@1 = 0.78), and COJEPA further improves upon this (R@1 = 0.84), confirming that enforcing view-invariance within a subject produces global representations that generalize to genetic similarity. A secondary finding is that global-average-pooled spatial tokens outperform the cls token for retrieval, despite the contrastive loss being applied exclusively to the cls token, suggesting that the contrastive signal propagates beneficially to the spatial representations through the attention layers. The segmentation results show marginal but consistent differences across the three objectives, with the contrastive models performing slightly better on both tasks, indicating that the contrastive objective does not degrade and in fact slightly improves the local predictive quality of the representations. Similarly, age and sex prediction results are largely comparable across both models, with the exception of age prediction using the cls probe, where performance drops when the contrastive loss is added. We speculate that the contrastive objective encourages the cls token to focus on view-invariant subject identity at the expense of more continuous demographic variation such as age. Notably, the attention-pooling age probe performs on par with dedicated brain age models trained on the same cohort (Sarica et al., 2024; Kopetzky et al., 2024; He et al., 2022a), despite our encoder being trained in a fully self-supervised manner without any age-related supervision. This suggests that the learned representations capture morphological variation relevant to brain ageing as an emergent property of the pretraining objective 
+
+## 6 Limitations 
+
+Several limitations of this work should be acknowledged. The pretraining data of N =2286 healthy subjects is small by SSL standards, and the consistently higher error on the 1.5T site (site 36) suggests that scanner-domain gaps deserve dedicated study. Larger and more diverse pretraining cohorts would likely yield stronger and more generalizable representations. Additionally, due to the substantial computational cost of pretrain-9ing on volumetric MRI, an extensive hyperparameter search was not feasible, and the reported results may therefore not reflect the full potential of the proposed framework. 
+
+## 7 Conclusion 
+
+We presented COJEPA, a self-supervised framework for volumetric brain MRI that combines a joint-embedding predictive objective with a contrastive loss. The predictive objective produces spatially struc-tured representations that support out-of-distribution segmentation and age prediction, as well as coarse identity retrieval. Specifically, the CO term adds discriminability needed for fine-grained subject-level re-trieval. Trained on 2286 healthy subjects, the model achieves competitive downstream performance. Future work should investigate larger and more diverse pretraining cohorts, as well as the applicability of COJEPA representations to a broader range of clinical downstream tasks. 
+
+## Acknowledgements 
+
+This work was supported by the Danish Data Science Academy, which is funded by the Novo Nordisk Foundation (NNF21SA0069429) and VILLUM FONDEN (40516). The research was further supported by the Novo Nordisk Foundation grant NF22OC0076907 ”Cognitive spaces - Next generation explainability” and the Pioneer Centre for AI, DNRF grant number P1. Computational resources were provided by the DeiC National HPC (DeiC-DTU-N5-2024049). 
+
+## References 
+
+Mahmoud Assran, Quentin Duval, Ishan Misra, Piotr Bojanowski, Pascal Vincent, Michael Rabbat, Yann LeCun, and Nicolas Ballas. Self-supervised learning from images with a joint-embedding predictive archi-tecture. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 15619–15629, 2023. Alexei Baevski, Arun Babu, Wei-Ning Hsu, and Michael Auli. Efficient self-supervised learning with contex-tualized target representations for vision, speech and language. In International conference on machine learning , pp. 1416–1429. PMLR, 2023. Hangbo Bao, Li Dong, Songhao Piao, and Furu Wei. Beit: Bert pre-training of image transformers. arXiv preprint arXiv:2106.08254 , 2021. Susan Y Bookheimer, David H Salat, Melissa Terpstra, Beau M Ances, Deanna M Barch, Randy L Buckner, Gregory C Burgess, Sandra W Curtiss, Mirella Diaz-Santos, Jennifer Stine Elam, et al. The lifespan human connectome project in aging: an overview. Neuroimage , 185:335–348, 2019. Mathilde Caron, Ishan Misra, Julien Mairal, Priya Goyal, Piotr Bojanowski, and Armand Joulin. Unsu-pervised learning of visual features by contrasting cluster assignments. Advances in neural information processing systems , 33:9912–9924, 2020. Mathilde Caron, Hugo Touvron, Ishan Misra, Hervé Jégou, Julien Mairal, Piotr Bojanowski, and Armand Joulin. Emerging properties in self-supervised vision transformers. In Proceedings of the IEEE/CVF international conference on computer vision , pp. 9650–9660, 2021. Ting Chen, Simon Kornblith, Mohammad Norouzi, and Geoffrey Hinton. A simple framework for contrastive learning of visual representations. URL http://arxiv.org/abs/2002.05709 .Ting Chen, Simon Kornblith, Mohammad Norouzi, and Geoffrey Hinton. A simple framework for contrastive learning of visual representations. In International conference on machine learning , pp. 1597–1607. PmLR, 2020. Monai Consortium et al. Monai: medical open network for ai. Zenodo , 2022. 10 Joseph Cox, Peng Liu, Skylar E. Stolte, Yunchao Yang, Kang Liu, Kyle B. See, Huiwen Ju, and Ruogu Fang. Brainsegfounder: Towards 3d foundation models for neuroimage segmentation. Medical image analysis ,97:103301 – 103301, 2024. URL https://api.semanticscholar.org/CorpusID:270559279 .Timothée Darcet, Maxime Oquab, Julien Mairal, and Piotr Bojanowski. Vision transformers need registers. 
+
+arXiv preprint arXiv:2309.16588 , 2023. Maria Correia de Verdier, Rachit Saluja, Louis Gagnon, Dominic LaBella, Ujjwall Baid, Nourel Hoda Tahon, Martha Foltyn-Dumitru, Jikai Zhang, Maram Alafif, Saif Baig, et al. The 2024 brain tumor segmentation (brats) challenge: Glioma segmentation on post-treatment mri. arXiv preprint arXiv:2405.18368 , 2024. Nicola K Dinsdale, Mark Jenkinson, and Ana IL Namburete. Deep learning-based unlearning of dataset bias for mri harmonisation and confound removal. NeuroImage , 228:117689, 2021. Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Un-terthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, et al. An image is worth 16x16 words: Transformers for image recognition at scale. arXiv preprint arXiv:2010.11929 , 2020. Benoit Dufumier, Antoine Grigis, Julie Victor, Corentin Ambroise, Vincent Frouin, and Edouard Duchesnay. Openbhb: a large-scale multi-site brain mri data-set for age prediction and debiasing. NeuroImage , 263: 119637, 2022. Quentin Garrido, Randall Balestriero, Laurent Najman, and Yann Lecun. Rankme: Assessing the down-stream performance of pretrained self-supervised representations by their rank. In International conference on machine learning , pp. 10929–10974. PMLR, 2023. Matthew F Glasser, Stamatios N Sotiropoulos, J Anthony Wilson, Timothy S Coalson, Bruce Fischl, Jesper L Andersson, Junqian Xu, Saad Jbabdi, Matthew Webster, Jonathan R Polimeni, et al. The minimal preprocessing pipelines for the human connectome project. Neuroimage , 80:105–124, 2013. Jean-Bastien Grill, Florian Strub, Florent Altché, Corentin Tallec, Pierre Richemond, Elena Buchatskaya, Carl Doersch, Bernardo Avila Pires, Zhaohan Guo, Mohammad Gheshlaghi Azar, et al. Bootstrap your own latent-a new approach to self-supervised learning. Advances in neural information processing systems ,33:21271–21284, 2020. Hao He, Fan Zhang, Steve Pieper, Nikos Makris, Yogesh Rathi, William Wells, and Lauren J O’Donnell. Model and predict age and sex in healthy subjects using brain white matter features: a deep learning approach. In 2022 IEEE 19th International Symposium on Biomedical Imaging (ISBI) , pp. 1–5. IEEE, 2022a. Kaiming He, Haoqi Fan, Yuxin Wu, Saining Xie, and Ross Girshick. Momentum contrast for unsupervised visual representation learning. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pp. 9729–9738, 2020. Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr Dollár, and Ross Girshick. Masked autoencoders are scalable vision learners. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pp. 16000–16009, 2022b. Sergey Ioffe and Christian Szegedy. Batch normalization: Accelerating deep network training by reducing internal covariate shift. In International conference on machine learning , pp. 448–456. pmlr, 2015. Emily Kaczmarek, Justin Szeto, Brennan Nichyporuk, and Tal Arbel. Building a general simclr self-supervised foundation model across neurological diseases to advance 3d brain mri diagnoses. 2025 IEEE/CVF International Conference on Computer Vision Workshops (ICCVW) , pp. 1321–1330, 2025. URL https://api.semanticscholar.org/CorpusID:281315685 .Sebastian J Kopetzky, Yong Li, Marcus Kaiser, Markus Butz-Ostendorf, and Alzheimer’s Disease Neu-roimaging Initiative. Predictability of intelligence and age from structural connectomes. Plos one , 19(4): e0301599, 2024. 11 Rafsanjany Kushol, Pedram Parnianpour, Alan H Wilman, Sanjay Kalra, and Yee-Hong Yang. Effects of mri scanner manufacturers in classification tasks with deep learning models. Scientific Reports , 13(1):16791, 2023. Moona Mazher, Geoff J. M. Parker, and Daniel C. Alexander. Towards generalisable foundation models for 3d brain mri. ArXiv , abs/2510.23415, 2025. URL https://api.semanticscholar.org/CorpusID: 282389559 .Leland McInnes, John Healy, and James Melville. Umap: Uniform manifold approximation and projection for dimension reduction. arXiv preprint arXiv:1802.03426 , 2018. Asbjørn Munk, Jakob Ambsdorf, Sebastian Nørgaard Llambias, and Mads Nielsen. Amaes: Aug-mented masked autoencoder pretraining on public brain mri data for 3d-native segmentation. ArXiv ,abs/2408.00640, 2024. URL https://api.semanticscholar.org/CorpusID:271600993 .Asbjørn Munk, Stefano Cerri, Vardan Nersesjan, Christian Hedeager Krag, Jakob Ambsdorf, Pablo Ro-camora García, Julia Machnio, Peirong Liu, Suhyun Ahn, Nasrin Akbari, et al. Towards brain mri foundation models for the clinic: Findings from the fomo25 challenge. arXiv preprint arXiv:2604.11679 ,2026. Maxime Oquab, Timothée Darcet, Théo Moutakanni, Huy Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez, Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, et al. Dinov2: Learning robust visual features without supervision. arXiv preprint arXiv:2304.07193 , 2023. Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning transferable visual models from natural language supervision. In International conference on machine learning , pp. 8748–8763. PmLR, 2021. Lucas Robinet, Ahmad Berjaoui, and Elizabeth Moyal Cohen-Jonathan. Multimodal masked autoencoder pre-training for 3d mri-based brain tumor analysis with missing modalities. ArXiv , abs/2505.00568, 2025. URL https://api.semanticscholar.org/CorpusID:278237475 .Alessia Sarica, Chiara Camastra, Assunta Pelagi, Fulvia Arcuri, and Andrea Quattrone. Conformal predic-tion for uncertainty quantification in brain age estimation using random forests quantile regression on mri features of the hcp young adult. In International Conference on Machine Learning, Optimization, and Data Science , pp. 132–146. Springer, 2024. Divyanshu Tak, Biniam A Garomsa, Anna Zapaishchykova, Tafadzwa L Chaunzwa, Juan Carlos Cli-ment Pardo, Zezhong Ye, John Zielke, Yashwanth Ravipati, Suraj Pai, Sri Vajapeyam, et al. A gen-eralizable foundation model for analysis of human brain mri. Nature Neuroscience , pp. 1–12, 2026. David C Van Essen, Stephen M Smith, Deanna M Barch, Timothy EJ Behrens, Essa Yacoub, Kamil Ugurbil, Wu-Minn HCP Consortium, et al. The wu-minn human connectome project: an overview. Neuroimage ,80:62–79, 2013. Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Lukasz Kaiser, and Illia Polosukhin. Attention is all you need. Advances in neural information processing systems , 30, 2017. Yizhou Wu, Shansong Wang, Yuheng Li, Mojtaba Safari, Mingzhe Hu, Chih-Wei Chang, Harini Veeraragha-van, and Xiaofeng Yang. Braindino: A brain mri foundation model for generalizable clinical representation learning. arXiv preprint arXiv:2604.27277 , 2026. Zhirong Wu, Yuanjun Xiong, Stella X Yu, and Dahua Lin. Unsupervised feature learning via non-parametric instance discrimination. In Proceedings of the IEEE conference on computer vision and pattern recognition ,pp. 3733–3742, 2018. 12 Zhenda Xie, Zheng Zhang, Yue Cao, Yutong Lin, Jianmin Bao, Zhuliang Yao, Qi Dai, and Han Hu. Simmim: A simple framework for masked image modeling. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pp. 9653–9663, 2022. Xing Yao, Benjamin Klugah-Brown, Hang Yang, and Bharat Biswal. Structural and functional network analysis of twins using fmri data. Cerebral Cortex , 33(22):11060–11069, 2023. Yuchong Yao, Nandakishor Desai, and Marimuthu Palaniswami. Moma: Contrastive learning distills better masked autoencoders. In International Conference on Pattern Recognition , pp. 73–88. Springer, 2024. 13 A Hyperparameters 
+
+Table 4: Pretraining hyperparameters. 
+
+Hyperparameter Value 
+
+Architecture 
+
+Model ViT-Base Patch size 93
+
+Patch embedding Conv + BatchNorm Positional embedding Global, prepended Register tokens 1Predictor depth 12 Predictor embedding dim 384 
+
+Data 
+
+Dataset HCP Young Adult S1200 Input channels 1ROI size 90 3
+
+Scale range [0 .9, 1.5] 
+
+Batch size (per node) 12 
+
+Masking 
+
+Context mask scale [0 .80 , 1.00] 
+
+Target mask scale [0 .20 , 0.25] 
+
+Target mask aspect ratio [0 .75 , 1.25] 
+
+Number of context masks 1Number of target masks 3Mask background tokens True 
+
+Optimization 
+
+Epochs 4000 Peak learning rate 1 × 10 −4
+
+Start / final learning rate 1 × 10 −5
+
+Warmup epochs 50 Weight decay (init / final) 0.04 / 0.40 
+
+EMA momentum range [0 .996 , 1.000] 
+
+Mixed precision bfloat16 
+
+Loss 
+
+Prediction loss coefficient 1.0 Density loss coefficient 0.0 Contrastive temperature 0.07 Token norm False 
+
+## B Ablations 
+
+Table 5 reports a 3D-component ablation of COJEPA on the HCP hold-out, measuring reconstruction quality (R 2), representation rank (RankMe Garrido et al. (2023)), and MZ twin retrieval at R@1/5/10. Removing global positional encodings causes the largest drop across all retrieval metrics, confirming that world-space coordinates are essential for learning subject-discriminative features. Removing the convolutional stem degrades retrieval moderately, while removing foreground masking has little effect on retrieval and slightly improves R 2.14 Table 5: 3D-component ablation of COJEPA on the HCP hold-out. Variant R2 RankMe R@1 R@5 R@10 Full (COJEPA) .572 ±.003 753.6 ±0.2 .399 ±.030 .681 ±.028 .775 ±.025 
+
+w/o global pos. enc. .519 ±.004 743.9 ±0.5 .127 ±.020 .283 ±.027 .377 ±.029 
+
+w/o foreground mask .593 ±.003 752.1 ±0.2 .424 ±.030 .703 ±.028 .768 ±.025 
+
+w/o conv stem .567 ±.003 752.2 ±0.2 .330 ±.028 .616 ±.029 .728 ±.027 
+
+## C Age prediction 
+
+Tables 6 to 8 report age MAE broken down by acquisition site at all label fractions. Site 36 (1.5T) consistently shows the highest error across all methods, highlighting the domain gap between scanner field strengths. Sites 15 and 64, despite having few subjects ( N ≤20 ), achieve competitive MAE on 3.0T scans. Table 6: Age MAE ( ↓, yr) by acquisition site — CO. 
+
+Site T N Token 5% 25% 50% 100% 15 3.0 20  
+
+> attn
+
+3.84 ±.70 4.44 ±.89 5.19 ±.95 5.39 ±.94  
+
+> avg
+
+10.32 ±1.29 10.28 ±1.19 11.70 ±1.17 11.04 ±1.17  
+
+> cls
+
+4.44 ±.65 2.99 ±.51 2.80 ±.53 3.15 ±.52 
+
+19 3.0 32  
+
+> attn
+
+5.61 ±.80 4.81 ±.88 4.79 ±.86 4.68 ±.88  
+
+> avg
+
+9.87 ±.88 7.57 ±.69 8.00 ±.67 7.07 ±.67  
+
+> cls
+
+7.36 ±1.23 5.29 ±.93 4.92 ±.82 4.81 ±.83 
+
+36 1.5 56  
+
+> attn
+
+9.41 ±.99 12.68 ±1.16 13.87 ±1.25 14.21 ±1.22  
+
+> avg
+
+8.24 ±.81 9.54 ±1.15 10.22 ±1.21 10.87 ±1.23  
+
+> cls
+
+9.00 ±.86 13.78 ±1.30 14.59 ±1.29 13.61 ±1.23 
+
+41 3.0 103  
+
+> attn
+
+6.18 ±.44 3.43 ±.34 3.29 ±.31 3.42 ±.32  
+
+> avg
+
+12.62 ±.52 7.04 ±.46 7.26 ±.43 7.73 ±.43  
+
+> cls
+
+6.00 ±.46 2.96 ±.27 3.07 ±.29 3.05 ±.28 
+
+55 3.0 166  
+
+> attn
+
+4.90 ±.32 4.18 ±.24 3.83 ±.23 3.66 ±.23  
+
+> avg
+
+6.95 ±.36 4.45 ±.29 5.59 ±.31 5.47 ±.30  
+
+> cls
+
+5.64 ±.32 3.70 ±.23 3.59 ±.23 3.44 ±.23 
+
+64 3.0 18  
+
+> attn
+
+3.63 ±.72 4.77 ±.81 4.58 ±.79 4.36 ±.70  
+
+> avg
+
+7.93 ±1.03 8.33 ±1.12 8.94 ±1.12 7.87 ±1.06  
+
+> cls
+
+5.74 ±1.03 3.84 ±.76 3.17 ±.73 3.58 ±.71 
+
+15 Table 7: Age MAE ( ↓, yr) by acquisition site — JEPA ( cls not available). 
+
+Site T N Token 5% 25% 50% 100% 15 3.0 20 attn 3.96 ±.53 3.97 ±.72 3.50 ±.63 3.22 ±.53  
+
+> avg
+
+3.53 ±.66 4.91 ±.70 4.83 ±.68 4.33 ±.54 
+
+19 3.0 32 attn 6.17 ±.88 5.93 ±.92 5.31 ±.87 5.32 ±.80  
+
+> avg
+
+6.41 ±.86 5.22 ±.79 5.19 ±.80 5.21 ±.80 
+
+36 1.5 56 attn 15.88 ±1.59 18.52 ±1.51 17.77 ±1.56 17.51 ±1.51  
+
+> avg
+
+14.37 ±1.56 16.27 ±1.66 16.74 ±1.67 16.12 ±1.61 
+
+41 3.0 103 attn 8.21 ±.43 3.43 ±.27 3.16 ±.26 3.42 ±.28  
+
+> avg
+
+4.32 ±.36 3.37 ±.28 3.63 ±.31 4.12 ±.34 
+
+55 3.0 166 attn 9.70 ±.44 6.05 ±.32 4.45 ±.28 4.41 ±.28  
+
+> avg
+
+6.82 ±.37 4.40 ±.26 4.30 ±.25 4.26 ±.26 
+
+64 3.0 18 attn 5.73 ±1.11 4.47 ±.71 4.55 ±.79 4.39 ±.74  
+
+> avg
+
+5.89 ±1.34 5.58 ±1.06 6.50 ±1.10 5.50 ±1.08 
+
+Table 8: Age MAE ( ↓, yr) by acquisition site — COJEPA. 
+
+Site T N Token 5% 25% 50% 100% 15 3.0 20  
+
+> attn
+
+4.69 ±.65 3.84 ±.66 3.61 ±.62 3.47 ±.64  
+
+> avg
+
+4.48 ±.55 3.68 ±.70 3.97 ±.66 3.87 ±.71  
+
+> cls
+
+4.79 ±.61 4.63 ±.91 4.16 ±.70 4.32 ±.72 
+
+19 3.0 32  
+
+> attn
+
+5.08 ±.64 4.58 ±.86 4.77 ±.83 4.75 ±.88  
+
+> avg
+
+4.99 ±.66 4.51 ±.87 4.32 ±.83 4.25 ±.87  
+
+> cls
+
+4.96 ±.71 5.27 ±.85 5.51 ±.87 5.18 ±.91 
+
+36 1.5 56  
+
+> attn
+
+12.54 ±1.22 10.90 ±1.17 13.92 ±1.30 12.56 ±1.22  
+
+> avg
+
+11.92 ±1.16 11.28 ±1.19 13.12 ±1.28 12.55 ±1.23  
+
+> cls
+
+11.32 ±1.06 12.15 ±1.28 14.52 ±1.40 13.56 ±1.34 
+
+41 3.0 103  
+
+> attn
+
+3.58 ±.36 2.53 ±.29 2.58 ±.32 2.55 ±.33  
+
+> avg
+
+3.65 ±.34 2.78 ±.29 2.68 ±.31 3.16 ±.32  
+
+> cls
+
+4.41 ±.38 3.37 ±.32 3.12 ±.34 3.04 ±.33 
+
+55 3.0 166  
+
+> attn
+
+4.66 ±.31 4.66 ±.26 4.54 ±.26 4.33 ±.25  
+
+> avg
+
+4.31 ±.30 4.12 ±.25 3.92 ±.25 3.52 ±.23  
+
+> cls
+
+4.95 ±.31 4.31 ±.25 4.58 ±.26 4.16 ±.25 
+
+64 3.0 18  
+
+> attn
+
+4.57 ±1.18 5.33 ±.88 4.94 ±.75 5.27 ±.87  
+
+> avg
+
+5.06 ±1.25 5.11 ±.93 5.05 ±.79 5.43 ±.91  
+
+> cls
+
+6.08 ±1.08 6.10 ±1.19 4.79 ±.92 5.13 ±.93 
+
+16
