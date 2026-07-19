@@ -1,0 +1,164 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-19T19:46:50.974397+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.14183v1",
+      "source": "arxiv",
+      "title": "Open-AoE: An Open Egocentric Manipulation Dataset and Toolchain for Embodied Learning",
+      "abstract": "Egocentric videos of human manipulation provide scalable supervision for embodied intelligence, yet existing resources rarely combine low-cost continuous capture, manipulation-level structured annotations, and reusable tools for robot learning. We present Open-AoE, an open, community-oriented egocentric manipulation dataset and toolchain spanning the full pipeline from smartphone capture to model training. Its first release contains approximately 2,000 hours of manipulation video collected in natural environments by 500+ contributors using 400+ smartphones. The dataset provides text annotations, MANO-based hand poses, camera trajectories, and temporally localized atomic actions. Open-AoE further includes a data processing pipeline that transforms raw recordings into structured samples through temporal action segmentation, semantic annotation, hand reconstruction, and camera trajectory reconstruction. Meanwhile, we provide a separate downstream toolchain supports visualization, cross-embodiment retargeting, model-specific data conversion, and training recipes for VLA policies, WAMs, and World Models. By integrating scalable capture, structured processing, and downstream adaptation, Open-AoE reduces the barriers to both data contribution and reuse, providing practical open infrastructure for embodied model training, human-to-robot transfer, and world modeling.",
+      "authors": [
+        "Zishuo Li",
+        "Bowen Yang",
+        "Changtao Miao",
+        "Kai Zhu",
+        "Hao Chen",
+        "Qingze Guan",
+        "Zhengxing Wu",
+        "Wanke Zhan",
+        "Yang Sun",
+        "Zhiyi Huang",
+        "Zitong Shan",
+        "Zhenchao Jin",
+        "Jiadong Hong",
+        "Taowen Wang",
+        "Yushi Feng",
+        "You Liu",
+        "Yibo Wang",
+        "Yifan Yang",
+        "Zhaowen Zhou",
+        "Man Luo",
+        "Hao Cheng",
+        "Bo Zhang",
+        "Jianshu Li",
+        "Jiansheng Cai",
+        "Guocai Yao",
+        "Jize Zhang",
+        "Chenhao Lin",
+        "Renjing Xu",
+        "Lequan Yu",
+        "Chao Shen",
+        "Chunhua Shen",
+        "Zhe Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-15T14:49:49+00:00",
+      "link": "https://arxiv.org/pdf/2607.14183v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "large-scale egocentric manipulation dataset for imitation learning",
+      "llm_evidence_cn": "大规模自我中心操作数据集，支持模仿学习",
+      "llm_evidence": "大规模自我中心操作数据集，支持模仿学习",
+      "canonical_evidence": "大规模自我中心操作数据集，支持模仿学习",
+      "llm_tldr_en": "Presents Open-AoE, a large-scale egocentric manipulation dataset with 2000 hours of video, annotations, and toolchain for robot learning from demonstrations.",
+      "llm_tldr_cn": "现有资源缺乏低成本的连续捕捉和结构化标注。本文提出Open-AoE，一个开放的自我中心操作数据集和工具链，包含约2000小时自然环境下由500多人用智能手机采集的视频，提供文本标注、手部姿态、相机轨迹和原子动作。该资源可直接用于模仿学习的数据支持。",
+      "llm_tldr": "现有资源缺乏低成本的连续捕捉和结构化标注。本文提出Open-AoE，一个开放的自我中心操作数据集和工具链，包含约2000小时自然环境下由500多人用智能手机采集的视频，提供文本标注、手部姿态、相机轨迹和原子动作。该资源可直接用于模仿学习的数据支持。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.14200v1",
+      "source": "arxiv",
+      "title": "Augmentations for Robust and Efficient Imitation Learning in Streamed Video Games",
+      "abstract": "Imitation learning is an appealing way to scale game-playing agents to complex 3D environments by training policies to map visual observations to actions from human demonstrations. However, these demonstrations are expensive to collect and modern game-playing is often done through streaming in which network delay and compression introduce spatiotemporally correlated visual artifacts that can cause a covariance shift at test time. To address these challenges, we propose streaming augmentations that mimic four types of artifacts commonly encountered during streaming with low-bandwidth network connection: pixelated blocks and scrubs, global blur, and ghosting. We instantiate our approach on top of predictive inverse dynamics models (PIDM), which combine future-state conditioning with an inverse dynamics policy in a learned latent space, and evaluate the impact of our augmentations across three tasks in modern 3D video games. Under stable streaming conditions, agents trained with spatiotemporal augmentations achieve up to 41% higher evaluation performance compared to agents trained without augmentations under an identical data budget. When network lag is introduced, agents trained with augmentations degrade by only 7.45% vs 49.82% of the original performance for agents trained only with the original data. These results clearly indicate that spatiotemporal augmentations tailored for the streaming setting are a simple yet powerful tool to train robust and efficient game-playing agents.",
+      "authors": [
+        "Somjit Nath",
+        "Abdelhak Lemkhenter",
+        "Pallavi Choudhury",
+        "Chris Lovett",
+        "Katja Hofmann",
+        "Sergio Valcarcel Macua",
+        "Lukas Schäfer"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-15T17:07:51+00:00",
+      "link": "https://arxiv.org/pdf/2607.14200v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "imitation learning with augmentation for robustness",
+      "llm_evidence_cn": "用于鲁棒性的模仿学习增强方法",
+      "llm_evidence": "用于鲁棒性的模仿学习增强方法",
+      "canonical_evidence": "用于鲁棒性的模仿学习增强方法",
+      "llm_tldr_en": "Proposes streaming augmentations to improve imitation learning robustness in video games, transferable to robotics.",
+      "llm_tldr_cn": "本文针对流式视频游戏中的模仿学习问题，提出流式增强方法模拟网络伪影，提高策略对视觉协变量偏移的鲁棒性，该方法可迁移至机器人领域。",
+      "llm_tldr": "本文针对流式视频游戏中的模仿学习问题，提出流式增强方法模拟网络伪影，提高策略对视觉协变量偏移的鲁棒性，该方法可迁移至机器人领域。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.14280v1",
+      "source": "arxiv",
+      "title": "DiMaS: Distribution Matching for Steering Vision-Language-Action Models",
+      "abstract": "Flow-matching-based vision-language-action (VLA) models have emerged as powerful policies for robotic manipulation, yet a critical capability remains underexplored: fine-grained behavioral control, the ability to govern how a robot performs a task by intervening on its internal representations. Representation steering is a well-established interpretability tool for language and vision-language models, where behavioral features are typically encoded as linear directions, but we show that these classic methods fall short in VLAs. We propose DiMaS, a Distribution-Matching Steering strategy tailored to flow-matching VLAs, which transports between representation distributions rather than shifting along a fixed direction, and show that it effectively controls behavior across two state-of-the-art VLAs. We further examine the generalizability of this strategy as the tasks it is learned from and evaluated on grow increasingly dissimilar, characterizing where behavioral control transfers and where it weakens. Finally, through an analysis of the representation structure of the action expert, we explain why classical linear steering falls short in the visuomotor setting: behavioral features are linearly decodable but not linearly steerable, which motivates the distribution-matching design of DiMaS. Our code is publicly available at https://github.com/pegah-kh/dimas, with additional results and videos at https://pegah-kh.github.io/dimas/",
+      "authors": [
+        "Pegah Khayatan",
+        "Sara Meziane",
+        "Jayneel Parekh",
+        "Matthieu Cord"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "published": "2026-07-15T18:39:13+00:00",
+      "link": "https://arxiv.org/pdf/2607.14280v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "uses flow matching (related to diffusion) for steering vision-language-action models in robotic manipulation",
+      "llm_evidence_cn": "使用流匹配（与扩散相关）引导机器人操作的视觉-语言-动作模型",
+      "llm_evidence": "使用流匹配（与扩散相关）引导机器人操作的视觉-语言-动作模型",
+      "canonical_evidence": "使用流匹配（与扩散相关）引导机器人操作的视觉-语言-动作模型",
+      "llm_tldr_en": "Proposes DiMaS, a distribution-matching steering method for flow-matching VLAs, enabling fine-grained control over robot behavior.",
+      "llm_tldr_cn": "流匹配VLA模型在机器人操作中表现优异但缺乏行为细粒度控制。本文提出DiMaS，通过分布匹配策略引导VLA表示，实现对机器人执行方式的精细调控。实验表明该方法能有效改变行为风格而不影响任务成功，为扩散策略的行为控制提供了新工具。",
+      "llm_tldr": "流匹配VLA模型在机器人操作中表现优异但缺乏行为细粒度控制。本文提出DiMaS，通过分布匹配策略引导VLA表示，实现对机器人执行方式的精细调控。实验表明该方法能有效改变行为风格而不影响任务成功，为扩散策略的行为控制提供了新工具。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -6,34 +6,30 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-18
-- 运行时间：2026-07-18 20:02:19 UTC
+- 最新运行日期：2026-07-19
+- 运行时间：2026-07-19 19:48:52 UTC
 - 运行状态：成功
-- 本次总论文数：4
-- 精读区：1
+- 本次总论文数：3
+- 精读区：0
 - 速读区：3
 
 ### 今日简报（AI）
-1) 今日精读1篇聚焦结构MRI表征学习，速读涵盖导航、多机器人协调与机器人技能引导三大方向。  
-2) 最值得关注的是对比联合嵌入预测在医学图像表征中的高潜力（8.0分），以及基于扩散模型的无通信多机器人协调方法。  
-3) 建议优先深入8分精读论文，理解对比预测框架的应用；速读中“零样本技能引导”对自动化部署有实操参考价值。
-- 详情：[/202607/18/README](/202607/18/README)
+今日三篇论文聚焦具身学习、视频游戏模仿学习与视觉-语言-动作模型分布匹配；其中《Open-AoE》提供开源的自体中心操作数据集和工具链，是具身学习方向的核心资源。建议优先阅读该文，并关注其数据集如何促进机器人操作任务的训练与评估。
+- 详情：[/202607/19/README](/202607/19/README)
 
 ### 精读区论文标签
-1. [Contrastive Joint-Embedding Prediction for Representation Learning in Structural MRI](/202607/18/2607.11962v1-contrastive-joint-embedding-prediction-for-representation-learning-in-structural-mri)  
-   标签：评分：8.0/10、query:imitation
-   evidence：对比联合嵌入预测架构（JEPA）用于医学成像
+- 本次无精读推荐。
 
 ### 速读区论文标签
-1. [NavCMPO: Critic-Guided MeanFlow Policy Optimization for Adaptive Navigation](/202607/18/2607.14643v1-navcmpo-critic-guided-meanflow-policy-optimization-for-adaptive-navigation)  
+1. [Open-AoE: An Open Egocentric Manipulation Dataset and Toolchain for Embodied Learning](/202607/19/2607.14183v1-open-aoe-an-open-egocentric-manipulation-dataset-and-toolchain-for-embodied-learning)  
    标签：评分：7.0/10、query:imitation
-   evidence：基于扩散的策略用于自适应视觉导航
-2. [CoDiMAD: Diffusion-Based Privileged Distillation for Communication-Free Multi-Robot Coordination](/202607/18/2607.09587v1-codimad-diffusion-based-privileged-distillation-for-communication-free-multi-robot-coordination)  
+   evidence：大规模自我中心操作数据集，支持模仿学习
+2. [Augmentations for Robust and Efficient Imitation Learning in Streamed Video Games](/202607/19/2607.14200v1-augmentations-for-robust-and-efficient-imitation-learning-in-streamed-video-games)  
    标签：评分：6.0/10、query:imitation
-   evidence：基于扩散的特权蒸馏用于多机器人协调
-3. [Zero2Skill: Bootstrapping Robot Skills through Autonomous Data Collection, Training, and Deployment](/202607/18/2607.14047v2-zero2skill-bootstrapping-robot-skills-through-autonomous-data-collection-training-and-deployment)  
+   evidence：用于鲁棒性的模仿学习增强方法
+3. [DiMaS: Distribution Matching for Steering Vision-Language-Action Models](/202607/19/2607.14280v1-dimas-distribution-matching-for-steering-vision-language-action-models)  
    标签：评分：6.0/10、query:imitation
-   evidence：自主数据收集支持机器人技能学习，为模仿学习流程赋能
+   evidence：使用流匹配（与扩散相关）引导机器人操作的视觉-语言-动作模型
 
 
 <div class="dpr-home-promo-card">

@@ -1,0 +1,54 @@
+{
+  "label": "2026-07-19",
+  "date": "2026-07-19",
+  "generated_at": "2026-07-19T19:48:57",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202607/19/2607.14183v1-open-aoe-an-open-egocentric-manipulation-dataset-and-toolchain-for-embodied-learning",
+      "section": "quick",
+      "title_en": "Open-AoE: An Open Egocentric Manipulation Dataset and Toolchain for Embodied Learning",
+      "authors": "Zishuo Li, Bowen Yang, Changtao Miao, Kai Zhu, Hao Chen, Qingze Guan, Zhengxing Wu, Wanke Zhan, Yang Sun, Zhiyi Huang, Zitong Shan, Zhenchao Jin, Jiadong Hong, Taowen Wang, Yushi Feng, You Liu, Yibo Wang, Yifan Yang, Zhaowen Zhou, Man Luo, Hao Cheng, Bo Zhang, Jianshu Li, Jiansheng Cai, Guocai Yao, Jize Zhang, Chenhao Lin, Renjing Xu, Lequan Yu, Chao Shen, Chunhua Shen, Zhe Li",
+      "date": "2026-07-15",
+      "pdf": "https://arxiv.org/pdf/2607.14183v1",
+      "score": "7.0",
+      "evidence": "大规模自我中心操作数据集，支持模仿学习",
+      "tldr": "现有自我中心操作数据集在低成本连续采集、结构化注释和可复用工具方面存在不足。Open-AoE构建了从智能手机采集到模型训练的开源工具链，包含约2000小时自然环境下操作视频及手部姿态、原子动作等精细标注。其数据处理流水线实现时间动作分割、语义标注、手部与相机轨迹重建，并提供跨实体重定向与VLA策略训练等下游工具。该工作降低了数据贡献与复用门槛，为具身模型训练、人机转移和世界建模提供实用开放基础设施。",
+      "tags": "query:imitation",
+      "abstract_en": "Egocentric videos of human manipulation provide scalable supervision for embodied intelligence, yet existing resources rarely combine low-cost continuous capture, manipulation-level structured annotations, and reusable tools for robot learning. We present Open-AoE, an open, community-oriented egocentric manipulation dataset and toolchain spanning the full pipeline from smartphone capture to model training. Its first release contains approximately 2,000 hours of manipulation video collected in natural environments by 500+ contributors using 400+ smartphones. The dataset provides text annotations, MANO-based hand poses, camera trajectories, and temporally localized atomic actions. Open-AoE further includes a data processing pipeline that transforms raw recordings into structured samples through temporal action segmentation, semantic annotation, hand reconstruction, and camera trajectory reconstruction. Meanwhile, we provide a separate downstream toolchain supports visualization, cross-embodiment retargeting, model-specific data conversion, and training recipes for VLA policies, WAMs, and World Models. By integrating scalable capture, structured processing, and downstream adaptation, Open-AoE reduces the barriers to both data contribution and reuse, providing practical open infrastructure for embodied model training, human-to-robot transfer, and world modeling.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/19/2607.14200v1-augmentations-for-robust-and-efficient-imitation-learning-in-streamed-video-games",
+      "section": "quick",
+      "title_en": "Augmentations for Robust and Efficient Imitation Learning in Streamed Video Games",
+      "authors": "Somjit Nath, Abdelhak Lemkhenter, Pallavi Choudhury, Chris Lovett, Katja Hofmann, Sergio Valcarcel Macua, Lukas Schäfer",
+      "date": "2026-07-15",
+      "pdf": "https://arxiv.org/pdf/2607.14200v1",
+      "score": "6.0",
+      "evidence": "用于鲁棒性的模仿学习增强方法",
+      "tldr": "针对流式视频游戏中网络延迟与压缩导致的视觉伪影引发的协变量偏移问题，本文提出四种时空增强方法模拟像素块、全局模糊、鬼影等伪影，并基于预测逆动力学模型（PIDM）训练智能体。在稳定流式条件下，增强训练使性能提升高达41%；引入网络延迟时，增强模型性能仅下降7.45%，而原始模型下降49.82%。结果表明，适配流式环境的时空增强是训练鲁棒高效游戏代理的简单有效手段。",
+      "tags": "query:imitation",
+      "abstract_en": "Imitation learning is an appealing way to scale game-playing agents to complex 3D environments by training policies to map visual observations to actions from human demonstrations. However, these demonstrations are expensive to collect and modern game-playing is often done through streaming in which network delay and compression introduce spatiotemporally correlated visual artifacts that can cause a covariance shift at test time. To address these challenges, we propose streaming augmentations that mimic four types of artifacts commonly encountered during streaming with low-bandwidth network connection: pixelated blocks and scrubs, global blur, and ghosting. We instantiate our approach on top of predictive inverse dynamics models (PIDM), which combine future-state conditioning with an inverse dynamics policy in a learned latent space, and evaluate the impact of our augmentations across three tasks in modern 3D video games. Under stable streaming conditions, agents trained with spatiotemporal augmentations achieve up to 41% higher evaluation performance compared to agents trained without augmentations under an identical data budget. When network lag is introduced, agents trained with augmentations degrade by only 7.45% vs 49.82% of the original performance for agents trained only with the original data. These results clearly indicate that spatiotemporal augmentations tailored for the streaming setting are a simple yet powerful tool to train robust and efficient game-playing agents.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/19/2607.14280v1-dimas-distribution-matching-for-steering-vision-language-action-models",
+      "section": "quick",
+      "title_en": "DiMaS: Distribution Matching for Steering Vision-Language-Action Models",
+      "authors": "Pegah Khayatan, Sara Meziane, Jayneel Parekh, Matthieu Cord",
+      "date": "2026-07-15",
+      "pdf": "https://arxiv.org/pdf/2607.14280v1",
+      "score": "6.0",
+      "evidence": "使用流匹配（与扩散相关）引导机器人操作的视觉-语言-动作模型",
+      "tldr": "流匹配视觉-语言-动作（VLA）模型在机器人操作中表现优异，但缺乏细粒度行为控制。经典线性引导方法在VLA中失效，因为行为特征线性可解码但不可线性引导。为此提出DiMaS，通过分布匹配在表示分布间传输而非沿固定方向移动，有效控制两个SOTA VLA的行为。分析表明该方法在任务差异增大时泛化性渐变，为VLA行为控制提供了新范式。",
+      "tags": "query:imitation",
+      "abstract_en": "Flow-matching-based vision-language-action (VLA) models have emerged as powerful policies for robotic manipulation, yet a critical capability remains underexplored: fine-grained behavioral control, the ability to govern how a robot performs a task by intervening on its internal representations. Representation steering is a well-established interpretability tool for language and vision-language models, where behavioral features are typically encoded as linear directions, but we show that these classic methods fall short in VLAs. We propose DiMaS, a Distribution-Matching Steering strategy tailored to flow-matching VLAs, which transports between representation distributions rather than shifting along a fixed direction, and show that it effectively controls behavior across two state-of-the-art VLAs. We further examine the generalizability of this strategy as the tasks it is learned from and evaluated on grow increasingly dissimilar, characterizing where behavioral control transfers and where it weakens. Finally, through an analysis of the representation structure of the action expert, we explain why classical linear steering falls short in the visuomotor setting: behavioral features are linearly decodable but not linearly steerable, which motivates the distribution-matching design of DiMaS. Our code is publicly available at https://github.com/pegah-kh/dimas, with additional results and videos at https://pegah-kh.github.io/dimas/",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
