@@ -1,0 +1,867 @@
+Title: Dynamics-Aware Meta-Imitation for Generalization to Unseen Robotic Manipulation
+
+URL Source: https://arxiv.org/pdf/2607.15880v1
+
+Published Time: Mon, 20 Jul 2026 01:10:28 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> 1
+
+# Dynamics-Aware Meta-Imitation for Generalization to Unseen Robotic Manipulation 
+
+Zhenduo Shang, Xiyao Liu, Bohan Li, Xudong Wang, Teng Ren, Lianqing Liu, and Zhi Han 
+
+Abstract —Imitation Learning aims to learn skills from extensive observations and demonstrations for robots, so it suffers from data scarcity and environment generalization. The existing methods predominantly focus on imitation from in-domain tasks and consequently struggle with generalization to unseen tasks. To bridge this generalization gap, we propose the Dynamics-Aware Meta-Imitation (DAMI) framework. By integrating meta-learning to construct a shared skill space, DAMI equips agents for rapid adaptation to novel tasks. We introduce the Visual-Motor Trajectory (VMT) module to capture complex spatio-temporal dynamics within the task latent space. Furthermore, we propose the Unpaired Unified Task (U2T) block to fuse unstructured multimodal observations. To coordinate these representations, we integrate a Task-Conditioned Feature Modulation (TCFM) mechanism customized for modulating low-level 3D features. By capturing intrinsic dynamics from a random complete reference demonstration, our framework learns the underlying task logic rather than memorizing static cues, ensuring effective generalization. Extensive experiments in both simulation and real-world settings demonstrate that our approach outperforms state-of-the-art baselines regarding direct inference on seen tasks and adaptation to unseen tasks via few-shot fine-tuning. 
+
+Note to Practitioners —Deploying robot manipulators in factories and service environments is often limited by the cost of collecting demonstrations for every new task. This work is motivated by the practical need to reuse experience from previously learned tasks and adapt a robot to a new manipulation task with only a small number of demonstrations. The proposed DAMI framework combines the robot’s current observation, a language instruction, and a complete reference demonstration to identify the intended behavior and adapt the control policy. Tests in simulated benchmarks and on a physical robot show that this approach can improve task success and reduce action misinterpretation compared with representative baseline methods, while requiring less than two minutes for the reported real-world adaptation procedure. The method is most applicable when a complete and relevant reference demonstration, reliable three-dimensional observations, and a small task-specific demonstration set are available. Its present limitations include the need for task-specific fine-tuning, additional computation compared with the baseline, and evaluation on a limited set of manipulation tasks. Future work should reduce adaptation time and validate reliability under broader object, sensing, and operating conditions. 
+
+Index Terms —Few-shot learning, Imitation learning, Meta-learning, Robotic manipulation. 
+
+Zhenduo Shang, Xiyao Liu, Xudong Wang, Lianqing Liu, and Zhi Han are with the State Key Laboratory of Robotics and Intelligent Systems, Shenyang Institute of Automation, Chinese Academy of Sciences, Shenyang 110016, China. Zhenduo Shang and Xudong Wang are also with the University of Chinese Academy of Sciences, Beijing 100049, China. Bohan Li and Teng Ren are with Shenyang University of Technology. Corresponding author: Xiyao Liu (e-mail: liuxiyao@sia.cn). Unseen Task   
+
+> Task Specific
+> Multi -Task
+> In -Context
+> Training on
+> seen data
+> …
+> Init
+> Action Misinterpretation
+> Align Close Gripper Press
+
+Generalization   
+
+> Unseen Task
+> Task Specific
+> Multi -Task
+> In -Context
+> Training on
+> seen data
+> …
+> Init
+> Action Misinterpretation
+> Align Close Gripper Press
+
+Generalization 
+
+Fig. 1. Generalization gap in conventional methods. Standard approaches overfit seen data and fail on unseen tasks. The bottom sequence shows Action Misinterpretation: the robot fails to push the cylinder with an open gripper. 
+
+I. I NTRODUCTION 
+
+Robotic manipulation aims to enable agents to interact with and change their environments [1], [2]. Imitation Learning (IL) is effective for acquiring complex robotic manipulation skills from demonstrations [3], [4]. However, IL policies learned from limited expert demonstrations can suffer from distribution shift and compounding errors, while collecting additional demonstrations is often costly [5]–[7]. As a result, many methods train specialized policies for individual tasks [8], [9] or use multi-task models that may memorize training patterns [10], [11]. These methods often generalize poorly to out-of-distribution tasks and still fall short of the needs of general-purpose robots [12]. Large-scale human videos [13] and synthesized data [14] can reduce the need for robot demonstrations, but they still require costly training and suffer from domain shifts [15]. Few-shot generalization provides a more data-efficient direction by using prior knowledge to solve new tasks [16], [17]. However, traditional meta-learning methods often struggle to infer the dynamics of novel tasks under large distribution shifts. Recently, In-Context Imitation Learning (ICIL) has emerged as a gradient-free paradigm that uses demonstrations directly as context during inference [18], [19]. Although efficient, these non-parametric methods often rely on visual similarity rather than task dynamics or action semantics, which limits their performance when tasks have different structures or require semantic understanding. Recent advances in 3D policy learning show that explicit 3D representations, including point clouds and fused geometric fea-tures, are essential for capturing spatial structure in unstructured arXiv:2607.15880v1 [cs.RO] 17 Jul 2026 2特征空间指标 concat 相同来源的特征 ，计算 cos sim   
+
+> 任务语义匹配 时间窗口 KL 散度
+> 帧之间的权重和时间有关 ，指标之间的权重先用平均
+> cond text
+
+θ Training Task2 
+
+> 
+
+θ Training Task2 
+
+> 
+> Gaussian Noise
+
+Down 
+
+Sample 
+
+Up 
+
+Sample 
+
+U-Net 
+
+U2T Text Instruction  
+
+> Door open
+> Assembly
+> ……
+> CLIP
+> Text Encoder
+> Time 1
+
+...  Time n 
+
+> Complete Demonstration
+> Support Observation
+> …
+> Vision Encoder
+> Action
+> Demo Vision Feature
+> Current Vision Feature
+> Positional Embedding
+
+VMT 
+
+> ...
+> ...
+> Text
+> ...
+> Add & Norm
+> Feed -Forward
+> Network
+> Add & Norm
+> Multi -Head
+> Self -Attention
+
+Trajectory 
+
+TCFM 
+
+> Gaussian Noise
+
+Down 
+
+Sample 
+
+Up 
+
+Sample 
+
+U-Net 
+
+U2T Text Instruction  
+
+> Door open
+> Assembly
+> ……
+> CLIP
+> Text Encoder
+> Time 1
+
+... Time n 
+
+> Complete Demonstration
+> Support Observation
+> …
+> Vision Encoder
+> Action
+> Demo Vision Feature
+> Current Vision Feature
+> Positional Embedding
+
+VMT 
+
+> ...
+> ...
+> Text
+> ...
+> Add & Norm
+> Feed -Forward
+> Network
+> Add & Norm
+> Multi -Head
+> Self -Attention
+
+Trajectory 
+
+TCFM 
+
+Fig. 2. Overview of the DAMI Architecture. Given the current observation, a language instruction, and a complete reference demonstration, DAMI predicts an action trajectory using a meta-learned 3D diffusion policy. 
+
+environments [20]–[22]. Within this area, diffusion policies have emerged as a powerful paradigm for modeling multimodal action distributions and generating complex visuomotor behav-iors [23]–[25]. However, their performance often depends on dense demonstrations. When only a few demonstrations are available, directly fine-tuning a high-capacity 3D diffusion policy creates a mismatch between data availability and model capacity, making the policy prone to overfitting support trajectories rather than learning transferable task dynamics [26], [27]. Therefore, combining expressive 3D diffusion policies with data-efficient adaptation remains a key challenge. Meeting this challenge requires extracting task-specific dynamics from sparse demonstrations while preserving transferable knowledge. To this end, we present the Dynamics-Aware Meta-Imitation (DAMI) framework, which couples an expressive 3D diffusion policy with a data-efficient meta-learning objective. Instead of learning each novel task from scratch, DAMI meta-learns a shared initialization [28] that can be rapidly updated from only a few demonstrations. The policy is conditioned on a text instruction, a complete reference demonstration, and the current observation, enabling task-specific behavior to be inferred from sparse data. Specifically, the Visual-Motor Trajectory (VMT) module jointly encodes visual features and motor actions from the demonstration with temporal position information, capturing task dynamics rather than static appearance. The Unpaired Unified Task (U2T) block then uses Transformer-based fusion to align the demonstration and text tokens with the observation–timestep condition at the first U-Net downsampling block. Finally, Task-Conditioned Feature Modulation (TCFM) injects this fused condition into the low-level 3D features of the diffusion U-Net [29], [30] in a task-conditioned manner. Together, these components reduce reliance on dense demonstrations and support rapid adaptation to unseen tasks. Extensive experiments show that DAMI outperforms state-of-the-art baselines, especially on unseen tasks. In summary, our contributions are as follows:  
+
+> •
+
+We propose the Dynamics-Aware Meta-Imitation (DAMI) framework, which uses meta-learning to build a shared skill space for rapid few-shot adaptation and cross-task generalization.  
+
+> •
+
+We introduce the Visual-Motor Trajectory (VMT) module to capture spatio-temporal dynamics in a compact latent space, helping the policy model task logic.  
+
+> •
+
+We design the Unpaired Unified Task (U2T) block with a TCFM mechanism to fuse unstructured multimodal observations and modulate low-level 3D features.  
+
+> •
+
+Experiments on Meta-World, RLBench, and real-world tasks demonstrate stronger direct inference on seen tasks and rapid adaptation to unseen tasks. II. R ELATED WORK 
+
+A. Few-Shot Imitation Learning 
+
+Conventional imitation learning often assumes independent and identically distributed data, making policies brittle under distribution shifts and novel tasks. BC-Z [31] and RAM [32] use large-scale data or retrieval for zero-shot transfer, but require high computational cost. OmniManip [33] and Funcanon [34] introduce structured constraints. Alignment-based methods ad-dress mismatched execution in one-shot imitation [35]. Recent zero-shot imitation approaches learn viewpoint-invariant object-centric representations through contrastive alignment, enabling cross-environment deployment with fewer demonstrations [36]. Closed-loop learning-from-demonstration frameworks further evaluate and automatically optimize skill-transfer generalization to unseen tasks [37]. Despite these advances, balancing cross-domain generality with low-level control precision remains challenging. 
+
+B. 3D Visual-Motor Policies 
+
+3D representations provide geometry and viewpoint invari-ance, improving policy robustness in robotic manipulation [38]. DP3 [24] established a strong 3D diffusion baseline, but high-dimensional 3D inputs remain costly to process. Later methods strengthen 3D perception and manipulation through visual pre-training [39], feature fusion [40], active scene perception with joint viewpoint planning and depth completion in cluttered environments [41], or multi-view graph-attention modeling of visual manipulation relationships for robotic grasping [42]. Language- and affordance-aware grasping further uses part-affordance grounding and multimodal large language model reasoning for task-driven selection [43], [44]. Despite better 3D 3… 
+
+> Obs Feature
+> …
+> …
+> Action Sequence
+> Temporal
+> Downsampling
+> Temporal
+> Embeddings
+> Feed -Forward
+> Multi -Head
+> Self -Attention
+> Feed -Forward
+> Multi -Head
+> Self -Attention
+> Demo Feature
+> …
+> …
+> Obs Feature
+> …
+> …
+> Action Sequence
+> Temporal
+> Downsampling
+> Temporal
+> Embeddings
+> Feed -Forward
+> Multi -Head
+> Self -Attention
+> Feed -Forward
+> Multi -Head
+> Self -Attention
+> Demo Feature
+> …
+> Fig. 3. The illustration of VMT.
+
+perception and execution, these methods are still mainly task-specific or in-domain, with limited support for data-efficient adaptation to unseen tasks. 
+
+C. Multi-task Robotic Manipulation 
+
+Multi-task robotic manipulation requires effective geometric and semantic features from high-dimensional observations. RVT-2 [45] improves precision with a multi-view transformer, and GNFactor [46] uses neural feature fields for semantic understanding. ManiGaussian [47] models scene dynamics with dynamic Gaussian Splatting [48], while diffusion-based frameworks [49], [50] and FlowRAM [51] improve trajectory modeling and efficiency. However, these methods still depend strongly on training distributions and generalize poorly to unseen tasks, limiting their use when rapid adaptation is needed. III. M ETHOD 
+
+Overview . This section details the core design of DAMI. As shown in Figure 2, DAMI conditions a 3D diffusion policy on the current observation, a language instruction, and a complete reference demonstration. The current point cloud and state are encoded by a visual encoder, the instruction is encoded by a frozen CLIP text encoder, and the reference demonstration is encoded by the proposed VMT module. The diffusion-timestep embedding and current observation feature are first combined into a U-Net condition. U2T then fuses this condition with projected demonstration and text tokens at the first downsampling block, while the remaining blocks retain the observation–timestep condition. The resulting policy predicts an action trajectory, while the meta-learning objective encourages the learned initialization to adapt rapidly to novel tasks with only a few demonstrations. 
+
+A. Problem Formulation 
+
+We consider manipulation tasks Ti ∼ p(T ), each associated with a task-specific expert dataset DTi containing ten complete expert episodes. At each meta-training step, a batch of 16-frame observation–action windows is sampled from DTi and split by index into a support batch Bsup i for inner-loop adaptation and a query batch Bqry i for the outer-loop update. A complete 200-frame reference demonstration τi is obtained by randomly selecting one complete episode from the same task dataset. Thus, the demonstration, support batch, and query batch all originate from DTi ; no episode-level isolation is enforced, and the selected demonstration episode may also contribute windows to Bsup i or Bqry i . At each control step, the policy πθ
+
+takes the current observation Ot (a 3D point cloud and robot state), a text instruction ℓi, and τi as inputs, and predicts an 
+
+H-step action trajectory A0 = [ at, . . . , at+H−1]. Our goal is to learn a policy initialization that enables strong base-task performance and rapid few-shot adaptation to unseen tasks. 
+
+B. Diffusion-based Meta-Imitation Formulation 
+
+DAMI adopts the Diffusion Policy paradigm [23] to model action trajectories. Given the clean action trajectory A0, the forward diffusion process gradually perturbs it into a noisy trajectory Ak. The reverse process is implemented by a conditional U-Net that predicts the clean trajectory from the noisy sample, diffusion step, current observation feature fobs ,demonstration tokens Hdemo , and text feature ftext . Following DP3 [24], we use the action-prediction parameterization: 
+
+Ldif f = Ek, A0,ϵ 
+
+
+
+A0 − ˆA0,θ (Ak, k, fobs , Hdemo , ftext ) 2
+
+.
+
+(1) To support rapid adaptation, we integrate this diffusion objective with the full Model-Agnostic Meta-Learning (MAML) procedure [28]. For a task Ti, the inner loop adapts the current initialization θ on the support set: 
+
+θ′ 
+
+> i
+
+= θ − α∇θ Ldif f (θ, B sup i ), (2) where α is the inner learning rate. At each outer step, the task batch B is constructed by enumerating all tasks assigned to the current GPU worker. The shared initialization is updated from the average query-set meta-gradient using AdamW: 
+
+¯gt = ∇θ
+
+1
+
+|B| 
+
+X
+
+> Ti∈B
+
+Ldif f (θ′
+
+> i
+
+, B qry i ),θ ← AdamW( θ, ¯gt; ηt),
+
+(3) where ηt follows a linear-warmup and cosine-decay schedule. We retain the computation graph through the inner-loop update, so the meta-gradient includes the second-order derivative terms of full MAML. During evaluation, base tasks are handled by direct inference using the EMA policy obtained during meta-training, whereas novel tasks are initialized from the same EMA policy, fine-tuned on few-shot demonstrations, and then evaluated with the adapted policy. 
+
+C. The VMT Module 
+
+To distill the intricate spatio-temporal dynamics embedded within expert demonstrations, we propose the Visual-Motor Trajectory, visually detailed in Figure 3. Purely visual demon-stration encoding can over-emphasize static object appearance, which is insufficient for distinguishing manipulation intents such as pushing, pulling, and pressing. In contrast, the action sequence exposes how the scene should evolve under the expert’s control. VMT therefore jointly models visual states and motor commands, allowing the representation to capture “what changes under what action” rather than relying only on static visual cues. Formally, we consider a reference demonstration trajectory τ = {(fv,t , at)}Tt=1 , comprising a sequence of high-dimensional visual representations fv,t ∈ RDv4
+
+Algorithm 1 DAMI Meta-Training Algorithm 
+
+Require: Policy πθ , inner learning rate α, outer optimizer Ometa , EMA schedule {γt}, per-task datasets {D i} 
+
+> 1:
+
+Load the frozen CLIP encoder; initialize θema ← θ 
+
+> 2:
+
+repeat  
+
+> 3:
+
+Construct B from all tasks assigned to the current GPU worker; set gtotal ← 0 
+
+> 4:
+
+for each task Ti ∈ B do  
+
+> 5:
+
+Sample a window batch Bi ∼ D i; split it by index into Bsup i and Bqry i 
+
+> 6:
+
+Sample ei ∼ Uniform {0, . . . , 9}; load the 200-frame trajectory τi ← FullEpisode( Di, e i) 
+
+> 7:
+
+Hsup demo ← VMT θ (VisEnc θ (τi.obs) , τ i.action) ; ftext ← CLIP( ℓi) 
+
+> 8:
+
+f sup obs ← VisEnc θ (Bsup i .obs)  
+
+> 9:
+
+Set A0 ← Bsup i .action ; sample ϵ, k ; construct Ak; ek ← TimeEmb θ (k) 
+
+> 10:
+
+hsup i,k ← MLP θ ([ ek ⊕ f sup obs ])  
+
+> 11:
+
+Within U-Net, set csup  
+
+> Down 1
+
+← U2T θ ([Proj θ (Hsup demo ) || Proj θ (ftext ) || hsup i,k ]) and csup other ← hsup i,k  
+
+> 12:
+
+bAsup  
+
+> 0,θ
+
+← UNet θ (Ak, k ; global cond = f sup obs , fuse feature = [ Hsup demo , ftext ])  
+
+> 13:
+
+Lin ← ∥ A0 − bAsup  
+
+> 0,θ
+
+∥22 
+
+> 14:
+
+θ′ 
+
+> i
+
+← θ − α∇θ Lin  
+
+> 15:
+
+Hqry demo ← VMT θ′ 
+
+> i
+
+(VisEnc θ′ 
+
+> i
+
+(τi.obs) , τ i.action)  
+
+> 16:
+
+f qry obs ← VisEnc θ′ 
+
+> i
+
+(Bqry i .obs)  
+
+> 17:
+
+Lout ← L dif f (θ′
+
+> i
+
+, B qry i , Hqry demo , ftext , f qry obs ) 
+
+> 18:
+
+gtotal ← gtotal + ∇θ Lout  
+
+> 19:
+
+end for  
+
+> 20:
+
+θ ← O meta (θ, g total /|B| ) ▷ AdamW with warmup and cosine decay  
+
+> 21:
+
+θema ← γtθema + (1 − γt)θ 
+
+> 22:
+
+until the maximum number of epochs is reached  
+
+> 23:
+
+return πθema 
+
+and proprioceptive actions at ∈ RDa , where T denotes the temporal horizon. 
+
+Unified Modality Embedding. Since vision and action reside in heterogeneous feature spaces, direct interaction is suboptimal. We first bridge this semantic gap by projecting the concatenated features onto a shared latent manifold via a learnable linear projection ϕproj :
+
+et = ϕproj ([ fv,t ⊕ at]) , (4) where ⊕ denotes concatenation, and et ∈ RDmodel represents the unified token at step t. This results in a raw token sequence 
+
+E = [ e1, . . . , eT ].
+
+Spatio-Temporal Representation Learning. To capture trajectory-level evolution, we add learnable positional em-beddings P, implemented with an embedding layer, to E to retain sequential order. The sequence is then processed by a Transformer encoder to model global temporal dependencies: 
+
+Hdemo = Transformer (E + P). (5) The resulting token sequence Hdemo serves as a motion-centric context, preserving the fine-grained dynamics required for downstream policy conditioning. 
+
+D. The U2T Module 
+
+Cross-Modal Semantic Alignment. To harmonize an un-structured text instruction, a structured reference demonstration, and the current observation, we propose the Unpaired Unified Task encoder. Here, “unpaired” indicates that the reference demonstration and current observation need not be temporally aligned or frame-wise matched; they share task semantics but may correspond to different states, object poses, or execution phases. In the implemented data flow, the demonstration and text form the explicit fusion tokens, whereas the current observation follows the U-Net global-conditioning branch and is combined with the diffusion timestep before fusion. The frozen CLIP encoder [52] produces the text feature ftext ,and VMT produces the demonstration tokens Hdemo . We use modality-specific affine projections to align only these two fusion inputs: 
+
+em = Wm · LN (fm) + bm, m ∈ { demo, text }, (6) where fdemo = Hdemo and LN (·) denotes LayerNorm. The current observation feature fobs is not passed through this modality-projection branch. 
+
+Observation–Timestep-Conditioned Fusion. At diffusion step k, the timestep embedding ek = TimeEmb( k) is concate-nated with the current observation feature and transformed by the U-Net condition MLP: 
+
+hk = MLP([ ek ⊕ fobs ]) . (7) Distinct learnable positional embeddings preserve the structure and source of the demonstration and text tokens. The U2T input and the resulting first-downsampling-block condition are 
+
+Zin = [ edemo + Pdemo || etext + Ptext || hk],
+
+CDown 1 = U2T( Zin ) = TransformerEncoder( Zin ), (8) where || denotes sequence concatenation. Thus, U2T performs Transformer-based fusion of the demonstration and text tokens with the observation–timestep condition specifically for the first downsampling block. 5
+
+Algorithm 2 Novel-Task Few-Shot Adaptation and Evaluation Algorithm 
+
+Require: Pre-trained EMA policy πθema , target-task expert dataset D, text instruction ℓ, steps N , learning rate α, weight decay 
+
+λ, clipping threshold c, EMA schedule {γi} 
+
+> 1:
+
+Initialization  
+
+> 2:
+
+πϕ ← Copy( πθema ); ϕema ← ϕ 
+
+> 3:
+
+Fit observation and action normalizers on D 
+
+> 4:
+
+ftext ← CLIP( ℓ) 
+
+> 5:
+
+Adaptation  
+
+> 6:
+
+for i = 1 to N do  
+
+> 7:
+
+Sample a complete reference trajectory d ∼ D and a batch B of observation-action windows from D 
+
+> 8:
+
+Hdemo ← VMT ϕ(VisEnc ϕ(d. obs) , d. action)  
+
+> 9:
+
+fobs ← VisEnc ϕ(B. obs)  
+
+> 10:
+
+Set A0 ← B. action ; sample ϵ, k ; construct Ak; ek ← TimeEmb ϕ(k) 
+
+> 11:
+
+hk ← MLP ϕ([ ek ⊕ fobs ])  
+
+> 12:
+
+Within U-Net, set cDown 1 ← U2T ϕ([Proj ϕ(Hdemo ) || Proj ϕ(ftext ) || hk]) and cother ← hk 
+
+> 13:
+
+bA0,ϕ ← UNet ϕ(Ak, k ; global cond = fobs , fuse feature = [ Hdemo , ftext ])  
+
+> 14:
+
+L ← ∥ A0 − bA0,ϕ ∥22 
+
+> 15:
+
+ϕ ← AdamW( ϕ, Clip( ∇ϕL, c ); α, λ ) 
+
+> 16:
+
+ϕema ← γiϕema + (1 − γi)ϕ 
+
+> 17:
+
+end for  
+
+> 18:
+
+Evaluation  
+
+> 19:
+
+For each Meta-World episode, sample deval ∼ D and hold it fixed throughout the rollout  
+
+> 20:
+
+Evaluate RLBench by sampling one deval ∼ D and reusing it for all episodes  
+
+> 21:
+
+return evaluation results 
+
+E. Task-Conditioned Feature Modulation 
+
+We implement the denoising network as a modified 1D conditional U-Net with residual convolutional blocks. The current observation feature fobs is supplied as the U-Net global condition, while [Hdemo , ftext ] is supplied as the fusion feature. Since early downsampling layers perform geometric grounding and local contact reasoning, we apply U2T fusion only at the first downsampling block. The remaining blocks use the lighter observation–timestep condition hk from Equation (7). Let hj denote the feature at the j-th U-Net block. We modulate it using FiLM: 
+
+ehj = γj (cj ) ⊙ hj + βj (cj ), (9) where γj and βj are learned projections that produce the modulation coefficients. The layer-specific condition is 
+
+cj =
+
+(
+
+CDown 1 , j = Down 1,
+
+hk, otherwise , (10) Here, ek is the diffusion timestep embedding, not the sampled diffusion noise ϵ. Consequently, every U-Net block remains conditioned on both the current observation and diffusion timestep, while only the first downsampling block performs Transformer fusion with the demonstration and text features. 
+
+F. Training and Adaptation Procedures 
+
+Meta-training. The complete procedure is summarized in Algorithm 1. At each outer step, every GPU worker constructs its task batch by enumerating all tasks assigned to that worker rather than randomly drawing tasks from p(T ). Each task has one expert dataset Di containing ten complete expert episodes. A DataLoader samples 16-frame observation–action windows from this dataset, and each batch is split by index into support and query subsets. The reference demonstration is sampled from the same task dataset by randomly selecting one complete episode and loading all 200 frames. The code does not enforce episode-level separation, so the selected demonstration episode may also contribute support or query windows. VMT encodes the demonstration, the frozen CLIP encoder processes the text instruction, and the visual encoder extracts the current observation feature. The observation and timestep embeddings are transformed into hk; U2T fuses hk with the projected demonstration and text tokens only at the first downsampling block, while the other blocks use hk. The inner loop performs one action-prediction gradient update on all trainable policy parameters. The complete query forward pass, including VMT, the visual encoder, U2T, and the U-Net, is recomputed using θ′
+
+> i
+
+;only the frozen CLIP feature is reused. Full-MAML gradients are averaged across the task batch and applied with AdamW under a linear-warmup and cosine-decay learning-rate schedule. An EMA copy of the policy is maintained with a step-dependent decay schedule. 
+
+Novel-task Adaptation and Evaluation. The few-shot adaptation procedure is summarized in Algorithm 2. For every evaluated task, the runner receives that task’s own expert dataset 
+
+D. For a novel task, the same D supplies the fine-tuning windows, full reference demonstrations, and normalization statistics for the point cloud, agent state, and action. Each adaptation iteration samples an observation–action batch and a complete reference trajectory from D, rebuilds the observation– timestep and U2T conditions, and updates the policy using AdamW with weight decay and gradient clipping. A scheduled 6
+
+TABLE I KEY HYPERPARAMETERS USED IN OUR EXPERIMENTS .
+
+Training and Data Optimization Architecture and Adaptation Hyperparameter Value Hyperparameter Value Hyperparameter Value 
+
+Training Epochs 3,000 Outer Optimizer AdamW Point Feature Dim 64 Episodes per Epoch 18 Outer Learning Rate 1.0 × 10 −4 Action Dim 128 Prediction Horizon 16 Optimizer Betas [0.95, 0.999] VMT Attention Heads 4Action Pred. Step 8 Weight Decay 1.0 × 10 −6 VMT Layers 2Observation Step 2 Inner Optimizer SGD U2T Attention Heads 8Diff. Training Steps 100 Inner Learning Rate 1.0 × 10 −4 U2T Pos. Emb. (Sim) 200 Diff. Inference Steps 10 Inner Loop Steps 1 U2T Pos. Emb. (Real) 500 Support / Episodes per Task 20 / 10 LR Scheduler Warmup + Cosine Diff. Step Embed Dim 128 Query Set Size 88 EMA Power / Max Decay 0.75 / 0.9999 FT Vision LR 1.0 × 10 −5
+
+Total Batch Size 108 FT Diffusion LR 3.0 × 10 −5 FT Other LR 1.0 × 10 −4
+
+TABLE II SUCCESS RATES (%) ON BASE META -W ORLD TASKS . BOLD AND UNDERLINED INDICATE THE BEST AND SECOND -B EST RESULTS .ML10 Tasks ML45 Tasks Average Alg. / Tasks E(5) M(3) H(2) E(26) M(9) H(5) VH(5) ML10 ML45 Meta-World 74.40 1.33 10.00 13.23 1.41 0.00 0.00 39.60 7.93 DP3 87.07 80.11 72.83 59.47 34.93 23.60 29.40 82.13 47.24 Mamba 85.07 76.22 33.83 64.18 36.48 32.80 25.87 72.17 50.90 FreqPolicy 84.33 82.11 69.83 57.88 32.63 26.00 27.07 80.77 45.87 FlowPolicy 83.73 74.44 69.17 61.21 28.81 15.80 26.73 78.03 45.85 
+
+Ours(DAMI) 90.27 91.78 72.83 87.19 71.04 61.60 68.60 87.23 79.05 
+
+TABLE III SUCCESS RATES (%) ON NOVEL META -W ORLD TASKS . BOLD AND UNDERLINED INDICATE THE BEST AND SECOND -B EST RESULTS .ML10 Tasks ML45 Tasks Average Alg. / Tasks Door Close Drawer Open Lever Pull Sweep Into Shelf Place Door Lock Door Unlock Bin Picking Box Close Hand Insert ML10 ML45 Meta-World 94.00 22.67 5.33 24.67 0.00 42.67 7.67 0.33 1.67 10.33 29.33 12.53 DP3 100.00 70.33 44.67 16.67 12.67 51.00 94.00 9.33 26.67 6.67 48.87 37.53 Mamba 100.00 32.33 27.67 9.67 10.00 22.67 34.67 9.67 12.67 5.33 35.93 17.00 FreqPolicy 93.00 98.00 18.67 15.67 7.00 11.33 6.00 11.00 25.33 13.67 46.47 13.47 FlowPolicy 100.00 13.33 17.67 6.67 0.00 15.00 22.00 9.00 13.33 6.00 27.53 13.07 
+
+Ours(DAMI) 100.00 100.00 45.33 28.00 10.67 39.33 98.67 13.67 22.33 13.67 56.80 37.53 
+
+TABLE IV SUCCESS RATES (%) ON NOVEL RLB ENCH FS25 N OVEL TASKS . BOLD  
+
+> AND
+
+UNDERLINED INDICATE THE BEST AND SECOND -B EST RESULTS .          
+
+> Task DP3 Mamba FreqPolicy FlowPolicy Ours(DAMI) Avg. 9.93 0.00 1.20 0.20 10.80
+
+EMA copy of the adapted policy is maintained to smooth the updates. For Meta-World, one complete demonstration is randomly selected from the current task’s ten episodes at the start of each rollout, held fixed throughout that rollout, and resampled for the next rollout. Base-task evaluation uses the same task dataset that was used during training. RLBench instead samples one demonstration and reuses it across its evaluation episodes. IV. E XPERIMENT 
+
+A. Experiment Setup 
+
+Simulations. In our simulation experiments, we adopt the standard ML10 and ML45 protocols from Meta-World [53] and the FS25 setting from RLBench [54] to systematically evaluate the few-shot adaptation and generalization capabilities of our method. These benchmarks comprise a broad spectrum of robotic skills ranging from simple object interactions to complex articulations and tool use. 
+
+Task Splits. The benchmarks are structured as follows:  
+
+> •
+
+Metaworld ML10: This suite is designed to test rapid adaptation to novel tasks with limited data. It consists of 10 training tasks and 5 held-out testing tasks.  
+
+> •
+
+Metaworld ML45: This larger-scale setting contains 45 training tasks and 5 held-out testing tasks, which evaluate the ability of the model to generalize from a diverse set of behaviors.  
+
+> •
+
+RLBench FS25: This setting trains policies on 25 base tasks and evaluates adaptation on 5 held-out tasks after few-shot fine-tuning. 
+
+Expert Demonstration. We collect expert trajectories using RL agents [55], [56], achieving 100% success on most tasks. Crucially, we maintain strict data consistency across all evalua-tion methods. This standardization eliminates discrepancies in 7                  
+
+> TABLE V DETAILED SUCCESS RATES (%) ON SELECTED REPRESENTATIVE BASE SIMULATION TASKS FROM THE ML10 B ENCHMARK . W EREPORT RESULTS ON A
+> SUBSET OF TASKS : 5 E ASY , 3 M EDIUM ,AND 2 H ARD TASKS , A VERAGED OVER 3 E VALUATION SEEDS .
+
+Meta-World (Easy) Meta-World (Medium) Meta-World (Hard) 
+
+Alg \ Task Door Open Button Press Topdown Drawer Close Reach Window Open Basketball Peg Insert Side Sweep Pick Place Push Meta-World 74.00 85.00 98.33 16.00 98.67 0.33 0.00 3.67 4.00 16.00 DP3 82.33 100.00 100.00 54.67 98.33 100.00 70.33 70.00 68.67 77.00 MambaPolicy 86.33 100.00 100.00 39.00 100.00 100.00 62.33 66.33 0.00 67.67 FreqPolicy 96.67 89.00 100.00 42.33 93.67 100.00 65.33 81.00 75.00 64.67 FlowPolicy 91.33 100.00 100.00 27.33 100.00 96.67 69.33 57.33 61.00 77.33 DAMI 92.67 100.00 100.00 58.67 100.00 100.00 88.00 87.33 70.33 75.33 Door Open  Peg Insert Side  Sweep Into  Drawer Open                
+
+> DP3 DAMI
+> Error Pos
+> Success
+> Peg Fall
+> Success Success Success
+> Object Fall Task Confus ion
+> Door Open Peg Insert Side Sweep Into Drawer Open
+> DP3 DAMI
+> Error Pos
+> Success
+> Peg Fall
+> Success Success Success
+> Object Fall Task Confus ion
+> Fig. 4. Qualitative comparison on Meta-World. Execution frames of DP3 (top) and DAMI (bottom) on base tasks (left) and novel-task adaptation (right).
+
+data quality or quantity, ensuring that performance differences are solely attributable to the policy architectures. 
+
+Baselines. We benchmark DAMI against a diverse suite of state-of-the-art methods to assess both adaptation and multi-task proficiency. Our comparison includes DP3, a representative 3D diffusion policy, alongside cutting-edge architectures such as Mamba Policy [57], FlowPolicy [55], and FreqPolicy [56]. We extend these originally single-task baselines to the multi-task setting via joint training on the aggregated dataset. This rigorous protocol allows us to examine whether advanced backbones can inherently absorb complex multi-task distributions via naive data aggregation, or if explicit meta-adaptation mechanisms remain indispensable. Finally, the standard Meta-World RL baseline [53] is included for completeness. 
+
+Evaluation Protocols. To ensure statistical reliability, all simulation experiments are conducted across three seeds, numbered 0, 1, and 2. Adhering to protocols [24], [40], [57], we evaluate imitation learning algorithms every 200 epochs, performing 20 evaluation episodes per task at each checkpoint. For the Meta-World RL baseline, evaluations are performed every 20 epochs. We employ distinct strategies based on task set. Direct inference is used for base tasks, while few-shot fine-tuning for 200 steps is applied to novel tasks before inference, following Algorithm 2. For each seed, we calculate the average success rate of the top-5 checkpoints. We then report the mean of these per-seed averages across all three seeds. 
+
+Implementation Details. We standardize the visual encoder architecture across all methods. This encoder comprises a three-layer MLP followed by a max-pooling layer for fea-ture aggregation, a projection head for compact 3D feature generation, and LayerNorm to enhance training stability. We utilize the pre-trained CLIP model with a ViT-B/32 backbone [52] as the text encoder. The model weights are kept frozen during training to preserve the learned semantic alignment. Point clouds are downsampled using Farthest Point Sampling (FPS). Specifically, we retain 512 points for simulation tasks and 1024 points for real-world experiments to accommodate the varying complexity of environmental details. For the meta-learning setup, we train the model for 3000 epochs, configuring a support set size of 20 and a query set size of 88 per task. The inner loop performs a single gradient update step for each support batch to enable rapid adaptation. A comprehensive list of hyperparameters is provided in Table I. 
+
+Key Hardware and Software. All methods are implemented within the PyTorch framework. Experiments are conducted on a computational node equipped with the Intel Xeon Platinum 8358 CPU and the NVIDIA L40S GPU (48GB). 
+
+B. Quantitative Comparison 
+
+We benchmark DAMI against prior state-of-the-art methods on the Meta-World and RLBench simulation suites. Following the protocol established in DP3 [24], we stratify the Meta-World tasks within ML10 and ML45 into Easy (E) , Medium (M) , Hard (H) , and Very Hard (VH) levels. In addition, we evaluate cross-task adaptation on RLBench under the FS25 setting. Accordingly, we report the quantitative results grouped by these benchmark-specific evaluation protocols. 
+
+1) Novel Tasks Evaluation: As presented in Table III and Table IV, DAMI ranks first or joint first across all three novel-task evaluation settings. It achieves an average success rate of 56.80% on ML10, outperforming all baselines, and reaches 37.53% on ML45, tying DP3 for the highest average success rate. Notably, this joint-best ML45 adaptation performance is achieved while DAMI attains 79.05% on ML45 base tasks, substantially exceeding DP3’s 47.24% (Table II). This 31.81-percentage-point improvement demonstrates that DAMI preserves substantially stronger base-task proficiency without sacrificing novel-task adaptation. On RLBench FS25, DAMI further obtains the highest average success rate of 10.80%. Overall, these results highlight DAMI’s stronger balance between base-task proficiency and cross-task adaptation. 8AG95 
+
+UR10e 
+
+Close Drawer  Object Place  Press Button  Pull Ball  Sweep Cylinder  Push Cube  Stack Cube   
+
+> Init
+> Move Gripper
+> Start
+> In Process
+> End
+> Init
+> Move Gripper
+> Grasp
+> Move
+> End
+> Init Init Init
+> Move Gripper
+> Alig n
+> Close Gripper
+> End
+> Align
+> Touch
+> In Process
+> End
+> Align
+> Touch
+> In Process
+> End
+
+D435i  Init  Init    
+
+> Close Gripper Align
+> Align Grasp
+> Pull
+> End End
+> Move
+
+AG95 
+
+UR10e 
+
+Close Drawer Object Place Press Button Pull Ball Sweep Cylinder Push Cube Stack Cube   
+
+> Init
+> Move Gripper
+> Start
+> In Process
+> End
+> Init
+> Move Gripper
+> Grasp
+> Move
+> End
+> Init Init Init
+> Move Gripper
+> Alig n
+> Close Gripper
+> End
+> Align
+> Touch
+> In Process
+> End
+> Align
+> Touch
+> In Process
+> End
+
+D435i Init Init    
+
+> Close Gripper Align
+> Align Grasp
+> Pull
+> End End
+> Move
+
+Fig. 5. Real-world setup and tasks. The left panel shows the UR10e manipulator with an AG95 gripper, while the right panels show representative execution frames for training and unseen tasks. TABLE VI DETAILED SUCCESS RATES (%) ON ALL 45 B ASE SIMULATION TASKS FROM THE ML45 B ENCHMARK . T HE TASKS ARE CATEGORIZED BY DIFFICULTY 
+
+LEVELS : 26 E ASY , 9 M EDIUM , 5 H ARD , AND 5 V ERY HARD TASKS . W E REPORT THE AVERAGE SUCCESS RATE OVER 3 E VALUATION SEEDS . T HESE 
+
+RESULTS CORRESPOND TO THE SUMMARIZED PERFORMANCE IN TABLE II. 
+
+Meta-World (Easy) - Part I 
+
+Alg \ Task Button Press Topdown Button Press Topdown Wall Button Press Button Press Wall Coffee Button Dial Turn Door Close Door Open Drawer Close Drawer Open Faucet Close Faucet Open Handle Press Side Meta-World 0.00 0.00 0.00 6.00 25.33 27.33 1.33 0.00 94.67 0.00 0.00 0.67 73.33 DP3 91.00 30.00 51.67 100.00 96.67 18.67 100.00 100.00 100.00 95.33 2.33 74.33 35.00 Mamba 100.00 73.33 50.33 100.00 92.33 22.00 100.00 99.33 100.00 98.67 4.00 100.00 55.67 FreqPolicy 73.33 18.33 57.67 100.00 88.00 23.33 100.00 90.33 100.00 88.00 7.33 76.00 21.33 FlowPolicy 99.67 35.67 47.00 100.00 100.00 21.33 100.00 100.00 100.00 93.00 2.67 99.67 26.00 DAMI 100.00 100.00 100.00 100.00 100.00 73.67 100.00 95.00 100.00 100.00 100.00 100.00 66.67 
+
+Meta-World (Easy) - Part II 
+
+Alg \ Task Handle Press Handle Pull Side Handle Pull Lever Pull Peg Unplug Side Plate Slide Back Side Plate Slide Back Plate Slide Side Plate Slide Reach Reach Wall Window Close Window Open Meta-World 95.33 15.33 2.00 0.00 0.67 0.00 2.00 0.00 0.00 0.00 0.00 0.00 0.00 DP3 86.00 26.33 2.33 8.00 24.00 100.00 100.00 0.00 99.67 41.33 38.67 98.00 27.00 Mamba 92.33 22.33 5.33 16.67 30.00 100.00 100.00 0.00 98.67 33.33 41.33 100.00 33.00 FreqPolicy 74.00 35.00 5.33 36.67 13.67 100.00 100.00 0.00 98.67 35.00 53.67 100.00 9.33 FlowPolicy 92.33 5.00 8.67 41.67 18.67 100.00 97.33 0.00 92.00 39.67 40.67 100.00 30.33 DAMI 86.67 37.33 16.00 75.00 89.00 100.00 100.00 99.33 98.33 63.00 68.67 100.00 98.33 
+
+Meta-World (Medium) 
+
+Alg \ Task Basketball Coffee Pull Coffee Push Hammer Peg Insert Side Push Wall Soccer Sweep Into Sweep Meta-World 0.00 0.00 8.00 0.00 0.00 0.00 3.33 1.33 0.00 DP3 96.00 0.00 65.67 30.00 2.33 47.67 18.33 15.00 39.33 Mamba 100.00 0.00 58.67 27.67 3.00 56.67 13.00 23.33 46.00 FreqPolicy 95.33 0.00 68.67 16.00 5.33 41.00 13.33 18.33 35.67 FlowPolicy 69.00 0.00 59.33 15.33 2.67 43.00 7.33 17.33 45.33 DAMI 97.33 82.33 92.67 92.00 59.67 80.00 28.33 15.00 92.00 
+
+Meta-World (Hard) Meta-World (Very Hard) Avg. Alg \ Task Assembly Pick Out Of Hole Pick Place Push Back Push Disassemble Pick Place Wall Shelf Place Stick Pull Stick Push Meta-World 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 7.93 DP3 34.67 28.67 0.00 46.67 8.00 28.00 22.00 5.67 16.67 74.67 47.24 Mamba 39.00 36.33 36.33 46.33 6.00 4.67 21.67 4.67 28.33 70.00 50.90 FreqPolicy 42.67 40.00 2.67 38.33 6.33 14.33 27.00 3.67 13.67 76.67 45.87 FlowPolicy 24.00 8.33 0.00 43.00 3.67 14.00 20.00 10.67 16.33 72.67 45.85 DAMI 88.00 31.67 60.33 44.67 83.33 65.00 86.33 23.67 69.33 98.67 79.05 
+
+2) Base Tasks Evaluation: Complementing our analysis on novel tasks, we evaluate the performance on base tasks. Table II summarizes the results by difficulty category, while Table V reports 10 representative ML10 base tasks (5 Easy, 3 Medium, and 2 Hard) and Table VI reports all 45 ML45 base tasks. All per-task success rates are averaged over 3 random seeds. DAMI achieves average success rates of 87.23% on ML10 and 79.05% on ML45. These results significantly surpass all 9Close Drawer Object Place Press Button Pull Ball Sweep Cylinder  Push Cube  Stack Cube                    
+
+> Config 1 Config 2 Config 3 Config 4 Config 5 Config 6 Config 7 Config 8 Config 9 Config 10
+> Close Drawer Object Place Press Button Pull Ball Sweep Cylinder  Push Cube  Stack Cube
+> Config 1 Config 2 Config 3 Config 4 Config 5 Config 6 Config 7 Config 8 Config 9 Config 10
+> Fig. 6. Initial environmental configurations for the seven real-world manipulation tasks used in the evaluation. The figure illustrates the starting states for the five base tasks and two novel tasks. All object and target positions correspond to the initialization protocols during the testing phase.
+
+baselines, showing that DAMI retains strong proficiency on base tasks. 
+
+C. Qualitative Comparison 
+
+Figure 4 illustrates qualitative results across representative base and novel tasks. On base tasks, DP3 frequently fails to achieve task completion. While it appears to replicate expert trajectories, it suffers from execution instability. For instance, in the Door Open task, the gripper prematurely loses contact with the handle, leading to failure. In contrast, DAMI demon-strates superior physical robustness. Regarding novel tasks, DP3 exhibits limited adaptation capabilities after fine-tuning. This is evident in the Sweep Into task, where performance remains suboptimal. Furthermore, DP3 suffers from Action Misinterpretation , erroneously executing actions consistent with Door Open when presented with the Drawer Open task. DAMI adapts effectively and yields robust performance. 
+
+D. Real-world Experiments 
+
+We conduct experiments on a UR10e manipulator equipped with an AG95 gripper and a RealSense D435i camera, adopting the DP3 visual format [24]. We design seven tasks to evaluate, divided into a base training set and a novel adaptation set. Each task collects 10 demonstrations via teleoperation. The real-world experimental setup and representative executions of the designed tasks are shown in Figure 5. The five base tasks are defined as follows:  
+
+> •
+
+Close Drawer : The robot closes the top and middle drawers of a three-tier drawer unit, whose position is kept uniform across ten experimental trials.  
+
+> •
+
+Object Place : The robot grasps a plastic fruit and deposits it into a basket, with the initial fruit position distributed uniformly across experiments.  
+
+> •
+
+Press Button : The robot presses a tabletop button whose successful activation produces an auditory signal; the button is placed at uniform positions throughout the experiments.  
+
+> •
+
+Pull Ball : The robot moves a ball into a designated goal whose position remains uniform, while the initial ball position is randomized relative to the goal.  
+
+> •
+
+Sweep Cylinder : The robot pushes a cylinder past a yellow marker line. Training uses only a standard green cylinder, whereas testing introduces three types of irregular cylinders to assess generalization; the cylinder is placed uniformly in all experiments. The two novel tasks are defined as follows:  
+
+> •
+
+Push Cube : A small cube rests on a larger cube and must be pushed off. The adaptation data contain only a purple 10                         
+
+> TABLE VII REAL -W ORLD TASK SUCCESS RATES (%). Type Task DP3 DAMI (Ours) Base Close Drawer 90 90 Object Place 10 50 Press Button 70 80 Pull Ball 100 100 Sweep Cylinder 10 100 Novel Push Cube 60 80 Stack Cube 50 80
+> Average 55.71 82.86
+
+cube, whereas testing additionally introduces a smaller 
+
+2 × 2 Rubik’s cube.  
+
+> •
+
+Stack Cube : The robot picks up a small cube from the table and stacks it onto a larger cube. The supporting large cube is positioned uniformly, while the initial position of the small cube is randomized across experiments. The initial test configurations for all seven tasks are shown in Figure 6. To ensure a fair comparison, we use identical sequences of initial environmental configurations for DAMI and all baseline methods across trials. Comprehensive video recordings provided with the supplementary material document the complete executions of both DAMI and the baseline methods on all evaluation tasks. For all real-world evaluations, we utilize the model check-point obtained from the final training epoch. We fine-tune on novel tasks for 500 steps to assess adaptability. 
+
+Quantitative Results. We evaluate model performance based on task completion criteria. We conduct 10 trials for each task, with environmental configurations uniformly distributed. Table VII reports results on both base and novel tasks. On base tasks, DAMI matches DP3 on Close Drawer and Pull Ball , while improving the success rate from 10% to 50% on 
+
+Object Place and from 10% to 100% on Sweep Cylinder . On novel tasks, DAMI achieves an 80% success rate on both Push Cube and Stack Cube , compared with 60% and 50% for DP3, respectively. Overall, DAMI improves the average success rate from 55.71% to 82.86%. 
+
+Analysis. To evaluate out-of-distribution generalization, we test Sweep Cylinder with irregular objects, including beverage and cosmetic bottles, that differ substantially from the standard cylinder used during training. As shown in Figure 7, DAMI maintains a 100% success rate across the tested object configurations, whereas DP3 fails in the majority of trials. The qualitative results further reveal an Action Misinterpretation failure in DP3: it incorrectly closes the gripper and applies downward force, exhibiting behavior associated with Press Button rather than the intended sweeping motion. In contrast, DAMI preserves the correct task semantics and robustly executes the sweeping behavior across different object geometries. We additionally analyze object-level generalization on Push Cube . As shown in Figure 8, the fine-tuning data contain only a purple cube, whereas evaluation additionally includes an unseen 2 × 2 Rubik’s cube. The figure also illustrates DP3’s action misinterpretation during evaluation. DAMI achieves Standard cylinder  Irregular cylinder 1  Irregular cylinder  2 Irregular cylinder  3                              
+
+> Test configs: 3 Test configs: 2 Test configs: 2 Test configs: 3
+> Init Move Gripper Close Gripper Press Down
+> Init Move Gripper Close Gripper Press Down
+> Standard cylinder Irregular cylinder 1 Irregular cylinder 2Irregular cylinder 3
+> Test configs: 3 Test configs: 2 Test configs: 2 Test configs: 3
+> Init Move Gripper Close Gripper Press Down
+> Init Move Gripper Close Gripper Press Down
+> Fig. 7. Generalization on Sweep Cylinder .The top row shows the standard training cylinder and irregular unseen variants. The bottom rows illustrate DP3’s action misinterpretation failure. “Test config” denotes trials per cylinder.
+
+an 80% success rate, outperforming DP3 at 60%. This result demonstrates that DAMI adapts more reliably to novel tasks and generalizes more effectively to variations in object appearance. 
+
+E. Ablation Study 
+
+To isolate the effect of meta-learning, we additionally train MAML-enhanced versions of DP3, Mamba, FreqPolicy, and FlowPolicy. Table VIII reports category-level performance on the ML10 base tasks and per-task performance on its five novel tasks. Compared with their conventionally trained counterparts, MAML improves the average novel-task success rate of all four baselines, confirming the benefit of meta-learning for rapid adaptation. DAMI nevertheless achieves the highest overall averages on both base tasks (87.23%) and novel tasks (56.80%). On the base split, DAMI performs best on the Easy and Medium categories and remains competitive with the strongest method on the Hard category. On novel tasks, DAMI attains the best or tied-best results on Door Close , Drawer Open ,
+
+Sweep Into , and Shelf Place , while Mamba performs best on 
+
+Lever Pull . These results demonstrate that DAMI’s gains cannot be attributed to meta-learning alone, but also arise from its task-aware representation and conditioning mechanisms. We further conduct a component-level ablation study on the novel tasks of ML10 to evaluate the effectiveness of our proposed modules, as summarized in Table IX. For the baseline configuration, we remove all proposed modules and substitute the VMT with a standard MLP to aggregate demonstration information. The empirical results indicate that all modules contribute positively to the overall performance. Notably, the integration of TCFM yields the optimal performance when applied to the down-sampling layer. 
+
+F. Computational Efficiency Analysis 
+
+Beyond task success rates, we rigorously evaluate the temporal cost of the adaptation process to assess real-world deployability. We measure the fine-tuning time once for each of the 45 tasks and report the average across tasks. 11 
+
+TABLE VIII MAML A BLATION ON META -W ORLD ML10. S UCCESS RATES (%) C OMPARE MAML-E NHANCED BASELINES WITH DAMI ON BASE -T ASK CATEGORIES AND INDIVIDUAL NOVEL TASKS . BOLD AND UNDERLINED INDICATE THE BEST AND SECOND -B EST RESULTS , R ESPECTIVELY .                                                         
+
+> Base Tasks Novel Tasks Alg. / Tasks E(5) M(3) H(2) Avg. Easy Door Close Easy Drawer Open Easy Lever Pull Medium Sweep Into Very Hard Shelf Place Avg. DP3 86.13 80.22 73.00 81.73 100.00 100.00 46.67 20.33 8.33 55.07 Mamba 87.33 79.11 33.33 74.07 100.00 100.00 55.33 12.67 3.67 54.33 FreqPolicy 85.20 78.22 70.33 80.13 100.00 99.33 35.67 18.67 3.67 51.47 FlowPolicy 84.53 77.56 62.17 77.97 97.00 55.00 32.67 12.00 0.00 39.33
+> Ours (DAMI) 90.27 91.78 72.83 87.23 100.00 100.00 45.33 28.00 10.67 56.80
+
+TABLE IX COMPONENT ABLATION ON ML10 N OVEL TASKS . S UCCESS RATES (%) ARE REPORTED FOR VMT AND TCFM V ARIANTS . L1–L3 DENOTE TCFM  
+
+> IN THE
+
+DOWN -S AMPLING , M IDDLE , AND UP-S AMPLING U-N ET LAYERS .Method Door Close Drawer Open Lever Pull Sweep Into Shelf Place Avg. 
+
+Baseline 100.00 100.00 40.00 31.00 12.00 56.60 + VMT 100.00 100.00 53.00 26.00 10.00 57.80 + TCFM (L1) 100.00 100.00 50.00 36.00 10.00 59.20 
+
++ TCFM (L2) 100.00 100.00 41.00 28.00 10.00 55.80 + TCFM (L3) 100.00 100.00 41.00 31.00 7.00 55.80 Purple  Cu be 
+
+Test configs: 3 
+
+Rubik ’s Cube 
+
+Test configs: 7    
+
+> Init Close Gripper Move Open Gripper
+
+Purple  Cu be 
+
+Test configs: 3 
+
+Rubik ’s Cube 
+
+Test configs: 7    
+
+> Init Close Gripper Move Open Gripper
+
+Fig. 8. Generalization on Push Cube . The top row compares the purple cube used for fine-tuning with the unseen Rubik’s cube used for evaluation. The bottom row shows DP3’s action misinterpretation during evaluation. “Test config” denotes trials per object. 
+
+In the 200 update steps simulation, DAMI requires 39.27 seconds compared to 32.18 seconds for the DP3 baseline. Similarly, in the 500 update steps real-world setting, our method incurs a slight overhead, requiring 74.73 seconds, while 60.56 seconds for DP3. This marginal increase in latency is primarily attributed to the additional multi-modal fusion operations within the U2T and VMT modules. However, considering the substantial gains in generalization capability and semantic consistency, this computational cost is negligible. V. C ONCLUSION 
+
+In this work, we present the Dynamics-Aware Meta-
+
+Imitation (DAMI) framework to address the critical challenges of data scarcity and limited generalization in robotic imitation learning. It establishes a robust initialization that facilitates rapid few-shot adaptation to unseen tasks. Central to our approach is the integration of the Visual-Motor Trajectory (VMT) module, which effectively captures complex spatio-temporal dynamics, enabling the agent to learn intrinsic task logic. Furthermore, the proposed Unpaired Unified Task (U2T) block, coupled with TCFM, achieves dynamic modulation of low-level 3D features by fusing unstructured multimodal observations. Extensive experiments on the Meta-World and RLBench benchmarks and real-world manipulation tasks demonstrate that DAMI significantly outperforms state-of-the-art baselines in both direct inference on seen tasks and adaptation to unseen tasks. ACKNOWLEDGMENTS 
+
+This work is supported in part by the National Natural Science Foundation of China under Grant 62303447, Grant U23A20343, T2596045, in part by the Fundamental research project of SIA, No. 2023JC1K01 and No. 2023JC3K05 and in part by the Natural Science Foundation of Liaoning Province, No. 2024-MSBA-81. REFERENCES [1] Y. Ji, H. Tan, J. Shi, X. Hao, Y. Zhang, H. Zhang, P. Wang, M. Zhao, Y. Mu, P. An, et al. , “Robobrain: A unified brain model for robotic manipulation from abstract to concrete,” in Proceedings of the Computer Vision and Pattern Recognition Conference , 2025, pp. 1724–1734. [2] Z. Li, A. Chapin, E. Xiang, R. Yang, B. Machado, N. Lei, E. Dellandrea, D. Huang, and L. Chen, “Robotic manipulation via imitation learning: Taxonomy, evolution, benchmark, and challenges,” 
+
+arXiv preprint arXiv:2508.17449 , 2025. [Online]. Available: https: //arxiv.org/abs/2508.17449 [3] Z. Lin, Y. Chen, Z. Li, X. Zhang, B. Liang, and Z. Liu, “Adaptive video-conditioned imitation learning via bidirectional cross-domain skill transfer,” IEEE Transactions on Automation Science and Engineering ,vol. 22, pp. 23 214–23 227, 2025. [4] H. Xu, Y. Chen, D. Yu, Y. Ren, and J. Pan, “Bikc+: Bimanual hierarchi-cal imitation with keypose-conditioned coordination-aware consistency policies,” IEEE Transactions on Automation Science and Engineering ,vol. 23, pp. 1064–1079, 2025. [5] Z. Lin, Z. Chen, G. Zhu, L. Wang, and J. Li, “Toward reliable imitation learning with limited expert demonstrations via search-based inverse dynamic learning,” IEEE Transactions on Automation Science and Engineering , 2026. [6] H. Wang, Z. Dong, T. Zhu, H. Lei, W. Shi, Z. Zhang, W. Luo, W. Wan, X. Chen, and J. Huang, “Robot deformable object manipulation via nmpc-generated demonstrations in deep reinforcement learning,” IEEE Transactions on Automation Science and Engineering , vol. 22, pp. 23 566– 23 578, 2025. [7] Z. Jiang, Y. Xie, K. Lin, Z. Xu, W. Wan, A. Mandlekar, L. J. Fan, and Y. Zhu, “Dexmimicgen: Automated data generation for bimanual dexterous manipulation via imitation learning,” in 2025 IEEE Interna-tional Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 16 923–16 930. [8] S. Xia, H. Fang, C. Lu, and H.-S. Fang, “Cage: Causal attention enables data-efficient generalizable robotic manipulation,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 13 242–13 249. [9] Y. Su, N. Liu, D. Chen, Z. Zhao, K. Wu, M. Li, Z. Xu, Z. Che, and J. Tang, “Freqpolicy: Efficient flow-based visuomotor policy via frequency consistency,” Advances in Neural Information Processing Systems , vol. 38, pp. 27 769–27 797, 2026. 12 
+
+[10] A. Goyal, J. Xu, Y. Guo, V. Blukis, Y.-W. Chao, and D. Fox, “Rvt: Robotic view transformer for 3d object manipulation,” in Conference on Robot Learning . PMLR, 2023, pp. 694–710. [11] T. Gervet, Z. Xian, N. Gkanatsios, and K. Fragkiadaki, “Act3d: 3d feature field transformers for multi-task robotic manipulation,” in Proceedings of The 7th Conference on Robot Learning . PMLR, 2023, pp. 3949–3965. [12] Octo Model Team, D. Ghosh, H. Walke, K. Pertsch, K. Black, O. Mees, S. Dasari, J. Hejna, T. Kreiman, C. Xu, J. Luo, Y. Tan, L. Chen, P. R. Sanketi, Q. Vuong, T. Xiao, D. Sadigh, C. Finn, and S. Levine, “Octo: An open-source generalist robot policy,” in Proceedings of Robotics: Science and Systems , 2024. [13] Z. Chen, S. Chen, E. Arlaud, I. Laptev, and C. Schmid, “Vividex: Learning vision-based dexterous manipulation from human videos,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 3336–3343. [14] J. Jang, S. Ye, Z. Lin, J. Xiang, J. Bjorck, Y. Fang, F. Hu, S. Huang, K. Kundalia, Y.-C. Lin, et al. , “Dreamgen: Unlocking generalization in robot learning through video world models,” in Proceedings of The 9th Conference on Robot Learning . PMLR, 2025, pp. 5170–5194. [15] H. Fang, C. Wang, Y. Wang, J. Chen, S. Xia, J. Lv, Z. He, X. Yi, Y. Guo, X. Zhan, et al. , “Airexo-2: Scaling up generalizable robotic imitation learning with low-cost exoskeletons,” in Proceedings of The 9th Conference on Robot Learning . PMLR, 2025, pp. 198–220. [16] Y. Liu, J. Mao, J. B. Tenenbaum, T. Lozano-P ´erez, and L. P. Kaelbling, “One-shot manipulation strategy learning by making contact analogies,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 15 387–15 393. [17] J. Wang, K. Liu, D. Guo, Z. Xian, and C. G. Atkeson, “One-shot video imitation via parameterized symbolic abstraction graphs,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 10 552–10 560. [18] H. Oh, A. M. Salcedo-V ´azquez, I. G. Ramirez-Alpizar, and Y. Domae, “Robust instant policy: Leveraging student’s t-regression model for robust in-context imitation learning of robot manipulation,” in 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2025, pp. 7973–7980. [19] V. Vosylius and E. Johns, “Instant policy: In-context imitation learning via graph diffusion,” in The Thirteenth International Conference on Learning Representations (ICLR) , 2025. [20] Q. Zhao, M. Zheng, Z. Li, S. Huang, and W. Shi, “Robot dexterous grasping in cluttered scenes based on single-view point cloud,” IEEE Transactions on Automation Science and Engineering , 2025. [21] X. Zhong, T. Gong, J. Yu, J. Luo, C. Zhou, X. Zhong, and Q. Liu, “Region-aware grasping for stacked workpieces: A 6d-wise label self-generation method and robust evaluation strategy,” IEEE Transactions on Automation Science and Engineering , vol. 22, pp. 16 899–16 912, 2025. [22] S. Yu, J. Yin, D.-H. Zhai, and Y. Xia, “Fast and accurate category-level object pose estimation without shape priors for robotic grasp detection,” 
+
+IEEE Transactions on Automation Science and Engineering , 2025. [23] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” The International Journal of Robotics Research , vol. 44, no. 10-11, pp. 1684–1704, 2025. [24] Y. Ze, G. Zhang, K. Zhang, C. Hu, M. Wang, and H. Xu, “3d diffusion policy: Generalizable visuomotor policy learning via simple 3d representations,” in Proceedings of Robotics: Science and Systems (RSS) , 2024. [25] Y. Ze, Z. Chen, W. Wang, T. Chen, X. He, Y. Yuan, X. B. Peng, and J. Wu, “Generalizable humanoid manipulation with 3d diffusion policies,” in 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . IEEE, 2025, pp. 2873–2880. [26] D. Chen, Z. Chen, X. Zheng, W. Xu, C. Ma, and C. Mao, “Adp: Adaptive diffusion policy energizes robots thinking in both learning and practice,” 
+
+IEEE Transactions on Automation Science and Engineering , 2025. [27] J. Zhao, J. Liu, X. Su, B. He, and S. Jiang, “Robot few-shot manipulation skills learning based on meta imitation learning and mixture of experts model,” IEEE Transactions on Automation Science and Engineering ,2026. [28] C. Finn, P. Abbeel, and S. Levine, “Model-agnostic meta-learning for fast adaptation of deep networks,” in International conference on machine learning . PMLR, 2017, pp. 1126–1135. [29] O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolutional networks for biomedical image segmentation,” in International Conference on Medical image computing and computer-assisted intervention . Springer, 2015, pp. 234–241. [30] E. Perez, F. Strub, H. De Vries, V. Dumoulin, and A. Courville, “Film: Visual reasoning with a general conditioning layer,” in Proceedings of the AAAI conference on artificial intelligence , 2018. [31] E. Jang, A. Irpan, M. Khansari, D. Kappler, F. Ebert, C. Lynch, S. Levine, and C. Finn, “Bc-z: Zero-shot task generalization with robotic imitation learning,” in Conference on Robot Learning . PMLR, 2022, pp. 991– 1002. [32] Y. Kuang, J. Ye, H. Geng, J. Mao, C. Deng, L. Guibas, H. Wang, and Y. Wang, “Ram: Retrieval-based affordance transfer for generalizable zero-shot robotic manipulation,” arXiv preprint arXiv:2407.04689 , 2024. [33] M. Pan, J. Zhang, T. Wu, Y. Zhao, W. Gao, and H. Dong, “Omnimanip: Towards general robotic manipulation via object-centric interaction primitives as spatial constraints,” in Proceedings of the Computer Vision and Pattern Recognition Conference , 2025, pp. 17 359–17 369. [34] H. Xu, L. Zhang, X. Hu, B. Zhong, K. Bai, Z.-C. M ´arton, Z. Bing, Z. Chen, A. C. Knoll, and J. Zhang, “FUNCanon: Learning pose-aware action primitives via functional object canonicalization for generalizable robotic manipulation,” arXiv preprint arXiv:2509.19102 , 2025. [Online]. Available: https://arxiv.org/abs/2509.19102 [35] K. Kedia, P. Dan, A. Chao, M. A. Pace, and S. Choudhury, “One-shot imitation under mismatched execution,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 15 649–15 656. [36] J. Luo, S. Yang, C. Zheng, J. Fan, Y. Gao, R. Song, and W. Zhang, “Cova-il: Zero-shot imitation learning via contrastive viewpoint alignment on object-centric representation,” IEEE Transactions on Automation Science and Engineering , 2026. [37] S. Wu, Y. Wang, and Y. Huang, “Autolfd: Closing the loop for learning from demonstrations,” IEEE Transactions on Automation Science and Engineering , vol. 22, pp. 11 124–11 138, 2025. [38] C. R. Qi, L. Yi, H. Su, and L. J. Guibas, “Pointnet++: Deep hierarchical feature learning on point sets in a metric space,” Advances in neural information processing systems , vol. 30, 2017. [39] C. Hou, Y. Ze, Y. Fu, Z. Gao, S. Hu, Y. Yu, S. Zhang, and H. Xu, “4d visual pre-training for robot learning,” in Proceedings of the IEEE/CVF International Conference on Computer Vision , 2025, pp. 8451–8461. [40] Z. Liu, Y. Wang, K. Wang, L. Liang, X. Xue, and Y. Fu, “Spatial-temporal aware visuomotor diffusion policy learning,” in Proceedings of the IEEE/CVF International Conference on Computer Vision , 2025, pp. 7122–7131. [41] Y. Liu, T. Jia, H. Zhang, G. Yang, H. Wang, and D. Chen, “Rasp: Robot active scene perception with joint viewpoint planning and depth completion in cluttered environments,” IEEE Transactions on Automation Science and Engineering , 2025. [42] M. Ding, Y. Liu, Y. Shi, X. Lan, and N. Zheng, “Dual graph attention networks for multi-view visual manipulation relationship detection and robotic grasping,” IEEE Transactions on Automation Science and Engineering , 2025. [43] Y. Song, P. Sun, P. Jin, Y. Ren, Y. Zheng, Z. Li, X. Chu, Y. Zhang, T. Li, and J. Gu, “Learning 6-dof fine-grained grasp detection based on part affordance grounding,” IEEE Transactions on Automation Science and Engineering , 2025. [44] Z. Zhao, J. Gao, and D. Zheng, “Affordance-guided robotic grasping via multimodal large language model reasoning,” IEEE Transactions on Automation Science and Engineering , 2026. [45] A. Goyal, V. Blukis, J. Xu, Y. Guo, Y.-W. Chao, and D. Fox, “Rvt-2: Learning precise manipulation from few demonstrations,” in Proceedings of Robotics: Science and Systems , 2024. [46] Y. Ze, G. Yan, Y.-H. Wu, A. Macaluso, Y. Ge, J. Ye, N. Hansen, L. E. Li, and X. Wang, “Gnfactor: Multi-task real robot learning with generalizable neural feature fields,” in Conference on robot learning . PMLR, 2023, pp. 284–301. [47] G. Lu, S. Zhang, Z. Wang, C. Liu, J. Lu, and Y. Tang, “Manigaussian: Dynamic gaussian splatting for multi-task robotic manipulation,” in 
+
+European Conference on Computer Vision . Springer, 2024, pp. 349– 366. [48] B. Kerbl, G. Kopanas, T. Leimk ¨uhler, and G. Drettakis, “3d gaussian splatting for real-time radiance field rendering.” ACM Trans. Graph. ,vol. 42, no. 4, pp. 139–1, 2023. [49] T.-W. Ke, N. Gkanatsios, and K. Fragkiadaki, “3d diffuser actor: Policy diffusion with 3d scene representations,” arXiv preprint arXiv:2402.10885 ,2024. [50] J. Tian, L. Wang, S. Zhou, S. Wang, J. Li, H. Sun, and W. Tang, “Pdfactor: Learning tri-perspective view policy diffusion field for multi-task robotic manipulation,” in Proceedings of the Computer Vision and Pattern Recognition Conference , 2025, pp. 15 757–15 767. 13 
+
+[51] S. Wang, L. Wang, S. Zhou, J. Tian, J. Li, H. Sun, and W. Tang, “Flowram: Grounding flow matching policy with region-aware mamba framework for robotic manipulation,” in Proceedings of the Computer Vision and Pattern Recognition Conference , 2025, pp. 12 176–12 186. [52] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry, A. Askell, P. Mishkin, J. Clark, et al. , “Learning transferable visual models from natural language supervision,” in International conference on machine learning . PmLR, 2021, pp. 8748–8763. [53] T. Yu, D. Quillen, Z. He, R. Julian, K. Hausman, C. Finn, and S. Levine, “Meta-world: A benchmark and evaluation for multi-task and meta reinforcement learning,” in Conference on robot learning . PMLR, 2020, pp. 1094–1100. [54] S. James, Z. Ma, D. R. Arrojo, and A. J. Davison, “RLBench: The robot learning benchmark & learning environment,” IEEE Robotics and Automation Letters , vol. 5, no. 2, pp. 3019–3026, 2020. [55] Q. Zhang, Z. Liu, H. Fan, G. Liu, B. Zeng, and S. Liu, “Flowpolicy: Enabling fast and robust 3d flow-based policy via consistency flow matching for robot manipulation,” in Proceedings of the AAAI Conference on Artificial Intelligence , 2025, pp. 14 754–14 762. [56] Y. Zhong, Y. Liu, C. Xiao, Z. Yang, Y. Wang, Y. Zhu, Y. Shi, Y. Sun, X. Zhu, and Y. Ma, “Freqpolicy: Frequency autoregressive visuomo-tor policy with continuous tokens,” Advances in Neural Information Processing Systems , vol. 38, pp. 56 493–56 526, 2026. [57] J. Cao, Q. Zhang, J. Sun, J. Wang, H. Cheng, Y. Li, J. Ma, K. Wu, Z. Xu, Y. Shao, et al. , “Mamba policy: Towards efficient 3d diffusion policy with hybrid selective state models,” in 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . IEEE, 2025, pp. 11 359–11 366.

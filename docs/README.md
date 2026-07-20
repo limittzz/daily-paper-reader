@@ -6,30 +6,31 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-19
-- 运行时间：2026-07-19 19:48:52 UTC
+- 最新运行日期：2026-07-20
+- 运行时间：2026-07-20 21:27:53 UTC
 - 运行状态：成功
 - 本次总论文数：3
-- 精读区：0
-- 速读区：3
+- 精读区：1
+- 速读区：2
 
 ### 今日简报（AI）
-今日三篇论文聚焦具身学习、视频游戏模仿学习与视觉-语言-动作模型分布匹配；其中《Open-AoE》提供开源的自体中心操作数据集和工具链，是具身学习方向的核心资源。建议优先阅读该文，并关注其数据集如何促进机器人操作任务的训练与评估。
-- 详情：[/202607/19/README](/202607/19/README)
+今日精读高分机器人模仿学习论文，速读多模态与强化学习跨域适应研究。  
+最值得关注《Dynamics-Aware Meta-Imitation》的动力学感知元模仿方法，显著提升未知操控任务泛化能力。  
+建议后续追踪元学习与扩散模型在机器人策略迁移中的融合进展。
+- 详情：[/202607/20/README](/202607/20/README)
 
 ### 精读区论文标签
-- 本次无精读推荐。
+1. [Dynamics-Aware Meta-Imitation for Generalization to Unseen Robotic Manipulation](/202607/20/2607.15880v1-dynamics-aware-meta-imitation-for-generalization-to-unseen-robotic-manipulation)  
+   标签：评分：9.0/10、query:imitation
+   evidence：元模仿学习用于机器人操作
 
 ### 速读区论文标签
-1. [Open-AoE: An Open Egocentric Manipulation Dataset and Toolchain for Embodied Learning](/202607/19/2607.14183v1-open-aoe-an-open-egocentric-manipulation-dataset-and-toolchain-for-embodied-learning)  
-   标签：评分：7.0/10、query:imitation
-   evidence：大规模自我中心操作数据集，支持模仿学习
-2. [Augmentations for Robust and Efficient Imitation Learning in Streamed Video Games](/202607/19/2607.14200v1-augmentations-for-robust-and-efficient-imitation-learning-in-streamed-video-games)  
+1. [SPyCE: Skill-Policy Co-evolution for Multimodal Agents](/202607/20/2607.13854v1-spyce-skill-policy-co-evolution-for-multimodal-agents)  
    标签：评分：6.0/10、query:imitation
-   evidence：用于鲁棒性的模仿学习增强方法
-3. [DiMaS: Distribution Matching for Steering Vision-Language-Action Models](/202607/19/2607.14280v1-dimas-distribution-matching-for-steering-vision-language-action-models)  
+   evidence：将轨迹蒸馏为可重用技能用于策略学习，可应用于模仿学习
+2. [DADiff: Diffusion-Driven Cross-Domain Policy Adaptation for Reinforcement Learning](/202607/20/2607.16090v1-dadiff-diffusion-driven-cross-domain-policy-adaptation-for-reinforcement-learning)  
    标签：评分：6.0/10、query:imitation
-   evidence：使用流匹配（与扩散相关）引导机器人操作的视觉-语言-动作模型
+   evidence：基于扩散的策略适应框架，可应用于机器人控制
 
 
 <div class="dpr-home-promo-card">
