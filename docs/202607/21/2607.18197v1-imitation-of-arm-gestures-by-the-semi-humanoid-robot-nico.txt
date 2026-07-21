@@ -1,0 +1,253 @@
+Title: Imitation of Arm Gestures by the Semi-Humanoid Robot NICO
+
+URL Source: https://arxiv.org/pdf/2607.18197v1
+
+Published Time: Tue, 21 Jul 2026 02:16:43 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# Imitation of Arm Gestures by the Semi-Humanoid Robot NICO 
+
+Anastasiya Ihnatovich, Igor Farkaš 
+
+Faculty of Mathematics, Physics and Informatics Comenius University Bratislava Mlynská dolina 6284, 842 48 Bratislava, Slovakia 
+
+Abstract. Seamless human–robot interaction (HRI) requires a number of perceptual and motor abilities from the robot, one of them being the imitation of human gestures. Humanoid robots have an advantage in HRI thanks to their anthropomorphic features. In this work, we develop a system for imitation of human arm gestures by the semi-humanoid robot NICO based on analytical geometry and a pretrained MediaPipe pose-estimation model. For each input RGB frame, 3D coordinates of rel-evant human body landmarks, including arm joints and hand keypoints, are obtained using the MediaPipe framework. Joint angles are then com-puted from these coordinates using derived geometric relations. Finally, the computed angles are properly mapped to NICO’s motor configuration and executed in a predefined motion sequence. Preliminary experiments on several representative arm gestures with six participants of different height indicate that the proposed method can produce meaningful imi-tative motions from monocular RGB input only, while also highlighting limitations in more complex poses and wrist-related movements. 
+
+Keywords: gesture imitation · joint angle reconstruction · angle map-ping · MediaPipe accuracy. 
+
+# 1 Introduction 
+
+Robotic imitation is a fundamental capability for natural human–robot interac-tion, enabling robots to acquire skills through observation rather than explicit programming. Early approaches relied on direct trajectory teaching, where a human physically guided the robot while recording joint configurations. This paradigm evolved with the introduction of inverse kinematics (IK) methods, which compute joint parameters required to reproduce desired motions. More recently, learning-based approaches have been proposed, framing imitation as a data-driven problem. Foundational work highlights imitation as a key path-way toward humanoid intelligence [1] while recent studies emphasize multimodal perception and embodied learning [2]. Neural network approaches based on self-supervised learning [3] and pose similarity metric learning [4] demonstrate strong generalization capabilities but typically require large datasets, extensive training, and significant computational resources, which can limit real-time applicability. arXiv:2607.18197v1 [cs.RO] 20 Jul 2026 2 Anastasiya Ihnatovich, Igor Farkaš 
+
+In contrast, analytical and geometry-based approaches offer a computationally efficient and interpretable alternative (e.g. [5,6]), albeit with some limitations (see Related work). The emergence of RGB-based pose estimation frameworks has turned out to be quite successful. MediaPipe [7] enables real-time extraction of 2D and pseudo-3D body and hand landmarks from monocular images, making it suitable for low-cost systems. Its accuracy has been evaluated [8], where results show that joint angle estimation is generally reliable, although performance degrades under occlusions and challenging viewpoints. These findings suggest that RGB-only pipelines are viable but require careful handling of noise and missing data. Vision-based human–machine interaction has also been explored in the context of robotic hand control. It has been demonstrated that human hand movements can be used to control robotic hands through vision-based tracking, enabling intuitive interaction [9]. However, such approaches typically focus on hand articulation and do not address full arm motion or coordinated gesture imitation. Overall, existing work demonstrates that imitation can be achieved using both analytical and learning-based approaches. Learning-based methods offer flexibility and generalization but at the cost of complexity, while analytical ap-proaches provide efficiency and transparency but often require adaptation to specific kinematic structures. Moreover, prior studies either focus on simplified gestures or depend on specialized sensing hardware. In this context, the present work extends analytical geometry-based methods to a broader set of arm gestures using only RGB input. By leveraging MediaPipe for landmark extraction and adapting geometric formulations to the kinematics of the NICO robot, the proposed approach achieves meaningful imitation without reliance on expensive sensors or computationally intensive learning models. 
+
+# 2 Related Work 
+
+With the advancement of computer vision, systems have emerged for extracting human skeletons from RGB images. One of the most well-known such systems is OpenPose [11], which is designed for multi-user 2D pose estimation, using two CNNs to predict body parts and their associations. More recent solutions, such as MediaPipe, enable the real-time extraction of pseudo-3D landmarks using standard RGB cameras [7] . Thanks to its low latency, MediaPipe has become a popular solution for human-robot interaction and gesture-based systems. With the emergence of pose-estimation systems, vision-based human mo-tion imitation became more feasible. Instead of relying on wearable sensors or motion-capture systems, robots can now infer human body configuration directly from RGB images and reproduce the observed motion. This development mo-tivated both analytical geometry-based methods and learning-based imitation approaches. Early neural-network-based approaches to robot imitation were explored by Durdu et al., who used artificial neural networks to classify human arm move-Arm Gesture Imitation by Robot NICO 3
+
+ments collected from joint-mounted sensors and reproduce them on a robotic arm platform [12]. Self-supervised approaches were explored by Lúčny et al.[3], where robots learn imitation through associations between visual observations and their own motor states. These methods reduce the need for manually annotated datasets and demonstrate promising generalization capabilities. Although learning-based methods demonstrate high flexibility and the ability to generalize, they typically require large-scale datasets, training procedures, and substantial computational resources. A number of studies use analytical geometry to transform landmark coordi-nates into joint angles without relying on learning-based methods. Altayeb [5] used MediaPipe to extract hand landmarks, while joint angles were computed using direct geometric relations for further robotic hand control. Their study demonstrates that analytical methods can achieve high accuracy without rely-ing on learning-based approaches. The reported accuracy of approximately 96% indicates that analytical approaches are promising, but their applicability to more complex movements remains an open question. Another relevant study [6] presents a system based on depth-camera input. In this work, joint angles are derived using geometric relations and mapped to the NAO robot platform. The authors report an imitation accuracy of approximately 95% for arm motion imitation, demonstrating that analytical methods can be effective when accurate 3D data is available. However, the reliance on depth-sensing hardware increases system cost and complexity. In contrast, the present work applies a similar analytical framework to the humanoid robot NICO using only RGB camera input. Since the kinematic struc-ture of NICO differs from that of the NAO robot, the corresponding angle for-mulations must also be adapted. In particular, the proposed system includes estimation of forearm rotation and wrist flexion, while NICO does not provide the elbow roll joint available on the NAO platform. Furthermore, this work in-corporates MediaPipe hand landmarks, which provide additional information for estimating wrist flexion and forearm rotation. Head motion imitation is outside the scope of the current implementation and is therefore not addressed experi-mentally. Overall, existing analytical approaches demonstrate that promising pose im-itation is achievable without learning-based models. However, prior work either focuses on simplified gesture sets or depends on specialized hardware. Thus, the proposed approach does not require a training stage, uses only monocular RGB input, supports full arm and hand reconstruction, and is tailored to the kinematics of the NICO robot. 
+
+# 3 Materials and Methods 
+
+Here we describe the hardware and software used, as well as the processing pipeline for gesture imitation. 4 Anastasiya Ihnatovich, Igor Farkaš 
+
+3.1 NICO Robot 
+
+NICO (Neuro-Inspired COmpanion) [10] is a child-size semi-humanoid robot developed for social interaction by the Knowledge Technology group at the Uni-versity of Hamburg, shown in Fig. 1. The robot is equipped with two actuated degrees of freedom (DoF) in the head and six DoFs in each arm, enabling a wide range of upper-body motions suitable for gesture imitation tasks. The joints are driven by Dynamixel servo actuators, which provide programmable position control together with feedback such as present position and load estimates.  
+
+> Fig. 1. Degrees of freedom of the NICO robot.
+
+Now we describe the processing pipeline used for gesture imitation. The pro-posed framework converts monocular RGB input into robot motion through several consecutive stages. Human pose and hand landmarks are first estimated using MediaPipe. These landmarks are then processed by analytical geometric formulas to recover the required joint angles. In the final stage, the obtained angles are transformed into valid motor commands for the NICO robot. An overview of the complete pipeline is shown in Fig. 2. 
+
+3.2 3D Coordinates Extraction 
+
+A key limitation of the proposed system is the use of a single RGB camera with-out additional sensing modalities such as depth sensors. To estimate 3D human pose under this constraint, the MediaPipe framework [7] is employed. MediaPipe provides models for extracting both pose and hand landmarks directly from RGB images. Arm Gesture Imitation by Robot NICO 5RGB input frame MediaPipe pose and hand landmark extraction 3D landmark coordinates    
+
+> Pi= ( xi, y i, z i)
+> Joint angle reconstruction Angle-to-motor-mapping Motor command execution on NICO robot
+> Fig. 2. Processing pipeline of the proposed gesture imitation approach. Dashed boxes denote data representations, solid round boxes denote processing steps.
+> Fig. 3. Visualization of hand landmarks extracted using MediaPipe.
+
+The hand landmark model outputs 3D coordinates of 21 key points, as illustrated in Fig. 3. The x and y coordinates are normalized with respect to the image dimensions, while the z coordinate is defined relative to the wrist (landmark 0). For full-body pose estimation, MediaPipe detects 33 landmarks corresponding to major body joints (Fig. 4). We used the pose_landmarker_heavy.task model, which provides higher accuracy than the lite and full variants at the cost of increased computational demands. Each landmark approximates the position of a specific body part (e.g., eyes, shoulders, elbows). The z coordinate is defined relative to the estimated depth of the hips. Whenever hand landmarks were available, the corresponding wrist and palm points from the hand detector were preferred over pose landmarks. Specifically, pose landmarks P15 , P 17 , P 19 for the left hand and P16 , P 18 , P 20 for the right hand were replaced by the corresponding hand-model landmarks. This substi-tution was used for palm orientation, wrist flexion, and forearm rotation. Since the hand landmarks are expressed in a local coordinate system centered at the hand, the landmark set was translated so that its origin ( P0) coincided with the corresponding wrist landmark in the pose model. No additional scaling or rota-tional alignment was required, as both MediaPipe Pose and MediaPipe Hands estimate landmarks within the same camera coordinate frame, differing only in the choice of origin. 6 Anastasiya Ihnatovich, Igor Farkaš        
+
+> Fig. 4. Example of pose landmark extraction. Left: MediaPipe landmark indexing scheme. Center: input RGB frame. Right: reconstructed 3D landmarks obtained from MediaPipe.
+
+In this work, we use landmarks 11–24, focusing on arm motion. The approach can be extended to full-body imitation, which remains an interesting direction for future investigation. The accuracy of MediaPipe outputs has been evaluated in prior work [8]. In that study, four subjects performed multiple physical exercises recorded from dif-ferent viewpoints, with ground truth provided by a motion capture system (MTw Awinda). The results indicate that estimation accuracy strongly depends on the viewing angle, with increased error under occlusions. Additionally, joint angle estimation was found to be more reliable than absolute body measurements. These findings are consistent with observations in this work, where occlusions and non-optimal viewpoints lead to decreased precision. 
+
+3.3 Joint Angle Reconstruction 
+
+To save space, the calculations are described for the left arm. The calculations for the right arm are performed in the same way, taking into account the orientation of the rotations when taking the vector product. The following formulas are derived assuming that the subject’s torso is ap-proximately parallel to the camera plane. To compensate for deviations from this assumption, the landmark coordinates are rotated about the vertical (yaw) axis using the orientation of the shoulder line estimated from the left and right shoulder landmarks. This alignment reduces the effect of torso yaw on the recon-structed joint angles. Compensation for torso pitch and roll is not performed, as the experimental protocol considers an upright standing posture in which these rotations are expected to be small. Table 1 summarizes the symbols and notation used in the proposed method. The left palm-plane normal vector is defined as 
+
+VLPN = ( P17 − P15 ) × (P19 − P15 ). (1) Arm Gesture Imitation by Robot NICO 7
+
+Table 1. Description of the symbols used. Symbol Explanation 
+
+Pi 3D point of extracted landmark i (using the numbering from Fig. 4). 
+
+VLA Vector of left upper arm, pointing from shoulder ( P11 ) to elbow ( P13 ). 
+
+VLF Vector of the left forearm, pointing from elbow ( P13 ) to wrist ( P15 ). 
+
+VLPN Normal vector to the left palm plane. 
+
+VLRS Vector of shoulders, pointing from left ( P11 ) to right shoulder ( P12 ). 
+
+Wrist flexion angle (DoF 1 in Fig. 1) is given by 
+
+θwrist-bend = π
+
+2 +̸ A, (2) where ̸ A denotes unsigned angle between VLPN and (−VLF ). Geometrically, this follows from the relationship between the forearm direction and the palm plane normal. The same formula applies for both downward and upward bending, ensuring a continuous definition over the full range of motion. 
+
+Forearm rotation angle (DoF 2) can be computed as follows: 
+
+Reference direction. The reference rotation base is defined as the component of 
+
+VLA orthogonal to VLF :
+
+rot.base = VLA − VLA · VLF 
+
+VLF · VLF 
+
+VLF . (3) 
+
+Fig. 5. Example of forearm rotation calculations. Numeration from Fig. 4 8 Anastasiya Ihnatovich, Igor Farkaš 
+
+In case of ∥rot.base ∥ = 0 (straight arm), a different method of calculation is needed. In this case, NICO’s joints design allows us to calculate the reference direction as 
+
+rot.base = VLA × VLRS , (4) where the symbol × denotes the cross product of two vectors. The resulting vector is multiplied by −1 when the z-coordinate of VLA is positive, since in this configuration the effect of the arm being behind the body is accounted for by the shoulder roll calculation rather than the shoulder pitch calculation (see Shoulder angles below). When VLA and VLRS are parallel, fallback vector (0 , 1, 0) ⊤ is used. 
+
+Palm orientation. Let proj rot.plane (VLPN ) be the projection of the palm normal onto rotation plane, i.e. the plane perpendicular to VLF . It is calculated as 
+
+proj rot.plane (VLPN ) = VLPN − VLPN · VLF 
+
+VLF · VLF 
+
+VLF . (5) If ∥proj rot.plane (VLPN )∦ = 0 , the palm orientation vector is defined as 
+
+VPO = −sgn (cos( θwrist-bend )) · proj rot.plane (VLPN ). (6) Otherwise (when palm is perpendicular to forearm), a fallback vector is con-structed using the wrist point and the midpoint of landmarks P17 and P19 :
+
+M = 0 .5( P17 + P19 ), VW = M − P15 , (7) and the palm orientation vector is defined as 
+
+VPO = sgn (π − θwrist-bend ) · VW (8) 
+
+Forearm rotation angle is then given by the signed angle between palm orienta-tion and rotation base vectors around the forearm axis. An illustrative example is shown in Fig. 5. 
+
+Elbow bend angle To compute elbow bend angle (DoF 3) in range (0 , π ] it is enough to compute unsigned angle between forearm and upper arm vectors 
+
+θelbow-bend = arccos 
+
+ VLF · VLA 
+
+∥VLF ∥ · ∥ VLA ∥
+
+
+
+(9) 
+
+Shoulder angles Arm Gesture Imitation by Robot NICO 9
+
+Shoulder pitch To compute the left θshldr-pitch angle (DoF 5), the vector VLA is decomposed into its vertical component and its projection onto the Oxz plane. As seen in Fig. 6, the desired angle can be derived from a right triangle with sides of length vy and (v2 
+
+> x
+
++ v2 
+
+> z
+
+)1/2 ≥ 0. To distinguish between cases of bending the arm below and above the shoulder, the function atan2 automatically resolves the correct quadrant based on the sign of vy :
+
+θshldr-pitch = atan2 
+
+
+
+(v2 
+
+> x
+
++ v2 
+
+> z
+
+)1/2, v y
+
+
+
+. (10) Thus, the computed angle lies in the range [0 , π ], where 0 corresponds to the arm pointing downwards, π/ 2 to the arm being approximately horizontal, and 
+
+π to the arm pointing upwards. Since the term (v2 
+
+> x
+
++ v2 
+
+> z
+
+)1/2 is non-negative, this angle does not distinguish whether the arm is in front of or behind the body. This ambiguity is handled separately in the shoulder roll computation. 
+
+Shoulder roll To compute the left θshldr-roll (DoF 4), VLA is decomposed into its horizontal component and its projection onto the Oyz plane. As seen in Fig. 6, desired angle can be derived from a right triangle with sides of length vx and 
+
+(v2 
+
+> z
+
++ v2 
+
+> y
+
+)1/2 ≥ 0. To distinguish between cases of rotating the arm clockwise and counterclockwise from the shoulder, the function atan2 automatically resolves the correct quadrant based on the sign of vx:
+
+θshldr-roll = atan2 
+
+
+
+vx, (v2 
+
+> z
+
++ v2 
+
+> y
+
+)1/2
+
++ π/ 2. (11) For configurations in which the arm is located behind the body, identified by 
+
+vz > 0, the computed value is mirrored with respect to 2π:
+
+θshldr-roll = 2 π − θshldr-roll . (12) This allows the method to distinguish between front and back arm configura-tions. The resulting angle lies in the range [0 , 2π), where π/ 2 and 3π/ 2 correspond to the arm being aligned with the Oyz plane in front of and behind the body, respectively. 
+
+Shoulder yaw In the current method, shoulder yaw (DoF 6) is fixed in the neutral position. 
+
+3.4 Angle Mapping to NICO 
+
+The joint angles reconstructed from the geometric model cannot be used directly as motor commands because each NICO joint has its own admissible range and motor coordinate system. Therefore, each analytically reconstructed angle was linearly mapped to the corresponding motor range. For each joint, the admissible analytical interval [θmin , θ max ] and the corre-sponding motor positions m(θmin ) and m(θmax ) were determined experimentally. 10 Anastasiya Ihnatovich, Igor Farkaš  
+
+> Fig. 6. Left shoulder angles calculations. Numeration from Fig. 4
+
+The reconstructed angle θ was first clamped to the analytical interval and then mapped as 
+
+m = m(θmin ) + θ − θmin 
+
+θmax − θmin 
+
+(m(θmax ) − m(θmin )) . (13) Since the motor positions at the interval boundaries are specified explicitly, the same equation naturally handles both matching and reversed motor orien-tations. Finally, the computed motor position is rounded to the nearest integer before being sent to the controller. 
+
+# 4 Experiments 
+
+The RGB-based evaluation was conducted using a dedicated dataset collected for this study. Six volunteers with different body heights participated in the experiment, including three male participants (175 cm, 183 cm, and 188 cm) and three female participants (158 cm, 168 cm, and 180 cm). Each participant performed 11 predefined symmetric upper-limb poses rep-resenting different combinations of shoulder pitch, shoulder roll, elbow flexion, forearm rotation, and wrist flexion (see Table 2). Since all poses were symmetric, identical reference joint angles were used for both the left and right arm. To evaluate the influence of viewpoint, every pose was recorded under three body orientations with respect to the camera: 0◦, 30 ◦, and 45 ◦. The 0◦ configu-ration corresponds to a frontal view, while the remaining orientations introduce Arm Gesture Imitation by Robot NICO 11                                                      
+
+> Table 2. Reference joint angles (degrees) defining the evaluated poses.
+> Shoulder Shoulder Elbow Forearm Wrist Pitch Roll Bend Rotation Bend
+> 90 180 180 180 180 45 135 180 45 180 90 180 90 90 180 90 135 90 90 180 45 180 45 180 180 90 135 180 0180 90 135 180 90 180 90 135 180 180 180 45 180 180 0240 45 180 180 0100 90 180 135 180 180
+
+increasing self-occlusion and perspective distortion, making landmark estimation progressively more challenging. All recordings were acquired under identical conditions. A Google Pixel 9a front-facing RGB camera was mounted at a height of approximately 125 cm above the floor and positioned 150 cm from the participant. The recording en-vironment, camera position, illumination, and background remained unchanged throughout the experiment. To minimize the influence of clothing appearance on landmark detection, all participants wore plain black T-shirts without visible patterns. For each captured image, body pose and hand landmarks were extracted using MediaPipe and processed by the proposed reconstruction algorithm. The reconstructed joint angles were compared with the predefined reference angles of the corresponding pose. Reconstruction accuracy was quantified using the absolute angular error for each joint. For cyclic rotational quantities, such as forearm rotation, the minimum circular angular difference was used. The experiments demonstrate that the proposed landmark-based geometric approach provides moderate reconstruction accuracy for shoulder pitch, elbow bend, and wrist bend, achieving mean absolute errors (MAE) of approximately 
+
+10 ◦, 20 ◦, and 23 ◦, respectively. Shoulder roll is reconstructed with lower accuracy (34 ◦ MAE), indicating that the current geometric formulation remains sensitive to body orientation and could benefit from additional normalization or geometric constraints. To better illustrate how reconstruction accuracy depends on the performed gesture, Fig. 7 presents the average absolute error for each evaluated pose and reconstructed joint. The values correspond to the proposed method using Me-diaPipe hand landmarks whenever available (64% of cases) and are averaged across all participants and viewing angles. The principal limitation of the proposed method is the estimation of forearm rotation. Using pose landmarks alone resulted in the largest reconstruction error (67 .1◦ MAE). Replacing the forearm estimation with dedicated hand landmarks 12 Anastasiya Ihnatovich, Igor Farkaš  
+
+> Fig. 7. Average absolute reconstruction error (MAE, degrees) for each evaluated pose and reconstructed joint. Values are averaged across all participants and viewing angles using the proposed method with MediaPipe hand landmarks whenever available.
+
+reduced the error to 50 .1◦, corresponding to an improvement of approximately 
+
+25% . Despite this improvement, the remaining error is still substantially higher than for the other reconstructed joints, suggesting that reliable forearm rotation estimation cannot be achieved from the available landmark configuration alone. The limited accuracy of forearm rotation also affects wrist bend estimation. As the wrist deviates further from its neutral position, the apparent wrist an-gle becomes increasingly dependent on forearm orientation. Consequently, wrist bend is reconstructed considerably more accurately when the wrist remains close to its neutral configuration ( 180 ◦), whereas the error increases noticeably for more extreme wrist flexion and extension. Across all six participants, the mean absolute error (MAE) varied only be-tween approximately 30 .1◦–32 .1◦ and 20 .8◦–23 .7◦ without forearm rotation and wrist flexion. Despite the relatively large variation in participant height (158–188 cm), no clear relationship between body height and reconstruction accuracy can be observed. No consistent trend was observed across the participant group. Within the evaluated range of viewing angles ( 0◦–45 ◦), the effect of viewpoint appears to be relatively small compared to the variability introduced by individual poses and reconstructed joints. The left arm generally had a higher MAE than the right arm for most participants and viewpoints, which is likely due to the fact that the Arm Gesture Imitation by Robot NICO 13 
+
+turn was made counterclockwise, and the larger the turn, the more the visibility of the left hand was reduced. In contrast, the performed pose had a substantially stronger influence on esti-mation accuracy. In particular, poses involving pronounced forearm rotation and palm orientation produced the largest errors, suggesting that self-occlusion and ambiguities in hand orientation remain the dominant sources of reconstruction error. The computational performance of the vision-based pipeline was also evalu-ated. The measured processing time includes MediaPipe Pose estimation, Me-diaPipe Hands estimation, joint angle reconstruction, and mapping of the esti-mated angles to the robot joint ranges. The physical execution time of the robot motion was not included. The average processing time was 0.0017 s per frame, while the maximum observed processing time was 0.0093 s per frame. This corresponds to approx-imately 590 frames per second on average and approximately 108 frames per second in the worst case. In addition to the quantitative evaluation, Fig. 8 presents qualitative ex-amples of gesture imitation performed by one of the study participants. The gestures shown are different from the predefined evaluation poses and are in-tended to illustrate the visual behavior of the proposed system on representative arm configurations. 
+
+# 5 Conclusion 
+
+This paper presented an analytical pipeline for monocular RGB-based imita-tion of human arm gestures by the semi-humanoid robot NICO. The proposed method combines MediaPipe pose and hand landmark extraction with geometric joint-angle reconstruction and an angle-mapping procedure tailored to NICO’s kinematic structure. Unlike learning-based imitation methods, the proposed ap-proach requires no training data, is computationally efficient, and provides an interpretable mapping from visual observations to robot motor commands. Experimental evaluation on a dataset of predefined arm poses demonstrated that the method reconstructs shoulder pitch, elbow bend, and wrist flexion with moderate accuracy, while shoulder roll and especially forearm rotation remain more challenging. The results further showed that incorporating MediaPipe hand landmarks substantially improves forearm rotation estimation compared with us-ing pose landmarks alone, although this joint continues to represent the primary source of reconstruction error. Reconstruction accuracy was relatively consis-tent across participants and viewing angles under the controlled experimental conditions, whereas the performed gesture had a much greater influence on per-formance. The presented method provides a proof of concept for analytical monocular RGB-based gesture imitation using MediaPipe landmarks and geometric recon-struction. While the approach achieves encouraging results for several arm joints under controlled conditions, further improvements and validation on larger and 14 Anastasiya Ihnatovich, Igor Farkaš 
+
+more diverse datasets are required before it can be considered a robust solu-tion for general gesture imitation. Future work will focus on improving forearm rotation estimation, incorporating temporal smoothing, extending the system to dynamic gestures, and evaluating the method on more diverse subjects and viewpoints.  
+
+> Fig. 8. Qualitative comparison of six test poses. Each cell shows one gesture: the robot pose obtained from manually defined reference landmarks, the corresponding human RGB input image, and the robot pose obtained after MediaPipe landmark extraction and RGB-based reconstruction.
+
+Arm Gesture Imitation by Robot NICO 15 
+
+Acknowledgments. The authors are thankful to Branislav Zigo for technical assis-tance. This research was supported by Horizon Europe MSCA project TRAIL, no. 101072488 and by Slovak Research and Development Agency, project APVV-21-0105. 
+
+Disclosure of Interests. The authors have no competing interests to declare that are relevant to the content of this article. 
+
+# References 
+
+1. Schaal, S.: Is imitation learning the route to humanoid robots? Trends in Cognitive Sciences, 3(6) (1999), https://doi.org/10.1016/S1364-6613(99)01327-3 2. Spisak, J., Kerzel, M., Wermter, S. Robotic Imitation of Human Actions. Interna-tional Conference on Development and Learning (2024). https://doi.org/10.48550/ arXiv.2401.08381 3. Lúčny, A., Malinovská, K., Farkaš, I.: Robot at the Mirror: Learning to Imitate via Associating Self-supervised Models. In: Artificial Neural Networks and Machine Learning (2023), vol 14254, https://doi.org/10.1007/978-3-031-44207-0_39 4. Lei, J., Song, M., Li, Z.-N., Chen, C., Xu, X., Pu, S.: Humanoid Robot Imitation with Pose Similarity Metric Learning. In International Conference on Pattern Recognition (2014), pp. 4240-4245, https://doi.org/10.1109/ICPR.2014.727 5. Altayeb, M.: Hand Gestures Replicating Robot Arm Based on MediaPipe. In-donesian Journal of Electrical Engineering and Informatics, 11(3) (2023). https: //doi.org/10.52549/ijeei.v11i3.4491 6. Zhang, Z., Niu, Y., Kong, L., Lin, S., Wang, H.: A Real-Time Upper-Body Robot Imitation System. International Journal of Robotics and Control, 2(1) (2019). https: //doi.org/10.5430/ijrc.v2n1p49 7. Lugaresi, C., Tang, J., Nash, H., McClanahan, C., Uboweja, E., Hays, M., Zhang, F., Chang, C.-L., Yong, M.G., Lee, J., Chang, W.-T., Hua, W., Georg, M., Grundmann, M.: MediaPipe: A Framework for Building Perception Pipelines (2019), https://doi. org/10.48550/arXiv.1906.08172 8. Dill, S., Rösch, A., Rohr, M., Güney, G., De Witte, L., Schwartz, E., Hoog Antink, C.: Accuracy Evaluation of 3D Pose Estimation with MediaPipe Pose for Physical Exercises. Current Directions in Biomedical Engineering, 9(1) (2023). https://doi. org/10.1515/cdbme-2023-1141 9. García-Gil, G., del Carmen López-Armas, G., de Jesús Navarro, J. Human-Machine Interaction: A Vision-Based Approach for Controlling a Robotic Hand Through Human Hand Movements. Technologies 13(5), 169 (2025). https://doi.org/10.3390/ technologies13050169 10. Kerzel, M., Strahl, E., Magg, S., Navarro-Guerrero, N., Heinrich, S., Wermter, S.: NICO – Neuro-Inspired Companion: A Developmental Humanoid Robot Plat-form for Multimodal Interaction. In: IEEE International Symposium on Robot and Human Interactive Communication (RO-MAN), pp. 113–120 (2017), https: //doi.org/10.1109/ROMAN.2017.8172289 11. Cao, Z., Simon, T., Wei, S.-E., Sheikh, Y.: OpenPose: Realtime Multi-Person 2D Pose Estimation Using Part Affinity Fields. In: Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), pp. 7291–7299 (2017), https: //doi.org/10.1109/CVPR.2017.143 12. Durdu, A., Cetin, H., Komur, H.: Robot Imitation of Human Arm via Artificial Neural Network. In: 16th International Conference on Mechatronics – Mechatronika (ME), pp. 65–70 (2014), https://doi.org/10.1109/MECHATRONIKA.2014.7018286

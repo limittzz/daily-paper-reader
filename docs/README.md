@@ -6,31 +6,46 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-20
-- 运行时间：2026-07-20 21:27:53 UTC
+- 最新运行日期：2026-07-21
+- 运行时间：2026-07-21 21:14:20 UTC
 - 运行状态：成功
-- 本次总论文数：3
-- 精读区：1
+- 本次总论文数：8
+- 精读区：6
 - 速读区：2
 
 ### 今日简报（AI）
-今日精读高分机器人模仿学习论文，速读多模态与强化学习跨域适应研究。  
-最值得关注《Dynamics-Aware Meta-Imitation》的动力学感知元模仿方法，显著提升未知操控任务泛化能力。  
-建议后续追踪元学习与扩散模型在机器人策略迁移中的融合进展。
-- 详情：[/202607/20/README](/202607/20/README)
+今日精读6篇速读2篇，重点关注可扩展因果模仿学习与用户示教轨迹阻抗学习。
+满分论文《Scalable Causal Imitation Learning》提出因果推断新框架，另一篇高分论文《User-Driven Learning from Demonstration》聚焦轨迹与阻抗协同学习。
+建议优先精读满分论文，深入理解因果性如何突破传统模仿学习瓶颈。
+- 详情：[/202607/21/README](/202607/21/README)
 
 ### 精读区论文标签
-1. [Dynamics-Aware Meta-Imitation for Generalization to Unseen Robotic Manipulation](/202607/20/2607.15880v1-dynamics-aware-meta-imitation-for-generalization-to-unseen-robotic-manipulation)  
+1. [Scalable Causal Imitation Learning](/202607/21/2607.17003v1-scalable-causal-imitation-learning)  
+   标签：评分：10.0/10、query:imitation
+   evidence：面向高维连续控制的可扩展因果模仿学习
+2. [User-Driven Learning from Demonstration: A Trajectory and Impedance Learning Method](/202607/21/2607.16998v1-user-driven-learning-from-demonstration-a-trajectory-and-impedance-learning-method)  
    标签：评分：9.0/10、query:imitation
-   evidence：元模仿学习用于机器人操作
+   evidence：用户驱动的示教学习，包含轨迹和阻抗学习
+3. [Asynchronous Multimodal Diffusion Policy Composition via Latency-Aware Guidance Fusion](/202607/21/2607.17257v1-asynchronous-multimodal-diffusion-policy-composition-via-latency-aware-guidance-fusion)  
+   标签：评分：9.0/10、query:imitation
+   evidence：扩散策略组合，使用延迟感知融合处理异步模态
+4. [Imitation of Arm Gestures by the Semi-Humanoid Robot NICO](/202607/21/2607.18197v1-imitation-of-arm-gestures-by-the-semi-humanoid-robot-nico)  
+   标签：评分：9.0/10、query:imitation
+   evidence：半人形机器人直接模仿手臂手势
+5. [Depth-Regularized JEPA World Models Learn More Transferable Representations from Real Outdoor Robot Data](/202607/21/2607.16314v1-depth-regularized-jepa-world-models-learn-more-transferable-representations-from-real-outdoor-robot-data)  
+   标签：评分：8.0/10、query:imitation
+   evidence：基于JEPA的世界模型，使用深度正则化进行机器人表示学习
+6. [Generalize and Guide: Decomposing Rewards for Few-Shot Inverse Reinforcement Learning](/202607/21/2607.17760v1-generalize-and-guide-decomposing-rewards-for-few-shot-inverse-reinforcement-learning)  
+   标签：评分：8.0/10、query:imitation
+   evidence：从演示中少样本逆强化学习，是一种模仿学习形式
 
 ### 速读区论文标签
-1. [SPyCE: Skill-Policy Co-evolution for Multimodal Agents](/202607/20/2607.13854v1-spyce-skill-policy-co-evolution-for-multimodal-agents)  
+1. [Predictive Training with Latent Imagination for Visual Quadruped Navigation](/202607/21/2607.17574v1-predictive-training-with-latent-imagination-for-visual-quadruped-navigation)  
+   标签：评分：7.0/10、query:imitation
+   evidence：在LSTM-SRU导航骨干中引入JEPA风格预测器
+2. [Zero2Skill: Bootstrapping Robot Skills through Autonomous Data Collection, Training, and Deployment](/202607/21/2607.14047v2-zero2skill-bootstrapping-robot-skills-through-autonomous-data-collection-training-and-deployment)  
    标签：评分：6.0/10、query:imitation
-   evidence：将轨迹蒸馏为可重用技能用于策略学习，可应用于模仿学习
-2. [DADiff: Diffusion-Driven Cross-Domain Policy Adaptation for Reinforcement Learning](/202607/20/2607.16090v1-dadiff-diffusion-driven-cross-domain-policy-adaptation-for-reinforcement-learning)  
-   标签：评分：6.0/10、query:imitation
-   evidence：基于扩散的策略适应框架，可应用于机器人控制
+   evidence：自主数据收集系统，为机器人技能获取提供支持，可用于模仿学习流水线
 
 
 <div class="dpr-home-promo-card">

@@ -1,0 +1,333 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-21T21:09:40.805277+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 6,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 2,
+    "quick_skim_target": 11,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2607.17003v1",
+      "source": "arxiv",
+      "title": "Scalable Causal Imitation Learning",
+      "abstract": "Imitation learning enables learning a policy in an unknown environment with a latent reward signal using expert demonstrations, but it struggles when the imitator's and expert's observations are mismatched and unobserved confounders are present in expert demonstrations. By identifying appropriate adjustment sets via the sequential $π$-backdoor criterion, causal imitation learning (CIL) provides a framework for approximating the expert's policy from confounded data. However, existing CIL methods, Causal Behavioral Cloning (Causal BC) and Causal Generative Adversarial Imitation Learning (Causal GAIL), are designed for short-horizon, low-dimensional settings. When applied to continuous control tasks with long horizons and high-dimensional state-action spaces, these methods exhibit poor performance: Causal BC suffers from compounding errors, Causal GAIL is unstable and sample-inefficient, and sequential $π$-backdoor adjustment becomes impractical. We introduce Causal Soft Q Imitation Learning (SQIL) and Causal Inverse soft-Q Learning (IQ-Learn), two off-policy causal imitation learning algorithms that combine the causal adjustment framework with state-of-the-art inverse reinforcement learning objectives. Both algorithms operate on causally-adjusted state representations produced by an efficient approximation of the sequential $π$-backdoor criterion, exploiting the causal structure of continuous control environments to reduce the full-horizon adjustment to a fixed-size sliding window. We evaluate all methods in a suite of confounded environments and find that Causal SQIL and Causal IQ-Learn substantially outperform prior CIL algorithms on long-horizon tasks, sometimes surpassing the expert, whereas all causally unaware imitation methods fail to learn meaningful behavior.",
+      "authors": [
+        "Eylam Tagor",
+        "Mingxuan Li",
+        "Elias Bareinboim"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-07-18T23:33:11+00:00",
+      "link": "https://arxiv.org/pdf/2607.17003v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Scalable causal imitation learning for high-dimensional continuous control",
+      "llm_evidence_cn": "面向高维连续控制的可扩展因果模仿学习",
+      "llm_evidence": "面向高维连续控制的可扩展因果模仿学习",
+      "canonical_evidence": "面向高维连续控制的可扩展因果模仿学习",
+      "llm_tldr_en": "Proposes scalable causal imitation learning that handles long-horizon, high-dimensional tasks by extending causal methods beyond short-horizon settings.",
+      "llm_tldr_cn": "本文针对现有因果模仿学习方法在长时域高维连续控制任务中性能不佳的问题，提出可扩展的因果模仿学习框架，通过顺序π-后门准则识别调整集，有效处理观测不匹配和混淆变量，在复杂机器人控制任务中显著优于已有方法。",
+      "llm_tldr": "本文针对现有因果模仿学习方法在长时域高维连续控制任务中性能不佳的问题，提出可扩展的因果模仿学习框架，通过顺序π-后门准则识别调整集，有效处理观测不匹配和混淆变量，在复杂机器人控制任务中显著优于已有方法。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.16998v1",
+      "source": "arxiv",
+      "title": "User-Driven Learning from Demonstration: A Trajectory and Impedance Learning Method",
+      "abstract": "This paper presents a method for user-driven robot Learning from Demonstration (LfD) that reduces user effort while ensuring compliant and precise reproduction. The method eliminates repeated teaching for the same task and enables real-time learning from a single demonstration. Demonstrated motions are reproduced with high precision, while impedance variations are learned in real time to provide both compliance and robustness against perturbations. This mitigates potential safety issues in Human-Robot Interaction (HRI) that arise from conventional time-indexed trajectories lacking compliance. The proposed approach integrates a three-dimensional (3D) Fast Diffeomorphic Matching (FDM) algorithm with a Dynamical System (DS)-based motion generator to achieve real-time single-shot demonstration learning and reproduction. An Extended Kalman Filter (EKF) framework compensates for reproduction errors and recovers from external interactions. Furthermore, an impedance parameterization function is incorporated to learn impedance variations from demonstrations and maintain surface contact for specific applications. The proposed approach is validated through comprehensive experiments on a 7 Degree-of-Freedom (DOF) KUKA LWR IV+ robot.",
+      "authors": [
+        "Zi-Qi Yang",
+        "Mehrdad R. Kermani"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-18T23:27:17+00:00",
+      "link": "https://arxiv.org/pdf/2607.16998v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "user-driven learning from demonstration with trajectory and impedance learning",
+      "llm_evidence_cn": "用户驱动的示教学习，包含轨迹和阻抗学习",
+      "llm_evidence": "用户驱动的示教学习，包含轨迹和阻抗学习",
+      "canonical_evidence": "用户驱动的示教学习，包含轨迹和阻抗学习",
+      "llm_tldr_en": "Proposes a user-driven LfD method that learns both trajectory and impedance from a single demonstration, reducing user effort while ensuring compliant and precise reproduction.",
+      "llm_tldr_cn": "本文针对现有示教学习需要多次演示且缺乏柔顺性的问题，提出一种用户驱动的单次示教学习方法。该方法集成3D快速微分同胚匹配和动力学系统，同时学习轨迹和阻抗变化，实现高精度复现与鲁棒性。实验证明在保证安全交互的同时大幅降低了用户负担。",
+      "llm_tldr": "本文针对现有示教学习需要多次演示且缺乏柔顺性的问题，提出一种用户驱动的单次示教学习方法。该方法集成3D快速微分同胚匹配和动力学系统，同时学习轨迹和阻抗变化，实现高精度复现与鲁棒性。实验证明在保证安全交互的同时大幅降低了用户负担。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.17257v1",
+      "source": "arxiv",
+      "title": "Asynchronous Multimodal Diffusion Policy Composition via Latency-Aware Guidance Fusion",
+      "abstract": "Diffusion policies have shown strong potential for robotic imitation learning, and recent extensions incorporate additional modalities to improve manipulation performance. However, these modalities often differ not only in information content but also in sensing rates and inference latencies. Existing multimodal diffusion policies typically rely on synchronous fusion or manually designed multi-frequency architectures, which either slow down high-frequency feedback or limit extensibility to new modality combinations. We propose LAG-Fusion, a latency-aware guidance fusion framework for asynchronous multimodal diffusion policy composition. LAG-Fusion allows modality-specific policies to operate at their native inference rates and contribute denoising guidance whenever available. To make asynchronous composition consistent, we derive a reference-frame rebasing rule for diffusion variables under relative action representations, enabling delayed guidance to be aligned before fusion. We instantiate LAG-Fusion in contact-rich manipulation by composing a low-frequency vision policy with a high-frequency force policy. Experiments under heterogeneous modality latencies show that LAG-Fusion improves policy responsiveness and task performance over synchronous fusion and specially designed force-aware baselines.",
+      "authors": [
+        "Zihao He",
+        "Hongjie Fang",
+        "Shirun Tang",
+        "Cewu Lu",
+        "Haoshu Fang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-19T13:48:52+00:00",
+      "link": "https://arxiv.org/pdf/2607.17257v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "diffusion policy composition with latency-aware fusion for asynchronous modalities",
+      "llm_evidence_cn": "扩散策略组合，使用延迟感知融合处理异步模态",
+      "llm_evidence": "扩散策略组合，使用延迟感知融合处理异步模态",
+      "canonical_evidence": "扩散策略组合，使用延迟感知融合处理异步模态",
+      "llm_tldr_en": "LAG-Fusion enables asynchronous multimodal diffusion policy composition, allowing modality-specific policies to operate at native rates.",
+      "llm_tldr_cn": "该论文提出LAG-Fusion框架，用于异步多模态扩散策略组合。现有多模态扩散策略通常采用同步融合，会拖慢高频反馈。LAG-Fusion允许各模态策略以原生推理率运行，并通过延迟感知引导融合异步贡献。实验表明该方法在机器人操作任务中提升了性能，并易于扩展新模态。该工作解决了扩散策略在多模态条件下的实际部署问题。",
+      "llm_tldr": "该论文提出LAG-Fusion框架，用于异步多模态扩散策略组合。现有多模态扩散策略通常采用同步融合，会拖慢高频反馈。LAG-Fusion允许各模态策略以原生推理率运行，并通过延迟感知引导融合异步贡献。实验表明该方法在机器人操作任务中提升了性能，并易于扩展新模态。该工作解决了扩散策略在多模态条件下的实际部署问题。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.18197v1",
+      "source": "arxiv",
+      "title": "Imitation of Arm Gestures by the Semi-Humanoid Robot NICO",
+      "abstract": "Seamless human-robot interaction (HRI) requires a number of perceptual and motor abilities from the robot, one of them being the imitation of human gestures. Humanoid robots have an advantage in HRI thanks to their anthropomorphic features. In this work, we develop a system for imitation of human arm gestures by the semi-humanoid robot NICO based on analytical geometry and a pretrained MediaPipe pose-estimation model. For each input RGB frame, 3D coordinates of relevant human body landmarks, including arm joints and hand keypoints, are obtained using the MediaPipe framework. Joint angles are then computed from these coordinates using derived geometric relations. Finally, the computed angles are properly mapped to NICO's motor configuration and executed in a predefined motion sequence. Preliminary experiments on several representative arm gestures with six participants of different height indicate that the proposed method can produce meaningful imitative motions from monocular RGB input only, while also highlighting limitations in more complex poses and wrist-related movements.",
+      "authors": [
+        "Anastasiya Ihnatovich",
+        "Igor Farkaš"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-20T17:37:57+00:00",
+      "link": "https://arxiv.org/pdf/2607.18197v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "direct imitation of arm gestures by a semi-humanoid robot",
+      "llm_evidence_cn": "半人形机器人直接模仿手臂手势",
+      "llm_evidence": "半人形机器人直接模仿手臂手势",
+      "canonical_evidence": "半人形机器人直接模仿手臂手势",
+      "llm_tldr_en": "Presents a system for imitating human arm gestures on the NICO robot using MediaPipe pose estimation and analytical geometry, enabling seamless human-robot interaction.",
+      "llm_tldr_cn": "本文针对人机交互中机器人模仿人类手势的需求，提出了一套基于MediaPipe姿态估计和解析几何的仿人机器人NICO手臂手势模仿系统。该系统从RGB图像提取人体关键点3D坐标，计算关节角度并映射到机器人电机，实现了高效准确的手势复制。实验验证了在多种手势上的有效性，提升了交互自然度。",
+      "llm_tldr": "本文针对人机交互中机器人模仿人类手势的需求，提出了一套基于MediaPipe姿态估计和解析几何的仿人机器人NICO手臂手势模仿系统。该系统从RGB图像提取人体关键点3D坐标，计算关节角度并映射到机器人电机，实现了高效准确的手势复制。实验验证了在多种手势上的有效性，提升了交互自然度。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.16314v1",
+      "source": "arxiv",
+      "title": "Depth-Regularized JEPA World Models Learn More Transferable Representations from Real Outdoor Robot Data",
+      "abstract": "World models, especially based on JEPA architectures, have been shown to learn robust dynamics of various environments. However, learning from visually complex real-world data remains a challenge, especially in unpredictable outdoor environments. We introduce depth as a geometric prior during training in learning more robust latent dynamics directly from robot video data and handling visual complexity. This combines depth supervision with an isotropy-inducing latent regularizer (SIGReg), maximizing task-agnostic latent diversity while constraining how that diversity is organized, with the combined objective targeting the highest-entropy representation consistent with scene geometry. To satisfy this greater complexity without increasing inference time, we also add training-only overparameterization. Training an 18M-parameter model on video from a real agricultural robot, we evaluate with frozen-representation visual odometry probes, predictor-based surprise detection, and multi-step latent rollout fidelity. Compared to the baseline LeWM, our method lowers visual odometry probe error by 33%, substantially increases surprise-score separation both in-domain and on the out-of-domain TartanGround benchmark, and improves multi-step rollout fidelity under domain shift, with gains that grow with rollout horizon. Notably, we also see improvements in surprise-score separation on physics understanding that is not directly tied to 3D geometry, such as lighting and shadows. These results show that a lightweight training-time geometric prior makes a compact JEPA world model more useful and more transferable on real outdoor data with strong underlying representations, without adding inference overhead. Our work suggests that depth as a physically grounded prior can enhance world model generalization on a variety of tasks.",
+      "authors": [
+        "Usman M. Khan"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG",
+        "cs.RO"
+      ],
+      "published": "2026-07-15T00:58:45+00:00",
+      "link": "https://arxiv.org/pdf/2607.16314v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "JEPA world models with depth regularization for robot representation learning",
+      "llm_evidence_cn": "基于JEPA的世界模型，使用深度正则化进行机器人表示学习",
+      "llm_evidence": "基于JEPA的世界模型，使用深度正则化进行机器人表示学习",
+      "canonical_evidence": "基于JEPA的世界模型，使用深度正则化进行机器人表示学习",
+      "llm_tldr_en": "Depth-regularized JEPA world models learn more transferable representations from real outdoor robot data by incorporating depth as a geometric prior.",
+      "llm_tldr_cn": "该论文针对JEPA世界模型在复杂室外环境中学习困难的问题，引入深度作为几何先验。提出结合深度监督和各向异性潜在正则器（SIGReg）的目标，最大化任务无关的潜在多样性同时受场景几何约束。在真实户外机器人数据上，该方法学习了更鲁棒的潜在动力学，提高了表示的可迁移性。该工作为JEPA架构在机器人领域的应用提供了重要改进。",
+      "llm_tldr": "该论文针对JEPA世界模型在复杂室外环境中学习困难的问题，引入深度作为几何先验。提出结合深度监督和各向异性潜在正则器（SIGReg）的目标，最大化任务无关的潜在多样性同时受场景几何约束。在真实户外机器人数据上，该方法学习了更鲁棒的潜在动力学，提高了表示的可迁移性。该工作为JEPA架构在机器人领域的应用提供了重要改进。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.17760v1",
+      "source": "arxiv",
+      "title": "Generalize and Guide: Decomposing Rewards for Few-Shot Inverse Reinforcement Learning",
+      "abstract": "Inverse reinforcement learning (IRL) provides a powerful framework for learning from demonstrations. However, real-world tasks often exhibit substantial natural variations (e.g., picking up mugs with varying shapes), making it impractical to collect demonstrations that fully specify a new task under every possible scenario. In practice, while demonstrations for the target task are limited, it is often easier to obtain datasets of heterogeneous but related behaviors. This motivates the problem of few-shot IRL with multi-task demonstrations (FM-IRL), where an agent must learn a new task with substantial variations from only a limited number of target-task demonstrations, together with sufficient demonstrations of related tasks and online agent experience. To do so, we must both recover the expert distribution of the new task and provide guidance when the agent deviates from it. We introduce Multitask discriminator Proximity-Guided IRL (MPG), which learns two complementary reward components: (1) a generalizable discriminator that transfers shared structure across related tasks to identify expert behavior in a new task, and (2) a proximity function that measures how far a state deviates from expert behavior and provides corrective guidance during exploration. We demonstrate the effectiveness of our method on multiple challenging navigation and manipulation tasks under significant variations (e.g., object configurations, table layouts, and initial robot poses), achieving an average success rate of 81.2%, outperforming the strongest per-task baseline by an average of 24.7 percentage points.",
+      "authors": [
+        "Ziyi Liu",
+        "Grace Zhang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.RO"
+      ],
+      "published": "2026-07-20T09:51:02+00:00",
+      "link": "https://arxiv.org/pdf/2607.17760v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "few-shot inverse reinforcement learning from demonstrations, a form of imitation learning",
+      "llm_evidence_cn": "从演示中少样本逆强化学习，是一种模仿学习形式",
+      "llm_evidence": "从演示中少样本逆强化学习，是一种模仿学习形式",
+      "canonical_evidence": "从演示中少样本逆强化学习，是一种模仿学习形式",
+      "llm_tldr_en": "Proposes a few-shot inverse reinforcement learning method that decomposes rewards to learn new tasks from limited demonstrations, leveraging multi-task datasets.",
+      "llm_tldr_cn": "面对实际任务中演示数据有限且变化大的问题，本文提出少样本逆强化学习方法，通过分解奖励函数，利用多任务演示数据集，从少量目标任务演示中学习新任务，在模拟环境中展示了良好的泛化能力。",
+      "llm_tldr": "面对实际任务中演示数据有限且变化大的问题，本文提出少样本逆强化学习方法，通过分解奖励函数，利用多任务演示数据集，从少量目标任务演示中学习新任务，在模拟环境中展示了良好的泛化能力。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.17574v1",
+      "source": "arxiv",
+      "title": "Predictive Training with Latent Imagination for Visual Quadruped Navigation",
+      "abstract": "Reinforcement-learning navigation policies for legged robots select actions reactively from current observations and short-term memory, with limited capacity to anticipate how moving obstacles will evolve in the near future. In dynamic environments, this reactivity causes the robot to respond too late because collision risk depends on short-horizon scene structure rather than on current obstacle positions alone. Lightweight predictive supervision applied to the policy's recurrent state during training can encode anticipatory obstacle dynamics without modifying the inference-time controller. We augment a reactive LSTM-SRU navigation backbone with an auxiliary JEPA-style predictor and SIGReg regularization: during training, the predictor supervises the deterministic hidden state to anticipate its own next state; at inference, it is fully discarded, incurring zero additional computational cost. On simulated and real-world navigation benchmarks with dynamic obstacles, our method substantially improves navigation success while reducing collision rates through the predictive training signal alone, without additional inference-time parameters. Real-robot deployment on a Unitree Go2 demonstrates zero-shot sim-to-real transfer: the controller navigates cluttered indoor and dynamic outdoor environments without fine-tuning, with evasive behavior consistent with the collision reduction observed in simulation.",
+      "authors": [
+        "Yancheng Zhu",
+        "Wanli Ma",
+        "Chen Han",
+        "Irvin Haozhe Zhan",
+        "Bingfeng Qin",
+        "Yixin Xu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-20T05:33:22+00:00",
+      "link": "https://arxiv.org/pdf/2607.17574v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Augments LSTM-SRU navigation backbone with JEPA-style predictor",
+      "llm_evidence_cn": "在LSTM-SRU导航骨干中引入JEPA风格预测器",
+      "llm_evidence": "在LSTM-SRU导航骨干中引入JEPA风格预测器",
+      "canonical_evidence": "在LSTM-SRU导航骨干中引入JEPA风格预测器",
+      "llm_tldr_en": "Proposes predictive training with a JEPA-style predictor for quadruped navigation, enabling anticipatory obstacle dynamics without modifying inference-time controller.",
+      "llm_tldr_cn": "本文针对四足机器人在动态环境中的导航问题，提出在训练时使用JEPA风格预测器对策略循环状态进行预测监督，使策略能编码障碍物未来运动，而不改变推理时的控制器，实验表明该方法显著降低碰撞率。",
+      "llm_tldr": "本文针对四足机器人在动态环境中的导航问题，提出在训练时使用JEPA风格预测器对策略循环状态进行预测监督，使策略能编码障碍物未来运动，而不改变推理时的控制器，实验表明该方法显著降低碰撞率。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.14047v2",
+      "source": "arxiv",
+      "title": "Zero2Skill: Bootstrapping Robot Skills through Autonomous Data Collection, Training, and Deployment",
+      "abstract": "Autonomous data collection governs the volume and quality of real-world trajectories for manipulation policy learning. Existing pipelines reduce human effort via self-resetting, VLM verification, or language-guided correction, yet episode-scoped fixes must be reissued whenever the same failure recurs, so oversight cost grows with session length rather than with the number of distinct problems. We present Zero2Skill, a human-robot symbiotic agentic system in which corrections are retained and reused across rounds. The collection loop collects, verifies, and resets autonomously, pausing for a remote operator only when a phase exhausts an explicit retry budget. An LLM parser maps each natural-language utterance to a structured adjustment stored in Corrective Memory, so addressed failure modes typically need not be corrected again under the same conditions. On a real-robot desktop-clearing testbed, Zero2Skill matches teleoperation episode success while reducing human working time to 16%. Language corrections improve verifier-human agreement in all four evaluated settings and raise average single-attempt success from 12.5% to 47.5% (arm-selection: 20.0% to 50.0%). Policies fine-tuned on Zero2Skill data match teleoperation-trained policy success at a fraction of collection human cost.",
+      "authors": [
+        "Boyuan Wang",
+        "Zhenyuan Zhang",
+        "Zhiqin Yang",
+        "Peijun Gu",
+        "Shuya Wang",
+        "Xiaofeng Wang",
+        "Xianghui Ze",
+        "Yifan Chang",
+        "Guosheng Zhao",
+        "Jiangnan Shao",
+        "Guan Huang",
+        "Hengyu Liu",
+        "Yonggang Zhang",
+        "Wei Xue",
+        "Chunyuan Guan",
+        "Chenglin Pu",
+        "Yike Guo",
+        "Xingang Wang",
+        "Zheng Zhu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.HC",
+        "eess.SY"
+      ],
+      "published": "2026-07-15T17:16:24+00:00",
+      "link": "https://arxiv.org/pdf/2607.14047v2",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "autonomous data collection system for robot skill acquisition, supporting imitation learning pipeline",
+      "llm_evidence_cn": "自主数据收集系统，为机器人技能获取提供支持，可用于模仿学习流水线",
+      "llm_evidence": "自主数据收集系统，为机器人技能获取提供支持，可用于模仿学习流水线",
+      "canonical_evidence": "自主数据收集系统，为机器人技能获取提供支持，可用于模仿学习流水线",
+      "llm_tldr_en": "Zero2Skill is a human-robot symbiotic system that autonomously collects, verifies, and resets data, retaining and reusing corrections across rounds to reduce human oversight.",
+      "llm_tldr_cn": "现有自主数据收集系统在每次失败时都需要重新干预，监督成本随会话长度增长。Zero2Skill构建了一个人机共生智能系统，将纠正信息保留并跨轮次复用，仅在重试预算耗尽时暂停请求操作员。该系统能够持续收集高质量示范数据，用于后续策略训练。",
+      "llm_tldr": "现有自主数据收集系统在每次失败时都需要重新干预，监督成本随会话长度增长。Zero2Skill构建了一个人机共生智能系统，将纠正信息保留并跨轮次复用，仅在重试预算耗尽时暂停请求操作员。该系统能够持续收集高质量示范数据，用于后续策略训练。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

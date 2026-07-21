@@ -1,0 +1,576 @@
+Title: User-Driven Learning from Demonstration: A Trajectory and Impedance Learning Method
+
+URL Source: https://arxiv.org/pdf/2607.16998v1
+
+Published Time: Tue, 21 Jul 2026 00:58:45 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# User-Driven Learning from Demonstration: A Trajectory and Impedance Learning Method 
+
+Zi-Qi Yang and Mehrdad R. Kermani 
+
+Abstract — This paper presents a method for user-driven robot Learning from Demonstration (LfD) that reduces user effort while ensuring compliant and precise reproduction. The method eliminates repeated teaching for the same task and enables real-time learning from a single demonstration. Demonstrated motions are reproduced with high precision, while impedance variations are learned in real time to provide both compliance and robustness against perturbations. This mitigates potential safety issues in Human-Robot Interaction (HRI) that arise from conventional time-indexed trajectories lacking compliance. The proposed approach integrates a three-dimensional (3D) Fast Diffeomorphic Matching (FDM) algo-rithm with a Dynamical System (DS)-based motion generator to achieve real-time single-shot demonstration learning and reproduction. An Extended Kalman Filter (EKF) framework compensates for reproduction errors and recovers from ex-ternal interactions. Furthermore, an impedance parameteri-zation function is incorporated to learn impedance variations from demonstrations and maintain surface contact for specific applications. The proposed approach is validated through comprehensive experiments on a 7 Degree-of-Freedom (DOF) KUKA LWR IV+ robot. 
+
+Index Terms — Learning from demonstration, human-robot interaction, diffeomorphic matching, dynamical system, impedance learning. 
+
+I. I NTRODUCTION 
+
+Industrial robots are increasingly deployed to reduce hu-man labour in tedious, repetitive tasks. Despite advances in machine learning and AI, Human-Robot Collaboration (HRC) has remained a critical necessity since robots cannot match human capabilities in terms of variability and task diversity. These tasks usually require human involvement to provide supervision, demonstrations, and modifications to robot motion [1], during object handling, collaborative manufacturing and assembling, and others. Learning from Demonstration (LfD) is one of the promising approaches [2], [3] to cope with these task requirements that increase efficiency and flexibility of HRC tasks. Specifically, among many approaches for demonstrations, kinesthetic teaching provides the most straightforward way. The recorded demonstrations are first preprocessed to rule out undesired demonstrations by methods including filtering demonstrated data [4], identifying suboptimal data [5], and quantifying demonstration quality [6]. More recent research also shows the importance of maintaining consistent interac-tion feeling to the demonstration quality [7]. Subsequently, for feature extraction, the satisfied demonstrations are learnt mainly by two broad categories of methods (i) deterministic  
+
+> Authors are with the Department of Electrical and Computer Engi-neering, Western University, London, ON N6A 5B9, Canada.
+
+Email: zyang524@uwo.ca, mkermani@eng.uwo.ca 
+
+approaches that try to approximate the demonstration with an explicit function, e.g., a radial basis function network, and (ii) probabilistic approaches that learn a probability distribution from the demonstrations. The first category of approaches usually requires offline training and high computational complexity, and thus is ruled out of consideration for most instant LfD tasks. The second category of approaches can provide satisfactory reproductions, most of the existing prob-abilistic methods are based on statistical data from multiple demonstrations to reproduce the ideal trajectories, and the replicated trajectories are with explicit time dependency. In the literature, three models are mainly used to ex-tract and generalize information from multiple demonstra-tions, namely the probabilistic-based hidden Markov model (HMM), Gaussian mixture model (GMM), and dynamic systems (DS)-based Dynamic movement primitives (DMPs). HMMs are a popular probabilistic methodology to encode the demonstrations, which captures both spatial and tem-poral variability by viewing a demonstrated trajectory as a sequence of latent motion states with probabilistic transitions [8]. GMMs provide a probabilistic encoding of the observed data distribution [9]. When combined with Gaussian mixture regression (GMR), they yield generalized reference trajecto-ries and an explicit covariance that can adapt compliance during task execution [10]. Complementing these mixture-based approaches, Gaussian Process Regression (GPR) offers a non-parametric, kernel-based alternative that interpolates smoothly within the neighbourhood of the demonstrations while simultaneously returning a predictive variance [11]. When reproducing, these approaches do not allow adaptation to new trajectories, as it is identified as perturbations that deviate from the task reference, unless another demonstration procedure is provided. DMPs model each movement as a stable, nonlinear DS whose parameters are learned from demonstration. DMPs are time-invariant, guarantee convergence to a goal, and can be reshaped on the fly, making them suitable to be applied to robot movements [12]. Although these methods can be adapted and combined with other approaches to help improve the efficiency and flexibility in learning the trajectories, the multiple demonstrations and time invariant characteristics remain largely unsolved. Recently, the DS also emerged as a flexible means of representing robot motions independent of time [13]. Additionally, the force and impedance information from demonstrations provides crucial information especially in contact tasks and constrained environment, which sug-gest this information must be embedded directly into 1arXiv:2607.16998v1 [cs.RO] 18 Jul 2026 the learning process. Existing methods for integrating the force/impedance information are usually rely on sensor feedback. These approaches usually provide time-indexed measurement and are recorded independently of the path re-production. Recently, force/impedance information has been incorporated into path reproduction models to enable com-pliant motion reproduction [14]. However, such approaches typically rely on simplified environment contact models and cannot be directly learned from human demonstrations. 
+
+A. Contribution 
+
+To overcome these challenges, and extend our prior work [7], [13], [15]–[17], we aim to develop a single-shot LfD framework that simultaneously acquires positional and impedance profiles directly from the robot’s proprioceptive sensors, then reproduces the demonstrated paths with high fidelity while maintaining contact across varying surface geometries. Our proposed approach builds on a linear DS that is transformed into a nonlinear Cartesian space translational motion generator via a 3-dimensional (3D) Fast Diffeomor-phic Matching (FDM) algorithm. Reproduction accuracy is substantially improved by combining an Extended Kalman Filter (EKF) with the proposed FDM-based motion genera-tor. Inspired by the impedance parameterization method in [18], we encode direction-dependent damping online along the learned paths. Finally, using the velocity direction es-timate, we generate a velocity direction along the surface normal of the taught trajectory, enabling compliant yet re-liable surface contact. Summarizing, the main contributions of this paper are:  
+
+> •
+
+A 3D FDM-based algorithm integrated with a DS framework that enables learning from single-shot demonstrations and reproduces them in real time.  
+
+> •
+
+An EKF framework-based velocity correction module that achieves centimeter-level reproduction accuracy, enabling rapid recovery from external perturbations.  
+
+> •
+
+A real-time impedance learning method that selectively regulates interaction dynamics to resist potential devia-tions induced by external contacts along the path, while maintaining surface contact when required. The remainder of this paper is organized as follows. Section II presents the proposed methodology, Section III describes the experimental evaluation, and Section IV con-cludes the paper. II. M ETHODOLOGY 
+
+In this work, we consider an n–DOF redundant serial torque-controlled robot manipulator. The dynamic model of the robot in joint space can be expressed as, 
+
+M (q)¨ q + C(q, ˙q) ˙ q + G(q) = τc + τf + τext , (1) where q ∈ Rn denotes the joint configuration, M (q) ∈ Rn×n
+
+is the inertia matrix, C(q, ˙q) ∈ Rn×n represents the Coriolis and centrifugal matrix, G(q) ∈ Rn denotes the gravitational torques, whose effect can be accurately compensated in most industrial robot’s internal controllers. τc ∈ Rn denote the control torques produced by our proposed method. τf ∈ Rn
+
+denotes the joint frictional torques, and τext ∈ Rn denotes the unknown external interaction torque exerted on the end-effector (EE) that reflected on robot joints. The architecture of the proposed framework is presented in Fig. 1. (i) A linear DS is matched to the demonstrated trajectories using the 3D FDM algorithm, yielding a base velocity field for motion tracking; (ii) the base velocity is subsequently corrected via an EKF to refine trajectory repro-duction, and enables perturbation recovery; (iii) impedance parameters are learned online during the reproduction pro-cess; (iv) an optional module is incorporated to maintain surface contact when required. This work aims to lighten the burden of human workers in repetitive and tedious kinesthetic teaching tasks by learning positional and the corresponding impedance profiles from single-shot demonstrations. The proposed approach enables robots to accurately reproduce demonstrated motions with adjustable compliance, remain-ing responsive to external interactions and, when required, maintaining contact with different target surfaces. In the following, we explain each part of the framework in detail. Linear DS FDM Matched  
+
+> DS
+
+× Robot ( ) 
+
+EKF T 
+
+> UU
+
+D
+
+> User Demo msr ymsr y
+
+−1  
+
+> ˆe( ) fG q
+> 
+> Helper
+> Axes
+
+×c      
+
+> 3
+> ˆe( ) cg
+> ,()ccF
+> ekf ymDS y12
+> ˆˆ,eewgT
+> [0, 0, 1] −( ) g
+
+yx
+
+> (I)
+> (II)
+> (III)
+> (IV)
+
+Fig. 1: Overview of the proposed framework architec-ture. (I) Demonstration path matching and velocity gen-eration; (II) velocity correction and perturbation recovery; (III) impedance learning; and (IV) an optional module for maintaining surface contact. 
+
+A. Motion Generation 
+
+The motion generation module is composed of three interconnected submodules, namely the FDM for matching the demonstrated path, the matched DS for generating initial velocity, and the EKF for correcting the velocity estimation errors in real time. 
+
+1) Fast Diffeomorphic Matching: The FDM method, in-troduced in [19], aims to compute a diffeomorphism Φ that maps each point xi ∈ X ⊂ R2 onto yi ∈ Y ⊂ R2,where X = (xi)i∈{ 1,...,N } and Y = (yi)i∈{ 1,...,N } are two sequences of distinct points. In this work, we extend the application of this method to 3D, where X ⊂ R3 and 
+
+Y ⊂ R3. Each point in X is transformed using the locally weighted translation, 
+
+ˆyi = ϕρj ,c j ,v j (xi) = xi + kρj vj , (2) where ˆyi denotes the translated point in ˆY ∈ R3, cj and vj ∈
+
+R3 denotes the center and direction of the jth translation. A smooth diffeomorphism is the composition of all single locally weighted translations. In which, kρj = e−ρ2  
+
+> j|| xi−cj|| 2
+
+,
+
+2Algorithm 1 3D FDM of ˆY = Φ( X)
+
+Inputs: X = ( xi)i∈{ 1,...,N }, Y = ( yi)i∈{ 1,...,N } 
+
+> 1:
+
+K ∈ N>0, 0 < μ < 1, 0 < β ≤ 1 
+
+> 2:
+
+ˆY = (ˆ yi)i∈{ 1,...,N } = 0 ▷ init  
+
+> 3:
+
+for j = 1 to K do  
+
+> 4:
+
+m = arg max   
+
+> i∈{ 1,...,N }
+
+xi − yi ▷ find furthest point # 
+
+> 5:
+
+cj = xm ▷ furthest point  
+
+> 6:
+
+qj = ym ▷ demo point  
+
+> 7:
+
+vj = β (qj − cj ) ▷ direction of ϕ 
+
+> 8:
+
+ρj = arg min  
+
+> ρ∈[0 ,μρ max (vj)]
+
+PNi || ϕρ,c j ,v j (X) − Y || 2
+
+N +
+
+λρ 2 
+
+> max
+> 9:
+
+ˆY = ϕρj ,c j ,v j (X) ▷ composition of all  
+
+> 10:
+
+end for  
+
+> 11:
+
+return qj , ρ j , c j , v j j∈{ 1,...,K }
+
+is a Gaussian Radial Basis Function (RBF) kernel, where ρj
+
+represents the coefficient to be optimized to minimize the distance between ϕρj ,c j ,v j (X) and Y ,
+
+ρj := min 1
+
+N
+
+X
+
+> j
+
+|| ϕρj ,c j ,v j (X) − Y || 2, (3) where N denotes the number of points in X and Y , and 
+
+ρmax = e(1 /4)  
+
+> √2|| v||
+
+as the maximum value for better mapping. In the following, we briefly describe the FDM algorithm (Algorithm 1). Firstly, we select the point xm in X that is the furthest from its corresponding target ym in Y . Here, the point set X can be a straight line connecting the start and the end of the demonstrated path Y . Then, we optimize the 
+
+ρj to minimize the distance between ϕρj ,c j ,v j (X) and Y as in (3). In which, the direction of the jth translation ϕρj ,c j ,v j
+
+is updated to vj = β(qj − cj ), with 0 < μ < 1 representing the safety margin, 0 < β ≤ 1 denoting the learning rate, and K = 120 –200 is the total number of locally weighted translations selected by the user, where the loop iterates over each translation. λ term denotes a regularization term. Finally, we update the estimated demonstration path ˆY by compositing the K locally weighted translations together as 
+
+ˆY = Φ( X(K)) =  ϕρ1,c 1,v 1 ◦ϕρ2,c 2,v 2 ◦· · ·◦ ϕρK ,c K ,v K
+
+(X).
+
+2) Motion Reproduction: To reproduce the demonstrated paths matched by the FDM algorithm, this subsection first illustrates the FDM algorithm’s ability to learn globally asymptotically stable (GAS) nonlinear DS that functions as a motion generator. The literature has shown that DS-based motion representations possess rich real-world applications and can be rigorously proven to be GAS in [20], which is one of the many benefits of our proposed motion reproduction approach. The authors in [19] utilize the derived diffeomor-phism Φ to map a linear DS formulated as ˙x = −x onto the demonstrated paths in 2D space with single motion pattern. The initial and mapped DS are formulated as, 
+
+˙x = −γ(x)x, (4) 
+
+˙y = −γ(Φ −1(y)) JΦ(Φ −1(y))Φ −1(y), (5) where the velocity tuner is defined as γ(·) = || y1||   
+
+> δtN || x||
+
+∈
+
+R3 → R+ for || x|| ≥ || y1||  
+
+> N
+
+and γ(·) = || y1||  
+
+> N
+
+otherwise, 
+
+y1 denotes the first element. In (4), (5), the subscripts of individual points xi ∈ X and yi ∈ Y are omitted for brevity, and ˙x, ˙y ∈ R3 represent the produced velocity by the linear and FDM-transformed DS, respectively. Although FDM (Algorithm 1) can successfully match demonstrated paths in both 2D and 3D, the motion generated by the transformed DS in (5) deviate substantially from the original demonstrations. Its generalization capability dete-riorates in higher-dimensional (3D) settings and for more complex motion cases. To solve this problem, we continue in 3D space and propose a modified DS (mDS) to significantly improve the original DS’s ability to reproduce demonstra-tions. The mDS-based motion generator is, 
+
+˙ymDS = −ζ J Φ ˆx, (6) where ˙ymDS ∈ R3 represents the velocity generated by the mDS in translational space, ζ = ζ + η ∆ζ ∈ R3×3 is a velocity modulation term. In which, ∆ζ = (·)T ev   
+
+> ∥(·)Tev∥+ϵ
+
+, with (·) denotes the partial derivative ∂ ˙ymDS  
+
+> ∂ζ
+
+. ˆx ∈ R3 denotes the individual point estimated from ˆX = Φ −1(Y ). ev ∈ R3
+
+denotes the velocity error between the original demonstration and mDS generated velocity. η and ϵ ∈ R+ denote the adaptation rate and threshold, respectively. In practice, ∆ζ is filtered by a moving average filter and applied with clamping. In the following, we derive the inverse of the diffeomor-phism (Algorithm 2) for ˆx. It is denoted as ˆX = Φ −1(Y ),and is obtained by reversing the displacement in (2) as, 
+
+Φ−1(Y ) = Y + kj v− 
+
+> j
+
+, (7) where v− 
+
+> j
+
+= −β(qj − cj ) denotes the negative direction of 
+
+vj . The RBF weight at iteration j is 
+
+kj = e(−ρ2   
+
+> j∥ˆX−cj∥2
+
+). (8) Letting oj := Y − cj , we can rewrite (8) as, 
+
+rj (k) := kj = e(−ρ2    
+
+> j∥oj+kjv−
+> j∥2
+
+), kj ∈ [0 , 1] . (9) Since (9) is a self-referential equation that cannot be solved algebraically, we therefore rewrite it as a 1D root finding problem Fj (k) := rj (k)−k = 0 and apply Newton–Raphson method, which exhibits local quadratic convergence under standard regularity conditions. Differentiate Fj (k) as, 
+
+F ′ 
+
+> j
+
+(k) = dd k [rj (k)] − 1. (10) To solve this, let ∗ := −ρ2 
+
+> j
+
+∥oj + kj v− 
+
+> j
+
+∥2, and write the first term as, 
+
+dd k 
+
+h
+
+e(∗)i
+
+= e(∗) d∗
+
+d k , (11) where e(∗) denotes the exponential function with argument 
+
+∗. Then calculate the derivative of ∗ as, 
+
+d∗
+
+d k = −2ρ2 
+
+> j
+
+(oj + kj v− 
+
+> j
+
+)T v− 
+
+> j
+
+, (12) 3since dd k ∥oj + kj v− 
+
+> j
+
+∥2 = 2( oj + kj v− 
+
+> j
+
+)T v− 
+
+> j
+
+. Thus, 
+
+F ′ 
+
+> j
+
+(k) = e(∗) · −2ρ2 
+
+> j
+
+(oj + kj v− 
+
+> j
+
+)T v−
+
+> j
+
+ − 1. (13) Rewriting in terms of rj (k) = e(∗),
+
+F ′ 
+
+> j
+
+(k) = −2ρ2 
+
+> j
+
+rj (k) (oj + kj v− 
+
+> j
+
+)T v−
+
+> j
+
+ − 1. (14) Finally, the update of kj can be written as, 
+
+kj+1 = kj − Fj (k)
+
+F ′ 
+
+> j
+
+(k) . (15) The detailed procedure is summarized in Algorithm 2, where the symbols defined in Algorithm 1 are inherited and parentheses are omitted for simplicity. In practice, the stopping threshold ϵ is set to a small positive value (e.g., 
+
+10 −6), and a maximum number of iterations (e.g., 20–50) is imposed to avoid potential non-termination. 
+
+Algorithm 2 Newton method of ˆX = Φ −1(Y )
+
+Inputs: Y = ( yi)i∈{ 1,...,N }, cj , q j , ρ j 
+
+> Kj=1
+> 1:
+
+K ∈ N>0, 0 < β ≤ 1, ϵ = 10 −6 
+
+> 2:
+
+for j = K to 1 do ▷ undo ΦK ◦ · · · ◦ Φ1 
+
+> 3:
+
+v− 
+
+> j
+
+= −β(qj − cj ) ▷ reversed direction  
+
+> 4:
+
+ej = Y − cj 
+
+> 5:
+
+repeat ▷ Newton method  
+
+> 6:
+
+rj = e
+
+ −ρ2    
+
+> j⊙ ∥ oj+kj⊙v−
+> j∥2
+
+
+
+▷ kernel  
+
+> 7:
+
+gj = (2[ oj + kj ⊙ v− 
+
+> j
+
+) ⊙ v− 
+
+> j
+
+]T 1N ▷ 1N ∈ RN ×1 
+
+> 8:
+
+Fj = rj − kj , F ′ = −1 − ρ2 
+
+> j
+
+⊙ gj ⊙ rj 
+
+> 9:
+
+kj+1 = kj − Fj ⊘ F ′ 
+
+> j
+> 10:
+
+until |Fj | < ϵ ▷ threshold  
+
+> 11:
+
+ˆX = Y + kj ⊙ v− 
+
+> j
+
+▷ output  
+
+> 12:
+
+end for 
+
+Given that many variables are already derived in the Algorithm 2, it is natural and numerically efficient to for-mulate Jacobian matrix of the diffeomorphism in (6) as a Sherman–Morrison formula, Jϕj ( ˆX) = I3 + uj wTj , where 
+
+I3 ∈ R3×3 is an identity matrix, and uj := −2ρ2 
+
+> j
+
+kj v− 
+
+> j
+
+,
+
+wj := ˆX − cj . The Jacobian is written as, 
+
+Jϕj = I3 + 2 ρ2 
+
+> j
+
+kj v− 
+
+> j
+
+( ˆX − cj )T , (16) with its dependency ˆX omitted. The full Jacobian JΦ ∈ R3×3
+
+of the diffeomorphism Φ is, 
+
+JΦ =
+
+> 1
+
+Y
+
+> j=K
+
+Jϕj , j = K → 1. (17) 
+
+3) Correction of Reproduced Motion under Perturbations: 
+
+Building upon the velocity generated by the mDS in (6), we further introduce a compensation mechanism to mitigate the amplified tracking errors that arise when reproducing complex motions in real-world environments. Specifically, we leverage the Kalman gain scheduling property of the EKF framework to refine the velocity ˙ymDS produced by the mDS. This correction enables centimeter-level accuracy in motion reproduction, even under external perturbations. Our approach uses a low-dimensional EKF state, which is more compact than estimating full motion derivatives, yet sufficient to correct residual velocity errors. We augment the mDS with an additional velocity bias term b, estimated online via the EKF. The corrected velocity is given by, 
+
+˙yekf = ˙ ymDS + b. (18) We define the EKF state as si = [ yi, b i]T ∈ R6, where 
+
+yi ∈ R3 is the ith Cartesian position in the demonstration path point set Y , bi ∈ R3 denotes the additive velocity bias term. We then write the discrete-time process model as, 
+
+fd(si) = 
+
+yi +  g(·) + bi
+
+ ∆t + wy,i ,e−λb∆t bi + wb,i ,
+
+
+
+, (19) where the mDS is denoted as g(·) and is defined as g(·) := ˙ymDS . ∆t is the sampling time, and λb > 0 is the bias decay rate. The process noises are modelled as, wy,i ∼N (0 , Q y ∆t), w b,i ∼ N (0 , Q b∆t), where Qy , Qb ∈ R3×3
+
+are user-defined covariance matrices. Then, to update the covariance, we linearize (19) at the current estimate ˆsi|i =[ˆ yi|i, ˆbi|i]T . The state transition Jacobian is, 
+
+Fi := ∂f d
+
+∂s s=ˆ si|i
+
+=
+
+I3 + Fy (ˆ yi|i)∆ t I3∆t
+
+03 e−λb∆t I3
+
+
+
+, (20) where Fy (ˆ yi|i) := ∂g (·) 
+
+> ∂y y=ˆ yi|i
+
+∈ R3×3. In practice, Fy can be approximated using forward finite differences approach with a small time interval (e.g., 10 −3). I3 is the 3×3 identity matrix, and 03 is the 3 × 3 zero matrix. Then, the EKF recursion is given by the prediction step, 
+
+( ˆsi|i−1 = fd(ˆ si−1|i−1),Pi|i−1 = Fi−1Pi−1|i−1F Ti−1 + Qi−1, (21) where Pi|i−1 ∈ R6×6 denotes the predicted covariance estimate, and Q = blkdiag (Qy Qb) ∆ t ∈ R6×6. The update process is, 
+
+
+
+ei = yi − ˆxi|i−1, ▷ estimation residual 
+
+Si = HP i|i−1HT + R, ▷ residual covariance 
+
+Ki = Pi|i−1HT S−1 
+
+> i
+
+, ▷ Kalman gain 
+
+ˆsi|i = ˆ si|i−1 + Kiei, ▷ updated state 
+
+Pi|i = ( I2d − KiH)Pi|i−1, ▷ updated covariance (22) where H = [ I3 03] is the measurement matrix, R ∈ R3×3
+
+is is a user-defined measurement noise covariance. Finally, the additive velocity bias b is extracted from the updated state ˆsi|i to produce the estimate of the adaptively corrected velocity defined in (18). 
+
+B. Impedance Parameterization 
+
+To tune the interaction dynamics along reproduced paths, the impedance characteristic must be parameterized. Inspired by [18] and extending the formulation in [13], we formulate a velocity tracking controller, 
+
+Fc = D(⋄) ˙ pc, (23) 4where ˙pc = ˙ymsr − ˙yekf , in that ˙ymsr denotes the actual translational velocity measured from the robot. D(⋄) is the velocity direction parameterized damping associated with the reproduced paths, it is designed to selectively tune the dissipation of energy in desired and undesired directions. In this work, the goal is to react to arbitrary external interactions with compliance while maintaining the tracking of demonstrated paths. Thus, let ⋄ := ˙ yekf , The parameterized damping is defined as, 
+
+D(⋄) = U (⋄)Λ U (⋄)T , (24) where matrix U (⋄) = [ˆ e1, ˆe2, ˆe3] ∈ R3×3 contains the esti-mated orthonormal principal axes ˆe1, ˆe2, ˆe3, with ˆe1 pointing in the desired direction of motion. Thus, let ˆe1 := ⋄/|| ⋄ || , and the rest be represented as, 
+
+ˆej := v(j)
+
+max( ∥v(j)∥, ε ) , j = 2 , 3, (25) where v(j) := ek −  ˆe Tj ek
+
+ˆej , ε ∈ R+ denotes a numerical stability constant, ek denotes the kth canonical axis, and for the 1st canonical axis, e1 = [1 , 0, 0] . Additionally, in practice, the sign continuity of components in U is ensured. 
+
+Λ = diag (λ1, λ 2, λ 3) ∈ R3×3 is a user-defined diagonal matrix with non-negative elements (typically 10–100). This is to adjust the perceived interaction behaviour. For example, setting λ1 = 0 and others > 0 allows for resisting the exter-nal force that results in deviations from the path tracking. 
+
+C. A Self-learned Strategy for Surface Contact Task 
+
+In the foregoing subsections, the proposed LfD scheme enabled the robot to reproduce a demonstrated path with both accuracy and compliance. For many manipulation tasks, however, the controller must also preserve a stable contact with the workpiece surface while following that path. We exploit an intrinsic property of the demonstration phase: the human demonstrator is assumed to keep the EE tool in continuous contact with the target surface. Consequently, the local geometry of the surface is implicitly encoded in the DS, where no external contact or vision sensors are required. This observation allows the framework to handle arbitrarily oriented, tilted, or curved surfaces. Taking advantage of the matrix U derived in the previous subsection, under the contact-maintenance assumption, the third column ˆe3 coincides with the outward surface normal. 
+
+ˆe3 enabling a real-time estimate of the surface normal, we augment the velocity presented in (18) as, 
+
+˙yd = ˙ ymDS + gc(·) + b, (26) where ˙yd ∈ R3 denotes the final generated velocity, with 
+
+gc(·) = αc ˆe3 creates an adjustable velocity pointing to the surface for contact maintaining. For example, a high αc
+
+enforces tight contact, αc = 0 means the robot is tracking the demonstrated path with no contact force exerted. Finally, we can write the total control force by first reformulating the prior ˙pc in (23) to ˙pc = ˙ ymsr − ˙yd, then convert Fc in (23) to joint torque τc and substitute into the robot dynamics in (1). Impedance learning 
+
+> Perturbation
+> resilient
+> Perturbation
+> resilient
+> Other complex shapes
+
+Fig. 2: Experimental procedure. The user teaches by physi-cally guiding the EE along a 3D trapezoidal path. The green and red markers show the start and end points, respectively. External interaction is highlighted by a green circle, and the inset image shows the user’s applied “push” motion (arrow). III. E XPERIMENTAL EVALUATION To evaluate the proposed method, we conduct experiments on a 7-DOF KUKA LWR IV+ robot manipulator as shown in Fig. 2. The control algorithms are implemented on a remote Ubuntu PC with the Robot Operating System (ROS) framework. This remote PC establishes communication with the KUKA robot controller via UDP, utilizing the Fast Research Interface (FRI) with a sampling rate of 200 Hz. Throughout the experiments, the desired EE orientation is configured as [π, 0, π ]T (rad) to point towards the ground and controlled by a PD controller. The robot is controlled in joint impedance mode, in which the controlled torque is the only input to the robot, with the control mode’s stiffness and damping interfaces disabled. Proper compensation for frictional ( τf ) and gravitational torques is ensured. In this experiment, we evaluate the learning and re-production accuracy using 2D reference trajectories from the LASA Handwriting dataset [21]. We extend from its original 2D formulation to 3D Cartesian space. Figs. 3 and 4 summarize the results. Subfigures (i) illustrate the FDM transformation by comparing the demonstrations ( Y in red) with their estimated counterparts ( ˆY in green), showing near-identical reconstruction. The inverse mapping ˆX is shown in light blue. The associated estimation errors remain negligible (below 0.3 cm) and are reported in subfigures (ii). External perturbations are introduced to assess compliance and disturbance rejection. Results for the ‘S’ and near ‘O’-shaped trajectories are shown in Fig. 3.a–b, while trape-zoidal and ‘W’-shaped paths are presented in Fig. 4.a–b. The corrected reproduced trajectories (green dashed) closely follow the demonstrations (red), with reproduction errors generally under 2 cm, as shown in subfigures (iii) and (iv). Perturbation intervals are highlighted with a light blue shaded region in subfigure (iii), and recovery behaviour is illus-trated in subfigure (iv) using light blue circles. In contrast, the DS-based velocity generation in (6) (dark blue) serves as a baseline method, exhibits visibly larger reproduction errors, which worsen with increasing path complexity and fails to recover under perturbations. Finally, subfigures (iv) 5Fig. 3: Experiment result: (a,i) 3D FDM learned path, (a.ii–a.iv) estimation error of the learned path, reproduction error, and reproduction under perturbation for an ‘S’-shaped path; (b.i–b.iv) corresponding results for a near ‘O’-shaped path. Shaded areas indicate the period of interaction, with the corresponding impact highlighted in circles. All values are expressed in cm. 
+
+Fig. 4: Experiment result: (a,i) 3D FDM learned path, (a.ii–a.iv) estimation error of the learned path, reproduction error, and reproduction under perturbation for a trapezoid-shaped path; (b.i–b.iv) corresponding results for a ‘W’-shaped path. Shaded areas indicate the period of interaction, with the corresponding impact highlighted in circles. All values are expressed in cm. also visualize the adaptive impedance parameters and the learned surface-contact strategy. Specifically, they depict the damping variations D along the principal axes (shown in the inset plots), as well as the contact-maintaining behaviour indicated by the black arrows. IV. C ONCLUSION 
+
+This paper presents an approach that integrates a 3D FDM algorithm with an EKF-DS-based motion generator to enable real-time single-shot LfD and precise motion reproduction. The proposed framework inherently supports perturbation re-silience and surface-contact execution, making it particularly suitable for robot LfD applications that traditionally require extensive and repetitive human demonstrations. By jointly ensuring compliance, perturbation recovery, and reproduction accuracy under varying interaction dynamics, the method provides a practical solution for interactive robotic tasks. Experimental validation on a KUKA LWR IV+ robot demon-strates the effectiveness and feasibility of the proposed ap-proach, even when reproducing complex handwriting paths. 6REFERENCES [1] D. Mukherjee, K. Gupta, L. H. Chang, and H. Najjaran, “A survey of robot learning strategies for human-robot collaboration in industrial settings,” Robotics and Computer-Integrated Manufacturing , vol. 73, p. 102231, 2022. [2] B. D. Argall, S. Chernova, M. Veloso, and B. Browning, “A survey of robot learning from demonstration,” Robotics and autonomous systems , vol. 57, no. 5, pp. 469–483, 2009. [3] H. Ravichandar, A. S. Polydoros, S. Chernova, and A. Billard, “Recent advances in robot learning from demonstration,” Annual review of control, robotics, and autonomous systems , vol. 3, no. 1, pp. 297– 330, 2020. [4] A. Coates, P. Abbeel, and A. Y. Ng, “Learning for control from multiple demonstrations,” in Proceedings of the 25th international conference on Machine learning , 2008, pp. 144–151. [5] S. Choi, K. Lee, and S. Oh, “Robust learning from demonstration using leveraged gaussian processes and sparse-constrained optimization,” in 
+
+2016 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2016, pp. 470–475. [6] M. Sakr, Z. J. Li, H. M. Van der Loos, D. Kuli´ c, and E. A. Croft, “Quantifying demonstration quality for robot learning and general-ization,” IEEE Robotics and Automation Letters , vol. 7, no. 4, pp. 9659–9666, 2022. [7] Z.-Q. Yang and M. R. Kermani, “User-driven human robot interaction: A null space optimization and inertia shaping method,” Control Engineering Practice , vol. 173, p. 106958, 2026. [8] J.-F. Lafleche, S. Saunderson, and G. Nejat, “Robot cooperative behav-ior learning using single-shot learning from demonstration and parallel hidden markov models,” IEEE Robotics and Automation Letters , vol. 4, no. 2, pp. 193–200, 2018. [9] C. Feng, Z. Liu, W. Li, X. Lu, Y. Jing, and Y. Ma, “Improved gaussian mixture model and gaussian mixture regression for learning from demonstration based on gaussian noise scattering,” Advanced Engineering Informatics , vol. 65, p. 103192, 2025. [10] Y. Wang, Y. Hu, S. El Zaatari, W. Li, and Y. Zhou, “Optimised learning from demonstrations for collaborative robots,” Robotics and Computer-Integrated Manufacturing , vol. 71, p. 102169, 2021. [11] G. Franzese, A. M´ esz´ aros, L. Peternel, and J. Kober, “Ilosa: Interactive learning of stiffness and attractors,” in 2021 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . IEEE, 2021, pp. 7778–7785. [12] C. Chen, C. Yang, C. Zeng, N. Wang, and Z. Li, “Robot learning from multiple demonstrations with dynamic movement primitive,” in 2017 2nd International Conference on Advanced Robotics and Mechatronics (ICARM) . IEEE, 2017, pp. 523–528. [13] Z.-Q. Yang, M. Wang, and M. R. Kermani, “A null space compliance approach for maintaining safety and tracking performance in human-robot interactions,” IEEE Robotics and Automation Letters , vol. 10, no. 6, pp. 5369–5376, 2025. [14] D. Ge, H. Zhao, Y. Wang, D. Li, X. Li, and H. Ding, “Learning compliant dynamical system from human demonstrations for stable force control in unknown environments,” Robotics and Computer-Integrated Manufacturing , vol. 86, p. 102669, 2024. [15] Z.-Q. Yang and M. R. Kermani, “A computationally efficient hysteresis model for magneto-rheological clutches and its comparison with other models,” in Actuators , vol. 12, no. 5. MDPI, 2023, p. 190. [16] M. R. Kermani, S. Pisetskiy, I. Polushin, and Z.-Q. Yang, “Antagonistic magneto-rheological actuators with inherent output boundedness: An ideal solution for high-performance and human-safe actuation,” in 
+
+Actuators , vol. 12, no. 9. MDPI, 2023, p. 351. [17] Z.-Q. Yang and M. R. Kermani, “A unified multi-layer framework for skill acquisition from imperfect human demonstrations,” arXiv preprint arXiv:2604.08341 , 2026. [18] K. Kronander and A. Billard, “Passive interaction control with dynam-ical systems,” IEEE Robotics and Automation Letters , vol. 1, no. 1, pp. 106–113, 2015. [19] N. Perrin and P. Schlehuber-Caissier, “Fast diffeomorphic matching to learn globally asymptotically stable nonlinear dynamical systems,” 
+
+Systems & Control Letters , vol. 96, pp. 51–59, 2016. [20] S. M. Khansari-Zadeh and A. Billard, “Learning stable nonlinear dynamical systems with gaussian mixture models,” IEEE Transactions on Robotics , vol. 27, no. 5, pp. 943–957, 2011. [21] S. M. Khansari-Zadeh, “LASA Handwriting Dataset,” Version 2.0, LASA Laboratory, EPFL, 2010, copyright (C) 2010 S. Mohammad Khansari-Zadeh. [Online]. Available: https://bitbucket.org/khansari/ lasahandwritingdataset/src/master/DataSet/ 
+
+7

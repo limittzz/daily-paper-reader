@@ -1,0 +1,1612 @@
+Title: Scalable Causal Imitation Learning
+
+URL Source: https://arxiv.org/pdf/2607.17003v1
+
+Published Time: Tue, 21 Jul 2026 00:50:55 GMT
+
+Number of Pages: 37
+
+Markdown Content:
+Reinforcement Learning Journal 2026 Cover Page 
+
+# Scalable Causal Imitation Learning 
+
+## Eylam Tagor, Mingxuan Li, Elias Bareinboim 
+
+Keywords: Causality, Imitation Learning, Inverse Reinforcement learning, Unobserved Confounders 
+
+# Summary 
+
+Imitation learning enables learning a policy in an unknown environment with a latent re-ward signal using expert demonstrations, but it struggles when the imitator’s and expert’s observations are mismatched and unobserved confounders are present in expert demonstra-tions. By identifying appropriate adjustment sets via the sequential π-backdoor criterion, causal imitation learning (CIL) provides a framework for approximating the expert’s policy from confounded data. However, existing CIL methods, Causal Behavioral Cloning (Causal BC) and Causal Generative Adversarial Imitation Learning (Causal GAIL), are designed for short-horizon, low-dimensional settings. When applied to continuous control tasks with long horizons and high-dimensional state-action spaces, these methods exhibit poor performance: Causal BC suffers from compounding errors, Causal GAIL is unstable and sample-inefficient, and sequential π-backdoor adjustment becomes impractical. We introduce Causal Soft Q Imitation Learning (SQIL) and Causal Inverse soft-Q Learn-ing (IQ-Learn), two off-policy causal imitation learning algorithms that combine the causal adjustment framework with state-of-the-art inverse reinforcement learning objectives. Both algorithms operate on causally-adjusted state representations produced by an efficient approx-imation of the sequential π-backdoor criterion, exploiting the causal structure of continuous control environments to reduce the full-horizon adjustment to a fixed-size sliding window. We evaluate all methods in a suite of confounded environments and find that Causal SQIL and Causal IQ-Learn substantially outperform prior CIL algorithms on long-horizon tasks, some-times surpassing the expert, whereas all causally unaware imitation methods fail to learn mean-ingful behavior. 
+
+# Contribution(s) 
+
+1. We introduce Causal SQIL and Causal IQ-Learn, two CIL algorithms for continuous-control settings with unobserved confounders. Both algorithms apply state-of-the-art inverse soft Q-learning objectives to causally-adjusted state representations. 
+
+Context: Prior CIL algorithms (Zhang et al., 2020; Kumor et al., 2021; Ruan et al., 2023; 2024) are only suitable for short-horizon, low-dimensional domains. Standard (non-causal) SQIL (Reddy et al., 2020) and IQ-Learn (Garg et al., 2021) assume no confounding. 2. We develop an approximation of the sequential π-backdoor criterion that reduces the adjust-ment set computation from the full horizon to a fixed-size sliding window, making causal adjustment tractable for environments with horizons of a thousand or more steps. 
+
+Context: The sequential π-backdoor criterion (Kumor et al., 2021) provides a complete graphical characterization of imitability given knowledge of the causal diagram but is infea-sible to compute and bloats dimensionality; our approximate adjustment is correct assuming bounded temporal influence and endogenous time-homogeneity. 3. We provide an empirical evaluation across confounded high-dimensional long-horizon con-trol tasks, demonstrating that Causal SQIL and Causal IQ-Learn achieve competitive suc-cess rates on tasks where Causal BC and Causal GAIL degrade and all causally unaware methods fail to learn meaningful policies. 
+
+Context: These environments are augmentations of OGBench (Park et al., 2025) tasks with latent confounders and partial observability modeled by structural causal models to mimic real-world imitation tasks. Prior empirical evaluations of CIL use short-horizon dis-crete MDPs or low-dimensional continuous environments. arXiv:2607.17003v1 [cs.LG] 18 Jul 2026 Scalable Causal Imitation Learning 
+
+# Scalable Causal Imitation Learning 
+
+## Eylam Tagor 1, Mingxuan Li 1, Elias Bareinboim 1
+
+eylam.tagor@columbia.edu, ml@cs.columbia.edu, eb@cs.columbia.edu 
+
+> 1
+
+Department of Computer Science, Columbia University 
+
+## Abstract 
+
+Imitation learning enables learning a policy in an unknown environment with a la-tent reward signal using expert demonstrations, but it struggles when the imitator’s and expert’s observations are mismatched and unobserved confounders are present in expert demonstrations. By identifying appropriate adjustment sets via the sequential 
+
+π-backdoor criterion, causal imitation learning (CIL) provides a framework for ap-proximating the expert’s policy from confounded data. However, existing CIL meth-ods, Causal Behavioral Cloning (Causal BC) and Causal Generative Adversarial Imita-tion Learning (Causal GAIL), are designed for short-horizon, low-dimensional settings. When applied to continuous control tasks with long horizons and high-dimensional state-action spaces, these methods exhibit poor performance: Causal BC suffers from compounding errors, Causal GAIL is unstable and sample-inefficient, and sequen-tial π-backdoor adjustment becomes impractical. We introduce Causal Soft Q Imita-tion Learning (SQIL) and Causal Inverse soft-Q Learning (IQ-Learn), two off-policy causal imitation learning algorithms that combine the causal adjustment framework with state-of-the-art inverse reinforcement learning objectives. Both algorithms operate on causally-adjusted state representations produced by an efficient approximation of the sequential π-backdoor criterion, exploiting the causal structure of continuous control environments to reduce the full-horizon adjustment to a fixed-size sliding window. We evaluate all methods in a suite of confounded environments and find that Causal SQIL and Causal IQ-Learn substantially outperform prior CIL algorithms on long-horizon tasks, sometimes surpassing the expert, whereas all causally unaware imitation meth-ods fail to learn meaningful behavior. Repository: https://github.com/CausalAILab/Scalable-Causal-Imitation-Learning 
+
+## 1 Introduction 
+
+Imitation learning (IL) has become a central paradigm in robotics and control tasks as an alternative to reinforcement learning (RL) in domains where reward signals are unavailable, sparse, or difficult to engineer (Osa et al., 2018; Zare et al., 2024). Rather than optimizing a task-specific reward, IL seeks to learn from demonstrations collected as state-action trajectories from an expert deployed in the environment. This framework underlies a large body of work in behavioral cloning, dataset aggregation, and inverse RL (Ross et al., 2011; Ziebart et al., 2008; Ho & Ermon, 2016; Fu et al., 2018; Chi et al., 2023; Zhao et al., 2023), and is widely used in offline RL and robotics applications (Levine et al., 2020; Fu et al., 2021; Figueiredo Prudencio et al., 2024; Brohan et al., 2023). Traditionally, IL methods assume that the expert and imitator operate with the same sensory ca-pabilities, meaning every variable that the expert can observe is also observable to the imitator. Under this No Unobserved Confounders (NUC) assumption, the expert policy is identifiable from observational data and standard IL can recover it given sufficient demonstrations. However, realistic Reinforcement Learning Journal 2026 0 10 20 30 40                
+
+> xposition
+> 5
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> y position
+> Causal IQ-Learn (659 steps)
+> Start
+> End
+> Goal 010 20 30 40
+> xposition
+> 5
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> y position
+> Causal GAIL (1000 steps)
+> Start
+> End
+> Goal 010 20 30 40
+> xposition
+> 5
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> y position
+> Non-Causal IQ-Learn (1000 steps)
+> Start
+> End
+> Goal Expert
+> Causal BC
+> Causal GAIL
+> Causal SQIL
+> Causal IQLearn
+> BC
+> GAIL
+> SQIL
+> IQLearn
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Normalized Success Rate (%)
+> 100.0%
+> 73.8%
+> 40.3%
+> 91.4% 89.7%
+> 5.6%
+> 0.0% 0.1% 1.3%
+> Normalized Success Rate Across Tasks (Avg Normalize)
+
+Figure 1: Performance of various imitation learning algorithms on the Confounded AntMaze Large task. (a) One of our proposed algorithms, Causal IQ-Learn. (b) Existing CIL methods such as Causal GAIL struggle to scale to high-dimensional long-horizon tasks, even when equipped with our windowed adjustment (Section 3.2) to bypass their infeasibility (see Appendix F.3). (c) Non-causal methods fail by overfitting to spurious correlations corrupted by unobserved confounding. (d) Success rates for all algorithms tested aggregated across all tasks evaluated; Causal SQIL and Causal IQ-Learn perform best through leveraging causal knowledge and scalable policy learning. decision-making systems rarely satisfy NUC. In practice, experts often have access to additional sen-sors or context unavailable to the imitator, and latent conditions such as wind, friction, and payload may unpredictably change their distribution. These phenomena introduce unobserved confounding to the imitation task that may jointly affect the state transition, expert’s action and rewards. By falsely assuming NUC or ignoring unobserved confounding, standard IL methods overfit to spu-rious correlations during training, thus failing to generalize when these correlations shift at runtime (de Haan et al., 2019; Lu et al., 2023). Figure 1 illustrates this on a confounded maze navigation task: the observation contains quantities that correlate with expert actions but, due to influence from unobserved confounders, suffer distribution shift at runtime. Causally unaware methods mis-take these spurious correlations for causal signals during training and incorporate them into their decision-making, ultimately failing to exhibit coherent movement during runtime and achieve near-
+
+0% success (Figure 1c,d). In safety-critical tasks in which IL is often applied due to its independence from reward engineering, such as autonomous driving (Chen et al., 2024; Codevilla et al., 2019) and robotic manipulation (Chi et al., 2023; Zheng et al., 2024), such failures are only revealed during deployment and thus pose an unaffordable risk which severely limits the utility of IL. Causal imitation learning (CIL) addresses this by leveraging structural causal knowledge to identify which observed variables are safe to condition on (Zhang et al., 2020; Kumor et al., 2021; Ruan et al., 2023; 2024). However, existing CIL methods have remained restricted to low-dimensional, short-horizon tasks: in continuous control benchmarks (Todorov et al., 2012; Park et al., 2025) where observation spaces are high-dimensional and episodes span thousands of steps, they suffer Scalable Causal Imitation Learning from compounding error and training instability (Figure 1b). On the same large maze task, these methods recover between 13 − 71% of expert performance despite recovering 84 − 89% on the medium maze (Table 1). A review of the CIL and IL literature is provided in Appendix A. Collectively, we identify the gap in the current state of imitation learning literature: scalable meth-ods can imitate long-term expert policies, but are fragile when NUC is violated; causal methods are robust under confounding, but struggle to scale. Our contributions address this gap by introduc-ing scalable CIL through soft Q-learning methods augmented by an efficient approximation to the sequential π-backdoor adjustment sets that leverages structural properties of the environment. For evaluation, we introduce a suite of confounded control tasks based on OGBench (Park et al., 2025) where confounding biases are designed to mirror what is naturally found in real-world scenarios. We find that in these environments, existing CIL algorithms struggle to recover a consistent policy and non-causal IL algorithms fail altogether, whereas our proposed algorithms are able to achieve 
+
+90% of the expert’s success rate on average (Figure 1d) and even surpass it on some tasks. 
+
+Notations. We will consistently use capital letters ( X) to represent variables either in the observa-tion or in the causal diagram, and lowercase ( x) for their values. We bold capital letters ( X) for sets of variables. We denote the parents of the variable X in a causal diagram pa( X) and its children 
+
+ch( X) (with Pa( X) and Ch( X) including X) and the C-component of X in G as C(X). For a topological order ≺ and the subgraph G(X) induced by X and its predecessors, the extended parent set pa +(X) = pa( C(X)) \ { X}; pa +(X) contains every variable collider-connected to X within 
+
+G(X) together with the parents of those variables. We write ch +(X) for the effective children of X,or every variable reachable from X by a directed path whose internal nodes are all latent. Xt and 
+
+XH denote the instance of X at timestep t and at the last step, respectively. We use P (X) as the probability distribution over X, π(X | Z) as the behavioral policy distribution conditioning on Z,and do (x) as the intervention fixing X to take values x.
+
+## 2 The Challenge of Imitation under Unobserved Confounding 
+
+We model the joint expert–environment system as a structural causal model (SCM). 
+
+Definition 1 (Structural Causal Model (Pearl, 2009; Bareinboim et al., 2022)) . A structural causal model (SCM) is a tuple M = ⟨U, V, F , P (u)⟩, where: • U is a set of exogenous variables determined by factors outside the model; • V = {V1, . . . , V n} is a set of endogenous variables determined by variables in U ∪ V;• F = {fV : V ∈ V} is a set of structural functions such that each V ∈ V is assigned via 
+
+V ← fV (pa( V ), U V ), where pa( V ) ⊆ V \ { V } are endogenous parents of V and UV ⊆ U;• P (u) is a joint probability distribution over the exogenous variables U.Each SCM M induces a causal diagram G with one node for each V ∈ V, directed edges 
+
+pa( V ) → V , and bidirected edges between variables that share an unobserved parent in U.In our setting, V includes states, actions, and latent environment variables, X ⊆ V is the action set, and Y ∈ U is the latent reward. To differentiate between variables that are unobserved, observed, and observed by the expert only, we partition the endogenous variables into 
+
+VO ⊆ V (observed to the imitator) , VL = V \ VO (latent to the imitator) .
+
+The expert demonstrations reflect the joint observational distribution P (VO ), whereas the imita-tor, operating under its own policy, induces the interventional distribution P (V | do (π)) . In the presence of latent variables VL, these two distributions may differ substantially: correlations be-tween observed variables and expert actions may be driven by unobserved confounders rather than causal paths. The goal of CIL is therefore to determine, for each time step t, the sufficient subset of observed variables Zt ⊆ VO for constructing an unbiased approximation of the expert’s decision mechanism, πt(xt | Zt) ≈ P (xt | Zt), in a way that is stable to the removal of latent confounding. Reinforcement Learning Journal 2026 Vt  
+
+> VLt
+> Xt
+> Y
+> VOt
+> ZtWtXt
+> Y
+> VOt
+> ZtWt
+> (b) (c)
+> Xt
+> Y
+> Vt+1
+> Xt+1
+> VH...
+> ...
+> (a)
+
+Figure 2: (a) Generic causal diagram for sequential imitation learning with unobserved confounders, as perceived by the expert. (b) Expanded single-timestep slice of a diagram with a spurious variable 
+
+Wt, a useful state variable Zt, and latent state VLt . (c) Imitator perception of diagram (b), demon-strating how latent observation variables become additional unobserved confounders. 
+
+Example 1 (Confounded AntMaze) . Consider an ant robot navigating a maze toward a goal region, receiving a terminal reward Y upon success (see Figure 1 for visualization). The expert observes the full state V, including its torso orientation O, and selects joint torques X accordingly to move itself; Figure 2a shows this sequential structure. The imitator, however, does not observe O (i.e. O ∈ VL). A compass sensor W serves as a noisy surrogate for the ant’s bearing. The environment is also subject to a latent wind U (shown implicitly through bidirectional edges) that applies an external force to the dynamics, affecting the compass reading and the difficulty of reaching the goal. Figure 2b shows a single-timestep slice of this structure. The compass Wt receives incoming edges from both the hidden orientation Ot ∈ VLt and the latent wind Ut, but has no outgoing edges: it is a collider that plays no causal role in determining future states, actions, or rewards. The useful state variables (position, joint angles, velocities) are represented by Zt, which does causally influence the expert’s action due to its edge into Xt. From the imitator’s perspective (Figure 2c), the hidden VLt
+
+becomes an additional unobserved confounder, introducing a bidirected edge between VOt and Xt.A causally unaware imitator that conditions on all observed variables, including Wt, inadvertently opens the spurious path Y ← Ut → Wt ← Ot → Xt. During training, the compass correlates with the expert’s turning behavior because both are influenced by the wind. The imitator mistakes this for a causal signal: it learns, for instance, that when Wt points east the expert turns right, not realizing both facts are driven by an eastward gust. Once deployed under a different P (U ), these associations become actively harmful: the imitator turns into walls whenever the wind changes direction. ■
+
+2.1 Sequential π-Backdoor Criterion 
+
+Formally, the sequential π-backdoor criterion graphically determines what each Zt must contain so that conditioning on Zt blocks all noncausal paths from Xt to the final outcome Y .
+
+Definition 2 (Sequential π-Backdoor Criterion (Kumor et al., 2021)) . Let G be the causal diagram induced by the SCM. For each action Xt, define a manipulated graph G′ 
+
+> t
+
+obtained by: (i) removing all incoming edges into future actions Xt+1: H , and (ii) replacing each future action Xj (j > t )by a node whose parents are restricted to Zj . A family of sets {Zt}Ht=0 satisfies the sequential π-backdoor for (G, X, Y ) if, for every t, either (Xt ⊥⊥ Y | Zt)(G′ 
+
+> t)Xt
+
+or Xt /∈ An G′
+
+> t
+
+(Y ). Here 
+
+(G′ 
+
+> t
+
+)Xt denotes the graph obtained from G′ 
+
+> t
+
+by deleting outgoing edges from Xt.When {Zt} satisfies Definition 2, conditioning on Zt removes all confounding and noncausal de-pendencies between Xt and Y that arise from shared latent parents in VL, proxy variables, or unobserved factors. Crucially, Zt is restricted to the observable set VO . Returning to Example 1 and Figure 2, applying the sequential π-backdoor to the diagram yields an adjustment set Zt that contains the useful state variables (position, joint angles, velocities) but excludes the compass Wt.By conditioning only on Zt, the imitator’s policy π(xt | zt) is indifferent to the wind-driven distri-butional shift in Wt and instead relies exclusively on variables that causally determine the expert’s actions. Even when the orientation Ot is unobserved and the full imitability condition is broken, Scalable Causal Imitation Learning 5 0 5 10 15 20 25       
+
+> xposition
+> 5
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> y position
+> Causal BC (309 steps)
+> Start
+> End
+> Goal 010 20 30 40
+> xposition
+> 5
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> y position
+> Causal BC (1000 steps)
+> Start
+> End
+> Goal
+
+Figure 3: Causal BC on Confounded AntMaze. On Medium (left), the agent reaches the goal. On Large (right), the agent follows the expert path initially but drifts off course partway through; once outside the demonstration support, it cannot recover and fails to reach the goal. learning a policy over Zt ⊆ VO can still approximate the expert behavior because the remaining observed variables carry sufficient causal signal for navigation. 
+
+## 3 Scalable Causal Imitation Learning 
+
+The sequential π-backdoor criterion identifies the correct conditioning set, but correct adjustment sets alone are not sufficient for imitation at scale. Prior CIL work has instantiated the criterion within two algorithmic paradigms: Causal Behavioral Cloning (Causal BC), or supervised cloning of the expert’s conditional policy on the adjustment sets ˆπt(xt | zt) = P (Xt | Zt) (Kumor et al., 2021), and Causal Generative Adversarial Imitation Learning (Causal GAIL), which matches occupancy measures over the adjustment sets via adversarial training (Ruan et al., 2023). Both exhibit funda-mental scaling limitations, which we illustrate on the Confounded AntMaze task from Example 1. 
+
+Failure of Causal BC in long-horizon tasks. Even when supplied with correct adjustment sets, Causal BC remains a simple supervised learner. In long-horizon tasks, small prediction errors com-pound and the policy drifts into states not covered by the expert demonstrations, where its predic-tions are unreliable. While Causal BC achieves a respectable 88 .9% normalized to the expert in AntMaze-Medium ( H ≈ 300 effective steps for successful solves), it drops to 71 .2% in AntMaze-Large ( H ≈ 700 for successful episodes) and to 30 .8% in HumanoidMaze-Medium ( H > 1000 for successful episodes). This degradation is shown in Figure 3, where Causal BC easily navigates a medium maze; on a large maze, however, the agent initially follows the expert path but gradually drifts off course due to compounding error, entering unseen states from which it cannot recover. 
+
+Failure of Causal GAIL in high-dimensional domains. While Causal GAIL addresses com-pounding error by matching occupancy measures via adversarial training, it introduces its own scal-ing difficulties through its reliance on on-policy rollouts (typically via PPO) and a discriminator to distinguish expert from imitator trajectories. In long-horizon tasks, the agent must discover the complete path to the goal through exploration before the discriminator can provide a useful learning signal for later portions of the trajectory. In AntMaze-Medium, this exploration is still somewhat fea-sible and Causal GAIL achieves 84 .6% success, but performance drops to 13 .1% in AntMaze-Large and collapses to 0% by HumanoidMaze-Medium. Figure 1b shows that even in AntMaze-Large, the agent learns only coherent navigation for roughly the first two-thirds of the maze. This indicates a credit-assignment failure, as on-policy training collects too few complete traversals to propagate reward signal to later stages of navigation and prevents scaling to long-horizon tasks. These failure modes point to a clear algorithmic requirement: off-policy methods that treat ex-pert demonstrations as a static buffer, learn from self-collected transitions, and propagate reward Reinforcement Learning Journal 2026 signal across long horizons via temporal-difference learning. SQIL (Reddy et al., 2020) and IQ-Learn (Garg et al., 2021), two recent off-policy imitation learning methods built on soft Q-learning, satisfy all three properties but assume unconfounded environments. We now describe how to com-bine them with the causal adjustment framework. 
+
+3.1 Causal SQIL and Causal IQ-Learn 
+
+Given a π-backdoor admissible scope S = {⟨ Xt, Zt⟩} H−1 
+
+> t=0
+
+, a straightforward causally-adjusted state representation would be zt that concatenates the values of the variables in Zt at each timestep. Both Causal SQIL and Causal IQ-Learn then operate on (zt, x t) pairs in place of the standard (st, a t)
+
+pairs, applying their respective objectives to the adjusted representation. 
+
+Causal SQIL. SQIL (Reddy et al., 2020) assigns a fixed reward of r = 1 to expert transitions and 
+
+r = 0 to policy transitions, then trains an SAC agent on the combined replay buffer. We apply this to causally-adjusted inputs (zt, x t): the critic minimizes the soft Bellman residual 
+
+y = r + γ
+
+
+
+min  
+
+> j=1 ,2
+
+Q¯θj (z′, a ′) − α log πϕ(a′ | z′)
+
+
+
+, LQ = E
+
+h Qθ (z, x ) − y2i
+
+, (1) with a′ ∼ πϕ(· | z′), and the actor maximizes the entropy-regularized objective 
+
+Lπ = Ez
+
+h
+
+α log πϕ(x | z) − min  
+
+> j=1 ,2
+
+Qθj (z, x )
+
+i
+
+, x ∼ πϕ(· | z). (2) Because the adjustment set Zt satisfies the π-backdoor criterion, the Q-function learns value esti-mates that are not confounded by latent variables, while temporal-difference learning propagates the expert signal across the full horizon. Full pseudocode is given in Algorithm 2 (Appendix C). 
+
+Causal IQ-Learn. IQ-Learn (Garg et al., 2021) learns a Q-function whose implicit reward is con-sistent with expert behavior. The critic enforces the soft Bellman equation on expert data, 
+
+Lexpert = E(z,x, z′)∼D exp 
+
+h Qθ (z, x ) − γ V ¯θ (z′)2i
+
+, (3) where V (z) = log Ex∼π [exp Q(z, x )] , and applies a policy-consistency regularizer on policy data, 
+
+Lreg = E(z,x )∼π
+
+h  log πϕ(x | z) − Qθ (z, x ) + Vθ (z)2i
+
+. (4) The combined loss LQ = Lexpert + λ Lreg trains the critic, grounding the implicit reward 
+
+r(z, x ) = Q(z, x ) − γV (z′) in deconfounded state-action associations rather than spurious cor-relations. The actor uses the same entropy-regularized objective as Causal SQIL. Full pseudocode is given in Algorithm 3 (Appendix C). The causal adjustment layer is algorithm agnostic. The downstream RL algorithm is unmodified; rather, it is the input representation that is changed. This property means that any future IL algorithm built on the soft Q learning approach can be made causal by the same procedure. 
+
+3.2 Scalable Causal Adjustment 
+
+Although the sequential π-backdoor yields a principled solution to the causal imitation problem, applying it swiftly becomes intractable as horizon and dimensionality increase. In a sequential decision-making problem with a terminal reward Y and a horizon H ≥ 1000 , the F IND OX al-gorithm of Kumor et al. (2021) (which returns the maximal admissible set VOX for sequential π-backdoor adjustment; reproduced in Appendix C) operates over thousands of nodes and results in 
+
+|Zt| that linearly increases with t. In an SCM where the full histories of V and X have at least a potential causal effect on Xt, adjustment is inefficient and bloats observational dimensionality. To make adjustment feasible, we propose an approximation of the true adjustment sets by generaliz-ing structural properties of confounded control environments. Our assumption is stated in terms of the extended parent set pa +, which rests on the notion of a confounded component. Scalable Causal Imitation Learning 
+
+Algorithm 1 Windowed Sequential π-Backdoor Adjustment 
+
+Require: Window size k, full horizon H. 
+
+> 1:
+
+Construct proxy environment Ek with horizon h = k + 1 and extract its causal graph Gk. 
+
+> 2:
+
+Run F IND OX (Gk, X, Y ) → OX . If X̸ ⊆ OX , return not imitable.  
+
+> 3:
+
+Compute ancestral graph GYk . Compute Markov boundary MB ← Pa +(C(Ch +(OX ))) \ OX
+
+and boundary actions BA ← { Xi ∈ X ∩ OX | ch +(Xi)̸ ⊆ OX } in GYk . 
+
+> 4:
+
+for each action Xt in Gk do  
+
+> 5:
+
+if Xt ∈ BA then  
+
+> 6:
+
+Zkt ← (MB ∪ BA) ∩ before( Xt) 
+
+> 7:
+
+else  
+
+> 8:
+
+Zkt ← ∅ // Xt /∈ An( Y ) in G′
+
+> t
+
+; satisfies condition (2) of Def. 2  
+
+> 9:
+
+end if  
+
+> 10:
+
+end for  
+
+> 11:
+
+for t = 0 , . . . , H − 1 do  
+
+> 12:
+
+ZHt ← { (v, τ ) ∈ Zkt | τ ≥ t − k} // Clip to window of width k 
+
+> 13:
+
+end for  
+
+> 14:
+
+Build sliding window specification S: for each observed variable type V appearing in S 
+
+> t
+
+Zkt ,enumerate lags {− 1, . . . , −k} with dimension dV . 
+
+> 15:
+
+return {ZHt }H−1 
+
+> t=0
+
+, S.
+
+Definition 3 (Confounded Component (Tian & Pearl, 2002)) . Given a causal diagram G over vari-ables V, a confounded component (C-component) is a maximal set C ⊆ V such that every pair of variables in C is joined by a path consisting entirely of bidirected edges. For V ∈ V, C(V ) denotes the C-component containing V .Fixing a topological order and letting G(V ) be the subgraph induced by V and its predecessors, recall that the extended parent set is pa +(V ) = pa( C(V )) \ { V }, essentially comprising of all variables collider-connected to V and their parents. The C-component generalizes the parent set to the semi-Markovian setting: under unobserved confounding a variable can remain dependent on a non-descendant joined to it by a bidirected edge even after conditioning on its directed parents, which the extended parents set accounts for. Throughout, pa + is computed on the diagram’s latent projection eG onto VO ∪ { Y } (Verma & Pearl, 1990; Tian & Pearl, 2002), in which latent-mediated paths appear as single edges (formal definition in Appendix B). We use this to bound the temporal reach of confounding: 
+
+Assumption 1 (k-Bounded Time-Homogeneous Confounding) . Let GH be the causal diagram in-duced by the SCM unrolled over horizon H, with endogenous variables Vt at each timestep t, and let eGH be its latent projection onto VO ∪ { Y }, with Y treated as an element of VH :(i) k-bounded influence. There exists a constant k ≥ 1 such that for every t, every node in 
+
+pa +(Vt) occurs at a timestep no earlier than t − k.(ii) Endogenous time-homogeneity. The structural functions F are identical at every timestep: for all t, t ′ and for any fixed j ≤ k, the local causal structure among (Vt−j , . . . , Vt, X t) is isomorphic to that among (Vt′−j , . . . , Vt′ , X t′ ).Condition (i) ensures that all causal influence on Xt, whether from observed state variables or unob-served confounders, is fully captured within a window of length k timesteps. Condition (ii) ensures that this local causal structure applies to any timestep in the unrolled graph, such that computing adjustment sets for one k-length window yields sufficient information of the relevant causal re-lationships to apply for all timesteps. Both conditions of Assumption 1 are naturally satisfied in physics-based continuous control environments such as MuJoCo, where dynamics depend solely on the immediate state and external forces from confounders have temporally localized effects. Algorithm 1 implements this approximation in two stages. The first stage (Lines 1–10) solves the exact sequential π-backdoor on a short-horizon proxy graph Gk with horizon k+1 . F IND OX (Kumor Reinforcement Learning Journal 2026 et al., 2021) identifies the maximal admissible set OX ; if X̸ ⊆ OX , the problem is not imitable. The algorithm then constructs per-action adjustment sets from the Markov boundary MB of OX
+
+in the ancestral graph GYk (the minimal observed set blocking OX from all other variables) and the boundary actions BA (actions whose causal effect on Y persists regardless of future actions) (Kumor et al., 2021, Definition 3.1, Lemma 3.2): boundary actions condition on (MB ∪ BA) ∩ before( Xt),while non-boundary actions require no conditioning. Intuitively, in Example 1 and Figure 2, the Markov boundary selects recent instances of Z and X within the k-step window while instances of 
+
+W, a collider with no outgoing edges, is excluded from OX and thus from any adjustment set. The second stage (Lines 11-15) transfers the proxy-graph adjustment sets to the full horizon. By time-homogeneity, the sets {Zkt } exhibit a repeating pattern of relative lags; clipping each to a window of k steps reduces dimensionality from O(H) to O(k). The output is a fixed-dimensional sliding window S that specifies adjustment set lags and dimensions for each timestep, used to encode inputs for the imitator. Its correctness is guaranteed by the following theorem (Proof in Appendix B). 
+
+Theorem 1 (Correctness of Windowed Adjustment) . Let GH be the causal diagram of an SCM unrolled over horizon H, and let Assumption 1 hold with window size k. Let {Zkt }kt=0 be adjustment sets constructed by Algorithm 1 that satisfy the sequential π-backdoor criterion (Definition 2) for the proxy graph Gk with horizon k + 1 . Then the transferred sets {ZHt }H−1 
+
+> t=0
+
+returned by Algorithm 1 satisfy the sequential π-backdoor criterion for (GH , X, Y ).With windowed adjustment sets {ZHt }H−1 
+
+> t=0
+
+and specification S in hand, the causal encoding zt is constructed at each timestep: for each observed variable type V appearing in the adjustment sets, we concatenate its values at lags {− 1, . . . , −k} relative to t. This representation comprises the state observation in both Causal SQIL and Causal IQ-Learn, making the full procedure from causal graph analysis to policy optimization accessible and feasible for arbitrarily long horizons. 
+
+## 4 Experiments 
+
+We evaluate the proposed algorithms on confounded continuous-control locomotion environments derived from OGBench (Park et al., 2025). Each environment is defined as an SCM to support the modeling of unobserved confounders. In Confounded AntMaze ( H=1000 ), an 8-DoF ant navigates a maze under latent wind; the imitator observes a wind-affected compass W in place of orientation 
+
+O (see Example 1). In Confounded HumanoidMaze ( H=2000 ), a 21-DoF humanoid navigates under latent seismic tremors; the imitator observes a tremor-affected vibration sensor W in place of the hidden center-of-mass velocity C. In both environments, causal methods exclude W from the adjustment set, while causally unaware methods condition on it and thereby fail under distributional shift. Full environment details, causal graphs, and visualizations are provided in Appendix D. We compare eight algorithms total, four causal (Causal BC (Kumor et al., 2021), Causal GAIL (Ruan et al., 2023), Causal SQIL (ours), Causal IQ-Learn (ours)) and four causally unaware (BC (Ross et al., 2011), GAIL (Ho & Ermon, 2016), SQIL (Reddy et al., 2020), IQ-Learn (Garg et al., 2021)), to isolate the contributions of causal adjustment and algorithmic choice. Expert policies are constructed via offline-to-online RL (BC and TD3 fine-tuning); full implementation details are in Appendix E. 
+
+4.1 Results 
+
+Causal variants use Algorithm 1 to compute their per-timestep observation using windowed causal adjustment. Non-causal variants condition on the full VO at each timestep. All hyperparameters remain the same between causal and non-causal variants of the same algorithm. 
+
+All non-causal methods fail catastrophically. As seen in Table 1, non-causal algorithms consis-tently fail across all environments: standard BC, GAIL, SQIL, and IQ-Learn achieve 0% or near-0% 
+
+success rates with low E[Y ] across all tasks. This confirms that the fundamental failure is not a consequence of any particular learning paradigm but of the decision to condition on all observed variables, and no amount of temporal-difference learning or adversarial training can overcome a Scalable Causal Imitation Learning Table 1: Evaluation results on confounded tasks. Normalized E[Y ] linearly shifts the worst-performing algorithm to 0 due to the purely negative reward. Best non-expert result per task in 
+
+bold . Standard errors are provided; unnormalized data can be found in Appendix F.1.                                                                                               
+
+> Expert C-BC C-GAIL C-SQIL C-IQ-Learn BC GAIL SQIL IQ-Learn
+> AntMaze-Medium Norm. E[Y]271 .4±87 .5250 .1±100 .9239 .5±113 .6275 .8±85 .7257 .1±101 .30.0±119 .210 .4±112 .24.7±119 .12.8±120 .8
+> Success rate (%) 87 .6±1.077 .9±1.374 .1±1.490 .7±0.984 .3±1.20.0±0.00.0±0.00.0±0.00.0±0.0
+> AntMaze-Large Norm. E[Y]229 .0±122 .8199 .3±121 .6155 .6±122 .6204 .3±125 .9225 .6±127 .914 .0±150 .285 .8±132 .90.0±151 .516 .1±153 .5
+> Success rate (%) 55 .9±1.639 .8±1.57.3±0.845 .0±1.658 .9±1.60.0±0.00.0±0.00.0±0.00.0±0.0
+> HumanoidMaze-Medium Norm. E[Y]224 .8±218 .492 .0±172 .70.5±161 .9192 .2±217 .2158 .9±203 .869 .4±169 .10.0±162 .541 .5±157 .050 .1±169 .7
+> Success rate (%) 33 .8±1.510 .4±1.00.0±0.024 .7±1.419 .1±1.25.4±0.70.0±0.00.1±0.12.4±0.5
+> HumanoidMaze-Large Norm. E[Y]136 .4±212 .9125 .1±227 .90.8±210 .2139 .3±226 .090 .0±220 .593 .0±204 .60.0±208 .980 .7±194 .970 .8±193 .3
+> Success rate (%) 7.0±0.88.0±2.70.0±0.08.0±2.73.0±1.75.0±2.20.0±0.00.0±0.00.0±0.0C-GAIL
+> C-SQIL
+> C-IQ-Learn
+> GAIL
+> SQIL
+> IQ-Learn
+> 0
+> 100
+> 200
+> 300
+> Normalized E[Y]
+> +11.7
+> -60.0 -72.7
+> -214.9
+> -320.7 -329.2
+> AntMaze Medium C-GAIL
+> C-SQIL
+> C-IQ-Learn
+> GAIL
+> SQIL
+> IQ-Learn
+> 0
+> 100
+> 200
+> 300
+> Normalized E[Y]
+> -29.4
+> -95.3 -64.2
+> -89.5
+> -224.6
+> -234.8
+> AntMaze Large C-GAIL
+> C-SQIL
+> C-IQ-Learn
+> GAIL
+> SQIL
+> IQ-Learn
+> 0
+> 100
+> 200
+> 300
+> Normalized E[Y]
+> -95.5
+> -120.1
+> -81.6
+> -57.1
+> -235.3 -247.0
+> HumanoidMaze Medium C-GAIL
+> C-SQIL
+> C-IQ-Learn
+> GAIL
+> SQIL
+> IQ-Learn
+> 0
+> 100
+> 200
+> 300
+> Normalized E[Y]
+> -143.7
+> -134.2
+> -81.6
+> -92.1
+> -182.0
+> -230.9
+> HumanoidMaze Large
+
+Figure 4: Evaluation return during training and runtime for GAIL, SQIL, and IQ-Learn (causal and non-causal variants). During training, both variants of each algorithm achieve comparable returns. The gap emerges only at runtime (Table 1) due to unobserved confounders causing distributional changes from where the expert demonstrations were collected, which affects only non-causal meth-ods. Hyperparameters and other training metrics are provided in detail in Appendix E. fundamentally misspecified conditioning set. The improvement of non-causal algorithms in Hu-manoidMaze tasks from AntMaze tasks, despite the former being more difficult, can be attributed to the less disruptive confounding effect of seismic tremors than wind fields on the state dynamics. 
+
+Causal adjustment is necessary but not sufficient for scaling. Although causal adjustment alone leads to significant improvements in most algorithms (Table 1), Causal BC and especially Causal GAIL see substantial performance decreases as the task horizon and dimensionality increases, with Causal GAIL collapsing to about the level of non-causal GAIL by the HumanoidMaze-Medium task. Causal SQIL and Causal IQ-Learn scale more gracefully despite increasing dimensionality and horizon, and at times surpassing the expert’s performance. 
+
+Confounding cannot be revealed by in-distribution evaluation. Figure 4 reveals that during training, when the imitator operates under the same confounder distribution P (U) as the expert, non-causal variants of each algorithm achieve nearly identical evaluation returns to causal variants, and in some cases appear better since conditioning on the spurious proxy W provides additional predictive signal that is useful when under the training P (U). At runtime, when P (U) shifts, every non-causal method collapses to near-0% success while the causal methods retain significantly more of the performance. Thus, confounding cannot be diagnosed during training. 0 1 10 100 
+
+> Sliding Window Length ( k)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Normalized Success Rate (%)
+> Causal BC
+> Causal GAIL
+> Causal SQIL
+> Causal IQLearn
+
+Figure 5: Sensitivity of causal al-gorithms to k in Algorithm 1 on Confounded AntMaze-Large. 
+
+Windowed approximation is necessary. Figure 5 demon-strates that a moderate k ∈ [1 , 10] is ideal for imitation, whereas k = 0 (pure Markov) and k = 100 see significant drops in most methods. This implies that while the environ-ments require sequential decision-making capabilities, the rel-evant causal effects on any Xt can be captured within a few timesteps; meanwhile, large k bloats the representation. Inter-estingly, at k = 100 , Q-learning methods collapse due to boot-strapping instability in high-dimensional state spaces while BC remains robust due to its supervised learning approach. Reinforcement Learning Journal 2026 
+
+The causality gap dominates the algorithmic gap. In every task, the causal variant of each al-gorithm outperforms its non-causal counterpart, with the exception of Causal GAIL and non-causal GAIL both achieving 0% success rate in HumanoidMaze tasks (Table 1). Thus, causal reasoning remains the primary determinant of success in confounded environments. The algorithm choice be-comes the secondary yet still substantial factor that determines how well a causal method performs. 
+
+## 5 Conclusion 
+
+We introduce Causal SQIL and Causal IQ-Learn, off-policy CIL algorithms that combine sequen-tial π-backdoor adjustment with soft Q-learning objectives, and windowed causal adjustment that is tractable for long-horizon control. Our experiments demonstrate that causal adjustment is necessary for robust policy learning and that off-policy Q-learning is necessary for scaling. While our approach relies on knowledge of the causal diagram (see Appendix G for a full discussion on limitations), it is algorithm-agnostic. Thus, looking forward, it can be composed with expressive policy classes (e.g. diffusion policies (Chi et al., 2023) or action-chunking transformers (Zhao et al., 2023)), high-dimensional sensory inputs where confounding manifests through pixel-level corruptions (Li et al., 2025; 2026; Juliani et al., 2026), and any setting in which the expert and imitator operate under dif-ferent sensor configurations, such as tele-operation, sim-to-real transfer, and multi-agent imitation. As unobserved confounding is the norm in real-world deployment, integrating causal reasoning with scalable policy learning is essential for trustworthy imitation in safety-critical domains. 
+
+## Acknowledgements 
+
+This research is supported in part by the NSF, ONR, AFOSR, DoE, Amazon, JP Morgan, and The Alfred P. Sloan Foundation. 
+
+## References 
+
+Pieter Abbeel and Andrew Y. Ng. Apprenticeship learning via inverse reinforcement learning. In 
+
+Proceedings of the Twenty-First International Conference on Machine Learning , ICML ’04, pp. 1, New York, NY, USA, 2004. Association for Computing Machinery. ISBN 1581138385. DOI: 10.1145/1015330.1015430. URL https://doi.org/10.1145/1015330.1015430 .Elias Bareinboim and Judea Pearl. Causal inference and the data-fusion problem. Proceedings of the National Academy of Sciences , 113(27):7345–7352, 2016. DOI: 10.1073/pnas.1510507113. URL https://www.pnas.org/doi/abs/10.1073/pnas.1510507113 .Elias Bareinboim, Juan D. Correa, Duligur Ibeling, and Thomas Icard. On Pearl’s Hierarchy and the Foundations of Causal Inference , pp. 507–556. Association for Computing Machinery, New York, NY, USA, 1 edition, 2022. ISBN 9781450395861. URL https://doi.org/10. 1145/3501714.3501743 .Mohammad Ali Bashiri, Brian Ziebart, and Xinhua Zhang. Distributionally robust imitation learn-ing. In M. Ranzato, A. Beygelzimer, Y. Dauphin, P.S. Liang, and J. Wortman Vaughan (eds.), 
+
+Advances in Neural Information Processing Systems , volume 34, pp. 24404–24417. Curran Associates, Inc., 2021. URL https://proceedings.neurips.cc/paper_files/ paper/2021/file/cc8090c4d2791cdd9cd2cb3c24296190-Paper.pdf .Anthony Brohan, Noah Brown, Justice Carbajal, Yevgen Chebotar, Xi Chen, Krzysztof Choro-manski, Tianli Ding, Danny Driess, Avinava Dubey, Chelsea Finn, Pete Florence, Chuyuan Fu, Montse Gonzalez Arenas, Keerthana Gopalakrishnan, Kehang Han, Karol Hausman, Alex Her-zog, Jasmine Hsu, Brian Ichter, Alex Irpan, Nikhil Joshi, Ryan Julian, Dmitry Kalashnikov, Yuheng Kuang, Isabel Leal, Lisa Lee, Tsang-Wei Edward Lee, Sergey Levine, Yao Lu, Hen-ryk Michalewski, Igor Mordatch, Karl Pertsch, Kanishka Rao, Krista Reymann, Michael Ryoo, Grecia Salazar, Pannag Sanketi, Pierre Sermanet, Jaspiar Singh, Anikait Singh, Radu Soricut, Scalable Causal Imitation Learning Huong Tran, Vincent Vanhoucke, Quan Vuong, Ayzaan Wahid, Stefan Welker, Paul Wohlhart, Jialin Wu, Fei Xia, Ted Xiao, Peng Xu, Sichun Xu, Tianhe Yu, and Brianna Zitkovich. Rt-2: Vision-language-action models transfer web knowledge to robotic control. In arXiv preprint arXiv:2307.15818 , 2023. Jongseong Chae, Seungyul Han, Whiyoung Jung, Myungsik Cho, Sungho Choi, and Youngchul Sung. Robust imitation learning against variations in environment dynamics. Proceedings of Machine Learning Research , 162:2828–2852, 2022. ISSN 2640-3498. Publisher Copyright: Copyright © 2022 by the author(s); 39th International Conference on Machine Learning, ICML 2022 ; Conference date: 17-07-2022 Through 23-07-2022. Jonathan Daniel Chang, Masatoshi Uehara, Dhruv Sreenivas, Rahul Kidambi, and Wen Sun. Miti-gating covariate shift in imitation learning via offline data with partial coverage. In A. Beygelz-imer, Y. Dauphin, P. Liang, and J. Wortman Vaughan (eds.), Advances in Neural Information Pro-cessing Systems , 2021. URL https://openreview.net/forum?id=7PkfLkyLMRM .Li Chen, Penghao Wu, Kashyap Chitta, Bernhard Jaeger, Andreas Geiger, and Hongyang Li. End-to-end autonomous driving: Challenges and frontiers. IEEE Trans. Pattern Anal. Mach. Intell. ,46(12):10164–10183, December 2024. ISSN 0162-8828. DOI: 10.1109/TPAMI.2024.3435937. URL https://doi.org/10.1109/TPAMI.2024.3435937 .Cheng Chi, Siyuan Feng, Yilun Du, Zhenjia Xu, Eric Cousineau, Benjamin Burchfiel, and Shuran Song. Diffusion policy: Visuomotor policy learning via action diffusion. In Proceedings of Robotics: Science and Systems (RSS) , 2023. Felipe Codevilla, Eder Santana, Antonio Lopez, and Adrien Gaidon. Exploring the limitations of behavior cloning for autonomous driving. In 2019 IEEE/CVF International Conference on Computer Vision (ICCV) , pp. 9328–9337, 2019. DOI: 10.1109/ICCV.2019.00942. Pim de Haan, Dinesh Jayaraman, and Sergey Levine. Causal confusion in imitation learn-ing. In H. Wallach, H. Larochelle, A. Beygelzimer, F. d'Alché-Buc, E. Fox, and R. Garnett (eds.), Advances in Neural Information Processing Systems , volume 32. Curran Associates, Inc., 2019. URL https://proceedings.neurips.cc/paper_files/paper/2019/ file/947018640bf36a2bb609d3557a285329-Paper.pdf .Rafael Figueiredo Prudencio, Marcos R. O. A. Maximo, and Esther Luna Colombini. A survey on offline reinforcement learning: Taxonomy, review, and open problems. IEEE Transactions on Neural Networks and Learning Systems , 35(8):10237–10257, August 2024. ISSN 2162-2388. DOI: 10.1109/tnnls.2023.3250269. URL http://dx.doi.org/10.1109/TNNLS.2023. 3250269 .Justin Fu, Katie Luo, and Sergey Levine. Learning robust rewards with adverserial inverse re-inforcement learning. In International Conference on Learning Representations , 2018. URL 
+
+https://openreview.net/forum?id=rkHywl-A-.Justin Fu, Aviral Kumar, Ofir Nachum, George Tucker, and Sergey Levine. D4{rl}: Datasets for deep data-driven reinforcement learning, 2021. URL https://openreview.net/forum? id=px0-N3_KjA .Scott Fujimoto, Herke van Hoof, and David Meger. Addressing function approximation error in actor-critic methods. In International Conference on Machine Learning , pp. 1587–1596, 2018. URL https://arxiv.org/abs/1802.09477 .Divyansh Garg, Shuvam Chakraborty, Chris Cundy, Jiaming Song, and Stefano Er-mon. Iq-learn: Inverse soft-q learning for imitation. In M. Ranzato, A. Beygelz-imer, Y. Dauphin, P.S. Liang, and J. Wortman Vaughan (eds.), Advances in Neural Information Processing Systems , volume 34, pp. 4028–4039. Curran Associates, Inc., 2021. URL https://proceedings.neurips.cc/paper_files/paper/2021/ file/210f760a89db30aa72ca258a3483cc7f-Paper.pdf .Reinforcement Learning Journal 2026 Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine. Soft actor-critic: Off-policy maximum entropy deep reinforcement learning with a stochastic actor. In International Confer-ence on Machine Learning , pp. 1861–1870, 2018. URL https://arxiv.org/abs/1801. 01290 .Jonathan Ho and Stefano Ermon. Generative adversarial imitation learning. In D. Lee, M. Sugiyama, U. Luxburg, I. Guyon, and R. Garnett (eds.), Advances in Neural In-formation Processing Systems , volume 29. Curran Associates, Inc., 2016. URL 
+
+https://proceedings.neurips.cc/paper_files/paper/2016/file/ cc7e2b878868cbae992d1fb743995d8f-Paper.pdf .Mateo Juliani, Mingxuan Li, and Elias Bareinboim. Confounding robust continuous control via au-tomatic reward shaping. In The 25th International Conference on Autonomous Agents and Multi-Agent Systems , 2026. URL https://openreview.net/forum?id=ZFtjCJqEQf .Geon-Hyeong Kim, Seokin Seo, Jongmin Lee, Wonseok Jeon, HyeongJoo Hwang, Hongseok Yang, and Kee-Eung Kim. DemoDICE: Offline imitation learning with supplementary imper-fect demonstrations. In International Conference on Learning Representations , 2022. URL 
+
+https://openreview.net/forum?id=BrPdX1bDZkQ .Daniel Kumor, Junzhe Zhang, and Elias Bareinboim. Sequential causal imitation learn-ing with unobserved confounders. In M. Ranzato, A. Beygelzimer, Y. Dauphin, P.S. Liang, and J. Wortman Vaughan (eds.), Advances in Neural Information Pro-cessing Systems , volume 34, pp. 14669–14680. Curran Associates, Inc., 2021. URL 
+
+https://proceedings.neurips.cc/paper_files/paper/2021/file/ 7b670d553471ad0fd7491c75bad587ff-Paper.pdf .Michael Laskey, Jonathan Lee, Roy Fox, Anca D. Dragan, and Ken Goldberg. Dart: Noise injection for robust imitation learning. In Conference on Robot Learning , 2017. URL https://api. semanticscholar.org/CorpusID:2043463 .Jongmin Lee, Wonseok Jeon, Byung-Jun Lee, Joelle Pineau, and Kee-Eung Kim. Optidice: Offline policy optimization via stationary distribution correction estimation. In Proceedings of the 38th International Conference on Machine Learning (ICML) , 2021. Sergey Levine, Aviral Kumar, George Tucker, and Justin Fu. Offline reinforcement learning: Tuto-rial, review, and perspectives on open problems. arXiv preprint arXiv:2005.01643 , 2020. URL 
+
+https://arxiv.org/abs/2005.01643 .Mingxuan Li, Junzhe Zhang, and Elias Bareinboim. Confounding robust deep reinforcement learn-ing: A causal approach. In The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2025. URL https://openreview.net/forum?id=9fUr5iFU9j .Mingxuan Li, Junzhe Zhang, and Elias Bareinboim. Causal flow q-learning for robust offline rein-forcement learning, 2026. URL https://arxiv.org/abs/2602.02847 .Yiren Lu, Justin Fu, George Tucker, Xinlei Pan, Eli Bronstein, Rebecca Roelofs, Benjamin Sapp, Brandyn White, Aleksandra Faust, Shimon Whiteson, Dragomir Anguelov, and Sergey Levine. Imitation is not enough: Robustifying imitation with reinforcement learning for challenging driv-ing scenarios. In 2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pp. 7553–7560, 2023. DOI: 10.1109/IROS55552.2023.10342038. Pedro A Ortega, Markus Kunesch, Grégoire Delétang, Tim Genewein, Jordi Grau-Moya, Joel Ve-ness, Jonas Buchli, Jonas Degrave, Bilal Piot, Julien Perolat, et al. Shaking the foundations: delu-sions in sequence models for interaction and control. arXiv preprint arXiv:2110.10819 , 2021. URL https://arxiv.org/abs/2110.10819 .Scalable Causal Imitation Learning Takayuki Osa, Joni Pajarinen, Gerhard Neumann, J. Andrew Bagnell, Pieter Abbeel, and Jan Peters. An algorithmic perspective on imitation learning. Foundations and Trends® in Robotics , 7(1–2): 1–179, March 2018. ISSN 1935-8261. DOI: 10.1561/2300000053. URL http://dx.doi. org/10.1561/2300000053 .Kishan Panaganti, Zaiyan Xu, Dileep Kalathil, and Mohammad Ghavamzadeh. Distributionally ro-bust behavioral cloning for robust imitation learning. In 2023 62nd IEEE Conference on Decision and Control (CDC) , pp. 1342–1347, 2023. DOI: 10.1109/CDC49753.2023.10383976. Seohong Park, Kevin Frans, Benjamin Eysenbach, and Sergey Levine. OGBench: Benchmarking offline goal-conditioned RL. In The Thirteenth International Conference on Learning Represen-tations , 2025. URL https://openreview.net/forum?id=M992mjgKzI .Judea Pearl. Causality: Models, Reasoning, and Inference . Cambridge University Press, 2nd edition, 2009. Samuel Pfrommer, Yatong Bai, Hyunin Lee, and Somayeh Sojoudi. Initial state interventions for deconfounded imitation learning. In CDC , pp. 2312–2319, 2023. URL https://doi.org/ 10.1109/CDC49753.2023.10383252 .Dean A. Pomerleau. Alvinn: An autonomous land vehicle in a neural network. In D. Touret-zky (ed.), Advances in Neural Information Processing Systems , volume 1. Morgan-Kaufmann, 1988. URL https://proceedings.neurips.cc/paper_files/paper/1988/ file/812b4ba287f5ee0bc9d43bbf5bbe87fb-Paper.pdf .Siddharth Reddy, Anca D. Dragan, and Sergey Levine. SQIL: imitation learning via reinforce-ment learning with sparse rewards. In 8th International Conference on Learning Represen-tations, ICLR 2020, Addis Ababa, Ethiopia, April 26-30, 2020 . OpenReview.net, 2020. URL 
+
+https://openreview.net/forum?id=S1xKd24twB .Stéphane Ross, Geoffrey J. Gordon, and J. Andrew Bagnell. A reduction of imitation learn-ing and structured prediction to no-regret online learning. In Proceedings of the Fourteenth International Conference on Artificial Intelligence and Statistics , pp. 627–635, 2011. URL 
+
+https://arxiv.org/abs/1011.0686 .Kangrui Ruan, Junzhe Zhang, Xuan Di, and Elias Bareinboim. Causal imitation learning via inverse reinforcement learning. In The Eleventh International Conference on Learning Representations ,2023. URL https://openreview.net/forum?id=B-z41MBL_tH .Kangrui Ruan, Junzhe Zhang, Xuan Di, and Elias Bareinboim. Causal imitation for markov de-cision processes: a partial identification approach. In A. Globerson, L. Mackey, D. Belgrave, A. Fan, U. Paquet, J. Tomczak, and C. Zhang (eds.), Advances in Neural Information Process-ing Systems , volume 37, pp. 87592–87620. Curran Associates, Inc., 2024. DOI: 10.52202/ 079017-2781. URL https://proceedings.neurips.cc/paper_files/paper/ 2024/file/9f7f2f57d8eaf44b2f09020f64ff6d96-Paper-Conference.pdf .Fumihiro Sasaki and Ryota Yamashina. Behavioral cloning from noisy demonstrations. In Interna-tional Conference on Learning Representations , 2021. URL https://openreview.net/ forum?id=zrT3HcsWSAt .Seokin Seo, Byung-Jun Lee, Jongmin Lee, HyeongJoo Hwang, Hongseok Yang, and Kee-Eung Kim. Mitigating covariate shift in behavioral cloning via robust stationary dis-tribution correction. In A. Globerson, L. Mackey, D. Belgrave, A. Fan, U. Pa-quet, J. Tomczak, and C. Zhang (eds.), Advances in Neural Information Processing Sys-tems , volume 37, pp. 109177–109201. Curran Associates, Inc., 2024. DOI: 10.52202/ 079017-3466. URL https://proceedings.neurips.cc/paper_files/paper/ 2024/file/c556da88a2665e6266453d8c9b8a552d-Paper-Conference.pdf .Reinforcement Learning Journal 2026 Daqian Shao, Thomas Kleine Buening, and Marta Kwiatkowska. A unifying framework for causal imitation learning with hidden confounders. In Workshop on Spurious Correlation and Shortcut Learning: Foundations and Solutions , 2025. URL https://openreview.net/forum? id=arlxXpjWGZ .Jonathan C. Spencer, Sanjiban Choudhury, Arun Venkatraman, Brian D. Ziebart, and J. Andrew Bag-nell. Feedback in imitation learning: The three regimes of covariate shift. CoRR , abs/2102.02872, 2021. URL https://arxiv.org/abs/2102.02872 .Gokul Swamy, Sanjiban Choudhury, J. Bagnell, and Steven Z. Wu. Sequence model imitation learning with unobserved contexts. In S. Koyejo, S. Mohamed, A. Agar-wal, D. Belgrave, K. Cho, and A. Oh (eds.), Advances in Neural Information Pro-cessing Systems , volume 35, pp. 17665–17676. Curran Associates, Inc., 2022a. URL 
+
+https://proceedings.neurips.cc/paper_files/paper/2022/file/ 708e58b0b99e3e62d42022b4564bad7a-Paper-Conference.pdf .Gokul Swamy, Sanjiban Choudhury, J. Andrew Bagnell, and Zhiwei Steven Wu. Causal imitation learning under temporally correlated noise. In Proceedings of the 39th International Conference on Machine Learning , volume 162 of Proceedings of Machine Learning Research , pp. 20877– 20890, 2022b. URL https://proceedings.mlr.press/v162/swamy22a.html .Guy Tennenholtz, Assaf Hallak, Gal Dalal, Shie Mannor, Gal Chechik, and Uri Shalit. On covariate shift of latent confounders in imitation and reinforcement learning. In The Tenth International Conference on Learning Representations, ICLR 2022, Virtual Event, April 25-29, 2022 . OpenRe-view.net, 2022. URL https://openreview.net/forum?id=w01vBAcewNX .Jin Tian and Judea Pearl. A general identification condition for causal effects. In Eighteenth Na-tional Conference on Artificial Intelligence , pp. 567–573, USA, 2002. American Association for Artificial Intelligence. ISBN 0262511290. Emanuel Todorov, Tom Erez, and Yuval Tassa. Mujoco: A physics engine for model-based control. In 2012 IEEE/RSJ International Conference on Intelligent Robots and Systems , pp. 5026–5033. IEEE, 2012. DOI: 10.1109/IROS.2012.6386109. Thomas Verma and Judea Pearl. Equivalence and synthesis of causal models. In Proceedings of the Sixth Annual Conference on Uncertainty in Artificial Intelligence , UAI ’90, pp. 255–270, USA, 1990. Elsevier Science Inc. ISBN 0444892648. Risto Vuorio, Pim De Haan, Johann Brehmer, Hanno Ackermann, Daniel Dijkman, and Taco Co-hen. Deconfounding imitation learning with variational inference. Transactions on Machine Learning Research , 2024. ISSN 2835-8856. URL https://openreview.net/forum? id=3FsVtsISHW . Expert Certification. Chuan Wen, Jierui Lin, Trevor Darrell, Dinesh Jayaraman, and Yang Gao. Fight-ing copycat agents in behavioral cloning from observation histories. In H. Larochelle, M. Ranzato, R. Hadsell, M.F. Balcan, and H. Lin (eds.), Advances in Neural In-formation Processing Systems , volume 33, pp. 2564–2575. Curran Associates, Inc., 2020. URL https://proceedings.neurips.cc/paper_files/paper/2020/ file/1b113258af3968aaf3969ca67e744ff8-Paper.pdf .Yueh-Hua Wu, Nontawat Charoenphakdee, Han Bao, Voot Tangkaratt, and Masashi Sugiyama. Im-itation learning from imperfect demonstration. In Kamalika Chaudhuri and Ruslan Salakhutdi-nov (eds.), Proceedings of the 36th International Conference on Machine Learning , volume 97 of Proceedings of Machine Learning Research , pp. 6818–6827. PMLR, 09–15 Jun 2019. URL 
+
+https://proceedings.mlr.press/v97/wu19a.html .Haoran Xu, Xianyuan Zhan, Honglei Yin, and Huiling Qin. Discriminator-weighted offline imitation learning from suboptimal demonstrations. In Kamalika Chaudhuri, Stefanie Jegelka, Le Song, Scalable Causal Imitation Learning Csaba Szepesvari, Gang Niu, and Sivan Sabato (eds.), Proceedings of the 39th International Conference on Machine Learning , volume 162 of Proceedings of Machine Learning Research ,pp. 24725–24742. PMLR, 17–23 Jul 2022. URL https://proceedings.mlr.press/ v162/xu22l.html .Maryam Zare, Parham M. Kebria, Abbas Khosravi, and Saeid Nahavandi. A survey of imitation learning: Algorithms, recent developments, and challenges. IEEE Transactions on Cybernetics ,54(12):7173–7186, 2024. DOI: 10.1109/TCYB.2024.3395626. Yan Zeng, Shenglan Nie, Feng Xie, Libo Huang, Peng Wu, and Zhi Geng. Confounded causal imitation learning with instrumental variables. CoRR , abs/2507.17309, July 2025. URL https: //doi.org/10.48550/arXiv.2507.17309 .Junzhe Zhang, Daniel Kumor, and Elias Bareinboim. Causal imitation learning with unobserved confounders. In H. Larochelle, M. Ranzato, R. Hadsell, M.F. Balcan, and H. Lin (eds.), 
+
+Advances in Neural Information Processing Systems , volume 33, pp. 12263–12274. Curran Associates, Inc., 2020. URL https://proceedings.neurips.cc/paper_files/ paper/2020/file/8fdd149fcaa7058caccc9c4ad5b0d89a-Paper.pdf .Tony Z. Zhao, Vikash Kumar, Sergey Levine, and Chelsea Finn. Learning fine-grained bimanual manipulation with low-cost hardware. In Robotics: Science and Systems , 2023. URL https: //arxiv.org/abs/2304.13705 .Boyuan Zheng, Sunny Verma, Jianlong Zhou, Ivor W. Tsang, and Fang Chen. Imitation learning: Progress, taxonomies and challenges. IEEE Transactions on Neural Networks and Learning Sys-tems , 35(5):6322–6337, 2024. DOI: 10.1109/TNNLS.2022.3213246. Brian D. Ziebart, Andrew L. Maas, J. Andrew Bagnell, and Anind K. Dey. Maximum entropy inverse reinforcement learning. In Proceedings of the Twenty-Third AAAI Conference on Ar-tificial Intelligence , pp. 1433–1438, 2008. URL https://cdn.aaai.org/AAAI/2008/ AAAI08-227.pdf .Reinforcement Learning Journal 2026 
+
+# Supplementary Materials 
+
+The following content was not necessarily subject to peer review. 
+
+## A Related Work 
+
+Imitation learning. Imitation learning (IL) trains policies from expert demonstrations without ac-cess to a reward signal. Behavioral cloning (BC) reduces IL to supervised learning (Pomerleau, 1988), but suffers from compounding errors due to covariate shift (Ross et al., 2011). Interactive methods such as DAgger (Ross et al., 2011) mitigate this by querying the expert on-policy, though at the cost of requiring an interactive demonstrator. Inverse reinforcement learning (IRL) recovers a reward function rationalizing expert behavior (Abbeel & Ng, 2004; Ziebart et al., 2008); adversarial formulations such as GAIL (Ho & Ermon, 2016) and AIRL (Fu et al., 2018) cast IRL as occupancy-measure matching, avoiding explicit reward modeling but relying on on-policy rollouts and adversar-ial training that scale poorly to long horizons. More recently, off-policy value-based methods have achieved strong results on continuous-control benchmarks: SQIL (Reddy et al., 2020) reformulates IL as soft Q-learning with binary rewards, and IQ-Learn (Garg et al., 2021) learns a Q-function whose implicit reward is consistent with expert data. Both build on the SAC framework (Haarnoja et al., 2018) and propagate the expert signal across trajectories via temporal-difference learning, making them substantially more effective than BC or GAIL on long-horizon tasks. Modern IL has also scaled to real-world robotics through expressive policy classes such as diffusion policies (Chi et al., 2023) and action-chunking transformers (Zhao et al., 2023). All of these methods, however, assume that the expert and imitator share the same observation space, i.e., No Unobserved Con-founders (NUC). The present work retains the scalability advantages of off-policy soft Q-learning while relaxing NUC via causal adjustment. 
+
+Formal objectives of prior CIL and IL methods. For reference, we provide the formal objectives of the methods discussed in the main text. Causal BC (Kumor et al., 2021) directly clones the expert’s conditional policy over the admissible adjustment variables, ˆπt(xt | zt) = P (Xt | Zt),via supervised learning on expert demonstrations. Causal GAIL (Ruan et al., 2023) extends the framework to inverse reinforcement learning by matching expert and imitator occupancy measures over the adjusted variables: 
+
+min  
+
+> π∼S
+
+max  
+
+> D
+
+E[log D(zt, x t)] + Eπ [log(1 − D(zt, x t))] . (5) In non-causal settings, SQIL (Reddy et al., 2020) assigns a fixed reward of 1 to expert transitions and 0 to policy transitions, and then applies SAC on the combined replay buffer. The SAC critic minimizes the soft Bellman residual 
+
+y = r + γ
+
+
+
+min  
+
+> j=1 ,2
+
+Q¯θj (s′, a ′) − α log πϕ(a′ | s′)
+
+
+
+, LQ = E
+
+h Qθ (s, a ) − y2i
+
+, (6) with a′ ∼ πϕ(· | s′). The actor maximizes the entropy-regularized objective 
+
+Lπ = Es
+
+h
+
+α log πϕ(a | s) − min  
+
+> j=1 ,2
+
+Qθj (s, a )
+
+i
+
+, a ∼ πϕ(· | s). (7) IQ-Learn (Garg et al., 2021) learns a Q-function whose induced reward is consistent with expert behavior. The critic enforces the soft Bellman equation on expert data, 
+
+Lexpert = E(s,a,s ′)∼D exp 
+
+h Qθ (s, a ) − γ V ¯θ (s′)2i
+
+, (8) where V (s) = log Ea∼π [exp Q(s, a )] , and applies a policy-consistency regularizer on policy data, 
+
+Lreg = E(s,a )∼π
+
+h  log πϕ(a | s) − Qθ (s, a ) + Vθ (s)2i
+
+. (9) The combined loss LQ = Lexpert + λ Lreg trains the critic, while the actor uses the same objective as above. Despite their scalability advantages, these methods assume fully observed (i.e., uncon-founded) environments; using them in the presence of latent confounders leads to biased policies. Scalable Causal Imitation Learning 
+
+Causal imitation learning. Causal imitation learning (CIL) leverages structural causal knowledge to approximate the expert policy in the presence of unobserved confounding. Zhang et al. (2020) introduces the π-backdoor criterion, a complete graphical condition for determining policy imitabil-ity from observational data when the expert and imitator have different sensory inputs. Kumor et al. (2021) extend this to sequential decision-making with the sequential π-backdoor criterion and the F IND OX algorithm for constructing per-timestep adjustment sets. Ruan et al. (2023) develop CIL via inverse reinforcement learning, and Ruan et al. (2024) introduce a partial-identification ap-proach that can enable the imitator to surpass expert performance. In practice, these methods have been instantiated as Causal BC and Causal GAIL, both of which assume access to a π-backdoor admissible scope. Despite their theoretical appeal, existing CIL algorithms have remained restricted to low-dimensional, short-horizon domains: Causal BC inherits the covariate-shift limitations of behavioral cloning, Causal GAIL’s reliance on on-policy rollouts and adversarial training leads to sample and stability challenges at scale, and the adjustment sets produced by F IND OX grow linearly with the horizon, making exact computation infeasible in long-horizon settings. Our work addresses all three limitations by combining the causal adjustment framework with off-policy soft Q-learning objectives and introducing a windowed approximation that reduces the adjustment set computation to a fixed-size sliding window. 
+
+Confounding, causal confusion, and spurious correlations in IL. A related line of work studies the problem of spurious correlations in IL without assuming access to a causal graph. de Haan et al. (2019) identify “causal confusion,” showing that conditioning on non-causal features can degrade imitation performance, and propose targeted interventions to select the correct causal model. Ortega et al. (2021) formalize “delusions” in sequence models, demonstrating that treating past actions as observations rather than interventions leads to incorrect inference. Variations of this problem have been studied under different names: as feedback-driven covariate shift (Spencer et al., 2021), as the copycat problem in BC from observation histories (Wen et al., 2020), as confounding in driving settings (Codevilla et al., 2019), and as deconfounding via initial-state interventions (Pfrommer et al., 2023). These works diagnose the problem and propose heuristic or environment-specific solutions. In contrast, the CIL framework this paper builds on provides a complete, non-parametric graphical criterion for determining imitability and identifying the correct adjustment set. Several works address confounded IL through mechanisms other than graphical backdoor adjust-ment. Swamy et al. (2022b) apply instrumental variable (IV) regression to handle temporally cor-related noise in expert actions, proposing DoubIL and ResiduIL. Swamy et al. (2022a) prove that on-policy sequence models can asymptotically recover expert behavior when the expert observes privileged information, while showing that off-policy methods “latch” onto confounded features—a failure mode that directly motivates the causal adjustment layer in our off-policy algorithms. Vuorio et al. (2024) train a variational inference model to infer the expert’s latent information and learn a latent-conditional policy. Shao et al. (2025) propose DML-IL, a unifying framework that refor-mulates causal IL as a conditional moment restriction problem solved via IV regression, handling both expert-observable and expert-unobservable confounders. Zeng et al. (2025) similarly lever-age IVs for confounded sequential IL. These IV and latent-inference approaches typically assume additive or temporally bounded confounding for instrument validity, or require ergodic dynamics for latent inference; they do not require a known causal graph but trade this for stronger distribu-tional assumptions. Our approach instead assumes a known causal graph and applies non-parametric graphical adjustment, which is complementary: it provides exact deconfounding guarantees when the graph is available, and our windowed approximation makes it tractable at scale. 
+
+Robust imitation learning without causal structure. A complementary line of work improves the robustness of imitation policies to distribution shift without positing a causal model, and it is natural to ask whether such methods could substitute for causal adjustment. These methods are best organized by the shift they target. A first family targets the covariate shift induced by the imitator’s compounding errors: DAgger (Ross et al., 2011) queries the expert on learner-visited states, DART (Laskey et al., 2017) injects noise into the expert’s controls during collection so that Reinforcement Learning Journal 2026 demonstrations cover the learner’s error distribution, and Chang et al. (2021) handle the offline case by exploiting a supplementary dataset with partial coverage through model-based pessimism. Asecond family targets covariate shift already present in the demonstrations: distribution-matching methods (Kim et al., 2022) align the imitator’s stationary distribution with that of the data, while distributionally robust formulations optimize the worst-case imitation loss over an uncertainty set of state distributions around the data: a total-variation ball in DR-BC (Panaganti et al., 2023), and, in DrilDICE (Seo et al., 2024), an f -divergence ball intersected with the set of stationary distribu-tions satisfying the Bellman flow constraint, which handles demonstrations collected from arbitrary non-stationary state distributions. Related robust formulations address noisy expert actions (Bashiri et al., 2021), suboptimal or corrupted demonstrations (Sasaki & Yamashina, 2021; Wu et al., 2019; Xu et al., 2022), and variations in the environment dynamics (Chae et al., 2022); Tennenholtz et al. (2022) intertwine this literature with ours by studying covariate shift of latent confounders them-selves. The unifying structure of the covariate-shift family is that each method changes where the supervised imitation loss is evaluated, whether by reweighting states, enlarging coverage, or opti-mizing a worst case over state distributions, while fixing the observational conditional of the expert’s action given the imitator’s observations. This is explicit in Seo et al. (2024), whose problem state-ment assumes that the training and target distributions differ only in their state marginals while sharing the same state-conditional expert action everywhere. 
+
+Orthogonality of confounding and covariate-shift robustness. Distribution shift in sequential decision-making arises from distinct causes (see Bareinboim & Pearl (2016) for a broader treatment of the biases underlying generalization): (1) non-overlap, where the imitator visits state-action re-gions unsupported by the data; (2) confounding bias, where unobserved variables jointly influence observations, actions, and outcomes, so that the observational conditional differs from the interven-tionally correct policy; and (3) structural change between the training and deployment environments. Covariate-shift-robust IL addresses cause (1) (and dynamics-robust variants a form of (3)) under the assumption that the per-observation conditional is invariant. However, cause (2) violates that invari-ance. When unobserved confounders shift at deployment, the conditional P (x | vO ) that was correct on the demonstrations becomes the wrong policy, and no reweighting of where that conditional is fit can repair it, because the bias lives inside the conditional rather than in the marginal it is averaged over. This mirrors the situation in offline RL, where conservatism toward out-of-distribution actions cannot correct value estimates biased by confounding (Li et al., 2025). This is seen in the following instance, in which the covariate-shift machinery is provably inert. 
+
+Example 2 (Confounded Route Choice) . Consider a single-stage SCM with binary variables. A goal lies on side Z ∼ Bern(1 /2) of a junction, and the binary actuation X selects a route 
+
+A = X ⊕ Z relative to the goal side: route a=0 is exposed and succeeds only in calm condi-tions, P (Y =1 | a=0 , u ) = 1 − u, while route a=1 is sheltered and succeeds with probability 3/4
+
+regardless, P (Y =1 | a=1 , u ) = 3 /4. The wind U ∼ Bern( p) is exogenous and unobserved by all agents, with ptr = 1 /4 during demonstration collection. The expert observes its orientation 
+
+O ∼ Bern(2 /3) in addition to Z; the imitator does not observe O but instead carries a compass 
+
+W = O ⊕ U whose needle is deflected by the wind, so that O → W ← U is a collider with no outgoing edges, exactly as in Figure 2. Under ptr = 1 /4 both routes have expected reward 3/4 for every (z, o ), so the expert is optimal over its information set and, being indifferent, takes the route it is facing: X = Z ⊕ O. The induced diagram has edges Z → X, Z → Y , X → Y , O → X,
+
+O → W , U → W , U → Y ; its latent projection onto {Z, W, X, Y } has directed edges Z → X,
+
+Z → Y , X → Y and bidirected edges X ↔ W , W ↔ Y . Applying Definition 2, the set {Z} is 
+
+π-backdoor admissible; {Z, W } is not, since conditioning on the collider W opens X ↔ W ↔ Y ;and ∅ is not, since X ← Z → Y remains open. The demonstrations (z, w, x ) ∼ Ptr have full support (the smallest cell has probability 1/24 ) and are drawn i.i.d. from the expert’s own occupancy. There is thus no non-overlap, no compounding error as the horizon is one, and no mismatch between the dataset and the expert’s state distribution as the shift targeted by Seo et al. (2024) is intentionally absent. Nevertheless, the compass is genuinely Scalable Causal Imitation Learning informative in-distribution, 
+
+Ptr (X = z | z, W =0) = (1 /3)(3 /4) (1 /3)(3 /4)+(2 /3)(1 /4) = 35 ,Ptr (X = 1 −z | z, W =1) = (2 /3)(3 /4) (2 /3)(3 /4)+(1 /3)(1 /4) = 67 ,
+
+so the loss-minimizing deterministic imitator over (Z, W ) follows the compass, ˆπn(z, w ) = z ⊕ w
+
+(i.e., a = w), while the adjusted conditional over {Z} is πc(x | z) = Ptr (x | z), which takes the sheltered route with probability P (O=1) = 2 /3, and its deterministic counterpart ˆπc always takes it. At deployment the wind picks up, pte = 3 /4. The compass-following imitator now takes the exposed route precisely when the wind is blowing ( P (a=0 | U =1) = P (W =0 | U =1) = 2 /3) and collects zero reward there, whereas the adjusted policies are indifferent to the compass and unaf-fected by its miscalibration. Table 2 reports the exact interventional values. Two features mirror our main experiments: in-distribution, the confounded policies trail the expert by margins comparable to evaluation noise ( 0.721 and 0.688 against 0.750 ), so the bias is nearly invisible during training, as in Figure 4; and the deterministic adjusted policy surpasses the fixed expert at deployment, as causal methods occasionally do in Table 1 (cf. Ruan et al., 2024). By contrast, the stochastic adjusted policy 
+
+πc attains the expert’s interventional value under every deployment wind distribution: the expert’s action satisfies X = Z ⊕ O with O ⊥ (Z, U ), so the expert and do (πc) induce the same joint over 
+
+(Z, X ) with X ⊥ U | Z in both, and since the parents of Y are {X, Z, U }, the two interventional distributions of Y coincide for every P (U ). ■
+
+Table 2: Interventional values E[Y | do (π)] in Example 2 under the training wind ( ptr = 1 /4)and the deployment wind ( pte = 3 /4). “Robust-BC output” is the deterministic policy returned by BC and by every covariate-shift-robust method in the class of Proposition 1. All values are exact; the general closed forms in s = P (U =1) are shown for reference. Every entry is reproduced by exhaustive enumeration.                                                                               
+
+> Policy Conditions on E[Y|do (π)] , any sTrain (s=14)Deploy (s=34)Expert ( X=Z⊕O){Z, O }12+1−s
+> 33/4 = 0 .750 7/12 ≈0.583
+> πc(x|z) = Ptr (x|z){Z}12+1−s
+> 33/4 = 0 .750 7/12 ≈0.583 ˆπc(deterministic, sheltered) {Z}343/4 = 0 .750 3/4 = 0 .750
+> πn(x|z, w ) = Ptr (x|z, w ){Z, W }(1 −s)173 210 +s87 210 101 /140 ≈0.721 31 /60 ≈0.517 ˆπn(Robust-BC output: a=w){Z, W }(1 −s)56+s1411 /16 ≈0.688 19 /48 ≈0.396
+
+Proposition 1 (State reweighting cannot remove confounding bias) . Consider the demonstration distribution Ptr of Example 2; any single-stage instance with full support over the imitator’s observations suffices. For a deterministic policy π over observations (z, w ), let Cπ (z, w ) := 
+
+Ex∼Ptr (·| z,w )[ℓ(π(z, w ), x )] denote the expected loss against the sampled expert actions, with ℓ the 0–1 loss. Then ˆπn(z, w ) = arg max x Ptr (x | z, w ) minimizes E(z,w )∼d[Cπ (z, w )] simultaneously for every distribution d over observations. Consequently, ˆπn attains the minimum of every objective formed by nonnegatively aggregating the per-observation losses {Cπ (z, w )}: including any supre-mum or infimum over a family of state weightings, with or without an f -divergence regularizer, 
+
+min  
+
+> π
+
+sup 
+
+> d∈Q
+
+Ed[Cπ ] − αD f (d ∥ dD ),
+
+for every uncertainty set Q, every convex generator f , and every α ≥ 0. This class contains be-havioral cloning, adversarially weighted BC, DR-BC (Panaganti et al., 2023), OptiDICE-BC (Lee et al., 2021), and DrilDICE (Seo et al., 2024), which therefore all return the compass-following pol-icy of Example 2 and its deployment value of 19 /48 . This also holds for the stochastic conditional 
+
+πn(x | z, w ) = Ptr (x | z, w ) under the log loss. 
+
+Proof. Each objective decomposes over observations, Ed[Cπ ] = P 
+
+> z,w
+
+d(z, w ) Cπ (z, w ), and by full support Cπ (z, w ) is well defined at every (z, w ) and is minimized pointwise by ˆπn (respec-tively, by πn under the log loss). A simultaneous pointwise minimizer minimizes every nonneg-atively weighted aggregate of the per-observation losses, hence every supremum or infimum of Reinforcement Learning Journal 2026 such aggregates over families of weightings, and subtracting a term αD f (d∥dD ) that does not de-pend on π changes neither the inner optimizer’s feasible directions in π nor the outer arg min . For DrilDICE specifically, each policy update minimizes E(s,a )∼dD [w∗(s, a ) Cπ (s)] with fixed nonneg-ative weights; since the cost is constant in a given s, this equals a state-weighted BC loss with weights ω(s) = EdD [w∗(s, a ) | s] ≥ 0, and in the single-stage problem the weights are moreover directly state-measurable, as eπ,ν (s, a, s ′) = Cπ (s) − ν(s) with the terminal value fixed to zero. Hence ˆπn is returned by the two-step instantiation of DrilDICE and is a fixed point of its alternating scheme. When the optimal weighting places positive mass on every observation, ˆπn is the unique minimizer, since the argmax in Example 2 is strict at every (z, w ).The orthogonality runs in both directions, and neither correction subsumes the other. Causal adjust-ment does nothing for cause (1): Causal BC in Figure 3 drifts outside the demonstration support on AntMaze-Large despite conditioning on admissible adjustment sets, purely a non-overlap fail-ure. Symmetrically, the covariate-shift constructions of Seo et al. (2024) contain no unobserved confounding, so a causal method handed the unconfounded diagram would reduce to plain BC and inherit its failure there. Note that robustifying against the deployment-time shift in the observable marginals would not rescue the confounded imitator in Example 2: the compass marginal does shift (P (W =1) moves from 7/12 to 5/12 ), but the failure is driven by the shifted conditional, which every method in the class intentionally leaves unmodified. Because the two corrections act on dif-ferent components of the learning problem, either the conditioning set or the distribution over which the loss is evaluated, they compose rather than compete: Causal SQIL and Causal IQ-Learn are themselves such a composition, pairing adjustment for cause (2) with off-policy temporal-difference learning against the compounding-error consequences of cause (1), and composing windowed causal adjustment with DICE-style stationary distribution corrections is a natural direction for future work. 
+
+Causal reinforcement learning. Causal reasoning has been increasingly integrated into RL to handle confounded offline data and distribution shift. Li et al. (2025) develop confounding-robust deep RL via causal adjustment in the presence of unobserved confounders; Li et al. (2026) extend this to offline settings via causal flow Q-learning; and Juliani et al. (2026) address confounders in continuous control through automatic reward shaping. These works operate in the RL setting where a reward signal is available, whereas the present paper addresses the harder IL setting where the reward is entirely latent. Nevertheless, the structural causal formalization and the challenge of off-policy learning under confounders are shared, and our causal adjustment layer is compatible with advances in causal RL. 
+
+Learned history compression. Since Algorithm 1 ultimately encodes a fixed window of recent observations, a natural question is whether a learned sequence model, such as an RNN or Trans-former over st−k:t, could replace graphical adjustment altogether. The two mechanisms are not interchangeable: Algorithm 1 determines both which variables may be conditioned on and which lags are required, whereas a learned compressor addresses only the latter. A sequence model over the raw history still conditions on every observed variable, including the collider W, and its train-ing objective provides no signal to exclude it: the spurious association is predictive in-distribution (Figure 4), and history-conditioned imitators are prone to latching onto past actions and confounded features (Wen et al., 2020; Swamy et al., 2022a), so such a model would inherit the biased condi-tional that defeats the non-causal baselines in Table 1. Furthermore, Theorem 1 and the window ablation (Figure 5) indicate that the sufficient window is small relative to the horizon in our envi-ronments, limiting the benefit of expressive history models over the direct encoding of Algorithm 1. Learned compression instead becomes appropriate when Assumption 1 fails and long-range latent dependencies require summarizing history beyond any fixed window (Appendix G); composing the variable selection of Algorithm 1 with learned temporal compression of the selected variables is a noteworthy direction for future work. Scalable Causal Imitation Learning 
+
+## B Proof 
+
+Theorem 2 (Restatement of Theorem 1) . Let GH be the causal diagram of an SCM unrolled over horizon H, and let Assumption 1 hold with window size k. Let {Zkt }kt=0 be adjustment sets con-structed by Algorithm 1 that satisfy the sequential π-backdoor criterion (Definition 2) for the proxy graph Gk with horizon k + 1 . Then the transferred sets {ZHt }H−1 
+
+> t=0
+
+returned by Algorithm 1 satisfy the sequential π-backdoor criterion for (GH , X, Y ).
+
+Proof. We show that for every t ∈ { 0, . . . , H −1}, one of the two conditions of Definition 2 holds for ZHt in the full-horizon manipulated graph (GH )′
+
+> t
+
+. We handle t ≥ k first, then t < k .
+
+Setup and notation. Throughout the proof we work in the latent projections eGH and eGk onto 
+
+VO ∪{ Y } (respectively Yk), on which Assumption 1(i) is stated. Since latent projection preserves d-separation among the retained variables and directed (ancestral) relationships between them (Verma & Pearl, 1990; Tian & Pearl, 2002), both conditions of Definition 2 are invariant under projection, and it suffices to establish them in the projected graphs; the manipulated-graph operations (deleting incoming edges of future actions and re-parenting them on the observed sets ZHj ) involve only retained variables and can equivalently be performed on the projections. To avoid clutter, we write 
+
+GH and Gk for the projections in the remainder of the proof. In particular, every node of these graphs is observed (or is the reward), pa + always denotes the extended parent set in the projection, and a single edge may represent a latent-mediated path of the original SCM, so edges span up to k
+
+timesteps rather than one. Let (GH )′ 
+
+> t
+
+denote the manipulated graph at timestep t: all incoming edges into future actions Xj
+
+(j > t ) are removed and each Xj is given parents ZHj . Let (( GH )′
+
+> t
+
+)Xt further delete all outgoing edges from Xt. Define Win t := {t−k, . . . , t }. We use Vr (non-bold) for an individual variable at timestep r.
+
+Step 1: Structure of the manipulated graph. By k-bounded influence (Assumption 1(i)), for every t the extended parent set pa +(Vt) lies within the window Win t = {t−k, . . . , t }: all directed parents of Vt, all variables collider-connected to Vt, and the parents of those variables, occur at timesteps ≥ t − k. In (GH )′
+
+> t
+
+, the original incoming edges to future actions are replaced by edges from ZHj , which by Algorithm 1 contain only variables within k steps of j; this replacement only deletes edges and redirects action parents to in-window variables; since deleting a bidirected edge can only shrink a C-component (Definition 3) and redirecting adds only in-window parents, no extended parent set grows beyond its width-k bound. Therefore the bound on pa + is preserved in 
+
+(GH )′
+
+> t
+
+. Note also that the bound implies every edge of the (projected, manipulated) graph spans at most k timesteps: for a directed edge B → A, B ∈ pa( A) ⊆ pa +(Vslice( A)), and for a bidirected edge B ↔ A with B earlier, B is collider-connected to A and hence B ∈ pa +(Vslice( A)).Crucially, the window is sealed against open escapes into the past. Suppose a path segment lying behind Xt (i.e., before any crossing into the tail defined below) leaves Win t downward, and let 
+
+A ∈ Win t be a node at which it exits or re-enters, with neighbor B on the segment at a timestep 
+
+< t − k. Since directed edges respect the temporal order and every edge spans at most k lags, the boundary edge must be B → A or B ↔ A; either way it places an arrowhead at A. If the other path-edge at A also carries an arrowhead, A is a collider, and the segment is blocked at A unless 
+
+A ∈ An( ZHt ); if it carries a tail, A is a non-collider, and the segment is blocked at A unless A / ∈ ZHt .It is here that the proof uses the specific construction of Lines 1–10 of Algorithm 1 rather than mere proxy admissibility. By the Markov-boundary property of the construction (Kumor et al., 2021, Definition 3.1 and Lemma 3.2), transferred to Win t by the isomorphism of Step 2, every observed window variable that receives an incoming arrowhead from outside the conditioned corridor and transmits along a tail edge either belongs to ZHt (and hence blocks the segment as a conditioned non-collider) or is d-separated from Xt given ZHt within the window (so that the segment is blocked before reaching Xt). In the collider case, A ∈ ZHt opens A, but the segment then continues below the window, where all nodes are unconditioned, and must eventually re-enter Win t to reach Y (every Reinforcement Learning Journal 2026 edge spans at most k lags, and Y lies above the window); at the re-entry node the same dichotomy applies, and since a finite path can sustain only finitely many below-window excursions, it must ultimately traverse a transmitting (tail-edge) window node, where the Markov-boundary property blocks it. Hence no open path behind Xt leaves Win t, and no variable at a timestep ≤ t − k − 1
+
+participates in an open path into Win t.We decompose (GH )′ 
+
+> t
+
+into two parts: • The local subgraph Lt: the restriction of (GH )′ 
+
+> t
+
+to variables at timesteps in Win t.• The tail subgraph Tt: the restriction of (GH )′ 
+
+> t
+
+to variables at timesteps in {t+1 , . . . , H }, including 
+
+Y .By the pa + bound, every directed or bidirected connection between Lt and Tt runs from a variable in {t−k+1 , . . . , t } ⊂ Win t to a variable in {t+1 , . . . , t +k} ⊂ T t. We call the variables in Tt
+
+at timesteps {t+1 , . . . , t +k} that are collider-connected to, or have a parent in, Lt the interface variables It. By the sealing property, every path leaving Lt for Tt does so through a node in It
+
+whether via a directed or bidirected edge; these interface nodes together with their incident edges are themselves contained in pa +-bounded neighborhoods of the window. In particular, both directed and bidirected boundary crossings are confined to It; the manipulated-graph construction additionally removes incoming edges to future actions Xj ∈ T t, so no boundary crossing terminates at a future action. 
+
+Step 2: Isomorphism between the local subgraph and the proxy graph. Consider the proxy graph Gk on timesteps {0, . . . , k } with terminal reward Yk. Define the time-shift ϕt(τ ) = τ +( t−k).By time-homogeneity (Assumption 1(ii)), ϕt induces a graph isomorphism between Gk restricted to {0, . . . , k } and Lt, preserving all directed and bidirected edges of the projections as well as the identity of state variables, actions, and reward. (Time-homogeneity of F carries over to the projections, since the latent projection is determined by the diagram.) This extends to manipulated graphs. In the proxy manipulated graph (Gk)′
+
+> k
+
+, timestep k is the final step so there are no future actions to modify. In Lt, the action Xt is likewise the last action (all actions at j > t belong to Tt). The adjustment sets satisfy ZHϕt(τ ) = ϕt(Zkτ ) by the identical relative-lag construction of Algorithm 1. Therefore Lt with the manipulated-graph modifications is isomorphic to (Gk)′ 
+
+> k
+
+under ϕt.
+
+Step 3: Relating Yk and Y via the interface. In Gk, the terminal reward Yk receives edges from variables at timesteps {k−k, . . . , k } = {0, . . . , k } (by k-bounded influence). Since Y is a terminal sink node with only incoming edges in both Gk and GH , and its parent structure follows the same time-homogeneous template, the structural role of Yk relative to {0, . . . , k } in Gk is identical to that of Y relative to {H−k, . . . , H } in GH . Under the isomorphism, these correspond to variables in 
+
+Win t in GH .In (GH )′
+
+> t
+
+, the terminal reward Y at timestep H is not solely adjacent to Win t; it is connected to 
+
+Win t only through paths that traverse Tt. However, by Step 1, all connections from Lt into Tt pass through the interface It at timesteps {t+1 , . . . , t +k}. This means that It is a cut set between Win t
+
+and Y in Tt: every path from any variable in Lt to Y in (GH )′ 
+
+> t
+
+must pass through some node of It.The extended parents of Yk in Gk (variables at timesteps {0, . . . , k }) are mapped by ϕt to variables in Win t that are exactly the extended parents of the interface variables It within Lt. Thus Yk in Gk
+
+and Y in GH attach to Lt through the same set of nodes, with Yk directly and Y through It and the tail. By the sealing property of Step 1, every path from a variable in Lt to Y in (GH )′ 
+
+> t
+
+passes through 
+
+It.
+
+Step 4: Transferring the sequential π-backdoor conditions. Since {Zkt } satisfies the sequential 
+
+π-backdoor on Gk, at timestep k either: 
+
+Case A: Xk /∈ An (Gk )′ 
+
+> k
+
+(Yk).Scalable Causal Imitation Learning This means there is no directed path from Xk to Yk in (Gk)′
+
+> k
+
+. By the isomorphism of Step 2, there is no directed path from Xt to any interface variable in It within Lt. Since every directed path from Xt
+
+to Y in (GH )′ 
+
+> t
+
+must pass through It (Step 3), and no directed path from Xt reaches It, we conclude 
+
+Xt /∈ An (GH )′ 
+
+> t
+
+(Y ).
+
+Case B: (Xk ⊥⊥ Yk | Zkk)(( Gk )′  
+
+> k)Xk
+
+.
+
+We show (Xt ⊥⊥ Y | ZHt )(( GH )′ 
+
+> t)Xt
+
+. Let p be any path from Xt to Y in (( GH )′
+
+> t
+
+)Xt .Since outgoing edges from Xt are deleted, p must leave Xt via an incoming edge from a parent or a node collider-connected to Xt, all of which lie in Win t by the pa + bound (Step 1). If any node of p behind Xt (i.e., before its first crossing into Tt) occurred at a timestep < t − k, then p would exit Win t downward, and by the sealing property of Step 1 it would be blocked by ZHt ; in that case we are done. It therefore suffices to consider paths whose portion behind Xt, up to the first crossing into Tt, is contained in Lt.Since p connects Xt to Y and Y /∈ L t, the path p must at some point cross from Lt into Tt. By Step 1, this crossing must go through an interface variable I ∈ It.Now consider the path p as having two segments: the segment pL from Xt to the first interface variable I (contained in Lt ∪ { I}), and the segment pT from I onward to Y (contained in Tt). We show p is blocked by ZHt by showing pL is blocked. Construct the corresponding path p′ 
+
+> L
+
+in (( Gk)′
+
+> k
+
+)Xk : apply ϕ−1 
+
+> t
+
+to map pL from Lt to Gk. The interface variable I at timestep t + j (for some 1 ≤ j ≤ k) maps to a variable at timestep k + j in 
+
+Gk. However, Gk only contains timesteps {0, . . . , k }, so if j ≥ 1, the variable I maps to a timestep beyond Gk.We handle this as follows. By definition of It, the interface variable I is connected to Lt through its extended parents in Lt: either a directed parent, or a node collider-connected to I whose own parents lie in Lt. By Step 3, Yk in the proxy attaches to the in-window nodes through the same extended-parent structure (under ϕt). Therefore any path from Xk that reaches an extended parent of Yk in 
+
+(( Gk)′
+
+> k
+
+)Xk corresponds to a path from Xt that reaches an extended parent of It in (( GH )′
+
+> t
+
+)Xt , and conversely. Concretely, the path pL from Xt to I reaches I through some node Vq ∈ pa +(I) ∩ L t. The sub-path from Xt to Vq lies entirely in Lt (any step to a timestep < t − k is covered by the sealing property of Step 1, under which p is already blocked) and maps under ϕ−1 
+
+> t
+
+to a path from Xk to ϕ−1 
+
+> t
+
+(Vq ) in 
+
+(( Gk)′
+
+> k
+
+)Xk . Because pa + is defined as the parents of a C-component, the collider/non-collider status of Vq along pL is preserved under ϕ−1 
+
+> t
+
+: a node entered through a bidirected edge inside a collider-connected chain remains so in the proxy, and a directed parent remains a directed parent. Since Vq
+
+is an extended parent of an interface variable, ϕ−1 
+
+> t
+
+(Vq ) is an extended parent of Yk in Gk (Step 3), so the path from Xk to ϕ−1 
+
+> t
+
+(Vq ) extends to Yk through the corresponding parent or collider-connecting edge, forming a path q from Xk to Yk in (( Gk)′
+
+> k
+
+)Xk .By the d-separation hypothesis, q is blocked by Zkk. The extension from ϕ−1 
+
+> t
+
+(Vq ) to Yk introduces no open collider at ϕ−1 
+
+> t
+
+(Vq ) that was not already present on pL: if the extension makes ϕ−1 
+
+> t
+
+(Vq ) acollider, the identical collider configuration appears at Vq on the full-graph path p (via the matching edge into the interface chain), so the two paths share collider status at this node and a block of one implies a block of the other. Hence the block of q occurs on the sub-path from Xk to ϕ−1 
+
+> t
+
+(Vq ),at a node of Zkk. Mapping back via ϕt, the same block occurs on pL at the corresponding node of 
+
+ZHt = ϕt(Zkk). Therefore p is blocked by ZHt .
+
+Boundary timesteps ( t < k ). For t < k , the window is {0, . . . , t }. The before( Xt) constraint in Algorithm 1 (Line 6) ensures Zkt contains only variables at timesteps ≤ t − 1. Since t < k , all such variables satisfy τ ≥ 0 > t − k, so the clipping in Lines 11–13 is vacuous: ZHt = Zkt . The subgraph of GH restricted to {0, . . . , t } is identical to the subgraph of Gk on the same timesteps (a direct subgraph inclusion requiring no time-shift). The manipulated graph (GH )′ 
+
+> t
+
+restricted to {0, . . . , t }Reinforcement Learning Journal 2026 matches (Gk)′ 
+
+> t
+
+restricted to {0, . . . , t }, since the modifications at timesteps > t (replacement of future action parents) do not alter the subgraph at {0, . . . , t }. Therefore the d-separation or non-ancestry condition holding for Xt in (Gk)′ 
+
+> t
+
+also holds in (GH )′
+
+> t
+
+.Since for every t ∈ { 0, . . . , H −1} one of the two conditions of Definition 2 holds, {ZHt }H−1
+
+> t=0
+
+satisfies the sequential π-backdoor criterion for (GH , X, Y ).
+
+B.1 Necessity of Extended Parents Set 
+
+Assumption 1(i) bounds the temporal reach of the extended parent set pa +(Vt) rather than that of the ordinary parent set pa( Vt) or, equivalently, the maximal length of an individual edge. This is necessary, as an SCM may satisfy a naive edge-length bound yet violate the windowed criterion. XH-2 OH-2  XH-1 OH-1  YXHOH
+
+Figure 6: Causal graph for Example 3, shown over the final three timesteps. Every edge spans a single timestep, yet the open path ρ, of XH ↔ XH−1 ← XH−2 → OH−1 ↔ OH ↔ Y , reaches the non-collider XH−2 at lag −2, outside the width-1 window Win H = {H − 1, H }.
+
+Example 3. Consider an SCM unrolled over horizon H with endogenous variables {Ot, X t}Ht=1 
+
+and terminal reward Y (Figure 6), with directed edges Ot → Xt, Xt → Ot+1 , and Xt → Xt+1 ,terminal edge XH → Y , and bidirected edges Ot ↔ Ot+1 , Xt ↔ Xt+1 , and OH ↔ Y from unobserved confounders, with only Y ∈ VL. Every directed and bidirected edge spans exactly one timestep, satisfying the condition that pa( Vt) lie within k = 1 of Vt, V t ∈ V.Now examine action XH at the final step under the resulting window from Algorithm 1, Win H =
+
+{H − 1, H }, and consider the path 
+
+ρ : XH ↔ XH−1 ← XH−2 → OH−1 ↔ OH ↔ Y. 
+
+On ρ, the nodes XH−1, OH−1, OH are colliders that are conditioned and thus opened. To block ρ
+
+one must condition on XH−2. But XH−2 lies at timestep H − 2 outside Win H , so a window of width k = 1 omits it and ρ remains open rendering the windowed adjustment set is invalid. Though XH−2 is only a single directed edge removed from the window, it is a parent of the C-component OH−2, O H−1, O H , Y due to XH−2 → OH−1. Hence XH−2 ∈ pa +(VH ), even though no single bidirected edge reaches it from the window. Assumption 1(i), which bounds pa +, is violated by this SCM at k = 1 as it requires every element of pa +(VH ) including XH−2 to occur no earlier than H −k, forcing k ≥ 2. This blocks ρ and deems the windowed adjustment set valid while satisfying Assumption 1. Therefore, by bounding pa +(V ) instead of pa( V ), collider-connected paths that have causal influence on V beyond the edge length of direct parents are considered. ■Scalable Causal Imitation Learning 
+
+## C Algorithm Pseudocode 
+
+Algorithms 2 and 3 give the full training procedures for Causal SQIL and Causal IQ-Learn, respec-tively. Both algorithms share the same causal encoding layer (Algorithm 1) and SAC-style actor update, differing only in how the critic is trained. In Causal SQIL the critic minimizes a standard soft Bellman residual on binary-labeled transitions, whereas in Causal IQ-Learn it minimizes a chi-squared divergence objective on implicit rewards. All other components (entropy tuning, soft target updates, replay buffer management, and the causal adjustment algorithm) are identical. 
+
+Algorithm 2 Causal SQIL 
+
+Require: Expert demonstrations Dexp , causal graph G, window size k, horizon H, discount γ, soft update rate τ , batch size B. 
+
+> 1:
+
+Compute windowed adjustment sets {ZHt }H−1 
+
+> t=0
+
+and window specification S via Algorithm 1.  
+
+> 2:
+
+Build encoder E NCODE (s, t ) from S: concatenates values of V ∈ VO ∩ ZHt at lags 
+
+{0, −1, . . . , −k} relative to t, zero-padding when t < k . 
+
+> 3:
+
+Initialize actor πϕ, twin Q-networks Qθ1 , Q θ2 , target networks Q¯θ1 ← Qθ1 , Q¯θ2 ← Qθ2 . 
+
+> 4:
+
+Initialize entropy coefficient log α ← 0, target entropy ¯H ← −| A|. 
+
+> 5:
+
+Bexp ← ∅, Bπ ← ∅. 
+
+> 6:
+
+for each transition (st, xt, st+1 , d t) in Dexp do  
+
+> 7:
+
+Bexp ← B exp ∪ { (ENCODE (st, t ), xt, r =1 , ENCODE (st+1 , t +1) , d t)} 
+
+> 8:
+
+end for  
+
+> 9:
+
+for each episode e = 1 , 2, . . . do  
+
+> 10:
+
+Reset environment, observe s0. 
+
+> 11:
+
+for t = 0 , . . . , H − 1 do  
+
+> 12:
+
+zt ← ENCODE (st, t ) 
+
+> 13:
+
+Sample xt ∼ πϕ(· | zt), execute, observe st+1 , dt. 
+
+> 14:
+
+Bπ ← B π ∪ { (zt, xt, r =0 , ENCODE (st+1 , t +1) , d t)} 
+
+> 15:
+
+end for  
+
+> 16:
+
+for each gradient step do  
+
+> 17:
+
+Sample {(z, x, r, z′, d )}Bi=1 with B/ 2 from Bexp and B/ 2 from Bπ . 
+
+> 18:
+
+// Critic update  
+
+> 19:
+
+x′ ∼ πϕ(· | z′) 
+
+> 20:
+
+y ← r + γ(1 − d)  min j Q¯θj (z′, x′) − α log πϕ(x′ | z′) 
+
+> 21:
+
+LQ ← 12
+
+P2 
+
+> j=1
+
+Qθj (z, x) − y 2 
+
+> 22:
+
+Update θ1, θ 2 by ∇θ LQ. 
+
+> 23:
+
+// Actor update  
+
+> 24:
+
+˜x ∼ πϕ(· | z) (reparameterized)  
+
+> 25:
+
+Lπ ← Eα log πϕ(˜ x | z) − min j Qθj (z, ˜x) 
+
+> 26:
+
+Update ϕ by ∇ϕLπ . 
+
+> 27:
+
+// Entropy tuning  
+
+> 28:
+
+Lα ← − log α E log πϕ(˜ x | z) + ¯H 
+
+> 29:
+
+Update log α by ∇L α, α ← exp(log α). 
+
+> 30:
+
+// Soft target update  
+
+> 31:
+
+¯θj ← τ θ j + (1 − τ ) ¯θj for j = 1 , 2. 
+
+> 32:
+
+end for  
+
+> 33:
+
+end for  
+
+> 34:
+
+return πϕ.Reinforcement Learning Journal 2026 
+
+Algorithm 3 Causal IQ-Learn 
+
+Require: Expert demonstrations Dexp , causal graph G, window size k, horizon H, discount γ, soft update rate τ , batch size B, number of value samples K. 
+
+> 1:
+
+Compute adjustment sets and build encoder E NCODE as in Algorithm 2, steps 1–2.  
+
+> 2:
+
+Initialize actor πϕ, twin Q-networks Qθ1 , Q θ2 , target networks Q¯θ1 ← Qθ1 , Q¯θ2 ← Qθ2 . 
+
+> 3:
+
+Initialize entropy coefficient log α ← 0, target entropy ¯H ← −| A|. 
+
+> 4:
+
+Bexp ← ∅, Bπ ← ∅. 
+
+> 5:
+
+Encode expert demonstrations into Bexp as {(zt, xt, zt+1 , d t)} (no reward labels).  
+
+> 6:
+
+for each episode e = 1 , 2, . . . do  
+
+> 7:
+
+Roll out πϕ in the environment with causal encoding (as in Algorithm 2, steps 9–13). Store transitions in Bπ . 
+
+> 8:
+
+for each gradient step do  
+
+> 9:
+
+Sample {(ze, xe, z′e, d e)}B/ 2 
+
+> i=1
+
+from Bexp and {(zp, xp, z′p, d p)}B/ 2 
+
+> i=1
+
+from Bπ . 
+
+> 10:
+
+Let (z, x, z′, d ) denote the concatenation of expert and policy batches.  
+
+> 11:
+
+// Compute soft state value via Monte Carlo  
+
+> 12:
+
+{˜xm}Km=1 ∼ πϕ(· | z′) 
+
+> 13:
+
+¯V (z′) ← 1
+
+> K
+
+PKm=1 
+
+ min j Q¯θj (z′, ˜xm) − α log πϕ(˜ xm | z′) 
+
+> 14:
+
+// Implicit reward  
+
+> 15:
+
+ˆrj (z, x) ← Qθj (z, x) − γ(1 − d) ¯V (z′) for j = 1 , 2 
+
+> 16:
+
+// Critic update (chi-squared divergence)  
+
+> 17:
+
+LQj ← − Eexp 
+
+ˆrj (ze, xe) + 12 Eall 
+
+ˆrj (z, x)2 for j = 1 , 2 
+
+> 18:
+
+Update θ1, θ 2 by ∇θ LQ. 
+
+> 19:
+
+// Actor update (identical to Algorithm 2, steps 21–24)  
+
+> 20:
+
+˜x ∼ πϕ(· | z), Lπ ← Eα log πϕ(˜ x | z) − min j Qθj (z, ˜x) 
+
+> 21:
+
+Update ϕ by ∇ϕLπ . 
+
+> 22:
+
+// Entropy tuning and soft target update (identical to Algorithm 2, steps 26–29)  
+
+> 23:
+
+Update log α, α, and ¯θ1, ¯θ2. 
+
+> 24:
+
+end for  
+
+> 25:
+
+end for  
+
+> 26:
+
+return πϕ.Scalable Causal Imitation Learning For completeness, we reproduce the F IND OX algorithm of Kumor et al. (2021) (Algorithm 1 in that paper), which returns the maximal set OX ⊆ VO from which sequential π-backdoor admissible sets can be constructed. Given the causal diagram G, action set X, and target Y , F IND OX iteratively grows OX by checking, for each observed node, whether a valid backdoor adjustment exists that would make that node a non-ancestor of Y in the manipulated graph. A sequential π-backdoor exists for (G, X, Y ) if and only if X ⊆ OX (Kumor et al., 2021, Theorem 3.1). Once OX is obtained, the per-action adjustment sets Zt are constructed from the Markov boundary of OX in GY 
+
+> X′
+
+(where 
+
+X′ = OX ∩ X), intersected with before( Xt). Our windowed adjustment procedure (Algorithm 1) invokes F IND OX on a short-horizon proxy graph Gk rather than the full-horizon graph GH .
+
+Algorithm 4 FIND OX (Kumor et al., 2021): Find largest valid OX in ancestral graph of Y
+
+Require: Causal diagram G, action set X, target Y . 
+
+> 1:
+
+function HAS VALID ADJUSTMENT (G, OX , O i, X i) 
+
+> 2:
+
+C ← the C-component of Oi in GY 
+
+> 3:
+
+GC ← the subgraph of GY containing only Pa +(C) and intermediate latent variables  
+
+> 4:
+
+OC ← C \ (OX ∪ { Oi}) // Elements of C-component that might be ancestors of Y in G′ 
+
+> i
+> 5:
+
+return (Oi ⊥⊥ OC | OC ∩ before( Xi)) in GC 
+
+> 6: 7:
+
+function FIND OX( G, X, Y ) 
+
+> 8:
+
+OX ← empty map from elements of VO to elements of X 
+
+> 9:
+
+repeat  
+
+> 10:
+
+for Oi ∈ VO of GY (ancestral graph of Y ) in reverse temporal order do  
+
+> 11:
+
+if |ch +(Oi)| > 0 and ch +(Oi) ⊆ keys( OX ) then  
+
+> 12:
+
+Xi ← earliest element of OX [ch +(Oi)] in temporal order  
+
+> 13:
+
+if HAS VALID ADJUSTMENT (G, keys( OX ), O i, X i) then  
+
+> 14:
+
+OX [Oi] ← Xi 
+
+> 15:
+
+else if Oi ∈ X and H AS VALID ADJUSTMENT (G, keys( OX ), O i, O i) then  
+
+> 16:
+
+OX [Oi] ← Oi 
+
+> 17:
+
+while |OX | changed in most recent pass  
+
+> 18:
+
+return keys( OX )Reinforcement Learning Journal 2026 
+
+## D Environment Details 
+
+We describe each confounded environment in detail, including the causal structure, the confounding mechanism, and the observation partition. Table 3 summarizes the key dimensions and setup. 
+
+Confounded AntMaze. The base task is goal-conditioned navigation in a windy maze using an 8-DoF ant robot as described in Example 1. The imitator does not observe O, or torso orientation; to compensate, a 2D compass reading W is added providing a noisy surrogate for heading. The latent wind field U follows a piecewise-constant gust process and affects both the dynamics and the reward function. The compass is prone to distributional shift between expert and imitator environments due to changing influence from U. Causally unaware methods that condition on W conflate the wind’s influence on the compass with the ant’s true heading, learning policies that turn into walls when the wind changes direction. Causal methods exclude W from their adjustment set and learn to navigate the maze using position, joint angles, and velocities alone, without explicit orientation information. PtLt   
+
+> Ot
+> AtTt
+> Jt
+> Xt
+> Y
+> Pt+1 Lt+1
+> Ot+1
+> At+1 Tt+1
+> Jt+1
+> Xt+1 PHLH
+> OH
+> AHTH
+> JH
+> WtWt+1 WH
+
+Figure 7: Confounded AntMaze. P is global position, L is torso linear velocity, O is torso orienta-tion, A is joint angles, T is torso angular velocity, J is joint angular velocities, U is the latent wind field, W is the compass, X is joint torques, and Y is the latent terminal reward. 
+
+Figure 8: Visualization for Confounded AntMaze, demonstrating the effect of latent winds U (blue) on the heading compass W (red) despite the original heading O (green) being completely different. Scalable Causal Imitation Learning 
+
+Confounded HumanoidMaze. The base task is goal-conditioned navigation in a maze using a 21-DoF humanoid robot. The imitator does not observe C, the 3D center-of-mass velocity; to com-pensate, a 2D ground-vibration reading W is added that provides a noisy surrogate for locomotion velocity. The latent seismic tremor U follows a piecewise-constant impulse process and affects both the dynamics (applying external force to the torso) and the reward function. The vibration sensor is prone to distributional shift between expert and imitator environments due to changing influence from U. Causally unaware methods that condition on W conflate the tremor’s influence on the vibration reading with the humanoid’s true velocity, learning policies that stumble or over-correct when the tremor changes direction. Causal methods exclude W from their adjustment set and must learn to navigate the maze using position, joint angles, head height, extremity positions, torso ori-entation, and joint velocities alone, without explicit velocity information. The confounding effect of the seismic tremor is less disruptive than that of the wind field in AntMaze. Pt
+
+> At
+> Ht
+> Et
+> Vt
+> Ct
+> Jt
+> Y
+> Wt
+> Xt
+> Pt+1
+> At+1
+> Ht+1
+> Et+1
+> Vt+1
+> Ct+1
+> Jt+1
+> Wt+1
+> Xt+1
+> PH
+> AH
+> HH
+> EH
+> VH
+> CH
+> JH
+> WH
+
+Figure 9: Confounded HumanoidMaze. P is global position, A is joint angles, H is head height, E
+
+is extremities in torso frame, V is torso vertical, C is center-of-mass gravity, J is joint velocities, U
+
+is the latent seismic tremor, W is the vibration sensor, X is joint torques, and Y is the latent reward. 
+
+Figure 10: Visualization for Confounded HumanoidMaze, demonstrating the effect of latent seismic tremors U (yellow) on the perceived ground vibration sensor W (red) despite the true center-of-mass velocity C (green) pointing in a completely different direction. Reinforcement Learning Journal 2026 
+
+Environment H |V| |X| Latent Confounder Collider 
+
+AntMaze 1000 35 8 Wind field Compass HumanoidMaze 2000 89 21 Seismic tremors Vibration Table 3: Summary of confounded environments. |V| denotes the imitator’s observation dimension-ality (excluding hidden variables). |X| is the action dimensionality. 
+
+## E Hyperparameters and Training Details 
+
+Table 4 summarizes the hyperparameters for all algorithms. Causal and non-causal variants of each algorithm use identical hyperparameters and network architectures; the only difference is the input representation (causally-adjusted Zt vs. full observation VOt ). Where hyperparameters differ be-tween environment families we write A (AntMaze) and H (HumanoidMaze). All tasks used 3 seeds. Note: due to limited computational resources, HumanoidMaze-Large evaluations consisted of 100 
+
+episodes rather than the other tasks’ 1000 episodes, and non-causal SQIL for HumanoidMaze-Large was trained on only 1M timesteps instead of 2M ; this decision was informed by the fact that every algorithm in every task reached its best checkpoint before the 1M timestep mark during training. Table 4: Hyperparameters for all algorithms. Causal and non-causal variants share identical settings. “—” denotes a hyperparameter not applicable to that algorithm. A / H distinguishes AntMaze and HumanoidMaze values where they differ. 
+
+Hyperparameter BC GAIL SQIL IQ-Learn 
+
+Network Architecture 
+
+Hidden dimension 256 256 256 256 Actor residual blocks 4 3 3 3Actor dropout 0.0 0.05 0.05 0.05 Layer normalization ✓ ✓ ✓ ✓
+
+Activation SiLU SiLU SiLU SiLU Output squashing Tanh Tanh Tanh Tanh 
+
+Optimization 
+
+Optimizer Adam Adam Adam Adam Actor learning rate 3 × 10 −4 1 × 10 −4 3 × 10 −4 3 × 10 −4
+
+Critic learning rate — 3 × 10 −4 3 × 10 −4 3 × 10 −4
+
+Batch size 2048 1024 256 256 Discount γ — 0.99 0.99 0.99 Max gradient norm — 0.5 1.0 1.0 
+
+BC-Specific 
+
+Loss function Huber — — —Training epochs A: 100 / H-Med: 100 / H-Large: 200 — — —Early stopping patience A: 15 / H-Med: 30 / H-Large: 15 — — —Validation fraction 0.2 — — —
+
+GAIL-Specific (PPO + Discriminator) 
+
+PPO clip ratio ϵ — 0.2 — —GAE λ — 0.95 — —PPO epochs per round — A: 4 / H: 2 — —PPO entropy coefficient — 10 −2 — —Value loss coefficient — 0.5 — —Normalize advantages — ✓ — —Discriminator learning rate — 3 × 10 −4 — —Discriminator dropout — 0.2 — —Discriminator updates per round — 2 — —Discriminator minibatch size — 1024 — —Gradient penalty λGP — 5.0 — —Episodes per round — A: 20 / H: 10 — —Total training rounds — A: 500 / H: 200 — —Disc. LR scheduler — StepLR( 100 , 0.5) — —
+
+SQIL / IQ-Learn (SAC-Based) 
+
+Soft update rate τ — — 0.005 0.005 Entropy coefficient α — — auto-tuned auto-tuned Entropy learning rate — — 3 × 10 −4 3 × 10 −4
+
+Target entropy ¯H — — −| A| −| A|
+
+α clamp range — — [e− log 1000 , e − log 10 ] [e− log 1000 , e − log 10 ]
+
+Replay buffer capacity — — 10 6 10 6
+
+Expert buffer ratio — — 0.5 0.5 Random exploration steps — — 5000 5000 Update-to-data ratio — — A: 0.25 / H: 0.5 A: 0.25 / H: 0.5 Total timesteps — — 2 × 10 6 2 × 10 6
+
+V estimation — — — A: MC ( K=16 ) / H: single-sample Critic LR scheduler — — CosineAnnealing CosineAnnealing 
+
+Shared 
+
+Lookback window k A: 10 / H: 2 A: 10 / H: 2 A: 10 / H: 2 A: 10 / H: 2 Max episode steps A: 1000 / H: 2000 A: 1000 / H: 2000 A: 1000 / H: 2000 A: 1000 / H: 2000 Scalable Causal Imitation Learning 
+
+Expert construction. Expert policies for the maze tasks are constructed using offline-to-online RL. For each environment, we begin by training a goal-conditioned behavioral cloning (BC) policy on provided demonstrations from the base OGBench dataset. This policy provides an initialization that captures the global structure of the task, but it is not yet ready for the confounders introduced in the modified environment. To obtain an expert that reflects performance under the confounded dynamics, we then fine-tune this BC policy through a period of off-policy actor–critic training using TD3 (Fujimoto et al., 2018). Reward shaping is added optionally during fine-tuning to compensate for the sparse reward signals. The resulting expert policy is capable of operating effectively un-der the latent disturbances, partial observability, and altered transition dynamics of the confounded environment. 
+
+Network architecture. All algorithms share a residual MLP backbone for the actor. The actor network maps the causally-adjusted encoding zt to actions through a linear projection into hidden dimension 256 , followed by residual blocks, and a final linear output with tanh squashing to the ac-tion bounds. Each residual block consists of LayerNorm, SiLU, a linear layer, a second LayerNorm, SiLU, dropout, and a second linear layer, with a skip connection from input to output. For GAIL, SQIL, and IQ-Learn, the actor outputs the mean of a squashed Gaussian with a state-independent learnable log-variance; for BC, the actor outputs a deterministic action. The Q-networks (SQIL and IQ-Learn) use the same residual MLP architecture, taking concatenated (zt, xt) as input and pro-ducing a scalar output. GAIL’s value network (critic) uses a simpler three-layer MLP with ReLU activations, taking zt as input. GAIL’s discriminator similarly uses a three-layer MLP with ReLU activations, skip connections between layers, higher dropout ( 0.2), and binary cross-entropy loss to classify (zt, xt) pairs as expert or policy-generated. 
+
+SQIL training details. Causal SQIL uses SAC with twin Q-networks and soft target updates (τ = 0 .005 ). The entropy coefficient α is automatically tuned toward a target entropy of −| X| and clamped to [exp( − log 1000) , exp( − log 10)] ≈ [0 .001 , 0.1] . The replay buffer is split equally: 
+
+50% capacity for expert transitions (labeled r = 1 ) and 50% for policy transitions ( r = 0 ), with each training batch sampled 50 /50 from both halves. The first 5,000 timesteps use random actions for exploration before policy rollouts begin. Training runs for 2 × 10 6 environment steps. The update-to-data (UTD) ratio is 0.25 for AntMaze tasks (one gradient step per four environment steps) and 0.5 for HumanoidMaze tasks. A cosine annealing schedule is applied to the critic learning rate. 
+
+IQ-Learn training details. Causal IQ-Learn shares the SAC actor update and twin Q-network architecture with Causal SQIL. The key difference is the critic loss: instead of minimizing a soft Bellman residual on binary-labeled transitions, IQ-Learn minimizes the chi-squared divergence be-tween the implicit reward distribution under the expert and the combined (expert + policy) data. For AntMaze tasks, the soft state value V (z′) is estimated via K = 16 Monte Carlo samples from the current policy; for HumanoidMaze tasks, a single-sample estimate is used (matching the standard SAC target computation), which avoids the high variance of multi-sample estimates in the higher-dimensional action space. The entropy coefficient α is auto-tuned and clamped to 
+
+[exp( − log 1000) , exp( − log 10)] ≈ [0 .001 , 0.1] to prevent entropy collapse or explosion. IQ-Learn uses the same UTD ratios as SQIL ( 0.25 for AntMaze, 0.5 for HumanoidMaze). 
+
+GAIL training details. Causal GAIL alternates between on-policy rollouts and discriminator– policy updates. Each round collects 20 episodes for AntMaze ( 10 for HumanoidMaze), up to H steps each, using the current policy, computes advantages via GAE ( λ = 0 .95 , γ = 0 .99 ), and performs PPO updates with clipping ratio ϵ = 0 .2, entropy regularization coefficient 10 −2, and value loss coefficient 0.5. The number of PPO epochs per round is 4 for AntMaze and 2 for HumanoidMaze. The discriminator is updated 2 times per round on minibatches of 1024 with gradient penalty ( λGP =5.0). The discriminator learning rate follows a StepLR schedule, halving every 100 rounds. Training runs for 500 rounds on AntMaze and 200 rounds on HumanoidMaze. Reinforcement Learning Journal 2026 
+
+BC training details. Causal BC performs supervised learning on expert demonstrations using Huber loss, optimized with Adam at learning rate 3 × 10 −4. The actor uses 4 residual blocks with no dropout, trained for up to 100 epochs (200 for HumanoidMaze-Large) with early stopping on a held-out 20% validation split. The early stopping patience is 15 for all tasks except HumanoidMaze-Medium, which uses a patience of 30 . Training uses large batches of 2048 to reduce variance in the gradient estimates. BC is the only algorithm that does not interact with the environment during training; it learns entirely from the static expert dataset. 
+
+## F Additional Results 
+
+F.1 Raw Evaluation Data 
+
+Table 5: Evaluation results on confounded tasks without normalization. Best non-expert result per task in bold .Ant-Med Ant-Large Hum-Med Hum-Large                                                                                     
+
+> Algorithm E[Y]SR (%) E[Y]SR (%) E[Y]SR (%) E[Y]SR (%) Expert −104 .0±87 .587 .6±1.0−255 .2±122 .855 .9±1.6−522 .9±218 .433 .8±1.5−840 .6±212 .97.0±0.8
+> C-BC −125 .2±100 .977 .9±1.3−284 .9±121 .639 .8±1.5−655 .7±172 .710 .4±1.0−858 .6±227 .98.0±2.7
+> C-GAIL −135 .8±113 .674 .1±1.4−328 .5±122 .67.3±0.8−747 .2±161 .90.0±0.0−976 .3±210 .20.0±0.0
+> C-SQIL −99 .6±85 .790 .7±0.9−279 .9±125 .945 .0±1.6−555 .5±217 .224 .7±1.4−837 .7±226 .08.0±2.7
+> C-IQL −118 .2±101 .384 .3±1.15 −258 .6±127 .958 .9±1.6−588 .8±203 .819 .1±1.2−887 .1±220 .53.0±1.7
+> BC −375 .3±119 .20.0±0.0−470 .2±150 .20.0±0.0−678 .4±169 .15.4±0.7−884 .1±204 .65.0±2.2
+> GAIL −364 .9±112 .20.0±0.0−398 .4±132 .90.0±0.0−747 .7±162 .50.0±0.0−977 .0±208 .90.0±0.0
+> SQIL −370 .7±119 .10.0±0.0−484 .2±151 .50.0±0.0−706 .2±157 .00.1±0.1−896 .3±194 .90.0±0.0
+> IQL −372 .5±120 .80.0±0.0−468 .1±153 .50.0±0.0−697 .6±169 .72.4±0.5−906 .2±193 .30.0±0.0
+
+Remark on expert success rates. We note that the raw expert success rates in Table 5 are sub-stantially lower than those typically reported in standard MuJoCo benchmarks. This is by design: our confounded environments are partially observable even to the expert, as the exogenous distur-bances U (represented by bidirected arrows in the causal diagrams) are unobserved by all agents, including the expert. The unpredictable external forces generated by U make consistent task com-pletion inherently difficult regardless of the agent’s sensory access or learning algorithm. In this sense, the environments are designed to reflect realistic deployment conditions in which no agent has full knowledge of the environment dynamics, rather than the fully observed settings common in standard benchmarks. Nevertheless, the expert has strictly more information than the imitator (observing VO ∪ VL rather than VO alone) and serves as a meaningful upper bound on what can be achieved given the imitator’s observation set. The normalized metrics in Table 1 should therefore be interpreted relative to this upper bound: an algorithm recovering, say, 80% of the expert’s success rate is operating near the frontier of what is achievable given the imitator’s partial observability, not at 80% of a trivially solvable task. Cases in which a causal method exceeds 100% normalized per-formance (e.g., Causal SQIL on AntMaze-Medium, Causal IQ-Learn on AntMaze-Large) indicate that the imitator’s learned policy is slightly more robust to the stochastic disturbances than the expert policy obtained via offline-to-online RL, likely because the off-policy Q-learning objective implic-itly averages over the disturbance distribution encountered during training rather than committing to the point estimates used during expert fine-tuning. 
+
+F.2 Episode Lengths 
+
+We report the mean episode length for successfully solved episodes in Table 6. Shorter episodes indicate more efficient navigation. Only algorithms with nonzero success rates are included. Scalable Causal Imitation Learning Table 6: Mean episode length (steps) for successfully solved episodes ( ± std). Only algorithms with nonzero success rates are shown. Best result per task in bold .
+
+Algorithm AntMaze-Med AntMaze-Large HumanoidMaze-Med HumanoidMaze-Large 
+
+Expert 301 ±57 648 ±99 976 ±410 1463 ±366 
+
+C-BC 318 ±79 683 ±116 1356 ±344 1477 ±421 
+
+C-GAIL 309 ±75 709 ±134 — —C-SQIL 299 ±62 695 ±119 912 ±425 1251 ±316 
+
+C-IQL 321 ±90 636 ±108 1024 ±443 1848 ±84 
+
+BC — — 1364 ±320 1663 ±237 
+
+GAIL — — — —SQIL — — 1800 ±0 —IQL — — 1085 ±396 —
+
+F.3 Wall-Clock Runtime of Full vs. Windowed Adjustment 
+
+To empirically motivate the windowed approximation of Algorithm 1, we measure the wall-clock time required to compute the per-timestep adjustment sets Zkt under different horizons up to 
+
+H = 2000 . Runtime for H = 1000 , 2000 reflects full sequential π-backdoor computation for envi-ronments such as AntMaze and HumanoidMaze, while the runtime for smaller H (i.e. H = 2 , 10 )is equivalent to that of Algorithm 1 which uses k = 2 , 10 respectively in our experiments due to windowed adjustment. 1
+
+> 10
+> 50
+> 100
+> 200
+> 500
+> 1000
+> 2000
+
+Horizon H
+
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> Time (s)
+
+Runtime of Sequential -Backdoor Adjustment 
+
+Figure 11: Runtime to compute adjustment sets as a function of horizon H (log–log scale). Al-gorithm 1 ( H = 2 for HumanoidMaze, H = 10 for AntMaze; Appendix E) completes in a few seconds, while full-horizon adjustment ( H = 1000 , 2000 ) takes over four hours. The runtime is roughly constant for small H but grows super-linearly once H exceeds a few hundred, increasing from 7.1s at H = 1 to 14 ,854 s ( 4.1 hours) at H = 2000 . By restricting the sequential 
+
+π-backdoor computation to a fixed-size window (Theorem 1), Algorithm 1 reduces this cost to O(k)
+
+independent of H, making causal adjustment tractable for the long-horizon tasks in this work. 
+
+F.4 Ablations over Horizon Length and Confounding Strength 
+
+The main experiments (Table 1) fix the episode horizon at the default ( H = 1000 for AntMaze, 
+
+H = 2000 for HumanoidMaze) and the confounding strength at 100% . To test the effect of these settings in higher granularity, we sweep the horizon H ∈ { 500 , 1000 , 1500 } (Table 7) and the confounding strength ∈ { 15% , 50% , 85% } (Table 8) on both AntMaze tasks (in which confounding Reinforcement Learning Journal 2026 strength is represented by heading compass diversion from the true heading) for all eight algorithms; due to limited computational resources, the HumanoidMaze tasks are excluded from these ablations. Both sweeps utilize the same expert as the main experiments, though for H ∈ { 500 , 1500 } expert demonstrations are generated with the appropriate horizon. Note that at 0% confounding strength the compass is an uncorrupted (if noisy) heading sensor, so a non-causal imitator would incur no confounding bias and could even benefit from the additional signal, as seen in the 15% -confounded columns. The H = 1000 and 100% -confounded columns reproduce the results reported in Ta-ble 1 and are listed for reference. E[Y ] is normalized in the same manner as in Table 1. Because the reward penalizes every step taken before reaching the goal, it reflects solving speed; thus, an episode solved in a given number of steps yields a larger normalized value under a longer horizon (failed episodes accrue penalties for all H steps), while the anchor changes with the strength setting per configuration. Normalized E[Y ] therefore compares algorithms within a configuration and is generally not comparable across horizons or across strengths. 
+
+H = 500 H = 1000 H = 1500 
+
+Algorithm E[Y ] SR (%) E[Y ] SR (%) E[Y ] SR (%) C-BC 90 .4±62 .4 78 .2±1.3 250 .1±100 .9 77 .9±1.3 406 .5±153 .1 81 .3±1.2
+
+C-GAIL 76 .5±68 .9 64 .5±1.4 239 .5±113 .6 74 .1±1.4 400 .1±159 .4 80 .2±1.3
+
+C-SQIL 98 .3±59 .3 87 .5±1.0 275 .8±85 .7 90 .7±0.9 431 .0±135 .8 87 .0±1.1
+
+C-IQL 99 .1±59 .0 86 .3±1.1 257 .1±101 .3 84 .3±1.1 431 .7±134 .0 87 .2±1.1
+
+BC 17 .1±77 .7 0.0±0.0 0.0±119 .2 0.0±0.0 82 .3±132 .8 0.5±0.1
+
+GAIL 17 .1±77 .3 0.0±0.0 10 .4±112 .2 0.0±0.0 199 .0±170 .4 26 .5±1.0
+
+SQIL 6.0±81 .9 0.0±0.0 4.7±119 .1 0.0±0.0 2.3±144 .4 0.0±0.0
+
+IQL 0.0±84 .3 0.0±0.0 2.8±120 .8 0.0±0.0 0.0±145 .2 0.0±0.0
+
+(a) AntMaze-Medium 
+
+H = 500 H = 1000 H = 1500 
+
+Algorithm E[Y ] SR (%) E[Y ] SR (%) E[Y ] SR (%) C-BC 61 .2±83 .9 0.7±0.3 199 .3±121 .6 39 .8±1.5 271 .6±179 .6 25 .3±1.4
+
+C-GAIL 49 .1±89 .4 0.0±0.0 155 .6±122 .6 7.3±0.8 257 .8±167 .3 16 .2±0.9
+
+C-SQIL 63 .3±84 .2 0.4±0.1 204 .3±125 .9 45 .0±1.6 330 .4±194 .4 46 .7±1.6
+
+C-IQL 65 .4±82 .6 0.1±0.1 225 .6±127 .9 58 .9±1.6 322 .1±181 .6 32 .4±1.4
+
+BC 5.6±105 .9 0.0±0.0 14 .0±150 .2 0.0±0.0 8.0±184 .6 0.0±0.0
+
+GAIL 15 .4±102 .1 0.0±0.0 85 .8±132 .9 0.0±0.0 58 .2±174 .0 0.0±0.0
+
+SQIL 1.3±107 .5 0.0±0.0 0.0±151 .5 0.0±0.0 1.1±186 .3 0.0±0.0
+
+IQL 0.0±108 .1 0.0±0.0 16 .1±153 .5 0.0±0.0 0.0±186 .6 0.0±0.0
+
+(b) AntMaze-Large 
+
+Table 7: Ablation over horizon length H ∈ { 500 , 1000 , 1500 } on Confounded AntMaze, at the default 100% confounding strength. Best result per column in bold . Normalized E[Y ] is not com-parable across horizons (see text). The prevalence of scalable causal algorithms over non-causal and less scalable algorithms is stable across horizons. On AntMaze-Medium, every causal method attains 64 –91% success at all three horizons while every non-causal method remains near 0% , with a single exception discussed below, and on AntMaze-Large the same ordering holds at every H under normalized E[Y ]. At H = 500 
+
+on AntMaze-Large, success rates saturate near zero for all methods including the causal ones; this is likely due to successful expert traversals requiring 648 ±99 steps (Table 6). Normalized E[Y ] is more informative in this case, with causal imitators’ higher values indicating that they progress further to-ward the goal than non-causal imitators even under an infeasible time budget. The clearest departure from the overall pattern is non-causal GAIL at H = 1500 on Medium ( 26 .5% ). Two factors plau-sibly contribute. First, GAIL’s training budget is specified in rounds and episodes (Appendix E), so Scalable Causal Imitation Learning its total environment interaction scales linearly with H and is largest in this configuration, whereas SQIL and IQ-Learn are capped at 2 × 10 6 steps throughout. Second, GAIL is the only on-policy algorithm among the non-causal baselines, and on-policy divergence minimization has been shown to partially recover from errors induced by unobserved contexts where off-policy conditional fitting latches onto them (Swamy et al., 2022a). Even so, this partial recovery remains far below every causal method at the same horizon ( 80 .2–87 .2% ). 
+
+15% 50% 85% 100% 
+
+Algorithm E[Y ] SR (%) E[Y ] SR (%) E[Y ] SR (%) E[Y ] SR (%) C-BC 59 .1±99 .5 80 .6±1.2 246 .8±98 .8 81 .1±1.2 248 .5±99 .3 81 .6±1.2 250 .1±100 .9 77 .9±1.3
+
+C-GAIL 45 .5±115 .2 76 .6±1.3 254 .2±102 .4 83 .4±1.2 240 .0±110 .0 79 .5±1.3 239 .5±113 .6 74 .1±1.4
+
+C-SQIL 73 .2±97 .9 86 .5±1.1 267 .2±90 .1 87 .8±1.0 256 .3±99 .4 82 .6±1.2 275 .8±85 .7 90 .7±0.9
+
+C-IQL 67 .5±102 .3 82 .5±1.2 256 .1±102 .2 83 .4±1.2 257 .8±97 .8 84 .6±1.1 257 .1±101 .3 84 .3±1.1
+
+BC 0.0±108 .9 47 .7±1.4 136 .5±113 .7 30 .6±1.4 29 .9±110 .5 0.0±0.0 0.0±119 .2 0.0±0.0
+
+GAIL 61 .1±104 .3 80 .5±1.2 152 .9±128 .5 40 .0±1.5 150 .3±130 .9 38 .4±1.4 10 .4±112 .2 0.0±0.0
+
+SQIL 62 .6±102 .8 80 .2±1.3 0.0±118 .3 0.0±0.0 0.0±118 .8 0.0±0.0 4.7±119 .1 0.0±0.0
+
+IQL 64 .8±99 .1 80 .7±1.2 1.0±118 .2 0.0±0.0 1.8±118 .1 0.0±0.0 2.8±120 .8 0.0±0.0
+
+(a) AntMaze-Medium 
+
+15% 50% 85% 100% 
+
+Algorithm E[Y ] SR (%) E[Y ] SR (%) E[Y ] SR (%) E[Y ] SR (%) C-BC 43 .7±128 .9 41 .5±1.5 189 .1±127 .3 39 .9±1.5 191 .2±128 .5 40 .6±1.5 199 .3±121 .6 39 .8±1.5
+
+C-GAIL 2.9±129 .6 15 .5±0.8 154 .2±138 .8 25 .9±1.2 142 .5±129 .3 10 .1±0.9 155 .6±122 .6 7.3±0.8
+
+C-SQIL 57 .3±131 .0 51 .8±1.6 207 .8±136 .1 54 .6±1.6 201 .7±127 .8 49 .0±1.6 204 .3±125 .9 45 .0±1.6
+
+C-IQL 52 .0±131 .0 46 .8±1.6 212 .3±131 .7 52 .7±1.5 204 .1±129 .8 51 .4±1.6 225 .6±127 .9 58 .9±1.6
+
+BC 13 .1±122 .9 18 .4±1.2 79 .0±134 .3 0.0±0.0 14 .9±148 .2 0.0±0.0 14 .0±150 .2 0.0±0.0
+
+GAIL 0.0±127 .6 11 .9±1.0 120 .0±124 .0 6.5±0.4 12 .5±148 .2 0.0±0.0 85 .8±132 .9 0.0±0.0
+
+SQIL 23 .7±121 .3 14 .9±1.0 1.7±151 .1 0.0±0.0 0.0±152 .1 0.0±0.0 0.0±151 .5 0.0±0.0
+
+IQL 25 .0±121 .3 21 .2±1.0 0.0±151 .8 0.0±0.0 0.0±151 .9 0.0±0.0 16 .1±153 .5 0.0±0.0
+
+(b) AntMaze-Large 
+
+Table 8: Ablation over confounding strength ∈ { 15% , 50% , 85% , 100% } on Confounded AntMaze, at the default horizon H = 1000 . Best result per column in bold . Normalized E[Y ] is not compara-ble across strengths (see text). The confounding-strength sweep isolates the mechanism behind the causal methods’ advantage. Be-cause causal variants exclude the compass W from their adjustment sets, and the strength parameter scales only the compass corruption, the learning problem faced by a causal imitator is identical at every strength; the causal rows (e.g., Causal IQ-Learn on Large: 46 .8–58 .9% ) therefore provide a scale against which the behavior of non-causal methods can be assessed (e.g. the higher variation of Causal GAIL on Large, 7.3–25 .9% , is consistent with its training instability at scale discussed in Section 3). Their smaller normalized E[Y ] values in the 15% rows reflect the improved worst-performing anchor at low strength rather than any degradation of the causal methods, whose success rates remain consistent. Non-causal methods, conversely, degrade monotonically as strength in-creases, and they collapse in a consistent order: SQIL and IQ-Learn reach 0% success by 50% 
+
+strength on both tasks, BC follows ( 0% by 85% on Medium and by 50% on Large), and GAIL persists longest ( 38 .4% at 85% strength on Medium; 6.5% at 50% on Large). This phenomenon implies how directly each objective commits to the confounded conditional: BC fits P (xt | vOt )
+
+pointwise; SQIL and IQ-Learn additionally propagate it through bootstrapped value targets across the horizon, amplifying the corrupted association; and GAIL, the only on-policy method, matches occupancy measures under its own rollouts rather than fitting the conditional directly, consistent with the greater robustness of on-policy divergence minimization to unobserved contexts (Swamy et al., 2022a), although GAIL’s larger interaction budget (Appendix E) cannot be fully separated from this effect. At the lowest strength, conditioning on W becomes nearly costless and sometimes net-beneficial: 
+
+15% confounding leaves the compass a mostly faithful heading sensor even after the runtime shift, Reinforcement Learning Journal 2026 and non-causal GAIL ( 80 .5% ) exceeds Causal GAIL ( 76 .6% ) on Medium while non-causal SQIL and IQ-Learn recover to within a few points of their causal counterparts ( 80 .2 against 86 .5% and 
+
+80 .7 against 82 .5% ). This substantiates the observation of Figure 4 that the spurious proxy carries genuine predictive signal, and is consistent with the discussion in Appendix A: the bias resides in the conditional over the imitator’s observations, and its cost is governed by how far that conditional moves at runtime. Excluding W sacrifices this signal for invariance, a trade that is repaid as strength grows. The favorable regime for non-causal methods does not extend to the harder task, however: on Large at 15% , Causal SQIL ( 51 .8% ) still more than doubles the best non-causal result ( 21 .2% ), as even mild per-step miscalibration compounds over the longer traversal. Relatedly, non-causal BC is anomalously weak at 15% on Medium ( 47 .7% against roughly 80% for the other non-causal methods): BC is the only algorithm that never interacts with the environment during training (Ap-pendix E) and thus has no mechanism to recover once the mildly miscalibrated compass drifts it off the demonstration support, an interaction between confounding bias and compounding error, the two causes of distribution shift discussed in Appendix A. Finally, the low-strength rows provide further evidence for non-causal methods’ comparatively better HumanoidMaze results being an effect of weaker confounding influence. 
+
+## G Limitations 
+
+Known causal graph. Our framework assumes that the causal diagram G is specified a priori . In practice, the graph must be elicited from domain expertise or estimated from data. Misspecification of G, such as missing an edge from a confounder to the action, can lead to invalid adjustment sets and biased policies. Integrating causal discovery from observational data, either as a preprocessing step or jointly with policy learning, remains an important open problem. 
+
+Bounded temporal influence of confounders. The windowed approximation in Algorithm 1 as-sumes that the influence of any single confounder realization decays within k timesteps. This is justified by the MuJoCo physics of the environments we consider, but environments with long-range latent dependencies (e.g. persistent hidden goals, slowly drifting dynamics, or latent agent intentions in multi-agent settings) would violate this assumption. In such cases, alternative approx-imation strategies (e.g., hierarchical windows or attention-based aggregation over history) or exact methods on compressed representations would be required. 
+
+No exploitation of reward structure. Our algorithms treat the reward as entirely latent and make no parametric assumptions about its form. Prior work on partial identification for CIL (Ruan et al., 2024) has shown that incorporating reward priors can tighten bounds on the imitating policy and even enable the imitator to surpass expert performance. Combining Causal IQ-Learn with such reward priors is a natural extension that we leave to future work. 
+
+Sensitivity to expert optimality. While Causal SQIL and Causal IQ-Learn successfully address the compounding error and credit assignment issues seen in Causal BC and Causal GAIL, they are more sensitive than BC to the quality and optimality of expert demonstrations. Because these off-policy algorithms utilize demonstrations to ground an implicit reward signal or a value func-tion via soft Q-learning objectives, they are more susceptible to noise in high-dimensional state-action spaces where the expert signal may be weak. This dependency is clearly demonstrated in the HumanoidMaze-Large task (Table 1), where the expert itself is sub-optimal, achieving a success rate of only 7.0% . While Causal BC maintains a success rate of 8.0% , Causal IQ-Learn collapses to 3.0% and Causal SQIL matches at 8.0% despite both algorithms outperforming BC in other tasks where the expert is more consistent. These results suggest that when the expert is sub-optimal, the off-policy grounding of value functions is more easily corrupted than the supervised cloning objec-tive, indicating that the scalability benefits of our proposed methods are most reliably realized when provided with a high-quality expert signal.
