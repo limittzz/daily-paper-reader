@@ -1,0 +1,224 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-22T21:23:17.481997+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 4,
+    "quick_skim_target": 11,
+    "quick_selected": 4
+  },
+  "deep_dive": [
+    {
+      "id": "2607.14852v2",
+      "source": "arxiv",
+      "title": "Towards Human-like Physical Intelligence: Lifelong Vision-Language-Action Learning for Robotic Manipulation",
+      "abstract": "Similar to the natural capabilities of humans to sequentially learn new tasks, robots with Vision-Language-Action (VLA) models should possess lifelong learning ability to learn a new task when deployed in open-world environments. However, most recently proposed lifelong learning models aim to effectively learn the current task (plasticity) or maintain high accuracy on previous tasks (stability), while the plasticity-stability trade-off remains largely unsolved in robotic manipulation models. To address this fundamental challenge, we propose a cache-efficient lifelong Vision-Language-Action learning framework for robotic manipulation (i.e., LifelongVLA), which alleviates the plasticity-stability trade-off with a dual-timescale adaptation mechanism while achieving low-cost robotic deployment with a cache-efficient replay strategy. More concretely, we propose a dual-timescale LoRA gating module to decompose VLA adaptation into two lightweight pathways: a short-term adapter for plasticity and a long-term adapter for stable consolidation. These pathways are integrated via a task-aware gate, enabling explicit control of the plasticity-stability trade-off. In the skill replay phase, a cache-efficient stochastic replay strategy is proposed to preserve more balanced retention signals without full-trajectory storage. Finally, experiments show that LifelongVLA outperforms existing baselines, demonstrating efficient skill expansion, robust retention of learned manipulation behaviors, and reduced reliance on retraining for real-world deployment on an xArm robot.",
+      "authors": [
+        "Yao He",
+        "Gan Sun",
+        "Wenqi Liang",
+        "Fazeng Li",
+        "Yang Cong"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-16T11:22:06+00:00",
+      "link": "https://arxiv.org/pdf/2607.14852v2",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "lifelong VLA learning for robotic manipulation, related to imitation learning advances",
+      "llm_evidence_cn": "机器人操作的终身VLA学习，与模仿学习进展相关",
+      "llm_evidence": "机器人操作的终身VLA学习，与模仿学习进展相关",
+      "canonical_evidence": "机器人操作的终身VLA学习，与模仿学习进展相关",
+      "llm_tldr_en": "Proposes LifelongVLA, a cache-efficient lifelong learning framework for Vision-Language-Action models in robotic manipulation, addressing the plasticity-stability trade-off.",
+      "llm_tldr_cn": "该论文针对机器人操作中视觉-语言-动作模型的可塑性与稳定性权衡问题，提出LifelongVLA框架，通过缓存高效的终身学习策略，使机器人能在开放世界中顺序学习新任务，同时保持旧任务性能。实验证明该方法能有效缓解遗忘问题，为机器人终身操作学习提供了实用解决方案。",
+      "llm_tldr": "该论文针对机器人操作中视觉-语言-动作模型的可塑性与稳定性权衡问题，提出LifelongVLA框架，通过缓存高效的终身学习策略，使机器人能在开放世界中顺序学习新任务，同时保持旧任务性能。实验证明该方法能有效缓解遗忘问题，为机器人终身操作学习提供了实用解决方案。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.18016v1",
+      "source": "arxiv",
+      "title": "Closing the Loop in Humanoid VLA: Persistent 3D Object Tokens for Verifiable Loco-Manipulation",
+      "abstract": "Vision-language-action policies are a promising foundation for general robot control, but long-horizon humanoid loco-manipulation requires the robot to treat task objects as persistent physical entities across movement, contact, occlusion, and recovery. We study this problem as object-state divergence: the object state used to condition a whole-body action can differ from the state used to decide whether the action achieved the intended physical relation. We propose \\emph{Persistent Object Tokenization} (POT), which maintains role-indexed 3D object records from RGB-D observations and converts them into object tokens for a whole-body action expert. Instantiated as \\emph{POT-VLA}, the same object records condition action generation and support geometric predicate checks, yielding a closed-loop execution system in which object state is both actionable and verifiable. On a Unitree G1, POT-VLA improves a matched direct GR00T-N1.7 baseline from 39/80 to 71/80 successes over eight real-world task families. In an external Being-0-aligned reference, POT-VLA achieves 44/50 successes on aligned service tasks, compared with the 37/50 success reported by the Being-0 paper. The largest gains occur on tasks requiring maintained 3D relations, suggesting that persistent object-centered state is a useful abstraction for verifiable humanoid VLA execution.",
+      "authors": [
+        "Peng Ren",
+        "Haoyang Ge",
+        "Jiang Zhao",
+        "Cong Huang",
+        "Yukun Shi",
+        "Pei Chi",
+        "Kai Chen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-20T14:52:46+00:00",
+      "link": "https://arxiv.org/pdf/2607.18016v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "VLA for humanoid loco-manipulation, related to imitation learning advances",
+      "llm_evidence_cn": "类人移动操作的VLA方法，与模仿学习进展相关",
+      "llm_evidence": "类人移动操作的VLA方法，与模仿学习进展相关",
+      "canonical_evidence": "类人移动操作的VLA方法，与模仿学习进展相关",
+      "llm_tldr_en": "Proposes Persistent Object Tokenization for VLA in humanoid robots to maintain object persistence across contacts and occlusions.",
+      "llm_tldr_cn": "该论文针对类人机器人长时域移动操作中对象状态发散的问题，提出持续对象令牌化方法。通过维护角色索引的3D对象记录并转换为令牌，基于同一对象记录调节动作生成，确保对象物理一致性。该方法与VLA策略结合形成POT-VLA，在复杂场景下提升了动作生成的可验证性和鲁棒性。实验证明了其在类人机器人操作中的有效性。",
+      "llm_tldr": "该论文针对类人机器人长时域移动操作中对象状态发散的问题，提出持续对象令牌化方法。通过维护角色索引的3D对象记录并转换为令牌，基于同一对象记录调节动作生成，确保对象物理一致性。该方法与VLA策略结合形成POT-VLA，在复杂场景下提升了动作生成的可验证性和鲁棒性。实验证明了其在类人机器人操作中的有效性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.12931v1",
+      "source": "arxiv",
+      "title": "ExToken: Structured Exploration for Efficient Vision-Language-Action Reinforcement Fine-tuning",
+      "abstract": "Reinforcement Learning (RL) has demonstrated significant potential for improving Vision-Language-Action (VLA) models on complex manipulation tasks. However, its practical scalability remains severely limited by the substantial cost of environmental interactions. In this work, we first investigate the exploration stagnation bottleneck in current VLA-RL frameworks and reveal that trajectory diversity is fundamentally more important to sample efficiency than the sheer quantity of collected rollouts. Motivated by these insights, we introduce RL Exploration Token (ExToken), a simple yet general framework that condition VLA policies on discrete behavioral priors derived from offline demonstrations for structured exploration. By conditioning the policy on different tokens during rollout collection, ExToken encourages the agent to explore diverse behavioral modes, substantially improving state-action coverage and exploration efficiency. To bridge exploration during training with deterministic inference at deployment, ExToken further incorporates a state-conditioned token selector that adaptively predicts effective behavioral modes for unseen scenarios. Extensive experiments across simulated and real-world robotic manipulation tasks demonstrate that ExToken consistently accelerates convergence, improves task performance, and exhibits strong robustness under highly constrained interaction budgets.",
+      "authors": [
+        "Yilun Kong",
+        "Yunpeng Qing",
+        "Guozheng Ma",
+        "Haoyu Wang",
+        "Li Shen",
+        "Zhi Hou",
+        "Dacheng Tao"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-14T16:04:41+00:00",
+      "link": "https://arxiv.org/pdf/2607.12931v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Structured exploration using offline demonstrations for VLA reinforcement fine-tuning",
+      "llm_evidence_cn": "利用离线示范进行VLA强化微调的结构化探索",
+      "llm_evidence": "利用离线示范进行VLA强化微调的结构化探索",
+      "canonical_evidence": "利用离线示范进行VLA强化微调的结构化探索",
+      "llm_tldr_en": "Introduces ExToken, a framework that conditions VLA policies on discrete behavioral priors from demonstrations to enable structured exploration, improving RL sample efficiency.",
+      "llm_tldr_cn": "该工作针对VLA模型强化微调中探索效率低的问题，提出ExToken框架，通过将策略条件化为从离线示范中提取的离散行为先验，引导结构化探索。实验表明，该方法显著提升了样本效率，使VLA模型在复杂操作任务中更快收敛。",
+      "llm_tldr": "该工作针对VLA模型强化微调中探索效率低的问题，提出ExToken框架，通过将策略条件化为从离线示范中提取的离散行为先验，引导结构化探索。实验表明，该方法显著提升了样本效率，使VLA模型在复杂操作任务中更快收敛。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.18200v1",
+      "source": "arxiv",
+      "title": "Learning Adaptive Safety Margins for Visual Navigation",
+      "abstract": "Robots in cluttered indoor spaces often fail not because they cannot generate collision-free paths, but because a fixed safety margin is mis-calibrated: conservative margins cause detours and timeouts, while permissive margins lead to near-boundary shortcuts under perception bias. Diffusion-based planners propose diverse trajectory candidates from egocentric RGB-D, yet reliable selection remains the bottleneck. We propose a context-conditioned safety critic that learns an adaptive clearance preference for ranking diffusion proposals, decomposed into three complementary terms: (i) a safety term with a clearance-budget penalty and a control-barrier-function residual for waypoint- and transition-wise safety, (ii) an efficiency term combining a smoothness penalty with a safety-gated detour-ratio penalty that avoids detours without incentivizing risky shortcuts, and (iii) a distance-constraint matching term that anchors the learned budget to realized ESDF clearances to prevent margin collapse. We train the critic with privileged ESDF geometry in simulation and distill it into a perception-only selector via a two-stage teacher-student procedure. On PointGoal navigation in HM3D and MP3D, including cross-dataset transfer, our method achieves the highest success rate (SR) and success weighted by path length (SPL) among strong diffusion, optimization, and RL baselines. Trained purely in simulation, it transfers to a Unitree G1 humanoid and navigates cluttered indoor scenes without task-specific tuning.",
+      "authors": [
+        "Junyi Hu",
+        "Shuaihang Yuan",
+        "Geeta Chandra Raju Bethala",
+        "Anthony Tzes",
+        "Yi Fang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-20T17:40:25+00:00",
+      "link": "https://arxiv.org/pdf/2607.18200v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Diffusion-based planners for visual navigation, adaptive safety margin learning relevant to robot learning from demonstration",
+      "llm_evidence_cn": "扩散规划器用于视觉导航，自适应安全边际学习与机器人从演示学习相关",
+      "llm_evidence": "扩散规划器用于视觉导航，自适应安全边际学习与机器人从演示学习相关",
+      "canonical_evidence": "扩散规划器用于视觉导航，自适应安全边际学习与机器人从演示学习相关",
+      "llm_tldr_en": "Proposes a context-conditioned safety critic for ranking diffusion-based trajectory proposals, enabling adaptive safety margins for visual navigation in cluttered spaces.",
+      "llm_tldr_cn": "该论文针对视觉导航中固定安全边际导致失败的问题，提出上下文条件安全评判器，为扩散规划器生成的轨迹候选排序，通过学习自适应近距偏好，在杂乱室内环境中实现更安全高效的导航。",
+      "llm_tldr": "该论文针对视觉导航中固定安全边际导致失败的问题，提出上下文条件安全评判器，为扩散规划器生成的轨迹候选排序，通过学习自适应近距偏好，在杂乱室内环境中实现更安全高效的导航。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "How is diffusion policy applied to robot learning from demonstration?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.19343v1",
+      "source": "arxiv",
+      "title": "Masked Visual Actions for Unified World Modeling",
+      "abstract": "Video models absorb rich priors over how the visual world moves, interacts, and responds to contact, making them promising substrates for robotic world modeling. The central challenge is how to communicate action to such models in a form aligned with the visual space in which they learned these interaction priors, yet still grounded in physical manipulation. We introduce Masked Visual Actions, a pixel-space control interface that expresses action as a partially revealed trajectory of an arbitrary entity in a video. Revealing robot motion makes the model act as a forward dynamics model that predicts the scene's response to low-level robot actions, while revealing desired object motion makes the same model recover robot behavior consistent with that outcome. Finetuned with only 15 hours of masked examples from real videos and simulation, a single checkpoint achieves strong visual fidelity and controllability across diverse scenes and multiple embodiments. In downstream manipulation settings, the model produces imagined rollouts whose outcomes correlate with real-world execution for policy evaluation, improves decision making by ranking candidate futures in model-based planning, and supports inverse modeling by synthesizing robot motion from desired object motion.",
+      "authors": [
+        "Hadi Alzayer",
+        "Wenlong Huang",
+        "Haonan Chen",
+        "Christopher Luey",
+        "Lvmin Zhang",
+        "Maneesh Agrawala",
+        "Gordon Wetzstein",
+        "Li Fei-Fei",
+        "Yilun Du",
+        "Jiajun Wu",
+        "Jia-Bin Huang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-07-21T17:59:11+00:00",
+      "link": "https://arxiv.org/pdf/2607.19343v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "uses masked visual actions for robotic world modeling, relevant to imitation learning",
+      "llm_evidence_cn": "使用掩码视觉动作进行机器人世界建模，与模仿学习相关",
+      "llm_evidence": "使用掩码视觉动作进行机器人世界建模，与模仿学习相关",
+      "canonical_evidence": "使用掩码视觉动作进行机器人世界建模，与模仿学习相关",
+      "llm_tldr_en": "Introduces Masked Visual Actions, a pixel-space interface for robotic world modeling that enables forward dynamics and behavior cloning.",
+      "llm_tldr_cn": "本文提出掩码视觉动作（Masked Visual Actions），一种像素空间控制接口，用于机器人世界建模。通过揭示机器人运动或目标物体运动，模型可执行前向动力学预测或恢复机器人行为。在微调后，该方法在机器人操作任务上展现出有效的行为克隆能力，为从视频中学习动作提供了新范式。",
+      "llm_tldr": "本文提出掩码视觉动作（Masked Visual Actions），一种像素空间控制接口，用于机器人世界建模。通过揭示机器人运动或目标物体运动，模型可执行前向动力学预测或恢复机器人行为。在微调后，该方法在机器人操作任务上展现出有效的行为克隆能力，为从视频中学习动作提供了新范式。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

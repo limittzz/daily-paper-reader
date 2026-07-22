@@ -6,46 +6,35 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-21
-- 运行时间：2026-07-21 21:14:20 UTC
+- 最新运行日期：2026-07-22
+- 运行时间：2026-07-22 21:25:45 UTC
 - 运行状态：成功
-- 本次总论文数：8
-- 精读区：6
-- 速读区：2
+- 本次总论文数：5
+- 精读区：1
+- 速读区：4
 
 ### 今日简报（AI）
-今日精读6篇速读2篇，重点关注可扩展因果模仿学习与用户示教轨迹阻抗学习。
-满分论文《Scalable Causal Imitation Learning》提出因果推断新框架，另一篇高分论文《User-Driven Learning from Demonstration》聚焦轨迹与阻抗协同学习。
-建议优先精读满分论文，深入理解因果性如何突破传统模仿学习瓶颈。
-- 详情：[/202607/21/README](/202607/21/README)
+今日精读1篇高分论文《Towards Human-like Physical Intelligence》，聚焦机器人终身VLA学习，另有4篇速读覆盖人形机器人闭环验证与探索效率。最值得关注的是VLA在机器人操作中的物理智能与终身学习方向，以及人形机器人的持久3D物体令牌闭环方法。建议优先精读这篇8分论文，再速读人形机器人闭环验证与视觉导航安全边际相关内容。
+- 详情：[/202607/22/README](/202607/22/README)
 
 ### 精读区论文标签
-1. [Scalable Causal Imitation Learning](/202607/21/2607.17003v1-scalable-causal-imitation-learning)  
-   标签：评分：10.0/10、query:imitation
-   evidence：面向高维连续控制的可扩展因果模仿学习
-2. [User-Driven Learning from Demonstration: A Trajectory and Impedance Learning Method](/202607/21/2607.16998v1-user-driven-learning-from-demonstration-a-trajectory-and-impedance-learning-method)  
-   标签：评分：9.0/10、query:imitation
-   evidence：用户驱动的示教学习，包含轨迹和阻抗学习
-3. [Asynchronous Multimodal Diffusion Policy Composition via Latency-Aware Guidance Fusion](/202607/21/2607.17257v1-asynchronous-multimodal-diffusion-policy-composition-via-latency-aware-guidance-fusion)  
-   标签：评分：9.0/10、query:imitation
-   evidence：扩散策略组合，使用延迟感知融合处理异步模态
-4. [Imitation of Arm Gestures by the Semi-Humanoid Robot NICO](/202607/21/2607.18197v1-imitation-of-arm-gestures-by-the-semi-humanoid-robot-nico)  
-   标签：评分：9.0/10、query:imitation
-   evidence：半人形机器人直接模仿手臂手势
-5. [Depth-Regularized JEPA World Models Learn More Transferable Representations from Real Outdoor Robot Data](/202607/21/2607.16314v1-depth-regularized-jepa-world-models-learn-more-transferable-representations-from-real-outdoor-robot-data)  
+1. [Towards Human-like Physical Intelligence: Lifelong Vision-Language-Action Learning for Robotic Manipulation](/202607/22/2607.14852v2-towards-human-like-physical-intelligence-lifelong-vision-language-action-learning-for-robotic-manipulation)  
    标签：评分：8.0/10、query:imitation
-   evidence：基于JEPA的世界模型，使用深度正则化进行机器人表示学习
-6. [Generalize and Guide: Decomposing Rewards for Few-Shot Inverse Reinforcement Learning](/202607/21/2607.17760v1-generalize-and-guide-decomposing-rewards-for-few-shot-inverse-reinforcement-learning)  
-   标签：评分：8.0/10、query:imitation
-   evidence：从演示中少样本逆强化学习，是一种模仿学习形式
+   evidence：机器人操作的终身VLA学习，与模仿学习进展相关
 
 ### 速读区论文标签
-1. [Predictive Training with Latent Imagination for Visual Quadruped Navigation](/202607/21/2607.17574v1-predictive-training-with-latent-imagination-for-visual-quadruped-navigation)  
+1. [Closing the Loop in Humanoid VLA: Persistent 3D Object Tokens for Verifiable Loco-Manipulation](/202607/22/2607.18016v1-closing-the-loop-in-humanoid-vla-persistent-3d-object-tokens-for-verifiable-loco-manipulation)  
    标签：评分：7.0/10、query:imitation
-   evidence：在LSTM-SRU导航骨干中引入JEPA风格预测器
-2. [Zero2Skill: Bootstrapping Robot Skills through Autonomous Data Collection, Training, and Deployment](/202607/21/2607.14047v2-zero2skill-bootstrapping-robot-skills-through-autonomous-data-collection-training-and-deployment)  
+   evidence：类人移动操作的VLA方法，与模仿学习进展相关
+2. [ExToken: Structured Exploration for Efficient Vision-Language-Action Reinforcement Fine-tuning](/202607/22/2607.12931v1-extoken-structured-exploration-for-efficient-vision-language-action-reinforcement-fine-tuning)  
    标签：评分：6.0/10、query:imitation
-   evidence：自主数据收集系统，为机器人技能获取提供支持，可用于模仿学习流水线
+   evidence：利用离线示范进行VLA强化微调的结构化探索
+3. [Learning Adaptive Safety Margins for Visual Navigation](/202607/22/2607.18200v1-learning-adaptive-safety-margins-for-visual-navigation)  
+   标签：评分：6.0/10、query:imitation
+   evidence：扩散规划器用于视觉导航，自适应安全边际学习与机器人从演示学习相关
+4. [Masked Visual Actions for Unified World Modeling](/202607/22/2607.19343v1-masked-visual-actions-for-unified-world-modeling)  
+   标签：评分：6.0/10、query:imitation
+   evidence：使用掩码视觉动作进行机器人世界建模，与模仿学习相关
 
 
 <div class="dpr-home-promo-card">
