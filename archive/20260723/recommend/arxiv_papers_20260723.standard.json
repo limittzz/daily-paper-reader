@@ -1,0 +1,393 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-23T20:44:30.892533+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 4,
+    "deep_cap": 6,
+    "deep_selected": 4,
+    "quick_candidates": 5,
+    "quick_skim_target": 11,
+    "quick_selected": 5
+  },
+  "deep_dive": [
+    {
+      "id": "2607.20033v1",
+      "source": "arxiv",
+      "title": "Robots Acquire Manipulation Skills in Seconds from a Single Human Video",
+      "abstract": "The ability to acquire skills rapidly and effortlessly while retaining those already mastered is essential for robots. However, current methods still rely on a cumbersome training-time loop that is costly and slow, while eroding skills already mastered. In this paper, we introduce HOST (Human-to-robot One-Shot Skill AcquisiTion), a framework that enables a robot to acquire skills in seconds from a single human video while retaining previously mastered skills. HOST resolves skill acquisition through a cascade of self-grounded prediction. It first estimates the robot's progress within the demonstrated task, then translates the upcoming progression into the robot's own future observations, and finally derives actions from these predicted observations. This cascade is trained on targets coupled to the video demonstration, obtained by mapping the robot trajectory and the video demonstration onto a shared task progress manifold, then redefining each target to align with the future progression of the video. HOST thereby enables the robot to actively follow the demonstrated procedure and adapt it to the robot's embodiment. HOST acquires novel skills at inference time from a single human video in an average of 29 seconds and achieves a 62% average success rate. It exceeds the zero-shot baseline by 45% while retaining previously mastered skills. HOST even exceeds the baseline fine-tuned on 50 robot demonstrations per task while requiring 50 times fewer demonstrations and acquiring each skill 507 times faster. Additional information about HOST is available on the project website.",
+      "authors": [
+        "Guangyan Chen",
+        "Meiling Wang",
+        "Te Cui",
+        "Zichen Zhou",
+        "Qi Shao",
+        "Shalfun Li",
+        "Hang Su",
+        "Roy Gan",
+        "Hao Wang",
+        "Mengyin Fu",
+        "Yi Yang",
+        "Yufeng Yue"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-22T11:20:05+00:00",
+      "link": "https://arxiv.org/pdf/2607.20033v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "one-shot skill acquisition from single human video",
+      "llm_evidence_cn": "从单个视频一键获取技能",
+      "llm_evidence": "从单个视频一键获取技能",
+      "canonical_evidence": "从单个视频一键获取技能",
+      "llm_tldr_en": "HOST enables robots to acquire manipulation skills in seconds from a single human video while retaining prior skills via cascaded self-grounded prediction.",
+      "llm_tldr_cn": "当前机器人技能获取需要昂贵耗时的训练循环且会遗忘已有技能。本文提出HOST框架，通过级联自基预测，首先估计任务进度，然后预测未来观察，最后推导动作，使机器人能从单个人类视频秒级学习新技能并保留旧技能。",
+      "llm_tldr": "当前机器人技能获取需要昂贵耗时的训练循环且会遗忘已有技能。本文提出HOST框架，通过级联自基预测，首先估计任务进度，然后预测未来观察，最后推导动作，使机器人能从单个人类视频秒级学习新技能并保留旧技能。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.19880v1",
+      "source": "arxiv",
+      "title": "EA-Nav: Learning Safe Visual Navigation Policies with Embodiment Awareness",
+      "abstract": "Cross-embodiment navigation is a key challenge in embodied intelligence. Due to differences in embodiment, the same visual observation may imply different actions for different agents, making prediction ambiguous when relying solely on vision. Existing studies mainly rely on reinforcement learning, which requires large-scale interaction and careful reward design, making it difficult to support scalable pretraining and real-world adaptation. In contrast, imitation-learning-based approaches remain limited. To address these challenges, we propose an imitation-learning-based embodiment-aware navigation framework with a modular multi-stage design. In pretraining, we construct a cross-embodiment navigation dataset from Internet videos and introduce embodiment geometry as conditional tokens to reduce action ambiguity under the same observation. In fine-tuning, we design a multimodal information injection mechanism based on a decoupled architecture. Specifically, we design a trajectory augmentation strategy to generate high-risk samples, which are used to train spatial perception and risk-aware correction separately, thereby explicitly incorporating embodiment geometry for safe navigation. Experimental results show that the proposed method effectively improves navigation performance across different embodiment settings, demonstrating the effectiveness of incorporating embodiment geometry into embodied navigation.",
+      "authors": [
+        "Jialu Zhang",
+        "Yong Du",
+        "Xianda Guo",
+        "Shunwang Sun",
+        "Xinqi Liu",
+        "Yue Sun",
+        "Guodong Lu",
+        "Wei Sui",
+        "Jituo Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-22T08:10:49+00:00",
+      "link": "https://arxiv.org/pdf/2607.19880v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "imitation-learning-based embodiment-aware navigation",
+      "llm_evidence_cn": "基于模仿学习的具身感知导航",
+      "llm_evidence": "基于模仿学习的具身感知导航",
+      "canonical_evidence": "基于模仿学习的具身感知导航",
+      "llm_tldr_en": "EA-Nav proposes an imitation-learning-based embodiment-aware navigation framework with modular multi-stage design, using internet videos to pretrain cross-embodiment navigation policies.",
+      "llm_tldr_cn": "跨具身导航中视觉观察对不同的机器人含义不同，现有RL方法需要大量交互。本文提出基于模仿学习的具身感知导航框架，从互联网视频构建跨具身导航数据集，通过多阶段模块化设计学习安全导航策略，仅需少量标注即可适应现实世界。",
+      "llm_tldr": "跨具身导航中视觉观察对不同的机器人含义不同，现有RL方法需要大量交互。本文提出基于模仿学习的具身感知导航框架，从互联网视频构建跨具身导航数据集，通过多阶段模块化设计学习安全导航策略，仅需少量标注即可适应现实世界。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.19919v1",
+      "source": "arxiv",
+      "title": "Diffusion ReRoll: Revisable Denoising for Robotic Sequential Prediction",
+      "abstract": "We propose Diffusion ReRoll, a diffusion-based framework for robotic sequential prediction that enables revisable denoising over horizons. Existing diffusion-based sequence predictors typically perform a single monotonic denoising process. In contrast, Diffusion ReRoll selectively re-noises regions that have become locally stable while the remaining regions continue denoising, so the re-noised regions can be refined again using context from the rest of the horizon. This structured re-noising enables iterative cross-horizon revision, allowing earlier and later segments to revise one another, while maintaining local consistency. We evaluate Diffusion ReRoll against full-sequence diffusion and causal denoising based on Diffusion Forcing across long-horizon planning, policy learning, and unified video-action modeling. On OGBench PointMaze and AntMaze, Diffusion ReRoll achieves relative gains in average success rate of 21% over Diffusion Forcing in matched guidance-based planning and 23% over Diffuser in matched goal-inpainting. In diffusion-policy-style action prediction, Diffusion ReRoll improves average success by 56.5% relative to Diffusion Policy across different prediction horizons and history lengths on the LIBERO-10 multi-task benchmark. In unified video-action prediction, Diffusion ReRoll improves policy and inverse dynamics performance, especially under out-of-distribution evaluation, and achieves the best action-video consistency. These results support structured re-noising as an effective mechanism for revisable robotic sequence generation.",
+      "authors": [
+        "Seonsoo Kim",
+        "Seongil Hong",
+        "Jun-Gill Kang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "published": "2026-07-22T08:50:40+00:00",
+      "link": "https://arxiv.org/pdf/2607.19919v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "diffusion-based framework for robotic sequential prediction with revisable denoising",
+      "llm_evidence_cn": "基于扩散的可修订去噪框架用于机器人序列预测",
+      "llm_evidence": "基于扩散的可修订去噪框架用于机器人序列预测",
+      "canonical_evidence": "基于扩散的可修订去噪框架用于机器人序列预测",
+      "llm_tldr_en": "Diffusion ReRoll introduces revisable denoising for sequential prediction, allowing selective re-noising and iterative cross-horizon revision, improving long-horizon action generation.",
+      "llm_tldr_cn": "现有扩散序列预测仅进行单调去噪，无法跨时间步修订。本文提出Diffusion ReRoll，选择性地重新加噪局部稳定区域并再次去噪，实现迭代跨视界修订，在保持局部一致性的同时优化整体预测。在长序列预测任务中优于基线方法。",
+      "llm_tldr": "现有扩散序列预测仅进行单调去噪，无法跨时间步修订。本文提出Diffusion ReRoll，选择性地重新加噪局部稳定区域并再次去噪，实现迭代跨视界修订，在保持局部一致性的同时优化整体预测。在长序列预测任务中优于基线方法。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.20293v1",
+      "source": "arxiv",
+      "title": "Evolving Cache Schedules for Fast Diffusion Policy Inference",
+      "abstract": "Diffusion policies achieve strong visuomotor control by iteratively denoising action chunks, but repeated denoising makes real-time deployment computationally demanding. Cache-based methods reduce inference cost by reusing intermediate activations, but existing training-free schedules typically allocate computation uniformly across blocks, ignoring heterogeneous redundancy across blocks and leading to a suboptimal performance-efficiency trade-off. To bridge this gap, we introduce Evolving Cache Schedules (EVO), a training-free acceleration framework that globally schedules cache refreshes via evolutionary search. EVO represents each candidate as a complete schedule over the block-timestep lattice. Thus, redundant transformer computations during iterative denoising can be skipped through cache reuse while preserving closed-loop rollout performance. To make the search practical, EVO introduces redundancy-aware initialization, which seeds the population with promising schedules, and target-conditioned early stopping, which verifies and terminates once a desired performance target is reached. The offline-optimized schedule can be directly plugged into pretrained diffusion policies without retraining. Extensive manipulation benchmarks show that EVO preserves near-full performance while substantially reducing computation, achieving up to 8.05x action-generation speedup and reducing FLOPs from 15.77G to as low as 1.96G. Source code is available at https://github.com/pillom/EVO.",
+      "authors": [
+        "Siying Wang",
+        "Kangye Ji",
+        "Di Wang",
+        "Fei Cheng"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-07-22T15:40:11+00:00",
+      "link": "https://arxiv.org/pdf/2607.20293v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "training-free acceleration for diffusion policy inference",
+      "llm_evidence_cn": "无训练加速扩散策略推理",
+      "llm_evidence": "无训练加速扩散策略推理",
+      "canonical_evidence": "无训练加速扩散策略推理",
+      "llm_tldr_en": "Proposes Evolving Cache Schedules (EVO) to accelerate diffusion policy inference by globally scheduling cache refreshes via evolutionary search.",
+      "llm_tldr_cn": "该论文针对扩散策略推理计算成本高的问题。提出进化缓存调度（EVO），一种无训练加速框架，通过进化搜索全局优化缓存刷新策略。在扩散策略的块-时间步格点上搜索最优调度，有效减少冗余计算。实验表明该方法加速推理且保持性能，直接服务于机器人控制中的扩散策略应用。",
+      "llm_tldr": "该论文针对扩散策略推理计算成本高的问题。提出进化缓存调度（EVO），一种无训练加速框架，通过进化搜索全局优化缓存刷新策略。在扩散策略的块-时间步格点上搜索最优调度，有效减少冗余计算。实验表明该方法加速推理且保持性能，直接服务于机器人控制中的扩散策略应用。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.17651v1",
+      "source": "arxiv",
+      "title": "HCPG-Flow:Hierarchical Contact-Progress Guidance for Flow-Policy Robot Manipulation",
+      "abstract": "Flow policies can represent multimodal action distributions for robot manipulation, yet a robot must execute one action at each control step. When several proposals are sampled, critic-based ranking makes data collection depend on value estimates over candidate actions that may be weakly represented in replay. We introduce HCPG-Flow, an analytic rollout-time selector that augments SAC-Flow with hierarchical, object-centric contact-progress guidance while preserving its actor and critic objectives. HCPG switches from end-effector approach to task progress after contact, scores each proposal by the first-order reduction of a task-relevant distance, standardizes scores within the candidate set, and executes a temperature-controlled action embedding. Across ten simulated tasks, HCPG improves mean success over SAC-Flow on both benchmarks, including a 9.5 percentage-point gain on Maniskill. Four physical tasks further show high success with a 17.4% reduction in successful completion steps.Project page: https://hitxraz.github.io/HCPG-Flow/",
+      "authors": [
+        "Guanghu Xie",
+        "Mingxu Li",
+        "Shuo Zhang",
+        "Yonglong Zhang",
+        "Yifan Yang",
+        "Yang Liu",
+        "Zongwu Xie",
+        "Baoshi Cao"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-20T08:04:35+00:00",
+      "link": "https://arxiv.org/pdf/2607.17651v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "flow-policy with hierarchical contact-progress guidance for robot manipulation",
+      "llm_evidence_cn": "基于流策略的机器人操控分级接触进度引导",
+      "llm_evidence": "基于流策略的机器人操控分级接触进度引导",
+      "canonical_evidence": "基于流策略的机器人操控分级接触进度引导",
+      "llm_tldr_en": "HCPG-Flow augments SAC-Flow with analytic contact-progress guidance to select better action proposals for contact-rich manipulation.",
+      "llm_tldr_cn": "流策略可以表示多模态动作分布，但选取动作时依赖价值估计容易不准确。HCPG-Flow提出分级接触进度引导，在接触前用末端执行器接近、接触后用任务进度评分，通过温度控制执行动作。该方法在保持演员-评论家目标的同时提升样本效率和成功率。实验显示在接触丰富任务中优于标准流策略。该工作为流策略在实际机器人操控中提供了实用的动作选择机制。",
+      "llm_tldr": "流策略可以表示多模态动作分布，但选取动作时依赖价值估计容易不准确。HCPG-Flow提出分级接触进度引导，在接触前用末端执行器接近、接触后用任务进度评分，通过温度控制执行动作。该方法在保持演员-评论家目标的同时提升样本效率和成功率。实验显示在接触丰富任务中优于标准流策略。该工作为流策略在实际机器人操控中提供了实用的动作选择机制。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.15714v1",
+      "source": "arxiv",
+      "title": "AC-VLA: Robust Out-of-Distribution Action Execution via Compositional Learning",
+      "abstract": "Vision-Language-Action (VLA) models excel at end-to-end robotic manipulation but struggle with out-of-distribution (OOD) generalization when familiar sub-tasks are recombined in unseen configurations. We identify two mutually reinforcing failure modes: \\emph{trajectory overfitting}, where models overfit to holistic trajectory patterns rather than compositional sub-skill semantics; and \\emph{perceptual shortcut}, where action tokens over-rely on wrist-view textures at the expense of global spatial grounding. To address both, we introduce \\textbf{AC-VLA}, a plug-and-play Action Compositional learning framework comprising two architecture-agnostic components: \\textbf{(i)} a compositional learning module that uses an LLM-driven instruction decomposer and a proprioceptive trajectory aligner to generate dense sub-task supervision, followed by mixed training on complete demonstrations and decomposed data to endow the model with compositional generalization; and \\textbf{(ii)} a state-conditioned asymmetric masking strategy that suppresses wrist-view inputs during closed-gripper phases, enforcing global semantic grounding. All components are architectural modification-free and directly integrable into any VLA backbone. Instantiated on $π_{0.5}$ and evaluated on LIBERO and LIBERO-OOD benchmarks, AC-VLA achieves a ~28% absolute improvement on compositional OOD tasks while maintaining near-perfect in-distribution performance.",
+      "authors": [
+        "Xiaojiang Peng",
+        "Kai Peng",
+        "Jie Lu",
+        "Zheng Lian",
+        "Zitong YU",
+        "Xiaobo Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-17T07:51:03+00:00",
+      "link": "https://arxiv.org/pdf/2607.15714v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "compositional learning for VLA models to improve OOD generalization",
+      "llm_evidence_cn": "通过组合学习提升VLA模型的分布外泛化",
+      "llm_evidence": "通过组合学习提升VLA模型的分布外泛化",
+      "canonical_evidence": "通过组合学习提升VLA模型的分布外泛化",
+      "llm_tldr_en": "AC-VLA addresses trajectory overfitting and perceptual shortcuts in VLAs via compositional learning and LLM-based instruction decomposition.",
+      "llm_tldr_cn": "视觉-语言-动作模型在分布外组合任务中容易过拟合整体轨迹模式并依赖局部纹理。AC-VLA提出一个即插即用的组合学习框架，包含LLM驱动的指令分解和两个架构无关的模块，以分离子技能语义并增强全局空间定位。实验证明在未见任务组合上显著提升泛化能力。该方法不改变VLA架构，易于集成到现有系统中。",
+      "llm_tldr": "视觉-语言-动作模型在分布外组合任务中容易过拟合整体轨迹模式并依赖局部纹理。AC-VLA提出一个即插即用的组合学习框架，包含LLM驱动的指令分解和两个架构无关的模块，以分离子技能语义并增强全局空间定位。实验证明在未见任务组合上显著提升泛化能力。该方法不改变VLA架构，易于集成到现有系统中。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.18231v1",
+      "source": "arxiv",
+      "title": "FM-VLA: Force-based Memory for Vision-Language-Action Models in Contact-Rich Manipulation",
+      "abstract": "Vision-language-action (VLA) models have achieved impressive generalization in robotic manipulation, and recent memory-augmented VLAs have relaxed the Markovian assumption by conditioning on past images or language summaries. Vision-based memory approaches address this by conditioning on sampled past image frames, but they are computationally expensive and fundamentally limited when temporal events are visually ambiguous, e.g., pushing a button multiple times with small movements. We propose FM-VLA, a VLA model with force-based memory, enabling temporal context reasoning for non-Markovian, contact-rich manipulation. We encode force histories into compact force memory tokens with a variational autoencoder (VAE) pretrained with force time series reconstruction. By projecting force latent representations and short state history as additional conditioning tokens to the action expert module, we enable VLAs to leverage accumulated contact event history to guide manipulation. We evaluate FM-VLA on three memory-dependent tasks, including finding a hidden block, pressing a button, and wiping a dish for a specific number of times. Our lightweight force memory achieves over 80% success rate with minimal inference overhead, significantly outperforming baseline approaches. Project page: https://qft-333.github.io/FM-VLA-Page/",
+      "authors": [
+        "Ruicheng Li",
+        "Qixiu Li",
+        "Ruichun Ma",
+        "Yu Deng",
+        "Lin Luo",
+        "Zhiying Du",
+        "Jianfeng Xiang",
+        "Huizhi Liang",
+        "Ruicheng Wang",
+        "Jiaolong Yang",
+        "Baining Guo"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-20T17:58:31+00:00",
+      "link": "https://arxiv.org/pdf/2607.18231v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "force-based memory for VLA models in robotic manipulation",
+      "llm_evidence_cn": "面向机器人操控的力记忆VLA模型",
+      "llm_evidence": "面向机器人操控的力记忆VLA模型",
+      "canonical_evidence": "面向机器人操控的力记忆VLA模型",
+      "llm_tldr_en": "FM-VLA uses force memory tokens to handle non-Markovian contact-rich manipulation, improving temporal reasoning over vision-only methods.",
+      "llm_tldr_cn": "现有视觉记忆方法在处理接触丰富任务时计算昂贵且受视觉模糊限制。FM-VLA提出基于力记忆的VLA模型，通过变分自编码器将力历史编码为紧凑记忆令牌，使得模型能推理非马尔可夫时间上下文。实验表明在需要时序推理的任务上超过视觉基线。该工作将多模态感知引入机器人策略学习，增强了操控的鲁棒性和泛化能力。",
+      "llm_tldr": "现有视觉记忆方法在处理接触丰富任务时计算昂贵且受视觉模糊限制。FM-VLA提出基于力记忆的VLA模型，通过变分自编码器将力历史编码为紧凑记忆令牌，使得模型能推理非马尔可夫时间上下文。实验表明在需要时序推理的任务上超过视觉基线。该工作将多模态感知引入机器人策略学习，增强了操控的鲁棒性和泛化能力。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.18840v1",
+      "source": "arxiv",
+      "title": "WorldScape Policy 2.0: Empowering Steerable World Action Modeling with Reasoning-Augmented Memory",
+      "abstract": "World Action Models (WAMs) offer a promising paradigm for robotic manipulation by jointly modeling visual state transitions and robot actions. However, existing WAMs are constrained by limited temporal context, coarse episode-level language supervision, and predominantly text-only conditioning, which hinder task-progress tracking and fine-grained language-video-action grounding while limiting visual-context reasoning and cross-embodiment transfer. In this paper, we introduce WorldScape Policy 2.0, a controllable WAM with reasoning-augmented long short-term memory. Its causal short-term visual memory supplies recent observations as DiT prefill to preserve local interaction dynamics, while its long short-term event memory organizes historical VLM outputs into global-history, local-active, and event-boundary representations for progress-aware retrieval. The retrieved history augments perception and autoregressively generated planning tokens, yielding an implicit subgoal condition for autonomous planning; semantic forcing further transfers event-level instruction semantics into this latent planning pathway. To establish fine-grained multimodal controllability, we construct ManipEvent-5M, an event-grounded embodied pretraining dataset containing nearly 5 million event segments with aligned action trajectories, episode-level task instructions, segment-level subtask captions, goal images, and video demonstrations. These designs provide a unified interface for autonomous planning from high-level instructions and controllable execution from fine-grained text, goal-image, or video-context prompts. Experiments in both simulation and real-world platforms demonstrate superior capabilities in long-horizon autonomous planning, fine-grained instruction following and in-context adaptation.",
+      "authors": [
+        "Haisheng Su",
+        "Zongdai Liu",
+        "Xin Jin",
+        "Haoxuan Dou",
+        "Chengming Hu",
+        "Baorun Li",
+        "Zhanwang Liu",
+        "Ruiyan Xu",
+        "Jianjie Fang",
+        "Xin Zhang",
+        "Zhenjie Yang",
+        "Xue Yang",
+        "Chen Gao",
+        "Junchi Yan",
+        "Yong Li",
+        "Wei Wu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-21T08:25:37+00:00",
+      "link": "https://arxiv.org/pdf/2607.18840v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "world action modeling with reasoning-augmented memory for robot manipulation",
+      "llm_evidence_cn": "具有推理增强记忆的世界动作模型用于机器人操控",
+      "llm_evidence": "具有推理增强记忆的世界动作模型用于机器人操控",
+      "canonical_evidence": "具有推理增强记忆的世界动作模型用于机器人操控",
+      "llm_tldr_en": "WorldScape Policy 2.0 extends WAMs with reasoning-augmented long short-term memory for better temporal and cross-embodiment transfer.",
+      "llm_tldr_cn": "现有世界动作模型受限于时间上下文和语言监督粒度。WorldScape Policy 2.0提出推理增强的记忆结构，包含因果短期视觉记忆和长期事件记忆，并用DiT预填充保持局部交互动力学。该方法提升了任务进度跟踪和跨实体迁移能力。实验证明在复杂操控任务上优于之前的WAM。该工作推动了可操控世界建模在机器人中的应用。",
+      "llm_tldr": "现有世界动作模型受限于时间上下文和语言监督粒度。WorldScape Policy 2.0提出推理增强的记忆结构，包含因果短期视觉记忆和长期事件记忆，并用DiT预填充保持局部交互动力学。该方法提升了任务进度跟踪和跨实体迁移能力。实验证明在复杂操控任务上优于之前的WAM。该工作推动了可操控世界建模在机器人中的应用。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.19534v1",
+      "source": "arxiv",
+      "title": "Learning Personalized Safety Interventions for Haptic Human-Robot Shared Control",
+      "abstract": "Haptic feedback provides an implicit channel for communicating safety intentions during human-robot shared control. Existing haptic guidance systems typically employ predefined intervention strategies that cannot accommodate the diverse safety preferences of individual users or application scenarios. To address this limitation, we propose a Learning from Haptics (LfH) framework that learns user-preferred safety interventions from sparse demonstrations, eliminating the need for manual trial-and-error design. Our framework is built on a differentiable Control Barrier Function (CBF)-based optimization layer that automatically adjusts the underlying safety parameters to match the demonstrated haptic responses. Instead of tuning controller parameters directly, users teach the system how they expect it to intervene during teleoperation. The resulting haptic guidance reflects the demonstrated intervention preferences while preserving the intuitive interaction of haptic shared control. Simulation and hardware experiments demonstrate that the proposed framework can learn personalized safety interventions from sparse user input and reduce the mismatch between the generated haptic feedback and the demonstrated preferences.",
+      "authors": [
+        "Dawei Zhang",
+        "Roberto Tron"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-21T19:28:41+00:00",
+      "link": "https://arxiv.org/pdf/2607.19534v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Learning from sparse demonstrations for haptic safety interventions",
+      "llm_evidence_cn": "从稀疏演示学习触觉安全干预",
+      "llm_evidence": "从稀疏演示学习触觉安全干预",
+      "canonical_evidence": "从稀疏演示学习触觉安全干预",
+      "llm_tldr_en": "Proposes Learning from Haptics (LfH) framework that learns user-preferred safety interventions from sparse demonstrations, using a differentiable CBF-based optimization layer to adjust safety parameters.",
+      "llm_tldr_cn": "现有触觉引导系统预设干预策略无法适应个体偏好。本文提出从触觉学习（LfH）框架，从稀疏演示中学习用户偏好的安全干预，利用可微控制屏障函数优化层自动调整安全参数。实验表明该方法无需手动调参即可匹配演示的触觉响应，是一种有效的机器人模仿学习方法。",
+      "llm_tldr": "现有触觉引导系统预设干预策略无法适应个体偏好。本文提出从触觉学习（LfH）框架，从稀疏演示中学习用户偏好的安全干预，利用可微控制屏障函数优化层自动调整安全参数。实验表明该方法无需手动调参即可匹配演示的触觉响应，是一种有效的机器人模仿学习方法。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

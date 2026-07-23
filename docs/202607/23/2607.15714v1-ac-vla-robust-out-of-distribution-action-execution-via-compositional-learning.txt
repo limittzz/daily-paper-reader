@@ -1,0 +1,217 @@
+Title: AC-VLA: Robust Out-of-Distribution Action Execution via Compositional Learning
+
+URL Source: https://arxiv.org/pdf/2607.15714v1
+
+Published Time: Mon, 20 Jul 2026 00:48:11 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# AC-VLA: Robust Out-of-Distribution Action Execution via Compositional Learning 
+
+Xiaojiang Peng 1,∗, Kai Peng 1,∗
+
+, Jie Lu 1, Zheng Lian 3, Zitong Yu 4, Xiaobo Wang 2,†
+
+> 1
+
+Shenzhen Technology University, 
+
+> 2
+
+Shenzhen University of Advanced Technology, 
+
+> 3
+
+Tongji University, 4Great Bay University 
+
+Abstract: Vision-Language-Action (VLA) models excel at end-to-end robotic manipulation but struggle with out-of-distribution (OOD) generalization when familiar sub-tasks are recombined in unseen configurations. We identify two mutually reinforcing failure modes: trajectory overfitting , where models over-fit to holistic trajectory patterns rather than compositional sub-skill semantics; and perceptual shortcut , where action tokens over-rely on wrist-view textures at the expense of global spatial grounding. To address both, we introduce AC-VLA , a plug-and-play Action Compositional learning framework comprising two architecture-agnostic components: (i) a compositional learning module that uses an LLM-driven instruction decomposer and a proprioceptive trajectory aligner to generate dense sub-task supervision, followed by mixed training on complete demonstrations and decomposed data to endow the model with compositional generalization; and (ii) a state-conditioned asymmetric masking strategy that sup-presses wrist-view inputs during closed-gripper phases, enforcing global semantic grounding. All components are architectural modification-free and directly inte-grable into any VLA backbone. Instantiated on π0.5 and evaluated on LIBERO and LIBERO-OOD benchmarks, AC-VLA achieves a ∼28% absolute improve-ment on compositional OOD tasks while maintaining near-perfect in-distribution performance. The source code will be made publicly available on this page. 
+
+Keywords: Vision-Language-Action models, Action Composition, Robots 
+
+# 1 Introduction 
+
+Vision-Language-Action (VLA) models [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] have achieved widespread adoption in robotic manipulation, owing to their ability to map language and vision directly to con-tinuous control actions through large-scale pre-training. However, these models exhibit marked degradation when faced with novel instructions that recombine familiar sub-tasks in unseen config-urations, even within the training distribution [12]. This failure mainly stems from reliance on spurious correlations between holistic task descriptions and specific trajectory patterns, rather than a genuine compositional understanding of sub-skills. Simply scaling up training data is unlikely to close this gap efficiently [13], as the core deficit lies in the model’s failure to decompose and recompose learned primitives. Hierarchical paradigms [14, 15, 16, 17] decouple planning from execution to mitigate this issue, yet the resulting modularity prevents high-level reasoning from adapting to real-time sensory feedback, disrupting fluid control. Stage-wise VLA methods [18, 19] similarly introduce rigid sub-task boundaries that cause error accumulation and abrupt transitions. We characterize this as a compositional generalization challenge: the agent’s ability to execute novel task instructions by recombining familiar sub-skills (e.g., performing a ‘pick’ and ‘place’ sequence 
+
+> ∗
+
+Co-first author. † Corresponding author. 10th Conference on Robot Learning (CoRL 2026), Austin TX, USA. arXiv:2607.15714v1 [cs.RO] 17 Jul 2026 in a new spatial configuration or with unseen object-verb pairings). When facing out-of-distribution tasks, we identify that existing VLA models may suffer from two mutually reinforcing failure modes: 
+
+trajectory overfitting and perception shortcuts .
+
+Figure 1: Out-of-distribution compositional actions confuse vision and language modalities. (a) Training tasks: object A→target A and object B →target B. (b) Novel task: object A→target B. Since all training examples map “grasp object A” to target A, the model faces a token-level conflict be-tween visual cues (object A) and language instructions (tar-get B), leading to action prediction confusion. As illustrated in Figure 1, trajec-tory overfitting manifests when mod-els memorize complete motion se-quences associated with seen task combinations, failing to disentangle reusable sub-skills such as “grasp A” and “place at B.” When con-fronted with a recombined instruc-tion, the model attempts to replicate a familiar holistic trajectory rather than dynamically composing the relevant primitives, leading to rigid and in-correct behaviors. In parallel, per-ceptual shortcut arises from an ex-cessive dependence on local wrist-view textures, which provide strong but spurious visual cues tightly cou-pled to specific objects during grasp-ing. When the task configuration changes—e.g., the same object must now be placed at a different target—the model remains an-chored to these egocentric features and neglects the global spatial layout required for accurate placement. This dual breakdown, semantic overfitting at the trajectory level and visual shortcut at the perception level, severely undermines compositional generalization in current VLA models. To facilitate compositional generalization in VLA models, we introduce AC-VLA, a plug-and-play Action Compositional learning framework that equips VLA models with the ability to recombine sub-skills for robust out-of-distribution (OOD) execution. AC-VLA consists of two architecture-agnostic components. First, a compositional learning module decomposes demonstrations into reusable sub-task units: an LLM-driven instruction decomposer segments complex instructions into granular sub-task descriptions, while a proprioceptive trajectory aligner partitions the corresponding trajectory segments, generating dense sub-task supervision. A mixed training strategy then jointly trains on complete task demonstrations and the decomposed sub-task data, systematically preserving holistic task coherence while instilling compositional generalization. Second, a state-conditioned asymmetric masking strategy suppresses wrist-view inputs during closed-gripper phases, forcing the model to develop robust global spatial grounding instead of over-relying on local wrist-view tex-tures, thereby substantially improving generalization to OOD scenarios. 
+
+# 2 Related Work 
+
+Vision-Language-Action Models. Vision-Language-Action (VLA) models integrate visual per-ception, language understanding, and action generation to enable end-to-end robotic control [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21, 22]. Leveraging internet-scale pre-training on vision-language mod-els [23, 24, 25, 26] and diverse large-scale robot datasets [27, 28, 29], these models exhibit versatile instruction-following and cross-embodiment generalization. Despite these advances, a core limi-tation of current VLA paradigms is that they supervise complete task demonstrations as holistic trajectories paired with a single, coarse language description. This coarse alignment encourages memorization of in-distribution trajectory patterns, significantly degrading performance on out-of-distribution tasks [12, 13]. Our work directly addresses this limitation through structured composi-tional learning, without any architectural modification. 2Hierarchical Task Segmentation. Hierarchical task segmentation aims to decompose complex, long-horizon manipulation demonstrations into structured, reusable primitives that support compo-sitional generalization. Early approaches employ high-level planners to break down natural language instructions into sub-goal sequences, either via LLM-based language decomposition [15, 16, 30] or visual subgoal generation [31, 32, 33]. These modular designs introduce a structural decoupling be-tween linguistic planning and low-level action execution, hindering joint optimization within unified VLA frameworks. More recent methods embed hierarchical segmentation directly into end-to-end VLA training [18, 19], providing dense supervision and fine-grained alignment between language instructions and visuo-motor segments. However, existing approaches typically rely on fixed-length temporal partitioning, which compromises semantic fidelity, or require task-specific engineering that limits scalability. Our work addresses this gap with an automated, proprioceptive-driven aligner that synchronizes LLM-decomposed semantic instructions with robot proprioceptive states—leveraging gripper-state transitions and cumulative displacement as natural semantic boundaries—yielding high-density supervision without manual annotation or task-specific design. In contrast to LLM-based planners [17, 34, 35] that depend on online inference or explicit skill libraries [36, 37, 38], our decomposition operates fully offline and integrates seamlessly into any VLA training pipeline. 
+
+Out-of-Distribution Generalization. Enabling agents to recombine acquired motor primitives for executing novel task instructions beyond the training distribution is a central challenge in manipu-lation. Recent works explore this from complementary angles: sub-skill-oriented training improves fine-grained action coverage [19], stage-wise sequential modeling structures task execution into dis-crete learnable phases [18], and counterfactual analysis reveals the visual-shortcut failure modes that impede language grounding [12]. Nevertheless, training on decomposed or stage-partitioned data alone overextends model capacity, dilutes holistic task knowledge, and causes significant in-distribution performance degradation. Concurrent works explore data augmentation [39, 40] and strong policy learning baselines including ACT [41], UMI [42], Diffusion Policy [43], 3D Dif-fusion Policy [44], and human-in-the-loop RL [45], which offer orthogonal improvements to our supervision restructuring approach. Our mixed training paradigm explicitly addresses this stability-plasticity dilemma, and our state-conditioned asymmetric masking provides a complementary mech-anism to mitigate perceptual shortcuts. 
+
+# 3 Method 
+
+3.1 Overview 
+
+We present the AC-VLA framework, as illustrated in Figure 2. Given a raw dataset of manip-ulation demonstrations, our framework equips any VLA backbone with two plug-and-play com-ponents that operate without architectural modification. First, a compositional learning module 
+
+(Section 3.2) automatically decomposes each demonstration into semantically meaningful sub-task units via LLM-based instruction parsing and proprioceptive trajectory alignment, and then applies a mixed training strategy on the original and decomposed data to instill compositional generalization. Second, a state-conditioned asymmetric masking strategy (Section 3.3) blinds wrist-camera views during closed-gripper phases for training, breaking spurious visual shortcuts and enforcing global spatial grounding. Together, these components enable robust out-of-distribution action execution in the inference phase while preserving in-distribution performance. 
+
+3.2 Compositional Learning 
+
+To address trajectory overfitting, we design a compositional learning module that decouples holistic demonstrations into reusable primitives and learns from both granularities. This module consists of two stages: collaborative decomposition and mixed training. 3Figure 2: Overview of the AC-VLA framework. (a) Compositional learning module: full demon-strations are decomposed into sub-tasks via LLM-based instruction parsing and proprioceptive tra-jectory alignment; the model is then trained with a mixture of complete and decomposed data. (b) Asymmetric masking module: wrist-camera views are suppressed during closed-gripper phases at training time, enforcing global spatial grounding. 
+
+3.2.1 Collaborative Decomposition with Language and Proprioceptive Trajectory 
+
+We design a collaborative decomposition scheme to synchronize sub-task descriptions and propri-oceptive actions, as illustrated in Figure 2(a). Given a demonstration with a language instruction ℓ
+
+and a trajectory ξ = {(ot, at)}Tt=1 , where ot includes third-view and wrist-view images, and at en-compasses actions such as end-effector pose and gripper status, we formulate it as a set of sub-task segments as: 
+
+ξ = {si}Ni=1 , si = ( ℓn, ξ n). (1) An LLM first decomposes ℓ into an ordered sequence of sub-task descriptions {ℓ1, ℓ 2, ..., ℓ N }, and 
+
+N is dynamically determined by the LLM based on the semantic complexity of ℓ.To synchronize these textual sub-tasks with physical trajectory, we introduce a proprioceptive-driven aligner that partitions ξ using naturally occurring physical cues: gripper-state transitions (open →
+
+close, close → open) and chunk-wise average end-effector displacement. Let at = ( pt, g t) denote the action at timestep t, where pt ∈ R6 is the end-effector pose and gt ∈ { 0, 1} is the gripper state. For an action chunk At = {at, at+1 , . . . , at+H−1} of length H, the chunk-wise average end-effector displacement and sub-task boundary condition are defined as: 
+
+D(At) = 1
+
+H
+
+> H−1
+
+X
+
+> i=1
+
+∥pt+i − pt+i−1∥2, seg (t) = gt̸ = gt−1 ∨ D(At) < ϵ . (2) where seg (t) = True indicates that timestep t is identified as a sub-task boundary, and ϵ is a dis-placement threshold determined via clustering on the training trajectories. A gripper state transition (gt̸ = gt−1) naturally marks the transition between grasping and transport phases, while a low displacement identifies approach-to-contact or placement events. Notably, we segment the full tra-jectory in a chunk-wise manner; thus, a “pick” or “place” sub-task can be obtained whenever at least one segmentation point exists in a chunk. The aligned pairs (ℓk, ξ k) form a dense sub-task supervision dataset Dsub , constructed fully offline without manual annotation. This preservation of linguistic granularity retains the rich compositional diversity of natural language and prevents the semantic sparsity common in stage-wise models that rely on coarse phase labels. 
+
+3.2.2 Mixed Training: An Instance of Diffusion-based Policy 
+
+Given the full-demonstration dataset Dfull and the decomposed sub-task dataset Dsub , we construct a mixed dataset Dmix = Dfull ∪ D sub by merging complete demonstrations with decomposed sub-task segments. At each training step, mini-batches are sampled from Dfull and Dsub with a fixed ratio. 4Consequently, learning from full trajectories preserves coherent long-horizon execution, while sub-task supervision explicitly trains the model to recombine primitives, resolving the stability-plasticity dilemma. Without loss of generality, we instantiate this mixed training paradigm on a flow-matching VLA backbone π0.5 [46], which consists of a Vision-Language Model (VLM) that produces vision-language features ϕt as conditioning input, and a Diffusion Transformer (DiT) action head Vθ
+
+for flow matching. Following action chunking [41, 42, 43, 44], the model predicts a sequence of 
+
+H future actions A′ 
+
+> t
+
+∈ Rd×H to improve temporal coherence. Given a flow-matching timestep 
+
+τ ∈ [0 , 1] and noise ϵ ∼ N (0 , I), the noised action chunk is A(τ ) 
+
+> t
+
+= τ A t + (1 − τ )ϵ. Together with a robot state embedding qt, the action head minimizes the flow-matching objective: 
+
+L(θ) = Eτ
+
+h
+
+Vθ (ϕt, A (τ ) 
+
+> t
+
+, qt) − (At − ϵ) 2i
+
+. (3) At inference, an action chunk is generated from random noise A(0)  
+
+> t
+
+∼ N (0 , I) via K-step forward Euler integration: 
+
+A(τ +1 /K ) 
+
+> t
+
+= A(τ ) 
+
+> t
+
++ 1
+
+K Vθ (ϕt, A (τ ) 
+
+> t
+
+, qt). (4) 
+
+3.3 State-Conditioned Asymmetric Masking Evidence of perception shortcuts . We first demonstrate the existence of perceptual short-cuts through both qualitative visualization and quantitative performance comparisons on the raw LIBERO dataset with the popular π0.5 [46] VLA model. As shown in Table 1, removing the wrist camera causes catastrophic performance collapse across all task categories (Goal, Object, Spatial, Long), with success rates dropping to near zero. Meanwhile, removing the third-person view also substantially degrades performance, albeit to a lesser extent, revealing that the model heavily relies on both views but uses wrist-level textures as an indispensable shortcut. Table 1: The evidence of perception shortcuts from an abla-tion study on camera views on LIBERO. 
+
+Views Spatial Goal Object Long 
+
+w/ both 98.8% 98.5% 99.3% 92.9% w/o third-person 52.2% 77.7% 68.9% 22.2% w/o wrist 1.9% 1.5% 2.9% 0.1% 
+
+Figure 3: Evidence of perception shortcuts in model atten-tion maps. To further investigate the model’s be-havior under OOD conditions, we vi-sualize token-level attention scores extracted from the DiT action head on both view images. Specifically, we average the attention maps across all layers of the DiT to obtain a uni-fied attention map per view, as shown in Figure 3. For in-distribution tasks, the attention in the “place” phase cor-rectly concentrates on the intended target region. In contrast, for the OOD task, while the “pick” phase at-tention remains semantically appro-priate, the “place” phase still exhibits strong attention to the original target (e.g., the bowl) instead of the newly instructed destination. This indicates a persistent perceptual shortcut inher-ited from training spurious correla-tions. 
+
+Asymmetric Masking . The above findings motivate our state-conditioned asymmetric masking strategy, which deliberately suppresses wrist-view inputs to force the model to rely on global spa-tial context and correctly follow language directives. Specifically, we leverage the Collaborative Decomposition module to identify all “place” phase segments and mask the wrist-view tokens in the attention computation ( i.e. , mask attention) during training. We observe that this compels the 5Table 2: Performance comparison on LIBERO benchmark, including both in-distribution and out-of-distribution suites. Results are success rates (%) averaged across tasks.                                                             
+
+> Model Spatial Goal Object Long Spatial OOD Goal OOD AVG
+> UniVLA [48] 96.5 95.6 96.8 92.0 11.0 32.0 70.7 OpenVLA-OFT [49] 97.6 97.9 98.4 94.5 0.0 1.0 64.9
+> π0.5[46] 98.8 98.5 99.3 92.9 35.5 46.6 78.6 Spatial Forcing-π0.5[50] 99.4 99.6 98.8 96.0 48.3 57.8 83.3 GR00T-N1 [2] 94.1 98.3 99.1 93.2 17.9 24.1 71.1
+> AC-VLA (π0.5)98.0 97.7 98.4 92.4 64.2 (+28.7) 73.3 (+26.7) 87.3 (+8.7)
+> AC-VLA (GR00T-N1) 95.4 96.7 99.1 92.3 36.4(+18.5) 44.0(+19.9) 77.3(+6.2)
+
+model to infer spatial relationships from third-view observations and language instructions, rather than tracking object textures in the egocentric view. Critically, wrist inputs remain intact when the gripper is open (e.g., during approaching and grasping phases), preserving the fine-grained feedback essential for precise manipulation. Conditioned on the proprioceptive gripper state, this asymmetric design severs spurious correlations between wrist textures and task configurations, encouraging the model to learn a globally grounded action policy. Masking is applied online during training and requires no architectural modifications or changes to the inference procedure. 
+
+# 4 Experiments 
+
+In this section, we design simulation and real-world experiments to answer the following research questions: RQ1 : How does our proposed paradigm enhance state-of-the-art (SOTA) models on OOD tasks? RQ2 : How does the composition learning module affect performance on both in-distribution and OOD tasks? RQ3 : How does asymmetric masking contribute to our method? 
+
+4.1 Experiment Setup Simulation and real-world experiments . We evaluate our method on the LIBERO benchmark [29], a standardized suite for lifelong robot learning that provides diverse tabletop manipulation tasks across four categories: LIBERO-Spatial (spatial relationship), LIBERO-Goal (goal-conditioned), LIBERO-Object (object-level), and LIBERO-Long (long-horizon chaining). To assess out-of-distribution (OOD) generalization, we adopt the LIBERO-OOD benchmark [47], which consists of the LIBERO-Spatial-OOD and LIBERO-Goal-OOD suites, each containing 20 novel compositional tasks. In addition, we design four real-world tasks and evaluate AC-VLA on two OOD variants of these tasks (Sec. 4.4). For language instruction decomposition, we employ the Qwen-3.5-Flash language model to de-compose the original holistic task descriptions into granular sub-task text sequences. We primarily instantiate our method on the GR00T and π0.5 backbones, using their default hyperparameters. All training experiments are run on 4 NVIDIA A100 80GB GPUs, and inference is performed on an NVIDIA RTX 5880 Ada 40GB. For more details, please refer to the appendix materials. 
+
+Evaluation protocol . Each task is evaluated over 3 random seeds, each with 50 episodes (150 episodes total per task). We report the mean success rate (%) over all tasks within each suite. 
+
+4.2 Comparison with State-of-the-Art Policies 
+
+We instantiate AC-VLA on both the π0.5 [46] and GR00T-N1 [2] backbones. We compare against the following baselines: SF-π0.5 (Spatial Forcing) [50], an architecture-agnostic framework that enhances π0.5 with spatial visual alignment without structural modifications; GR00T-N1.7 , a gener-alist humanoid VLA model; UniVLA [48], a universal VLA with a task-centric latent action design; and OpenVLA-OFT [49], an optimized fine-tuning variant of OpenVLA [5]. As shown in Table 2, all baseline models achieve near-perfect success rates on the standard LIBERO in-distribution suites, yet suffer severe OOD degradation. OpenVLA-OFT, for instance, drops to 60.0 and 1.0 on the Spatial-OOD and Goal-OOD suites, respectively. SF-π0.5, which forces VLA middle layers to align extra geometric representations, attains moderate OOD improvements over the vanilla π0.5, suggesting that explicit spatial vision alignment can partially mitigate perceptual shortcuts. Specifically, SF-π0.5 improves π0.5 on the two OOD suites by 12.8/11.2 , whereas our method yields gains of 28.7/26.7 . With the generalist humanoid robot model GR00T-N1, our method also obtains around 20 absolute gains on OOD tasks. We note that π-TLI [47] relies on combining two inference in-distribution tasks and reports 85/81 success rates on the OOD suites, but it involves manually-tuned hyperparameters (e.g., interpolation speed) and requires two rounds of inference. Overall, our AC-VLA establishes new state-of-the-art OOD results (64.2/73.3 on Spatial/Goal OOD) while preserving strong in-distribution competence, achieving the best overall average of 87.3. In the following, unless otherwise specified, we use AC-VLA to denote AC-VLA( π0.5). 
+
+4.3 Ablation Analyses 
+
+To answer RQ2 and RQ3 , we conduct a quantitative ablation study on both in-distribution (In-D) and out-of-distribution (OOD) tasks, with results summarized in Table 3. 
+
+Compositional learning . The first three rows present the effect of our compositional learning mod-ule. Training exclusively on raw demonstrations (row 1) yields strong in-distribution performance (97.4) but severe OOD degradation (35.5/46.6). Conversely, training solely on decomposed sub-task data (row 2) improves OOD to 54.8/68.6 at the cost of catastrophic in-distribution collapse (61.4), as the model loses long-horizon coherence. Our mixed training paradigm (row 3) combines raw and sub-task supervision, successfully resolving this stability-plasticity dilemma. Table 3: Ablation study on both In-D and OOD tasks. For In-D performance, we report the mean success rate (%) over four suites.                         
+
+> Raw-task Sub-task Mask In-D Spatial OOD Goal OOD
+> ✓97.4 35.5 46.6
+> ✓61.4 54.8 68.6
+> ✓✓96.6 51.6 67.5
+> ✓✓96.5 47.3 67.0
+> ✓✓✓96.7 64.2 73.3
+
+Asymmetric masking . The last three rows evaluate the contribution of state-conditioned asymmetric masking. Adding masking to raw-demonstration training (row 4) improves OOD performance from 35.5/46.6 to 47.3/67.0, with a negligible drop in In-D performance. This confirms that suppressing wrist-view inputs during “place” phases effectively mitigates per-ceptual shortcuts and forces global spatial grounding. When combined with compositional learning (row 5), the two components boost each other: OOD success rates rise further to 64.2 and 73.3, while in-distribution performance remains high at 96.7. These results indicate that trajectory over-fitting and perceptual shortcuts are complementary failure modes, and addressing both is necessary for robust compositional generalization. 
+
+Figure 4: Comparison of attention maps between the vanilla 
+
+π0.5 and the model trained with asymmetric masking. 
+
+Qualitative Analysis . We further an-alyze the effect of AC-VLA by vi-sualizing token-level attention scores on an OOD task, as shown in Fig-ure 4. In the attention maps of vanilla 
+
+π0.5 (Baseline), the model exhibits a stark misalignment between atten-tion and task intent, where attention is concentrated on an irrelevant target associated with in-distribution train-ing. In contrast, the attention maps produced by our method are precise and task-aligned. The right panel of Figure 4 additionally reports the average token attention score during the “place” phase, produced by wrist view, third-person view, and text modality. We ob-serve a larger than 100% increase in per-token attention on the third-person view, confirming that AC-VLA effectively fosters global spatial grounding and compositional generalization. 7Figure 5: Real-world setup and raw task examples. Table 4: Real-world performance (%) on In-D and OOD tasks.          
+
+> Model In-D Tasks OOD Tasks AVG
+> π0.593.7 35.0 64.4
+> AC-VLA 88.7 82.5 (+47.5) 85.6 (+21.2)
+
+Figure 6: Successful real-world OOD examples. 
+
+4.4 Evaluation on Real-World Scene 
+
+We further evaluate AC-VLA on a real-world robotic platform. As shown in Figure 5, the system consists of a 6-DoF PIPER arm, an ORBBEC DaBai DC1 wrist-view camera, and an Intel RealSense D455 third-person camera, forming a complete visual-manipulation pipeline. We design four in-distribution (In-D) tasks following the LIBERO-Goal setting: (1) pick up the banana between the wooden shelf and the plate and place it on the plate , (2) pick up the banana on the wooden shelf and place it on the plate , (3) pick up the chewing gum between the wooden shelf and the plate and place it in the pulp tray , (4) pick up the chewing gum in front of the plate and place it in the pulp tray . The two OOD tasks, illustrated in Figure 6, are (1) put the banana on the wooden shelf in the pulp tray ,and (2) put the chewing gum in front of the plate and place it on the plate .The quantitative results are reported in Table 4. The baseline model π0.5 achieves 93.7% success on In-D tasks but only 35% on OOD tasks, resulting in an average performance of 64.35%. In contrast, our AC-VLA maintains a high In-D success rate of 88.7% while significantly boosting OOD performance to 82.5%, yielding an overall average of 85.6%. This demonstrates that our method retains strong in-distribution performance while substantially improving generalization to novel scenarios. 
+
+# 5 Conclusion 
+
+We propose AC-VLA, a plug-and-play Action Compositional learning framework that endows VLA models with robust compositional OOD generalization for robotic manipulation. By integrating two architecture-agnostic components–a compositional learning module that decomposes demonstra-tions into reusable sub-task units with mixed training, and a state-conditioned asymmetric masking strategy that suppresses wrist-view shortcuts–AC-VLA directly addresses the dual failure modes of trajectory overfitting and perceptual shortcuts. Our framework requires no architectural modi-fication and can be seamlessly integrated into any VLA backbone. Extensive experiments on the LIBERO and LIBERO-OOD benchmarks demonstrate that AC-VLA achieves significant absolute improvement on compositional OOD tasks while maintaining near-perfect in-distribution perfor-mance. Real-world evaluations further validate the framework’s practicality and effectiveness. 
+
+# 6 Limitations 
+
+While AC-VLA achieves strong compositional generalization, it also has some limitations. First, the accuracy of offline task decomposition depends on both the LLM’s semantic parsing capability and the fidelity of our proprioceptive-based aligner; for highly ambiguous or domain-specific in-structions, the generated sub-task descriptions may be inaccurate, which could propagate errors into trajectory alignment and mixed training. Second, the benefits of explicit compositional learning may 8diminish when training on extremely large and diverse datasets that already cover most object–target combinations, effectively making the OOD gap negligible. 9Acknowledgments 
+
+If a paper is accepted, the final camera-ready version will (and probably should) include acknowl-edgments. All acknowledgments go at the end of the paper, including thanks to reviewers who gave useful comments, to colleagues who contributed to the ideas, and to funding agencies and corporate sponsors that provided financial support. 
+
+# References 
+
+[1] W. Li, R. Zhang, R. Shao, J. He, and L. Nie. Cogvla: Cognition-aligned vision-language-action model via instruction-driven routing & sparsification. In Advances in Neural Information Pro-cessing Systems (NeurIPS) , 2025. [2] J. Bjorck, F. Casta˜ neda, N. Cherniadev, X. Da, R. Ding, L. Fan, Y. Fang, D. Fox, F. Hu, S. Huang, et al. Gr00t n1: An open foundation model for generalist humanoid robots. arXiv preprint arXiv:2503.14734 , 2025. [3] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman, B. Ichter, et al. π 0: A vision-language-action flow model for general robot control. arXiv preprint arXiv:2410.24164 , 2024. [4] A. Zitkovich, R. Jackson, et al. Rt-2: Vision-language-action models transfer web knowledge to robotic control. In Conference on Robot Learning (CoRL) , 2023. [5] M. J. Kim, K. Cobbe, et al. Openvla: An open-source vision-language-action model. arXiv preprint arXiv:2406.09246 , 2024. [6] J. Wen, Y. Zhu, J. Li, M. Zhu, Z. Tang, K. Wu, Z. Xu, N. Liu, R. Cheng, C. Shen, et al. Tinyvla: Towards fast, data-efficient vision-language-action models for robotic manipulation. 
+
+IEEE Robotics and Automation Letters , 2025. [7] M. Shukor, D. Aubakirova, F. Capuano, P. Kooijmans, S. Palma, A. Zouitine, M. Aractingi, C. Pascal, M. Russi, A. Marafioti, et al. Smolvla: A vision-language-action model for afford-able and efficient robotics. arXiv preprint arXiv:2506.01844 , 2025. [8] A. Brohan, N. Brown, Y. Chebotar, et al. Rt-1: Robotics transformer for real-world control at scale. In Robotics: Science and Systems (RSS) , 2023. [9] D. Ghosh, H. Walke, K. Pertsch, et al. Octo: An open-source generalist robot policy. In 
+
+Robotics: Science and Systems (RSS) , 2024. [10] S. Liu, L. Wu, B. Li, H. Tan, H. Chen, Z. Wang, K. Xu, H. Su, and J. Zhu. Rdt-1b: a diffu-sion foundation model for bimanual manipulation. In International Conference on Learning Representations (ICLR) , 2025. [11] Y. Liang, X. Wang, K. Wang, S. Wang, X. Peng, H. Chen, D. K. H. Chua, and P. Vadakkepat. Adaptive action chunking at inference-time for vision-language-action models. arXiv preprint arXiv:2604.04161 , 2026. [12] Y. Fang, Y. Feng, D. Jing, J. Liu, Y. Yang, Z. Wei, D. Szafir, and M. Ding. When vision overrides language: Evaluating and mitigating counterfactual failures in vlas. arXiv preprint arXiv:2602.17659 , 2026. [13] F. Lin, Y. Hu, et al. Data scaling laws in imitation learning for robotic manipulation. In The Thirteenth International Conference on Learning Representations (ICLR) , 2024. [14] Z. Zhao et al. Robobrain 2.0: A spatial-temporal reasoning world model for robotic manipula-tion. arXiv preprint arXiv:2506.18829 , 2025. 10 [15] M. Ahn, A. Brohan, N. Brown, et al. Do as i can, not as i say: Grounding language in robotic affordances. In Conference on Robot Learning (CoRL) , 2022. [16] W. Huang, F. Xia, T. Xiao, et al. Inner monologue: Embodied reasoning through planning with language models. In Conference on Robot Learning (CoRL) , 2022. [17] D. Driess, F. Xia, M. S. M. Sajjadi, et al. Palm-e: An embodied multimodal language model. In International Conference on Machine Learning (ICML) , 2023. [18] J. Liu et al. Long-vla: Scaling long-context vision-language-action models with phase-aware decomposition and masking. arXiv preprint arXiv:2502.16925 , 2025. [19] Z. Chen et al. Learning semantic atomic skills for multi-task robotic manipulation. arXiv preprint arXiv:2512.18368 , 2024. [20] X. Li, M. Liu, H. Zhang, et al. Vision-language foundation models as effective robot imitators. In International Conference on Learning Representations (ICLR) , 2024. [21] D. Qu, H. Ge, Z. Shi, et al. Spatialvla: Exploring spatial representations for visual-language-action model. arXiv preprint arXiv:2501.12905 , 2025. [22] R. Doshi, H. Walke, O. Mees, et al. Scaling cross-embodied learning: One policy for ma-nipulation, navigation, locomotion, and aviation. In Conference on Robot Learning (CoRL) ,2024. [23] J. Bai, S. Bai, S. Yang, S. Wang, S. Tan, P. Wang, J. Lin, C. Zhou, and J. Zhou. Qwen-vl: A versatile vision-language model for understanding, localization, text reading, and beyond. 
+
+arXiv preprint arXiv:2308.12966 , 2023. [24] A. Radford, J. W. Kim, C. Hallacy, et al. Learning transferable visual models from natural language supervision. In International Conference on Machine Learning (ICML) , 2021. [25] H. Liu, C. Li, Q. Wu, and Y. J. Lee. Visual instruction tuning. In Advances in Neural Informa-tion Processing Systems (NeurIPS) , 2024. [26] J.-B. Alayrac, J. Donahue, P. Luc, et al. Flamingo: A visual language model for few-shot learning. In Advances in Neural Information Processing Systems (NeurIPS) , 2022. [27] Open X-Embodiment Collaboration, A. Padalkar, A. Pooley, et al. Open X-Embodiment: Robotic learning datasets and RT-X models. In IEEE International Conference on Robotics and Automation (ICRA) , 2024. [28] A. Khazatsky, K. Tajwar, et al. DROID: A large-scale in-the-wild robot manipulation dataset. In Robotics: Science and Systems (RSS) , 2024. [29] B. Liu, Y. Jiang, X. Zhang, S. Bahl, P. Stone, and Y. Zhu. LIBERO: Benchmarking knowledge transfer in lifelong robot learning. In Advances in Neural Information Processing Systems (NeurIPS) , 2023. [30] J. Liang, W. Huang, F. Xia, et al. Code as policies: Language model programs for embodied control. In IEEE International Conference on Robotics and Automation (ICRA) , 2023. [31] K. Black, M. Nakamoto, et al. Zero-shot robotic manipulation with pre-trained image-editing diffusion models. In International Conference on Learning Representations (ICLR) , 2024. [32] H. Chen, J. Guo, et al. Goal-vla: Image-generative vlms as object-centric world models em-powering zero-shot robot manipulation, 2025. [33] X. Kang and Y.-L. Kuo. Incorporating task progress knowledge for subgoal generation in robotic manipulation through image edits. In 2025 IEEE/CVF Winter Conference on Applica-tions of Computer Vision (WACV) . IEEE, 2025. 11 [34] I. Singh, V. Blukis, A. Mousavian, et al. Progprompt: Generating situated robot task plans using large language models. In IEEE International Conference on Robotics and Automation (ICRA) , 2023. [35] G. Wang, Y. Xie, Y. Jiang, et al. Voyager: An open-ended embodied agent with large language models. arXiv preprint arXiv:2305.16291 , 2023. [36] D. Garg, S. Vaidyanath, K. Kim, et al. LISA: Learning interpretable skill abstractions from language. In Advances in Neural Information Processing Systems (NeurIPS) , 2022. [37] L. Chen, K. Lu, A. Rajeswaran, et al. Decision transformer: Reinforcement learning via sequence modeling. In Advances in Neural Information Processing Systems (NeurIPS) , 2021. [38] Q. Zhao, Y. Lu, M. J. Kim, Z. Fu, Z. Zhang, Y. Wu, Z. Li, Q. Ma, S. Han, C. Finn, et al. Cot-vla: Visual chain-of-thought reasoning for vision-language-action models. In Proceedings of the Computer Vision and Pattern Recognition Conference , 2025. [39] C. Wang, L. Fan, J. Sun, et al. Mimicplay: Long-horizon imitation learning by watching human play. In Conference on Robot Learning (CoRL) , 2023. [40] H. Bharadhwaj, J. Vakil, M. Sharma, et al. Roboagent: Generalization and efficiency in robot manipulation via semantic augmentation. In IEEE International Conference on Robotics and Automation (ICRA) , 2024. [41] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn. Learning fine-grained bimanual manipulation with low-cost hardware. In Robotics: Science and Systems (RSS) , 2023. [42] C. Chi, Z. Xu, C. Pan, et al. Universal manipulation interface: In-the-wild robot teaching without in-the-wild robots. In Robotics: Science and Systems (RSS) , 2024. [43] C. Chi, S. Feng, Y. Du, Z. Xu, E. Cousineau, B. Burchfiel, and S. Song. Diffusion policy: Visuomotor policy learning via action diffusion. In Robotics: Science and Systems (RSS) ,2023. [44] Y. Ze, G. Zhang, K. Zhang, C. Hu, M. Wang, and H. Xu. 3d diffusion policy: Generalizable visuomotor policy learning via simple 3d representations. In Robotics: Science and Systems (RSS) , 2024. [45] J. Luo, C. Xu, J. Wu, and S. Levine. Precise and dexterous robotic manipulation via human-in-the-loop reinforcement learning. Science Robotics , 10(105):eads5033, 2025. [46] J. Hejna et al. π0.5: a vision-language-action model with open-world generalization. arXiv preprint arXiv:2504.16054 , 2025. [47] Q. Li. Vlas are confined yet capable of generalizing to novel instructions. In IJCAI , 2026. [48] Q. Bu et al. Univla: Learning to act anywhere with task-centric latent actions. arXiv preprint arXiv:2505.06111 , 2025. [49] M. J. Kim, K. Pertsch, S. Karamcheti, et al. Openvla-oft: Fine-tuning vision-language-action models via optimal transport with action chunking. arXiv preprint arXiv:2406.09246 , 2024. [50] F. Li, W. Song, H. Zhao, J. Wang, P. Ding, D. Wang, L. Zeng, and H. Li. Spatial forcing: Implicit spatial representation alignment for vision-language-action model. arXiv preprint arXiv:2510.12276 , 2025. 12

@@ -1,0 +1,389 @@
+Title: HCPG-Flow:Hierarchical Contact-Progress Guidance for Flow-Policy Robot Manipulation
+
+URL Source: https://arxiv.org/pdf/2607.17651v1
+
+Published Time: Tue, 21 Jul 2026 01:35:34 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+> 1
+
+# HCPG-Flow: Hierarchical Contact-Progress Guidance for Flow-Policy Robot Manipulation 
+
+Guanghu Xie, Mingxu Li, Shuo Zhang, Yonglong Zhang, Yifan Yang, Yang Liu ∗, Zongwu Xie, Baoshi Cao 
+
+Abstract —Flow policies can represent multimodal action dis-tributions for robot manipulation, yet a robot must execute one action at each control step. When several proposals are sampled, critic-based ranking makes data collection depend on value estimates over candidate actions that may be weakly repre-sented in replay. We introduce HCPG-Flow, an analytic rollout-time selector that augments SAC-Flow with hierarchical, object-centric contact-progress guidance while preserving its actor and critic objectives. HCPG switches from end-effector approach to task progress after contact, scores each proposal by the first-order reduction of a task-relevant distance, standardizes scores within the candidate set, and executes a temperature-controlled action embedding. Across ten simulated tasks, HCPG improves mean success over SAC-Flow on both benchmarks, including a 9.5 percentage-point gain on ManiSkill. Four physical tasks further show high success with a 17.4% reduction in successful completion steps. 
+
+Index Terms —Reinforcement learning, robot manipulation, flow policies. 
+
+I. I NTRODUCTION 
+
+# ROBOT manipulation couples multimodal action choices with abrupt changes in contact. Flow- and diffusion-based policies are well suited to this setting because they can represent action distributions that a unimodal Gaussian policy may not capture [1]–[4]. SAC-Flow [5] combines this expressive policy class with Soft Actor-Critic (SAC) [6], allowing several plausible actions to be generated from the same state. This capability shifts part of the control problem from generating an action to deciding which proposal should be executed. Sampling several actions from a generative policy and selecting the highest-valued proposal is an established strat-egy in batch-constrained and diffusion-based RL [7], [8]. This rule reuses the learned value function, but its decision quality inherits critic errors, particularly for actions weakly supported by the training distribution [7]–[9]. This issue is especially relevant around grasp, push, insertion, and release transitions, where similar long-horizon estimates can corre-spond to different immediate geometric consequences. Our experiments likewise show that Q-guided candidate selection 
+
+This work was supported by the Natural Science Foundation of Hei-longjiang Province for Excellent Young Scholars (Grant No. YQ2024E018) and the Youth Talent Support Program of China (Grant No. 2022-JCJQ-QT-061). The authors are with the State Key Laboratory of Robotics and Systems, Harbin Institute of Technology, Harbin 150001, Heilongjiang, China (e-mail: 23b308003@stu.hit.edu.cn; 25S008014@stu.hit.edu.cn; 25S008055@stu.hit.edu.cn; zhangyl202601@163.com; yangyi-fan03001@163.com; liuyanghit@hit.edu.cn; xiezongwu@hit.edu.cn; cbs@hit.edu.cn). 
+
+> ∗
+
+Corresponding author: Yang Liu (e-mail: liuyanghit@hit.edu.cn). 
+
+is not consistently stronger than single-candidate SAC-Flow. The unresolved question is therefore how to exploit proposal diversity using information that is available before reliable long-horizon ranking. Our key observation is that many manipulation tasks expose a local progress signal through the geometry among the tool center point (TCP), manipulated object, and task goal [4], [10], [11]. Before contact, useful actions move the TCP toward the object; after contact, they move the object along a task-relevant direction. HCPG-Flow turns this observation into a hierarchical candidate selector. It uses a contact-aware phase gate to switch between approach and task progress, evaluates each proposal through a first-order distance-reduction score, calibrates scores within the proposal set, and forms a soft action embedding. The resulting module operates only during rollout and leaves the actor and critic objectives unchanged. The principal contributions are:  
+
+> •
+
+An object-centric formulation of flow-policy candi-date selection. We formulate execution-time selection as phase-conditioned object-centric progress and relate the directional score to the local first-order reduction of a task distance.  
+
+> •
+
+An analytic selector that preserves the learning backbone. HCPG combines a contact-aware phase gate, within-set score normalization, and soft action embedding without introducing a learned scorer, auxiliary loss, or additional backward pass.  
+
+> •
+
+Empirical gains across simulation and real-world ma-nipulation. Across ten simulated tasks, HCPG improves the task-averaged success rate of SAC-Flow on both ManiSkill and MetaWorld, including a 9.5 percentage-point gain on ManiSkill. Across four physical tasks, it raises aggregate success from 91.7% to 98.3% and reduces successful completion steps by 17.4%. II. R ELATED WORK 
+
+A. Maximum-Entropy RL and Generative Policies 
+
+Policy-gradient and actor-critic methods provide the op-timization backbone for continuous-control RL [12]–[15]. SAC [6] combines off-policy value learning with entropy-regularized policy improvement, but its standard Gaussian actor can be restrictive for multimodal action distributions. Diffusion and flow models provide more expressive alterna-tives for decision making and robot control [1]–[4], [9], [16]– [19]. SAC-Flow [5], FlowRL [20], QSM [21], and DIME [22] study flow- or score-based policy parameterizations and their optimization. arXiv:2607.17651v1 [cs.RO] 20 Jul 2026 2    
+
+> Fig. 1. Robot-centric overview of HCPG-Flow. Physical and simulated manipulation tasks provide state and contact cues to a conditional flow actor, which generates K= 4 full-dimensional action proposals in one vectorized call. HCPG switches the active progress target at contact, scores the proposals, and forms a bounded soft action without critic-based ranking. The executed transition enters the original replay buffer and SAC-Flow update; the learning objectives remain unchanged.
+
+B. Candidate Evaluation and Goal-Conditioned Control 
+
+Value-based candidate ranking selects actions according to predicted long-horizon return, as used broadly in actor-critic and diffusion-based RL [6], [9], [21]. Model-based planning provides another route by simulating candidate consequences, but it requires a dynamics model and additional rollout com-putation. Hindsight Experience Replay [23] and related goal-conditioned methods use achieved goals to improve learning under sparse rewards. 
+
+C. Object-Centric Robot Manipulation 
+
+Relative object geometry is a recurring inductive bias in visual manipulation and large-scale robot learning [10], [11], [24], [25]. The same end-effector displacement can be useful or harmful depending on the contact phase and object-goal relation, motivating action evaluation in object-centric coordi-nates. III. M ETHOD 
+
+A. SAC-Flow Backbone and Problem Formulation 
+
+We consider a continuous-control Markov decision process 
+
+M = (S, A, P, r, γ ) with replay buffer D. SAC-Flow re-places the Gaussian SAC actor with a conditional flow policy while retaining off-policy twin-critic learning and entropy-regularized policy improvement [5]. Starting from base noise 
+
+x0 
+
+> i
+
+= ϵi ∼ p0, its velocity-reparameterized actor generates an action through M integration steps, 
+
+xm+1  
+
+> i
+
+= xmi + ∆ t v θ (xmi , t m; st), ait = Π A(xMi ), (1) where vθ is the conditional velocity network and ΠA enforces the action bounds. The differentiable flow rollout receives the SAC actor signal from the learned critics; executed transitions are stored in D, and the actor and critics are updated using the original SAC-Flow objectives. For HCPG-Flow, the same actor maps independent noise samples to a candidate set, 
+
+ait = Fθ (ϵi; st), ϵi ∼ p0, i ∈ { 1, . . . , K }, (2) where Fθ denotes the complete integration map in Eq. (1). Sampling is vectorized by repeating the state features K times in one actor call, yielding AKt = {a1 
+
+> t
+
+, . . . , a Kt }. The SAC-Flow baseline executes its single sample directly. A critic-guided selector would rank this set using 
+
+bQϕ(st, a it), making the collected transition depend on the critic’s ordering over the proposals. We instead seek a rollout-time map G(st, AKt ) 7 → a⋆t that uses task geometry available in the observation, adds no learned scorer, remains comparable across candidates and task scales, and leaves the SAC-Flow losses unchanged. As shown in Fig. 1, HCPG implements this map in three steps: it constructs object-centric approach and task directions, evaluates candidates with a contact-conditioned progress score, and converts within-set normalized scores into a bounded action. 3
+
+B. Object-Centric Task Adapter 
+
+The task adapter exposes the local geometry required by the selector. It maps the raw observation into 
+
+ϕ(st) =  xtcp  
+
+> t
+
+, x ot , x gt , z t
+
+ , (3) where xtcp  
+
+> t
+
+is the end-effector or tool position, xot is the manipulated-object position, xgt is the goal or task reference, and zt contains an optional grasp/contact indicator. Only the translational part of each candidate, ui = xyz( ait), is used to compute the progress score. Rotational and gripper components remain part of the flow-generated candidate and are retained by the soft action embedding described below. We define an approach vector and a task vector, 
+
+ρapp  
+
+> t
+
+= xot − xtcp  
+
+> t
+
+, ρtask  
+
+> t
+
+= xgt − xot . (4) The adapter specifies the semantic interpretation of these vec-tors for each task family rather than changing the underlying state seen by SAC-Flow. For example, PokeCube uses the peg head as the tool point, while lifting uses the vertical axis as the post-contact task direction. 
+
+C. First-Order Directional Progress 
+
+For a candidate translation u and target vector ρ, define 
+
+D(u, ρ ) = u⊤ρ
+
+max( ∥ρ∥2, ε ) . (5) The directional score is a local surrogate for immediate geometric progress. Let d(x, g ) = ∥g − x∥2 and assume a local displacement x+ = x + αu with small α > 0. A first-order expansion gives 
+
+d(x, g ) − d(x + αu, g ) = αD (u, g − x) + O(α2). (6) Thus, under this local displacement model, maximizing D
+
+maximizes the first-order reduction in target distance. Before contact, this argument applies to TCP-object distance. After contact, it applies to object-goal distance under the local approximation that TCP displacement transfers to the object. This interpretation motivates candidate ranking but does not assume that distance reduction is globally optimal over a long horizon. 
+
+D. Hierarchical Contact-Progress Score 
+
+The geometric objective changes when the robot establishes contact or grasps the object. HCPG represents this two-level hierarchy using a phase variable 
+
+ct =
+
+(
+
+clip( zgrasp  
+
+> t
+
+, 0, 1) , if a grasp flag is available ,
+
+I[∥ρapp  
+
+> t
+
+∥2 < d c] , otherwise . (7) The candidate progress score is 
+
+ei = (1 − ct)D(ui, ρ app  
+
+> t
+
+) + ctD(ui, ρ task  
+
+> t
+
+) − λa∥ui∥2. (8) The first term rewards approach before contact, the second rewards task progress after contact, and the final term breaks otherwise similar rankings in favor of smaller translational commands. The main experiments use dc = 0 .08 and λa =0.05 for all tasks. The lift adapter replaces ρtask  
+
+> t
+
+with the positive vertical axis, while articulated tasks use the task axis or goal displacement supplied by the observation adapter. 
+
+Algorithm 1 HCPG-Flow rollout-time candidate selection 
+
+Require: state st, flow actor Fθ , adapter ϕ, K, dc, λa, τ 
+
+> 1:
+
+Sample a1: Kt = Fθ (ϵ1: K ; st) in one vectorized call  
+
+> 2:
+
+Extract ρapp  
+
+> t
+
+, ρtask  
+
+> t
+
+, and phase ct using Eqs. (4)–(7)  
+
+> 3:
+
+for i = 1 , . . . , K do  
+
+> 4:
+
+Compute progress score ei using Eq. (8)  
+
+> 5:
+
+end for  
+
+> 6:
+
+Standardize {ei} using Eq. (9)  
+
+> 7:
+
+Compute weights ω1: K and action a⋆t using Eq. (10)  
+
+> 8:
+
+Execute a⋆t and store (st, a ⋆t , r t, s t+1 ) in D 
+
+> 9:
+
+Update the SAC critic and SAC-Flow actor without mod-ification 
+
+E. Within-Set Score Normalization and Soft Embedding 
+
+Raw progress scores vary with task scale and the local state. HCPG therefore standardizes them within each proposal set: 
+
+bei = ei − μe
+
+max( σe, ε ) , μe = 1
+
+K
+
+> K
+
+X
+
+> j=1
+
+ej , (9) where σe is the corresponding population standard deviation. This normalization preserves the within-set ordering while making the temperature less sensitive to the absolute score scale. Rather than executing a hard arg max , HCPG forms a temperature-controlled action embedding, 
+
+ωi = exp( bei/τ )
+
+PKj=1 exp( bej /τ ) , a⋆t = Π A
+
+> K
+
+X
+
+> i=1
+
+ωiait
+
+!
+
+, (10) where ΠA clips the blended action to the valid action bounds. This mapping is continuous with respect to the candidate scores and keeps the executed action in the convex hull of the proposals before clipping. We use K = 4 , τ = 0 .7, and no top-k truncation in the main experiments. IV. E XPERIMENTS 
+
+A. Evaluation Protocol 
+
+We evaluate on four ManiSkill tasks: PickCube, PushCube, PokeCube, and PullCube. These tasks cover grasping, pushing, poking, and pulling with explicit object-goal structure. We also evaluate on six MetaWorld tasks: ButtonPress, DrawerOpen, DoorOpen, SweepInto, PegInsertSide, and LeverPull. These tasks include contact-rich articulated manipulation and object relocation. Our primary baseline is SAC-Flow, which retains the same flow-policy learning backbone but does not use multi-candidate HCPG selection [5]. The MetaWorld comparison additionally includes SAC [6], FlowRL [20], and QSM [21]; the ManiSkill table includes FlowRL. We report mean and standard deviation over protocol-matched seeds 0, 1, and 2 using the final five evaluations. 
+
+B. Implementation Details 
+
+Simulation experiments run on NVIDIA GeForce RTX 4090 GPUs. HCPG uses K = 4, τ = 0.7, dc = 0.08 , and 4
+
+λa = 0.05 . Within each task, all methods use the same training budget, environment parallelism, update schedule, and evaluation frequency. Real-robot policies issue Cartesian end-effector delta commands at 30 Hz under matched sensing and control settings. 
+
+C. Main Results 
+
+Across both suites, HCPG improves the across-task mean of its matched SAC-Flow backbone and remains within 0.1 percentage points on saturated tasks. On MetaWorld (Table I), HCPG raises the across-task mean from 94.7% to 97.1%. It improves SAC-Flow on ButtonPress, SweepInto, PegInsert-Side, and LeverPull, with gains of 0.9–9.3 percentage points, and remains within 0.1 points on the saturated DrawerOpen and DoorOpen tasks. HCPG has the highest across-task mean among the compared methods, although QSM is strongest on ButtonPress and PegInsertSide. On ManiSkill (Table II), HCPG raises the across-task mean from 87.2% to 96.7%. The largest gain is 34.2 points on PickCube, where the selector must distinguish approach, grasp, and transport proposals. The remaining three tasks already exceed 96% under SAC-Flow; HCPG adds 0.4–2.1 points. FlowRL performs strongly on these saturated tasks but fails to learn PickCube reliably, yielding a lower across-task mean. Figure 5 reports checkpoint-level evaluation success for both simulation suites under the same fixed protocol as the main tables. HCPG improves the average learning profile across most of the training budget. 
+
+D. Ablation Study 
+
+We isolate the selection rule and candidate count on Pick-Cube, PushCube, and PullCube. All variants have complete coverage over three tasks and three seeds. As shown in Table III, HCPG K=4 achieves 96.7% last-five success and 85.2 success AUC, compared with 84.2% and 75.1 for SAC-Flow K=1. Q-guided K=4 attains high final success but lower last-five success (81.8%) and AUC (71.4), showing that four proposals and critic ranking alone do not reproduce the HCPG result. Table IV further shows that increasing K is not suf-ficient: K=8 does not dominate K=4, whereas K=2 and K=8 are markedly less reliable on PickCube. We therefore use K=4 throughout the main comparison. V. R EAL -R OBOT EVALUATION 
+
+We study peg insertion, button pressing, drawer closing, and rugby-ball grasping. The tasks instantiate four contact-progress structures used by HCPG: constrained insertion, short-horizon pressing, articulated closing, and an approach–grasp transition. Policies are initialized and trained under matched task budgets, then evaluated for 15 autonomous trials without intervention. The budgets are 1200 environment steps for insertion, 1000 for button pressing and rugby grasping, and 400 for drawer closing. Both methods solve all 15 insertion, button, and drawer trials. HCPG reduces the mean steps to first success from 29.6 to 24.3 for insertion, from 32.1 to 31.3 for button pressing, and from 127.7 to 107.4 for drawer closing. The largest difference appears on rugby grasping, where HCPG reaches 14/15 successes compared with 10/15 for SAC-Flow; among successful trials, completion steps decrease from 60.2 to 43.4. Pooling the four tasks, HCPG records 59/60 successes (98.3%) and SAC-Flow records 55/60 (91.7%). Across task-level means, successful completion steps decrease from 62.4 to 51.6 (17.4%). Figure 6 shows representative task-completion states from successful HCPG rollouts. VI. C ONCLUSION 
+
+We introduced HCPG-Flow, an analytic candidate selector that converts flow-policy proposals into robot actions using contact-conditioned object-centric progress. Across ten Man-iSkill and MetaWorld tasks, HCPG improves the across-task success of its matched SAC-Flow backbone, and ablations distinguish the gain from candidate count and Q-guided rank-ing alone. Four physical tasks further show improved pooled success and a 17.4% reduction in successful completion steps. Because the selector leaves the actor and critic objectives unchanged and adds no learned parameters, it provides a lightweight route for injecting manipulation geometry into online data collection. REFERENCES [1] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,” in Advances in Neural Information Processing Systems , 2020. [2] Y. Lipman, R. T. Q. Chen, H. Ben-Hamu, M. Nickel, and M. Le, “Flow matching for generative modeling,” in International Conference on Learning Representations , 2023. [3] X. Liu, C. Gong, and Q. Liu, “Flow straight and fast: Learning to gen-erate and transfer data with rectified flow,” in International Conference on Learning Representations , 2023. [4] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” in Robotics: Science and Systems , 2023. [5] Y. Zhang, S. Yu, T. Zhang, M. Guang, H. Hui, K. Long, Y. Wang, C. Yu, and W. Ding, “SAC Flow: Sample-efficient reinforcement learning of flow-based policies via velocity-reparameterized sequential modeling,” in International Conference on Learning Representations ,2026. [Online]. Available: https://openreview.net/forum?id=zZvWj4JrYj [6] T. Haarnoja, A. Zhou, P. Abbeel, and S. Levine, “Soft actor-critic: Off-policy maximum entropy deep reinforcement learning with a stochastic actor,” in International Conference on Machine Learning , 2018. [7] S. Fujimoto, D. Meger, and D. Precup, “Off-policy deep reinforcement learning without exploration,” in Proceedings of the 36th International Conference on Machine Learning , ser. Proceedings of Machine Learning Research, vol. 97. PMLR, 2019, pp. 2052–2062. [8] L. Mao, H. Xu, X. Zhan, W. Zhang, and A. Zhang, “Diffusion-DICE: In-sample diffusion guidance for offline reinforcement learning,” in          
+
+> Advances in Neural Information Processing Systems , vol. 37, 2024. [9] Z. Wang, J. J. Hunt, and M. Zhou, “Diffusion policies as an expressive policy class for offline reinforcement learning,” in International Confer-ence on Learning Representations , 2023. [10] A. Zeng, P. Florence, J. Tompson, S. Welker, J. Chien, M. Attarian, T. Armstrong, I. Krasin, D. Duong, V. Sindhwani, and J. Lee, “Trans-porter networks: Rearranging the visual world for robotic manipulation,” in Conference on Robot Learning , 2021. [11] C. Chi, Z. Xu, C. Pan, E. Cousineau, B. Burchfiel, S. Feng, R. Tedrake, and S. Song, “Universal manipulation interface: In-the-wild robot teach-ing without in-the-wild robots,” in Robotics: Science and Systems , 2024. [12] R. S. Sutton, D. McAllester, S. Singh, and Y. Mansour, “Policy gradient methods for reinforcement learning with function approximation,” in
+> Advances in Neural Information Processing Systems , 1999. [13] T. P. Lillicrap, J. J. Hunt, A. Pritzel, N. Heess, T. Erez, Y. Tassa, D. Silver, and D. Wierstra, “Continuous control with deep reinforcement learning,” in International Conference on Learning Representations ,2016.
+
+5
+
+TABLE I META WORLD LAST -FIVE EPISODE SUCCESS (%). V ALUES ARE REPORTED AS MEAN ± SD. T ASK ROWS USE SD OVER SEEDS 0/1/2; THE FINAL ROW USES SAMPLE SD ACROSS TASK MEANS . SD QUANTIFIES VARIABILITY AND IS NOT A CONFIDENCE INTERVAL OR A BOUNDED SUCCESS -RATE RANGE .Task SAC FlowRL QSM SAC-Flow HCPG-Flow ButtonPress 82.0 ± 13.2 78.0 ± 8.4 94.5 ± 5.2 82.5 ± 8.2 91.9 ± 2.3 DrawerOpen 55.1 ± 48.9 65.3 ± 56.6 33.3 ± 57.7 100.0 ± 0.0 99.9 ± 0.2 DoorOpen 99.9 ± 0.2 99.5 ± 0.6 100.0 ± 0.0 100.0 ± 0.0 99.9 ± 0.2 SweepInto 83.9 ± 8.5 83.1 ± 14.0 51.7 ± 46.0 92.3 ± 3.6 93.7 ± 6.7 
+
+## PegInsertSide 79.7 ± 31.7 64.8 ± 56.1 99.9 ± 0.2 98.1 ± 2.6 99.1 ± 1.0 LeverPull 55.9 ± 46.7 93.2 ± 8.4 64.9 ± 38.9 95.1 ± 1.8 98.4 ± 2.4 
+
+## Across-task mean 76.1 ± 17.5 80.6 ± 14.2 74.1 ± 28.3 94.7 ± 6.7 97.1 ± 3.5 a
+
+PickCube 
+
+> ManiSkill
+
+b
+
+PushCube 
+
+c
+
+PokeCube 
+
+d
+
+PullCube 
+
+e
+
+ButtonPress 
+
+> MetaWorld
+
+f
+
+DrawerOpen 
+
+g
+
+PegInsertSide 
+
+h
+
+LeverPull 
+
+Fig. 2. Representative successful simulation rollouts. The top row shows ManiSkill manipulation tasks; the bottom row shows MetaWorld contact-rich and articulated manipulation tasks. TABLE II MANI SKILL LAST -FIVE EPISODE SUCCESS (%). V ALUES ARE REPORTED AS MEAN ± SD. T ASK ROWS USE SD OVER SEEDS 0/1/2; THE FINAL ROW USES SAMPLE SD ACROSS TASK MEANS . SD QUANTIFIES VARIABILITY AND IS NOT A CONFIDENCE INTERVAL OR A BOUNDED SUCCESS -RATE RANGE . QSM IS OMITTED BECAUSE ITS CRITIC -GRADIENT TARGET WAS NUMERICALLY UNSTABLE UNDER THIS PROTOCOL .Task FlowRL SAC-Flow HCPG-Flow PickCube 1.6 ± 1.4 57.5 ± 14.2 91.7 ± 8.8 
+
+PushCube 99.9 ± 0.2 96.7 ± 2.9 98.8 ± 1.3 PokeCube 96.8 ± 1.6 96.2 ± 3.3 96.7 ± 1.4 PullCube 99.9 ± 0.2 98.3 ± 1.9 99.6 ± 0.7 Across-task mean 74.5 ± 48.6 87.2 ± 19.8 96.7 ± 3.6 
+
+[14] S. Fujimoto, H. van Hoof, and D. Meger, “Addressing function approx-imation error in actor-critic methods,” in International Conference on Machine Learning , 2018. [15] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, “Prox-imal policy optimization algorithms,” arXiv preprint arXiv:1707.06347 ,2017. [16] P. Florence, C. Lynch, A. Zeng, O. A. Ramirez, A. Wahid, L. Downs, A. Wong, J. Lee, I. Mordatch, and J. Tompson, “Implicit behavioral cloning,” in Conference on Robot Learning , 2022. [17] M. Janner, Y. Du, J. B. Tenenbaum, and S. Levine, “Planning with diffusion for flexible behavior synthesis,” in International Conference ButtonPress 
+
+> DrawerOpen
+> DoorOpen
+> SweepInto
+> PegInsertSide
+> LeverPull
+> Avg
+
+0
+
+25 
+
+50 
+
+75 
+
+100     
+
+> Success rate (%)  Avg.
+> SAC FlowRL QSM SAC-Flow HCPG
+
+Fig. 3. MetaWorld last-five episode success. Bars show means and black whiskers show ±1 SD as variability, not confidence intervals or bounded success-rate ranges; the shaded Avg group reports the across-task mean. 
+
+on Machine Learning , 2022. [18] A. Ajay, Y. Du, A. Gupta, J. B. Tenenbaum, T. Jaakkola, and P. Agrawal, “Is conditional generative modeling all you need for decision making?” in International Conference on Learning Representations , 2023. [19] A. Z. Ren, J. Lidard, L. L. Ankile, A. Simeonov, P. Agrawal, A. Majum-dar, B. Burchfiel, H. Dai, and M. Simchowitz, “Diffusion policy policy optimization,” in International Conference on Learning Representations ,2025. [20] L. Lv, Y. Li, Y. Luo, F. Sun, T. Kong, J. Xu, and X. Ma, “Flow-based policy for online reinforcement learning,” in Advances in Neural Information Processing Systems , 2025. [21] M. Psenka, A. Escontrela, P. Abbeel, and Y. Ma, “Learning a diffusion model policy from rewards via q-score matching,” in International 6PickCube PushCube PokeCube PullCube Avg 
+
+0
+
+25 
+
+50 
+
+75 
+
+100   
+
+> Success rate (%)  Avg.
+> FlowRL SAC-Flow HCPG
+
+Fig. 4. ManiSkill last-five episode success. Bars show means and black whiskers show ±1 SD as variability, not confidence intervals or bounded success-rate ranges; the shaded Avg group reports the across-task mean. 0 25 50 75 100 
+
+> 0
+> 25
+> 50
+> 75
+> 100
+> Success rate (%)
+
+(a) ManiSkill mean     
+
+> 025 50 75 100
+
+(b) MetaWorld mean 
+
+Normalized training budget (%) 
+
+> SAC
+> FlowRL
+> QSM
+> SAC-Flow
+> HCPG
+
+Fig. 5. Simulation learning progress for all main-table methods. Each panel averages all tasks in the corresponding suite within each seed after linearly aligning normalized training budgets. Lines show means over seeds 0, 1, and 2; shaded regions denote ±1 SD. 
+
+Conference on Machine Learning , 2024. [22] O. Celik, Z. Li, D. Blessing, G. Li, D. Palenicek, J. Peters, G. Chal-vatzaki, and G. Neumann, “DIME: Diffusion-based maximum entropy reinforcement learning,” in Proceedings of the 42nd International Con-ference on Machine Learning , ser. Proceedings of Machine Learning Research, vol. 267. PMLR, 2025, pp. 6958–6977. [23] M. Andrychowicz, F. Wolski, A. Ray, J. Schneider, R. Fong, P. Welinder, B. McGrew, J. Tobin, P. Abbeel, and W. Zaremba, “Hindsight experience replay,” in Advances in Neural Information Processing Systems , 2017. [24] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, X. Chen, K. Choro-manski, T. Ding, D. Driess, A. Dubey, C. Finn et al. , “RT-1: Robotics transformer for real-world control at scale,” in Robotics: Science and Systems , 2023. [25] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn, “Learning fine-grained bimanual manipulation with low-cost hardware,” in Robotics: Science and Systems , 2023. TABLE III SELECTION AND CANDIDATE -COUNT ABLATION ON PICK CUBE ,PUSH CUBE , AND PULL CUBE OVER SEEDS 0/1/2. M ETRICS ARE AVERAGED ACROSS THE NINE TASK -SEED RUNS .Method Runs Last-5 AUC Final SAC-Flow 9/9 84.2 75.1 96.5 Q-guided K=4 9/9 81.8 71.4 99.3 
+
+HCPG K=2 9/9 80.8 73.8 98.6 
+
+HCPG K=4 9/9 96.7 85.2 99.3 
+
+HCPG K=8 9/9 80.8 74.1 99.3 
+
+TABLE IV SENSITIVITY TO CANDIDATE COUNT K, MEASURED BY LAST -FIVE SUCCESS (%). K=4 PROVIDES THE STRONGEST AGGREGATE LAST -FIVE SUCCESS AND AUC IN TABLE III. Task HCPG K=2 HCPG K=4 HCPG K=8 PickCube 42.5 ± 13.5 91.7 ± 8.8 46.2 ± 15.7 PushCube 100.0 ± 0.0 98.8 ± 1.3 98.8 ± 1.3 PullCube 100.0 ± 0.0 99.6 ± 0.7 97.5 ± 2.2 TABLE V REAL -ROBOT EVALUATION OVER 15 TRIALS PER TASK . C OMPLETION STEPS ARE AVERAGED OVER SUCCESSFUL TRIALS AND COUNT ACTIONS TO THE FIRST TASK -CONDITION HIT . L OWER IS PREFERRED .Success (%) Completion steps Task SAC-Flow HCPG-Flow SAC-Flow HCPG-Flow Peg insertion 100.0 100.0 29.6 24.3 Button press 100.0 100.0 32.1 31.3 Drawer closing 100.0 100.0 127.7 107.4 Rugby grasp 66.7 93.3 60.2 43.4 Overall / macro mean 91.7 98.3 62.4 51.6 (a) Peg insertion (b) Button press 
+
+(c) Drawer closing (d) Rugby grasp 
+
+Fig. 6. Successful HCPG-Flow completion states on the physical Franka platform: (a) the peg is fully inserted, (b) the button is depressed, (c) the drawer is closed, and (d) the rugby ball is securely grasped above the support surface.
