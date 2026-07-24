@@ -1,0 +1,227 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-24T20:05:21.190900+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 2,
+    "deep_cap": 6,
+    "deep_selected": 2,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2607.21049v1",
+      "source": "arxiv",
+      "title": "GuidedAttention: Interpretable and Correctable Visual Attention for OOD-Robust Robot Manipulation via Imitation Learning",
+      "abstract": "End-to-end visuomotor policies provide little opportunity for humans to understand or correct the policy's visual attention. We propose GuidedAttention, a visuomotor imitation learning framework that introduces interpretable and correctable visual attention as an explicit intermediate representation. Task-relevant attention keypoints are predicted from camera images and condition a diffusion-based action policy. Users can inspect and optionally correct selected keypoints once at rollout initialization, after which the corrected attention is automatically propagated throughout execution by a tracking module. Experiments in simulation and the real world demonstrate that GuidedAttention consistently improves robot manipulation performance, particularly under positional and appearance out-of-distribution (OOD) conditions.",
+      "authors": [
+        "Masaki Murooka",
+        "Ryoichi Nakajo",
+        "Keisuke Shirai",
+        "Tomohiro Motoda",
+        "Hanbit Oh",
+        "Ryo Hanai",
+        "Yukiyasu Domae"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-23T08:33:40+00:00",
+      "link": "https://arxiv.org/pdf/2607.21049v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "imitation learning in robotics with diffusion policy",
+      "llm_evidence_cn": "机器人模仿学习结合扩散策略",
+      "llm_evidence": "机器人模仿学习结合扩散策略",
+      "canonical_evidence": "机器人模仿学习结合扩散策略",
+      "llm_tldr_en": "GuidedAttention introduces interpretable and correctable visual attention for robot manipulation via imitation learning, using diffusion-based action policy conditioned on attention keypoints.",
+      "llm_tldr_cn": "针对端到端模仿学习策略缺乏可解释性的问题，本文提出GuidedAttention框架，通过引入可解释可校正的视觉注意力作为中间表示，预测任务相关注意力关键点并条件化扩散动作策略。用户可在初始化时校正关键点，并由跟踪模块自动传播。仿真和真实实验表明，该方法提升了泛化鲁棒性并允许人类干预。",
+      "llm_tldr": "针对端到端模仿学习策略缺乏可解释性的问题，本文提出GuidedAttention框架，通过引入可解释可校正的视觉注意力作为中间表示，预测任务相关注意力关键点并条件化扩散动作策略。用户可在初始化时校正关键点，并由跟踪模块自动传播。仿真和真实实验表明，该方法提升了泛化鲁棒性并允许人类干预。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.21302v1",
+      "source": "arxiv",
+      "title": "Expert Behavior Prior Reinforcement Learning",
+      "abstract": "Behavior prior reinforcement learning (BPRL) has emerged as a promising paradigm to improve sample efficiency in online reinforcement learning (RL) by leveraging policy priors derived from offline demonstrations. However, most existing BPRL methods rely on static offline datasets, which often suffer from low data diversity and suboptimal trajectory quality. This reliance restricts the effectiveness of policy priors, hindering both policy exploitation and stability during online training. Consequently, agents are prone to inefficient exploration and unstable learning dynamics. To address these limitations, we deviate from existing offline pre-training methods and propose an Expert Behavior Prior (EBP) algorithm. Specifically, we introduce a Q-guided conditional variational autoencoder (Q-CVAE) that learns to generate expert policy priors directly from the online replay buffer. This enables the generation of high-value actions for guiding policy updates without relying on pre-collected expert trajectories. To further enhance policy exploitation, we propose an expert policy guidance (EPG) mechanism that selects expert actions from a generative support set, and we integrate a policy gradient correction (PGC) module to harmonize Q-guidance with expert supervision, promoting stable and consistent policy improvement. Extensive experiments conducted on robotic control (Gym, PyBullet) and industrial control (DMControl) benchmarks demonstrate that EBP significantly outperforms state-of-the-art online RL algorithms, achieving higher sample efficiency and more stable convergence.",
+      "authors": [
+        "Gong Gao",
+        "Weidong Zhao",
+        "Xianhui Liu",
+        "Ning Jia"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-23T13:26:57+00:00",
+      "link": "https://arxiv.org/pdf/2607.21302v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Expert Behavior Prior for RL using demonstrations",
+      "llm_evidence_cn": "利用示范的专家行为先验强化学习",
+      "llm_evidence": "利用示范的专家行为先验强化学习",
+      "canonical_evidence": "利用示范的专家行为先验强化学习",
+      "llm_tldr_en": "Expert Behavior Prior (EBP) algorithm uses a Q-guided conditional VAE to learn a policy prior from demonstrations, improving sample efficiency and stability in online RL.",
+      "llm_tldr_cn": "针对现有行为先验强化学习依赖静态离线数据导致探索效率低和训练不稳定的问题，本文提出专家行为先验（EBP）算法，通过Q引导的条件变分自编码器从示范中学习策略先验，并动态注入在线训练过程。实验表明该方法在多种机器人任务中显著提升了样本效率和稳定性。",
+      "llm_tldr": "针对现有行为先验强化学习依赖静态离线数据导致探索效率低和训练不稳定的问题，本文提出专家行为先验（EBP）算法，通过Q引导的条件变分自编码器从示范中学习策略先验，并动态注入在线训练过程。实验表明该方法在多种机器人任务中显著提升了样本效率和稳定性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.20771v1",
+      "source": "arxiv",
+      "title": "Emergent Compositional Skills in Mixture-of-Experts VLAs",
+      "abstract": "We consider the problem of learning compositional robot policies end-to-end from expert demonstrations, without any pre-specified notion of task decomposition or hierarchy. We ask whether a VLA trained with a simplified Mixture-of-Experts (MoE) action head can emergently learn to decompose tasks into reusable, interpretable primitives. We find that learned experts are heavily reused across tasks and consistently correspond to qualitatively distinct low-level behaviors, suggesting that the router implicitly learns to perform high-level sequencing while experts serve as compositional primitives. Our MoE matches the task performance of a monolithic baseline while demonstrating meaningful expert specialization, a step toward modular, interpretable robot policies that emerge from data alone.",
+      "authors": [
+        "Shlok Shah",
+        "Rhiaan Jhaveri",
+        "Tharun Kumar Tiruppali Kalidoss",
+        "Chirayu Nimonkar",
+        "Ishaan Javali"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-22T22:36:52+00:00",
+      "link": "https://arxiv.org/pdf/2607.20771v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Emergent compositional skills from expert demonstrations using MoE",
+      "llm_evidence_cn": "利用MoE从专家示范中涌现组合技能",
+      "llm_evidence": "利用MoE从专家示范中涌现组合技能",
+      "canonical_evidence": "利用MoE从专家示范中涌现组合技能",
+      "llm_tldr_en": "A Mixture-of-Experts VLA trained end-to-end on expert demonstrations discovers reusable primitives, with the router learning high-level sequencing and experts specializing in low-level behaviors.",
+      "llm_tldr_cn": "针对机器人策略端到端学习缺乏任务分解的问题，本文在视觉-语言-动作模型（VLA）中使用简化混合专家（MoE）动作头，从专家示范中自动学习可重用、可解释的原语。实验表明专家跨任务重用且对应不同低级行为，路由器隐式学习高层序列，在机器人操作任务上达到与单一模型相当的性能。",
+      "llm_tldr": "针对机器人策略端到端学习缺乏任务分解的问题，本文在视觉-语言-动作模型（VLA）中使用简化混合专家（MoE）动作头，从专家示范中自动学习可重用、可解释的原语。实验表明专家跨任务重用且对应不同低级行为，路由器隐式学习高层序列，在机器人操作任务上达到与单一模型相当的性能。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.18709v1",
+      "source": "arxiv",
+      "title": "RoboInter1.5: A Holistic Intermediate Representation Suite for Embodied World Modeling and Robotic Manipulation",
+      "abstract": "Existing robot datasets remain expensive to curate, embodiment-specific, and insufficiently annotated with the fine-grained structure required for generalizable reasoning, execution, or long-horizon environment dynamics simulation. Building on our prior work, RoboInter1.0, we present RoboInter1.5, an extended and holistic suite of intermediate representations for both robotic manipulation and embodied world modeling. RoboInter1.5 provides a unified resource of data, benchmarks, and models centered on dense manipulation-oriented intermediate representations. Specifically, RoboInter-Data contains over 230k manipulation episodes across 571 scenes with dense per-frame annotations covering more than ten types of intermediate representations, including subtasks, primitive skills, object and gripper grounding, segmentation, affordance, grasp poses, contact points, motion traces, etc. Built upon these annotations, RoboInter-VQA introduces spatial and temporal embodied VQA tasks to benchmark and improve the intermediate-representation reasoning capabilities of our RoboInter-VLM. RoboInter-VLA further studies how such representations benefit action execution through implicit, explicit, and modular plan-then-execute paradigms. To better model the physical world, we further introduce RoboInter-World, which leverages intermediate representations as structured conditioning signals for controllable prediction of future world states. Extensive evaluations demonstrate that RoboInter1.5 provides a unified spatiotemporal scaffolding for intermediate representations. Rather than treating intermediate representations merely as interpretable signals, RoboInter1.5 conceptualizes them as a bidirectional interface that both regularizes low-level action spaces and constrains the latent rollouts of open-world physical simulators.",
+      "authors": [
+        "Ziqin Wang",
+        "Hao Li",
+        "Weijun Wang",
+        "Junhao Cai",
+        "Jia Zeng",
+        "Yilun Chen",
+        "Jiangmiao Pang",
+        "Si Liu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-21T05:05:01+00:00",
+      "link": "https://arxiv.org/pdf/2607.18709v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Holistic intermediate representation suite for robotic manipulation, enabling imitation learning",
+      "llm_evidence_cn": "面向机器人操控的全面中间表示套件，支持模仿学习",
+      "llm_evidence": "面向机器人操控的全面中间表示套件，支持模仿学习",
+      "canonical_evidence": "面向机器人操控的全面中间表示套件，支持模仿学习",
+      "llm_tldr_en": "Presents RoboInter1.5, a large-scale dataset and benchmark with dense manipulation-oriented intermediate representations for robotic manipulation and world modeling.",
+      "llm_tldr_cn": "针对机器人数据集昂贵、标注不足的问题，本文扩展了RoboInter1.5套件。该套件包含超过23万操控片段、571个场景，提供密集的每帧中间表示标注，涵盖十多种类型。数据、基准和模型统一以密集操控导向中间表示为核心，旨在支持泛化推理、执行和长期环境模拟。该资源可直接用于训练和评估模仿学习算法。",
+      "llm_tldr": "针对机器人数据集昂贵、标注不足的问题，本文扩展了RoboInter1.5套件。该套件包含超过23万操控片段、571个场景，提供密集的每帧中间表示标注，涵盖十多种类型。数据、基准和模型统一以密集操控导向中间表示为核心，旨在支持泛化推理、执行和长期环境模拟。该资源可直接用于训练和评估模仿学习算法。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.21588v1",
+      "source": "arxiv",
+      "title": "AXIS: A Growable Community-Driven Data Engine for Scalable Robot Manipulation",
+      "abstract": "Learning effective robot manipulation policies requires diverse, high-quality demonstrations, yet existing data pipelines are often difficult to scale because they rely on specialized hardware, centralized operators, or fixed task suites. We present AXIS, a growable community-driven data engine and benchmark for scalable robot learning, which enables browser-based teleoperation for large-scale demonstration collection, automatically generates and validates new manipulation tasks, and transforms community-collected demonstrations into training-ready data through automated success checking, quality filtering, trajectory smoothing, and visual and physics-based augmentation. The AXIS dataset currently contains 207 diverse tasks and 50K+ trajectories. Meanwhile, AXIS organizes data into task snapshots and evaluates policies with a systematic held-out protocol. We compare vision-language-action (VLA) policies under a unified AXIS evaluation suite and analyze scaling behavior across different data volumes. Continual pretraining on AXIS substantially improves the overall success rate of $π_{0.5}$ by 5.8%, outperforms the model pretrained on RoboCasa365 by 37.3%, and exhibits consistent scaling with increasing data volume, with the largest gains observed under layout, sensor-noise, and camera perturbations.",
+      "authors": [
+        "Mengfei Zhao",
+        "Dihong Huang",
+        "Yikai Tang",
+        "Peihao Li",
+        "Mingxuan Yan",
+        "Ruiqi Zhuang",
+        "Yanjia Huang",
+        "Jie Wang",
+        "Hai Zhai",
+        "Tony Zhou",
+        "Rui Zhang",
+        "Zhexi Luo",
+        "Yuchen Huang",
+        "Jianfei Yang",
+        "Jiachen Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-23T17:58:08+00:00",
+      "link": "https://arxiv.org/pdf/2607.21588v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "demonstration collection engine for robot manipulation",
+      "llm_evidence_cn": "机器人操作演示收集引擎",
+      "llm_evidence": "机器人操作演示收集引擎",
+      "canonical_evidence": "机器人操作演示收集引擎",
+      "llm_tldr_en": "AXIS is a community-driven data engine that enables large-scale demonstration collection via browser teleoperation and automated processing, directly supporting imitation learning for robotic manipulation.",
+      "llm_tldr_cn": "当前的机器人操作策略学习需要大量高质量演示，但现有数据管道依赖专用硬件和固定任务套件，难以扩展。为此，本文提出AXIS，一个可增长的社区驱动数据引擎和基准测试，支持浏览器远程操作收集大规模演示，并自动生成和验证新任务，通过质量过滤、轨迹平滑和增强将社区收集的演示转化为训练就绪数据。AXIS目前包含207个多样任务和5万+轨迹，为机器人模仿学习提供了可扩展的数据基础设施，推动了数据驱动策略学习的发展。",
+      "llm_tldr": "当前的机器人操作策略学习需要大量高质量演示，但现有数据管道依赖专用硬件和固定任务套件，难以扩展。为此，本文提出AXIS，一个可增长的社区驱动数据引擎和基准测试，支持浏览器远程操作收集大规模演示，并自动生成和验证新任务，通过质量过滤、轨迹平滑和增强将社区收集的演示转化为训练就绪数据。AXIS目前包含207个多样任务和5万+轨迹，为机器人模仿学习提供了可扩展的数据基础设施，推动了数据驱动策略学习的发展。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
