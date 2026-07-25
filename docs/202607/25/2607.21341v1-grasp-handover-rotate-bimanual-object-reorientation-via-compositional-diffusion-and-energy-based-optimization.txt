@@ -1,0 +1,460 @@
+Title: Grasp, Handover, Rotate: Bimanual Object Reorientation via Compositional Diffusion and Energy-Based Optimization
+
+URL Source: https://arxiv.org/pdf/2607.21341v1
+
+Published Time: Fri, 24 Jul 2026 01:01:04 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# Grasp, Handover, Rotate: Bimanual Object Reorientation via Compositional Diffusion and Energy-Based Optimization 
+
+Wun Lam Yeung 1,∗, Wenjun Liu 1,∗, Yui Cheung Yu 1,∗, Zhengyan Lambo Qin 1,∗, Qijin She 1,2,†,Heng Li 1, Ziqi Wang 1, Ping Tan 1,2,‡
+
+> 1
+
+The Hong Kong University of Science and Technology 
+
+> 2
+
+Shenzhen Loop Area Institute 
+
+Fig. 1: Bimanual reorientation of a yellow cup using BiCompoDiff: the left arm picks and hands over the object, enabling the right arm to regrasp and place it in a reoriented pose with smooth, collision-free coordination. 
+
+Abstract — Bimanual object reorientation—picking an object, handing it over between two arms, and placing it in a desired target pose—is valuable when direct placement from the initial grasp is infeasible due to collisions, kinematic constraints, or poor final orientation. However, achieving this under multiple competing objectives remains challenging. We introduce Bi-CompoDiff, a compositional diffusion and energy-based frame-work that jointly optimizes grasp selection, handover, regrasp, and motion planning under multiple constraints. By combining a pretrained grasp diffusion model with bimanual planning energy-based models (EBMs), our method injects gradient guidance during reverse diffusion to enforce collision avoidance, trajectory smoothness (via differentiable inverse kinematics), handover feasibility, and regrasp safety. Annealed MCMC sampling further refines grasp poses over the composite energy landscape. Experiments across diverse simulated household re-orientation tasks demonstrate that BiCompoDiff achieves over 20% higher success rates and up to 37% smoother trajectories (measured by joint displacement) compared to strong sampling-based baselines. Real-world validation confirms effective sim-to-real transfer and robust performance on challenging scenes. 
+
+I. INTRODUCTION Rearranging objects into specific poses is a fundamental task in robotics, critical for both domestic tasks and industrial assembly. However, due to potential collisions and the inher-ent constraints of a robot’s workspace, directly moving from the initial grasp pose to the target placement pose is often infeasible; a grasp that is convenient for initial acquisition is rarely suitable for final placement (as shown in Figure         
+
+> ∗Co-first authors †Project lead ‡Corresponding author:
+> pingtan@ust.hk
+
+2). In such cases, object reorientation becomes an essential intermediate manipulation step: changing the object’s pose to satisfy goal constraints when the required grasp points are inaccessible initially. 
+
+Fig. 2: Scenarios requiring handover in dual-arm manipu-lation. Left: No compatible collision-free grasp directions exist for both pick and place with a single arm. Right: Asingle arm cannot find kinematically feasible grasp solutions for both the pick and place poses simultaneously. Previous approaches have often addressed the reorienta-tion problem in a single-arm robotic setup. These methods typically rely on external fixtures [1], [2] or require finding a stable intermediate pose on a planar surface [3], [4], which inherently limits the flexibility of manipulation. In contrast, we tackle the reorientation problem within a collaborative dual-arm framework, mirroring the way humans naturally use both hands to perform such tasks (as shown in Figure 1): one arm grasps the object, rotates it to an intermediate pose, and then hands it off to the other arm, which proceeds to place the object into the desired target pose. arXiv:2607.21341v1 [cs.RO] 23 Jul 2026 While a dual-arm configuration offers greater flexibility in selecting intermediate poses by mitigating gravitational con-straints, it simultaneously introduces challenges in balancing trade-offs among grasp selection, trajectory length, and inter-mediate pose choice. Prior reorientation approaches typically decompose object rearrangement tasks into sequential stages, relying on rejection sampling [3] or heuristics to generate solutions. However, such methods require a large number of candidate random samples and ultimately limit efficiency and overall performance. To address these challenges, we propose a unified opti-mization framework for bimanual object reorientation that jointly identifies feasible manipulation trajectories and en-ables efficient execution. Specifically, our method integrates grasp quality, motion planning, collision avoidance, and handover feasibility. These constraints are encoded as dif-ferentiable energy-based models (EBMs) [5] and combined with diffusion scores from a pretrained grasp model. The framework then employs gradient-guided MCMC sampling [6] to generate bimanual grasp poses from the constrained posterior, effectively balancing the competing objectives. We evaluate our method across various simulated scenarios, and the experimental results show that our approach outperforms baseline methods by a substantial margin. Our contributions can be summarized as follows:  
+
+> •
+
+We propose a bimanual object reorientation frame-work that compositionally optimizes grasp quality alongside motion plans during the reverse diffusion process, while proactively avoiding inter-arm and scene collisions.  
+
+> •
+
+This capability is powered by a learning-based inverse kinematics model we developed, which supports swift evaluation of motion costs and feasibility.  
+
+> •
+
+The efficacy of our approach is rigorously validated through extensive tests in both simulated and real-world domains, revealing its strong generalization across di-verse scenes and its capacity to dramatically reduce joint movements. II. RELATED WORKS 
+
+a) Object Reorientation for Rearrangement: Conven-tional works on object rearrangement are typically studied within the Task and Motion Planning (TAMP) framework. Methods such as PDDLStream [7], LOFT [8], and Wells et al. [9] adopt a modular architecture that combines symbolic planning with sampling-based motion planners (e.g., RRT) and heuristic grasp sampling. These approaches generally as-sume fully observable states and known object models, which limits their applicability in real-world open environments. More recent methods leverage vision-language models to infer target object poses from language or image goals [10]– [12], followed by pick-and-place execution. EBM-based ap-proaches [13], [14] further model constraints to generate feasible goal poses. However, both traditional TAMP and re-cent learning-based pipelines often assume compatible grasps for pick-and-place stages and struggle with tight integration between grasp selection and downstream motion feasibility. When direct placement is infeasible, robots must reori-ent the object via intermediate poses and regrasps. Prior reorientation methods generate such poses through rejection sampling [3], imitation learning [1], or classifier-guided sampling from learned priors [4]. Nevertheless, these works are predominantly single-arm and do not jointly optimize re-orientation poses with full motion trajectories and efficiency. 
+
+b) Bimanual Manipulation: Bimanual manipulation supports complex tasks such as fixture-based stabiliza-tion [15], cooperative carrying [16], and object rearrange-ment [17], [18]. Existing rearrangement approaches often de-compose the problem into discrete stages (e.g., arm schedul-ing [17] or handover planning [18]), which can yield kine-matically infeasible transitions or suboptimal reorientation due to heuristic grasp sampling that ignores full trajectory cost. 
+
+c) Energy-based Models and Compositional Optimiza-tion: EBMs [19] provide a general energy-minimization view of control and planning. Recent work connects dif-fusion models to EBMs [20], enabling composition of multiple diffusion models [6], [21] and additional con-straints [22] for compositional generalization. In particu-lar, SE(3)-Diffusion [23] demonstrates the power of this paradigm by unifying grasp generation and trajectory plan-ning within a single EBM framework. Building upon this line of work, we extend compositional EBMs to the more challenging setting of bimanual object reorientation. In contrast to prior modular or single-arm approaches, we treat bimanual reorientation as a unified energy-based optimization problem. Using compositional EBMs and grasp diffusion models, we jointly optimize grasps, handover con-figurations, and smooth dual-arm motions, enabling tighter integration of constraints such as dual-arm coordination, collision avoidance, and grasp quality across the entire reorientation sequence. III. PRELIMINARIES In this work, we leverage diffusion models as the core generative component for grasp candidate initialization and subsequent joint refinement with motion planning. Diffusion models are particularly well-suited for this setup due to their close connection to energy-based models (EBMs) and their ability to support compositional optimization in high-dimensional, multi-modal spaces [6], [20]. Diffusion models [24], [25] have emerged as powerful generative models capable of producing high-quality samples by learning to reverse a gradual noising process. In this work, we build upon the Denoising Diffusion Probabilistic Model (DDPM) framework [24], which has been success-fully adapted to 6-DoF grasp generation tasks [23], [26]. Given a data distribution q(x0), the forward diffusion process gradually adds Gaussian noise over T timesteps according to a fixed variance schedule β1, . . . , β T :
+
+q(xt | xt−1) = N (xt; p1 − βtxt−1, β tI), (1) where xt ∈ Rd is the noisy sample at timestep t. This process can be expressed in closed form as 
+
+q(xt | x0) = N (xt; √¯αtx0, (1 − ¯αt)I), (2) with αt = 1 − βt and ¯αt = Qts=1 αs.The reverse process is parameterized by a learned neural network ϵθ (xt, t ) that predicts the noise added at each step. The model is trained by minimizing the simplified variational lower bound, which reduces to the following denoising objective: 
+
+L(θ) = Et, x0,ϵ
+
+h
+
+∥ϵ − ϵθ (√¯αtx0 + √1 − ¯αtϵ, t )∥2i
+
+, (3) During inference, sampling starts from pure noise xT ∼N (0, I) and iteratively denoises using 
+
+xt−1 = 1
+
+√αt
+
+
+
+xt − 1 − αt
+
+√1 − ¯αt
+
+ϵθ (xt, t )
+
+
+
++σtz, z ∼ N (0, I),
+
+(4) where σt is typically set following the DDPM or DDIM [27] scheduler. In grasp generation, the data x0 usually represents a grasp configuration (e.g., 6-DoF pose in SE(3)) conditioned on the object geometry (point cloud or other representations). GraspGen [26] adopts a DiffusionTransformer architecture to model this conditional distribution directly in grasp space, achieving state-of-the-art performance on diverse embodi-ments and clutter scenarios. Our framework initializes grasp candidates using a pretrained GraspGen model and subse-quently refines them jointly with the motion plan through multi-objective optimization. IV. METHODS 
+
+A. PROBLEM FORMULATION 
+
+We study coordinated dual-arm pick-and-place in clutter using two UR12e 6-DoF robots. The robot must optimize a full reorientation sequence: pick with one arm, handover, regrasp with the other arm, and place at the target. To explore the multi-modal grasp space and improve ro-bustness, we optimize a batch of grasp tuples B = {g(i)}Ni=1 ,where each g(i) = ( g(i) 
+
+> P K
+
+, g (i) 
+
+> HO
+
+, g (i)
+
+> RG
+
+, g (i)
+
+> P L
+
+) ∈ SE (3) 4 is an ordered quadruplet of 6-DoF world-frame poses: pick grasp (gP K ), handover pose ( gHO ), regrasp pose ( gRG ), and place grasp ( gP L ). The ordered pairing ensures each candidate is evaluated as a consistent full manipulation sequence. For each pair i, we directly refine g(i) 
+
+> P K
+
+, g(i)
+
+> HO
+
+, and g(i)
+
+> P L
+
+,while g(i) 
+
+> RG
+
+∈ SE (3) is deterministically computed by a differentiable function h(·) from g(i) 
+
+> P K
+
+, g(i) 
+
+> HO
+
+, g(i)
+
+> P L
+
+, the initial object pose, and the target object pose. Let Pinitial be the object point cloud at the initial pose, 
+
+Ptarget the object point cloud at the target pose, and Pscene 
+
+the full scene point cloud. We solve for the best grasp tu-ple g∗ ∈ B by minimizing a composite objective combining a pretrained diffusion prior and task constraints:          
+
+> g∗= arg min g∈B
+> h
+> Ldiff (gP K , g P L |Pinitial ,Ptarget ) + P
+> cλcLc(g,Pscene )
+> i
+
+, (5) where we optimize over the batch to retain diversity and escape local minima. 
+
+Ldiff is the negative log-likelihood under the diffusion prior, conditioned on gP K and gP L (in the object frame) and the object point clouds Pinitial and Ptarget . The constraint terms Lc(g, Pscene ) depend on the full tuple and include joint-space smoothness Lsmooth (via IK joint configurations 
+
+q), regrasp feasibility/safety Lregrasp , handover feasibility 
+
+Lhandover , and scene collision penalties Lcollision w.r.t. Pscene .The selected tuple g∗ is then converted by inverse kine-matics to waypoints qP K , qHO , qRG , qP L ∈ R6, which a motion planner uses to generate the dual-arm trajectory τ .
+
+B. OVERVIEW 
+
+The overall pipeline is illustrated in Fig. 3. Our frame-work, Bimanual Compositional Diffusion and Energy-based Optimization, (BiCompoDiff) jointly optimizes 6-DoF grasp poses for dual-arm pick-and-place tasks in clut-tered environments by integrating a pretrained grasp diffu-sion model with compositional energy-based guidance dur-ing the reverse diffusion process. This enables the genera-tion of constraint-aware, high-quality grasp sequences (pick, handover, regrasp, place) without retraining the generative model. The approach consists of three tightly coupled com-ponents: 1) Grasp Diffusion Model: We utilize a pretrained grasp generation model (GraspGen [26]) that has learned a rich multi-modal distribution over valid 6-DoF grasps conditioned on object geometry, to refine 
+
+gtP k and gtP L under reverse diffusion. 2) Bimanual Planning EBMs: To steer the denoising steps toward feasible bimanual manipulation, we define a collection of differentiable task-specific energy func-tions whose negative gradients serve as compositional guidance signals with the diffusion model’s learned score function in each denoising step. 3) Compositional Annealed MCMC Sampling: The reverse diffusion process is realized via annealed MCMC sampling, where the total energy landscape is the sum of the pretrained grasp diffusion energy and the planning energy terms. 
+
+C. Grasp Diffusion Model 
+
+We initialize grasps using the pretrained GraspGen model [26], a DiffusionTransformer that generates multi-modal 6-DoF grasp pose distributions conditioned on object point clouds. We use the graspgen robotiq 2f 140 checkpoint for inference. At inference, we run guided reverse diffusion for a fixed k
+
+denoising steps. To support dual-arm pick-and-place, we con-dition sampling on both Pinitial and Ptarget , producing paired candidates in one pass: gtP k (conditioned on Pinitial ) and 
+
+gtP L (conditioned on Ptarget ), keeping both within the learned grasp manifold. We also use GraspGen’s discriminator to assign a scalar grasp confidence score to each generated (and optimized) candidate. This score measures consistency with high-probability regions of the pretrained distribution and serves as a distribution-aware term in our composite scoring function for selecting the optimal solution after optimization. Fig. 3: Overview of the proposed BiCompoDiff framework pipeline. Phase 1: Noisy initial poses ( gtP K , gtP L , gtHO in world frame) are randomly sampled, and gtRG is derived from the other three. Point clouds (object + environment) are fed into the grasp diffusion model and the bimanual planning EBMs. Phase 2: The diffusion model predicts ϵ-scores with current timestep t and noisy poses ( gtP K , gtP L converted to object frame), which are combined with energy gradients from the compositional bimanual planning EBMs (encoding smoothness, regrasp, handover, and grasp collision costs). These guidance signals iteratively refine the noisy poses ( gtP K , gtP L , gtHO ) at each reverse diffusion timestep. Phase 3: At timestep 
+
+t = 0 , collision-free pose pairs are filtered and ranked by composite scores. The highest-scoring pair is then passed to the sandbox module to generate the whole bimanual reorientation trajectory. 
+
+D. Bimanual Planning EBMs 
+
+These EBMs provide differentiable gradients that steer reverse diffusion toward grasp poses satisfying bimanual constraints. Gradients are taken w.r.t. the grasp pair gtP k ,
+
+gtHO , gtRG , and gtP L . We define task energies whose negative gradients act as corrective forces during denoising: 
+
+Grasp collision avoidance repels the gripper from ob-stacles. We approximate the gripper by collision spheres (transformed to world per pose) and query signed distances to the scene point cloud Pscene (KDTree). A soft-min aggregates the closest approach, and we apply a quadratic penalty when below margin δ: ccoll = v2 
+
+> δ2
+
+, v = max(0 , δ −dmin ), yielding smooth repelling gradients near obstacles. 
+
+Trajectory smoothness minimizes joint motion between key configurations using a wrapped L1 proxy: 
+
+csmooth = ∥∆qPK →HO ∥1 + ∥∆qRG →PL ∥1, (6) This serves as a computationally efficient proxy for total joint travel under linear joint-space interpolation. We verified its strong correlation with the actual total joint angle change of cuRobo-generated trajectories across scenes of varying collision complexity. While analytical IK and other IK solvers [28] are accurate, it is discrete/non-differentiable and offers no guidance for unreachable targets. We therefore use a trained differentiable model, Joint-Decoupled SubnetMLP (SubnetIK) for the UR12e robot. For each key pose gk (k ∈{PK , HO , RG , PL }), SubnetIK predicts 8 joint candidates qjk
+
+(j = 1 , . . . , 8); valid solutions are filtered by FK pose error threshold, and we select the four-pose joint candidate set minimizing csmooth .Analytical IK would require costly, unstable finite differ-ences to approximate ∂c smooth /∂ gk, especially near singular-ities or unreachable poses. In contrast, SubnetIK provides a smooth IK approximation qk ≈ fSubnetIK (gk) with exact gradients via the chain rule: ∂c smooth    
+
+> ∂gk
+> =∂c smooth
+> ∂qk
+> ·Jf(gk)
+
+, where 
+
+Jf = ∂f SubnetIK /∂ gk is the network Jacobian (autograd). SubnetIK is trained from analytical q; for unreachable poses, the closest reachable pose provides supervision, yielding meaningful continuous gradients and stable optimization. A comparison to analytical IK is in Table IV (Appendix). 
+
+Handover feasibility and safety ensures that the han-dover pose gtHO is kinematically feasible and collision-free. Feasibility is enforced with a soft workspace bounding box penalty on position and the following orientation cost: 
+
+corient = max( −dT Re z , 0) + max( cmin − | (Re z )x|, 0) , (7) where R is the gripper rotation matrix at gHO , d =[−1, 0, 0] ⊤ is the desired outward direction, and ez =[0 , 0, 1] ⊤ is the gripper’s local z-axis. The first term penalizes inward-pointing gripper orientations, while the second term penalizes near-planar alignments of the gripper z-axis with the robot’s xz -plane ( cmin controls the minimum allowed magnitude). Safety is enforced using signed-distance field penalties from collision spheres at the handover pose to scene obstacles, mirroring the grasp collision cost. Regrasp safety prevents unsafe proximity between the pick and placement grippers during regrasp. Both gtP k and 
+
+gtP L are projected onto the initial object frame; collision spheres are placed accordingly, and the regrasp cost penalizes insufficient clearance: 
+
+cregrasp = (max( dsafe − dmin , 0) /d safe )2 (8) where dmin is the minimum surface-to-surface distance be-tween any pair of spheres from the two grippers, and dsafe is the minimum required separation. 
+
+E. Iterative Compositional Energy-Based Optimization with Annealed MCMC 
+
+Algorithm 1 Iterative Compositional Energy-Based Opti-mization with Annealed MCMC      
+
+> Require: Initial noise gT
+> PK ,gT
+> PL ∼ N (0 , I )
+
+1: Handover pose gT 
+
+> HO sampled from a predefined handover region
+
+2: Timesteps T , MCMC steps per timestep M
+
+3: Denoising network εθ (·, t ; Pinitial , Ptarget )
+
+4: Scene point cloud Pscene 
+
+5: Initial and target object point clouds Pinitial , Ptarget 
+
+6: Planning energy functions ci(·), weights λi
+
+7: DDPM scheduling terms αt, ¯αt, σt
+
+8: 9: for t ← T down to 1 do ▷ Denoising loop over diffusion timesteps 
+
+10: 11: for m ← 1 to M do ▷ MCMC refinement steps at timestep t
+
+12: μt         
+
+> PK ←1√αt
+> 
+> gt
+> PK −1−αt√1−¯αt
+> εθ(gt
+> PK ,gt
+> PL , t ;Pinitial ,Ptarget )
+> 
+
+13: μt         
+
+> PL ←1√αt
+> 
+> gt
+> PL −1−αt√1−¯αt
+> εθ(gt
+> PK ,gt
+> PL , t ;Pinitial ,Ptarget )
+> 
+
+14: gt      
+
+> RG ←h μt
+> PK ,μt
+> PL ,gt
+> HO
+> ▷Regrasp pose (deterministic)
+
+15: ∇g ← − P        
+
+> iλi∇gCi
+>  μt
+> PK ,μt
+> PL ,gt
+> HO ,gt
+> RG ;Pscene
+> ▷task gradients
+
+16: if m = M then ▷ predict previous sample 
+
+17: gt−1         
+
+> PK ←μt
+> PK +∇gPK +σtzPK ,zPK ∼ N (0 , I )
+
+18: gt−1         
+
+> PL ←μt
+> PL +∇gPL +σtzPL ,zPL ∼ N (0 , I )
+
+19: gt−1    
+
+> HO ←gt
+> HO +∇gHO
+
+20: else ▷ Refine current sample 
+
+21: gt      
+
+> PK ←μt
+> PK +∇gPK +σtzPK
+
+22: gt      
+
+> PL ←μt
+> PL +∇gPL +σtzPL
+
+23: gt    
+
+> HO ←gt
+> HO +∇gHO
+
+24: end if 
+
+25: end for 
+
+26: end for 
+
+27: return g0    
+
+> PK ,g0
+> PL ,g0
+> HO ▷Final optimized pick, place, handover poses
+
+We optimize grasp poses via annealed MCMC-guided reverse diffusion (Alg. 1) with default M =5 . We define 
+
+k as the number of final denoising steps where bimanual planning EBM gradients are applied. For timesteps t > k , we perform standard reverse diffusion without task constraints and MCMC. For each timestep t ≤ k, we run M MCMC refinements: the diffusion model predicts the mean μt, we add weighted task constraint gradients, and inject noise. Only the final ( M -th) refinement advances to timestep t − 1.Inspired by inference-time policy steering [29], this loop better approximates sampling from the constrained posterior, yielding grasps that satisfy both diffusion likelihood and task constraints. This compositional guidance drives sampling to-ward feasible, smooth, and collision-free bimanual motions. After optimization, the candidate pairs are first filtered by the cuRobo [28] collision checker . The remaining candidates are then ranked using a composite score that balances grasp quality, trajectory smoothness, and regrasp safety: composite = wconf · conf norm + wplan · (1 − planning norm ) (9) 
+
+Fig. 4: Visualization of bimanual reorientation trajectories for placing a bridge-shape brick from lying flat on the ground to standing upright on a shelf. BiCompoDiff-Full 
+
+minimizes joint displacement from PK to HO while enabling smooth side-regrasping for final placement. BiCompoDiff-HO optimizes handover to a near-standing pose, reducing reorientation effort during the final RG to PL phase and yielding the most efficient RG to PL trajectory, but at the cost of higher joint delta earlier. NoEBM produces inefficient trajectories, requiring excessive object flipping and rear regrasp. Overall, Full mode achieves the best balance between PK to HO and RG to PL trajectory efficiency. where conf norm is the normalized average confidence score of 
+
+gPK , g PL from GraspGen, and planning norm is the normalized planning cost combining trajectory smoothness and regrasp cost ( wconf = 0 .4, wplan = 0 .6). The pair with the highest composite score is selected as the final solution and passed to the motion planner. V. EXPERIMENTS We evaluate BiCompoDiff on collaborative bimanual ma-nipulation tasks involving pick, place, handover, and regrasp actions for object reorientation. All experiments are con-ducted in simulation unless otherwise stated, with real-world validation. 
+
+A. Implementation Details 1) Simulation Pipeline: Experiments are conducted in a modular simulation pipeline that couples a high-level task specification front-end with a motion planning back-end. The environment includes:  
+
+> •
+
+Task Sandbox: Defines scene geometry, initial/target object poses, and planner interface. Scenes are designed in Fusion 360 and imported as triangle meshes and point clouds ( Pscene , Pinitial , Ptarget ).  
+
+> •
+
+Simplified Physics & Rendering: Polyscope handles visualization. Grasping and placement are simulated by rigidly attaching/detaching the object mesh to the gripper at optimized key poses ( gPK , gHO , gRG , gPL ), abstracting low-level contact dynamics to focus on high-level planning.  
+
+> •
+
+Motion Planning: cuRobo generates minimum-jerk, collision-free joint trajectories between key poses using the robot URDF, full scene geometry, and joint limits. 2) Task Benchmark: We introduce a benchmark of 60 pick-and-place reorientation tasks of varying difficulty (20 easy, 20 medium, 20 hard), all designed in Fusion 360. Quantitative results are averaged across the full set.  
+
+> •
+
+Easy: Minimal scene (ground plane + object in the air);  
+
+> •
+
+Medium: Static obstacles (e.g., shelf) added, requiring active collision avoidance during coordination.  
+
+> •
+
+Hard: Dense, realistic clutter (e.g., bin picking + clut-tered shelf placement); tests tight-space navigation and multi-constraint satisfaction. 
+
+3) Evaluation Metrics: Motion efficiency (excluding home-to-home segments) is measured by:  
+
+> •
+
+Total joint-space displacement (Traj. ∆ in rad) – the 
+
+primary metric and focused optimization aspect,  
+
+> •
+
+End-effector trajectory length ( Traj. Len. in m),  
+
+> •
+
+Execution duration ( Dur in s). The latter two metrics are treated as secondary. Grasp quality is quantified by pick and place confidence scores ( PK Conf. ,
+
+PL Conf. ) and percentage of gripper finger pad contact area on the object ( PK CA % , PL CA % ) [30]. Regrasp cost ( RG Cost ) penalizes gripper-to-gripper collision during regrasp. Path success rate ( Succ.% ) reports the percentage of fully collision-free trajectories (no robot-robot or robot-scene collisions), while the average number of collision-free grasp pairs ( CF ) assesses grasp collision avoidance. Computational cost is the average inference time per plan (see Appendix). 
+
+4) Baselines: We implement two strong baselines to iso-late our contributions. 
+
+NoEBM follows the same pipeline as BiCompoDiff but ablates bimanual planning EBM gradients: pick ( gPK ) and place ( gPL ) poses are denoised solely using the GraspGen diffusion score function, without any bimanual planning EBM gradients. 
+
+ReorientBot adapts ReorientBot [3] to our bimanual set-ting. For comparison, both ReorientBot and BiCompoDiff use GraspGen to sample 100 pick grasps ( gP K ), 100 place grasps ( gP L ), and random handover grasps ( gHO ). We re-place learned filtering with transparent heuristic filtering: IK solutions q are computed for each pose, followed by (i) scene collision checking with cuRobo, (ii) joint-space trajectory validity scoring, and (iii) smoothness scoring via total L1 joint displacement. Success is evaluated on scene and self-collisions only (dual-arm inter-collisions ignored for fair-ness). The key difference is grasp pairing: BiCompoDiff uses ordered sampling (100 ordered pairs), while ReorientBot exhaustively combines all grasps ( 100 3 candidates) before filtering. 
+
+5) Parameters: We tuned several cost weights through ex-tensive experimentation. The final values used in all reported experiments are listed in Table V, which yielded the best overall performance. 
+
+B. Ablation Studies 
+
+We ablate three key factors of BiCompoDiff across all tasks: (i) optimization modes, (ii) MCMC-based guidance, and (iii) the number of gradient-application step k.
+
+1) Optimization modes: We compare two configurations (averaged over k = 3 , with MCMC enabled):  
+
+> •
+
+BiCompoDiff-Full : Full joint optimization. All poses (gPK , gPL , gHO ) receive smoothness gradients plus task-specific gradients.  
+
+> •
+
+BiCompoDiff-HO : Handover-only mode. Smoothness gradients are applied only to gHO ; gPK and gPL receive other task gradients only. Table I summarizes results. Both variants improve motion efficiency and safety while keeping grasp quality compet-itive. BiCompoDiff-Full yields the smoothest and shortest trajectories overall (lowest joint delta, length, and duration): joint delta −37% , length −20% , duration −23% , and re-grasp cost −84% , while increasing success +22% (abs.) and collision-free pairs +77% . This highlights the benefit of injecting bimanual smoothness gradients across all poses during denoising. BiCompoDiff-HO attains the highest success (70.0%) and lowest regrasp cost. This shows that optimizing pick/place in Full further improves efficiency, at the modest cost of slightly reduced grasp and regrasp quality (and thus success). Figure 4 provides a qualitative comparison. 
+
+2) Effect of enabling MCMC guidance (Full mode, fixed at k = 3 ): Table I shows that enabling MCMC improves all metrics, with a moderate increase in inference time. We therefore use MCMC by default. 
+
+3) Effect of the number of k (Full mode + MCMC): 
+
+Figure 6 (Appendix) shows that increasing k from 1 to 10 improves trajectory quality, grasp confidence/contact area, and collision-free pairs, with the main gains up to k ≈ 5–6 and saturation thereafter. Success mildly peaks at low-to-mid 
+
+k before slightly dropping at very high k; regrasp cost has no consistent trend; inference time increases with k. We set 
+
+k = 3 by default for the best quality–efficiency trade-off. 
+
+C. Comparison to ReorientBot 
+
+Table II compares our method ( BiCompoDiff-Full ) with an adapted ReorientBot-style baseline. BiCompoDiff-Full 
+
+achieves markedly better overall performance: higher success (81.7% vs. 58.3%, +23.4 abs.), smoother motions with smaller joint delta ( -12.5% ), shorter trajectories ( -2.1% ), lower duration ( -7.0% ). ReorientBot benefits from dynamic grasp pairing and can improve collision-free planning over our ordered-pair base-line (NoEBM), but it degrades grasp quality and incurs high computational cost due to evaluating many grasp candidates. In contrast, our paired formulation with compositional energy-based optimization avoids exhaustive enumeration while simultaneously improving success rate and efficiency. Importantly, this gain is not merely due to more collision-free grasp pairs. Comparing BiCompoDiff-Full with its variant without grasp collision gradients ( w/o ∇gcoll ) shows that the efficiency boost primarily stems from injecting differentiable bimanual smoothness gradients during denoising. Overall, end-to-end gradient guidance enables more reliable and ef-ficient execution than traditional sample-and-filter pipelines, at substantially lower computational cost. TABLE I: Performance comparison across configurations (k=3, 200 grasp pairs). 
+
+Config Traj. ∆ (rad) ↓ Traj. Len. (m) ↓ Dur (s) ↓ PK Conf. ↑ PL Conf. ↑ RG Cost ↓ PK CA (%) ↑ PL CA (%) ↑ Succ (%) ↑ CF ↑
+
+NoEBM 7.293 1.476 1.621 0.891 0.875 1.625 79.7 70.8 41.7 59.8 BiCompoDiff-Full 4.569 1.184 1.243 0.808 0.863 0.259 77.7 72.7 63.3 106 BiCompoDiff-HO 4.692 1.183 1.286 0.863 0.878 0.208 76.0 67.6 70.0 107 
+
+Full-NoMCMC 6.150 1.380 1.522 0.760 0.615 0.340 60.4 48.3 57.8 95.3 
+
+TABLE II: Comparison with adapted ReorientBot baseline (k=3, 100 grasp pairs) 
+
+Config Traj. ∆ (rad) ↓ Traj. Len. (m) ↓ Dur (s) ↓ PK Conf. ↑ PL Conf. ↑ PK CA (%) ↑ PL CA (%) ↑ Succ (%) ↑ CF ↑
+
+NoEBM 7.372 1.399 1.637 0.804 0.847 78.8 79.4 71.7 29.8 ReorientBot* [3] 6.434 1.302 1.530 0.655 0.719 72.6 71.1 58.3 479.3 
+
+BiCompoDiff-Full 5.628 1.275 1.423 0.846 0.869 77.0 71.4 81.7 52.7 Full ( w/o ∇gcoll ) 5.717 1.295 1.477 0.801 0.847 80.7 81.2 65.0 29.2 
+
+D. Real-World Experiments 
+
+We validate BiCompoDiff on a real-world bimanual plat-form mirroring our simulation setup: two UR12e 6-DoF arms equipped with Robotiq Hand-E parallel-jaw grippers. Trajectories are executed from pre-computed joint sequences. Qualitative results (supplementary video) demonstrate smooth and collision-free bimanual coordination with BiCompoDiff-Full in challenging scenes. Quantitative eval-uation on two representative scenes shows significant tra-jectory efficiency gains: the T-shape brick improves from 10.850 rad (NoEBM) to 4.371 rad (59.7% ↑), and the cup im-proves from 10.126 rad to 5.427 rad (46.4% ↑). These results indicate successful sim-to-real transfer under the assump-tion of perfect perception, highlighting the practical benefit of diffusion-guided compositional energy optimization for smoother and more reliable bimanual reorientation. VI. CONCLUSIONS In this work, we introduced BiCompoDiff , a composi-tional diffusion and energy-based optimization framework for end-to-end bimanual object reorientation. By integrating GraspGen with an energy-guided joint denoising process and annealed MCMC sampling, BiCompoDiff jointly op-timizes pick, handover, regrasp, and place under trajectory smoothness, collision avoidance, handover, and regrasp fea-sibility constraints. SubnetIK further enables differentiable inverse kinematics for effective gradient-based refinement. Experiments and real-robot results show higher success rates (>20% ↑) and more efficient trajectories (37% ↑) than strong baselines, including an adapted ReorientBot pipeline. Over-all, BiCompoDiff demonstrates that compositional diffusion with task energies enables scalable co-optimization of high-dimensional grasp and key poses that account for motion-level objectives beyond sampling-and-filtering approaches. Current limitations of BiCompoDiff include the assump-tion of perfect perception (known object poses and ge-ometries) and indirect trajectory optimization via optimized grasps and key poses that incorporate motion planning objec-tives. Future work could explore direct trajectory optimiza-tion, robustness to noisy or partial observations, and more flexible task-level reasoning. ACKNOWLEDGMENTS This research is supported by the Hong Kong ITF grant GHP/215/23SZ, Shenzhen Loop Area Institute under grant FPF10120250006, and BYD-HKUST Joint Lab Research Project under grant BYD26IS02. REFERENCES [1] J. Luo, C. Xu, F. Liu, L. Tan, Z. Lin, J. Wu, P. Abbeel, and S. Levine, “Fmb: a functional manipulation benchmark for generalizable robotic learning,” The International Journal of Robotics Research , vol. 44, no. 4, pp. 592–606, 2025. [2] T. Kiyokawa, Z. Hu, W. Wan, and K. Harada, “Soft regrasping tool inspired by jamming gripper,” arXiv preprint arXiv:2509.13815 , 2025. [3] K. Wada, S. James, and A. J. Davison, “Reorientbot: Learning object reorientation for specific-posed placement,” in 2022 International Conference on Robotics and Automation (ICRA) . IEEE, 2022, pp. 8252–8258. [4] U. A. Mishra and Y. Chen, “Reorientdiff: Diffusion model based reorientation for object manipulation,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2024, pp. 10 867–10 873. [5] J. M. Tomczak, “Energy-based models,” in Deep Generative Modeling .Springer, 2021, pp. 143–158. [6] Y. Du, C. Durkan, R. Strudel, J. B. Tenenbaum, S. Dieleman, R. Fer-gus, J. Sohl-Dickstein, A. Doucet, and W. S. Grathwohl, “Reduce, reuse, recycle: Compositional generation with energy-based diffusion models and mcmc,” in International conference on machine learning .PMLR, 2023, pp. 8489–8510. [7] C. R. Garrett, T. Lozano-P´ erez, and L. P. Kaelbling, “PDDLStream: Integrating symbolic planners and blackbox samplers via optimistic adaptive planning,” in International Conference on Automated Plan-ning and Scheduling (ICAPS) , 2020. [8] T. Silver, R. Chitnis, J. Tenenbaum, L. P. Kaelbling, and T. Lozano-P´ erez, “Learning symbolic operators for task and motion planning,” in 2021 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2021, pp. 3182–3189. [9] A. M. Wells, N. T. Dantam, A. Shrivastava, and L. E. Kavraki, “Learn-ing feasibility for task and motion planning in tabletop environments,” 
+
+IEEE Robotics and Automation Letters , vol. 4, no. 2, pp. 1255–1262, 2019. [10] I. Kapelyukh, V. Vosylius, and E. Johns, “Dall-e-bot: Introducing web-scale diffusion models to robotics,” IEEE Robotics and Automation Letters , vol. 8, no. 7, pp. 3956–3963, 2023. [11] K. Xu, Z. Zhou, J. Wu, H. Lu, R. Xiong, and Y. Wang, “Grasp, see, and place: Efficient unknown object rearrangement with policy structure prior,” IEEE Transactions on Robotics , vol. 41, pp. 464–483, 2024. [12] I. Kapelyukh, Y. Ren, I. Alzugaray, and E. Johns, “Dream2real: Zero-shot 3d object rearrangement with vision-language models,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) .IEEE, 2024, pp. 4796–4803. [13] N. Gkanatsios, A. Jain, Z. Xian, Y. Zhang, C. Atkeson, and K. Fragki-adaki, “Energy-based models are zero-shot planners for compositional scene rearrangement,” arXiv preprint arXiv:2304.14391 , 2023. [14] Y. Xu, J. Mao, L. Li, Y. Du, T. Loz´ ano-P´ erez, L. P. Kaelbling, and D. Hsu, ““set it up”: Functional object arrangement with compositional generative models,” The International Journal of Robotics Research ,p. 02783649251378198, 2024. [15] Z. Wang, W. Liu, J. Wang, G. Vallat, F. Shi, S. Parascho, and M. Kamgarpour, “Learning to assemble with alternative plans,” ACM Transactions on Graphics (TOG) , vol. 44, no. 4, pp. 1–16, 2025. [16] Y. Zhang, “Adaptive coordinated impedance control for dual-arm robot symmetric bimanual tasks,” Robotics and Autonomous Systems , vol. 193, p. 105110, 2025. [17] S. Zhang, Q. She, W. Li, C. Zhu, Y. Wang, R. Hu, and K. Xu, “Learning dual-arm object rearrangement for cartesian robots,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) .IEEE, 2024, pp. 7440–7446. [18] Y. Li, C. Pan, H. Xu, X. Wang, and Y. Wu, “Efficient bimanual han-dover and rearrangement via symmetry-aware actor-critic learning,” in 2023 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2023, pp. 3867–3874. [19] Y. LeCun, S. Chopra, R. Hadsell, M. Ranzato, F. Huang, et al. , “A tutorial on energy-based learning,” Predicting structured data , vol. 1, no. 0, 2006. [20] L. Yang, Z. Zhang, Y. Song, S. Hong, R. Xu, Y. Zhao, W. Zhang, B. Cui, and M.-H. Yang, “Diffusion models: A comprehensive survey of methods and applications,” ACM computing surveys , vol. 56, no. 4, pp. 1–39, 2023. [21] Y. Du and I. Mordatch, “Implicit generation and modeling with energy based models,” Advances in neural information processing systems ,vol. 32, 2019. [22] D. Huang, W. Dong, C. Tang, and H. Zhang, “Hgdiffuser: efficient task-oriented grasp generation via human-guided grasp diffusion mod-els,” in 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . IEEE, 2025, pp. 19 538–19 545. [23] J. Urain, N. Funk, J. Peters, and G. Chalvatzaki, “Se (3)-diffusionfields: Learning smooth cost functions for joint grasp and motion optimization through diffusion,” in 2023 IEEE international conference on robotics and automation (ICRA) . IEEE, 2023, pp. 5923–5930. [24] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,” Advances in neural information processing systems , vol. 33, pp. 6840–6851, 2020. [25] Y. Song, J. Sohl-Dickstein, D. P. Kingma, A. Kumar, S. Ermon, and B. Poole, “Score-based generative modeling through stochastic differential equations,” arXiv preprint arXiv:2011.13456 , 2020. [26] A. Murali, B. Sundaralingam, Y.-W. Chao, W. Yuan, J. Yamada, M. Carlson, F. Ramos, S. Birchfield, D. Fox, and C. Eppner, “Graspgen: A diffusion-based framework for 6-dof grasping with on-generator training,” arXiv preprint arXiv:2507.13097 , 2025. [27] J. Song, C. Meng, and S. Ermon, “Denoising diffusion implicit models,” arXiv preprint arXiv:2010.02502 , 2020. [28] B. Sundaralingam, S. K. S. Hari, A. Fishman, C. Garrett, K. V. Wyk, V. Blukis, A. Millane, H. Oleynikova, A. Handa, F. Ramos, N. Ratliff, and D. Fox, “curobo: Parallelized collision-free minimum-jerk robot motion generation,” arXiv preprint arXiv:2310.17274 , 2023. [Online]. Available: https://arxiv.org/abs/2310.17274 [29] Y. Wang, L. Wang, Y. Du, B. Sundaralingam, X. Yang, Y.-W. Chao, C. P´ erez-D’Arpino, D. Fox, and J. Shah, “Inference-time policy steering through human interactions,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 15 626–15 633. [30] M. T. Leddy and A. M. Dollar, “Examining the frictional behavior of primitive contact geometries for use as robotic finger pads,” IEEE Robotics and Automation Letters , vol. 5, no. 2, pp. 3137–3144, 2020. 
+
+APPENDIX 
+
+A. Joint-Decoupled SubnetMLP Model (SubnetIK) 
+
+SubnetIK (Figure 5) takes as input a 9D pose representa-tion (first two columns of the rotation matrix + translation vector) concatenated with the current joint state qcur . The 
+
+Fig. 5: SubnetIK architecture TABLE III: IK comparison (mixed test set) (N =1000 ;reachable + No-IK). Return% : queries returning a joint vector. Succ@10mm : success rate where final pose error 
+
+≤ 10 mm. Non-returned counted as failures. MLP (Oracle) :best of K=8 via FK; MLP+FKRefine : gradient refinement. 
+
+Method Return% ↑ Succ@10mm ↑ Orient. (deg) ↓ Time (ms) ↓
+
+UR Analytic IK 80.2 80.2 0.0001 0.031 MLP (Oracle) 100.0 85.1 3.35 0.067 
+
+MLP+FKRefine 100.0 90.1 2.11 0.341 
+
+model consists of a shared backbone followed by six joint-specific sub-networks that predict per-joint hypotheses. The outputs are projected to satisfy URDF joint limits, and the model additionally predicts a reachability score and per-candidate validity logits. TABLE IV: Comparison of BiCompoDiff-Full ( k=5) with Analytical IK, SubnetIK, and NoEBM baseline (average metrics) 
+
+Metric Analytical IK SubnetIK NoEBM Traj. ∆ (rad) 6.26 6.03 7.10 Traj. Len. (m) 1.409 1.373 1.098 
+
+Dur (s) 1.48 1.44 1.54 Infer. Time (s) 123.90 3.12 0.11 
+
+B. Experiment Parameters 
+
+TABLE V: Cost weights used in BiCompoDiff. 
+
+Cost Weight Value 
+
+Smoothness (pick & place) w(PK, PL) smooth 0.005 Smoothness (handover) wHO smooth 0.01 Grasp collision w(PK, PL) coll 0.025 Handover region wHO region 0.1 Handover orientation wHO orient 0.3 Handover collision wHO coll 0.0001 Regrasp w(PK, PL) regrasp 0.001 
+
+C. Ablation studies 
+
+Fig. 6: Performance by k (Full mode + MCMC, all tasks). 
+
+Inference time difference in Table I. NoEBM: 0.29s ;BiCompoDiff-Full: 2.20s (NoMCMC: 0.63s).

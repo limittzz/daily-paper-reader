@@ -1,0 +1,243 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-25T20:06:22.564682+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 2,
+    "deep_cap": 6,
+    "deep_selected": 2,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2607.19745v2",
+      "source": "arxiv",
+      "title": "EgoRecovery: Acquiring Failure Recovery Ability Through Human Recovery Demonstration",
+      "abstract": "Robust embodied robots should be able to recover from failures and retry tasks in order to operate reliably in unstructured and noisy real-world environments. Achieving this capability requires training policies on data that captures recovery behaviors. However, collecting such data through robot teleoperation is difficult to scale, as it is time-consuming to induce diverse failure states, perform corrective actions, and reset the environment. This challenge is further exacerbated by the high diversity of failure modes, which demands substantially more recovery data than success demonstrations. In this work, we show that egocentric human data capturing failure recovery processes provides a scalable alternative. By efficiently arranging task-level failure configurations and recording short recovery segments, human operators can generate more than 10x as much valid recovery data per hour compared to robot teleoperation under our protocol. To address the embodiment gap between human and robot, we propose EgoRecovery, a co-training framework for learning recovery behavior, where human recovery demonstrations are aligned to a compact corrective-intent space shared with robot data, which captures the timing and magnitude of correction. Only a small number of robot recovery demonstrations are required to connect this intent to executable robot actions. At deployment, a learned recovery gate predicts when correction is needed from robot observations and activates the corrective intent only in recovery states. Experiments on real-world recovery tasks show that EgoRecovery improves success from failure starts over robot-only recovery, direct co-training with human recovery data, and direct intent-transfer baselines.",
+      "authors": [
+        "Zuhao Ge",
+        "Yuchen Zhou",
+        "Weitao Zhou",
+        "Minglei Li",
+        "Xinyu Li",
+        "Chao Wu",
+        "Hanwen Zhao",
+        "Haotian Wang",
+        "Zuxuan Wu",
+        "Xiaosong Jia",
+        "Yu-Gang Jiang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-22T04:44:26+00:00",
+      "link": "https://arxiv.org/pdf/2607.19745v2",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "robot imitation learning from human recovery demonstrations",
+      "llm_evidence_cn": "利用人类恢复演示进行机器人模仿学习",
+      "llm_evidence": "利用人类恢复演示进行机器人模仿学习",
+      "canonical_evidence": "利用人类恢复演示进行机器人模仿学习",
+      "llm_tldr_en": "EgoRecovery uses egocentric human recovery demonstration data to train robots to recover from failures, enabling imitation learning without expensive teleoperation data collection.",
+      "llm_tldr_cn": "本文针对机器人失败恢复数据难以规模化收集的问题，提出EgoRecovery框架，利用第一人称人类恢复演示数据训练机器人恢复策略。该方法通过高效组织人类恢复过程视频，使机器人学会从失败状态中恢复并重试任务。实验表明，该方法能有效学习多种失败恢复行为，降低了对遥操作数据的依赖，为机器人鲁棒操作提供可扩展的模仿学习途径。",
+      "llm_tldr": "本文针对机器人失败恢复数据难以规模化收集的问题，提出EgoRecovery框架，利用第一人称人类恢复演示数据训练机器人恢复策略。该方法通过高效组织人类恢复过程视频，使机器人学会从失败状态中恢复并重试任务。实验表明，该方法能有效学习多种失败恢复行为，降低了对遥操作数据的依赖，为机器人鲁棒操作提供可扩展的模仿学习途径。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.21341v1",
+      "source": "arxiv",
+      "title": "Grasp, Handover, Rotate: Bimanual Object Reorientation via Compositional Diffusion and Energy-Based Optimization",
+      "abstract": "Bimanual object reorientation - picking an object, handing it over between two arms, and placing it in a desired target pose - is valuable when direct placement from the initial grasp is infeasible due to collisions, kinematic constraints, or poor final orientation. However, achieving this under multiple competing objectives remains challenging. We introduce BiCompoDiff, a compositional diffusion and energy-based framework that jointly optimizes grasp selection, handover, regrasp, and motion planning under multiple constraints. By combining a pretrained grasp diffusion model with bimanual planning energy-based models (EBMs), our method injects gradient guidance during reverse diffusion to enforce collision avoidance, trajectory smoothness (via differentiable inverse kinematics), handover feasibility, and regrasp safety. Annealed MCMC sampling further refines grasp poses over the composite energy landscape. Experiments across diverse simulated household reorientation tasks demonstrate that BiCompoDiff achieves over 20% higher success rates and up to 37% smoother trajectories (measured by joint displacement) compared to strong sampling-based baselines. Real-world validation confirms effective sim-to-real transfer and robust performance on challenging scenes.",
+      "authors": [
+        "Wun Lam Yeung",
+        "Wenjun Liu",
+        "Yui Cheung Yu",
+        "Zhengyan Lambo Qin",
+        "Qijin She",
+        "Heng Li",
+        "Ziqi Wang",
+        "Ping Tan"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-23T14:11:14+00:00",
+      "link": "https://arxiv.org/pdf/2607.21341v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "compositional diffusion for bimanual robot manipulation",
+      "llm_evidence_cn": "组合式扩散用于双臂机器人操作",
+      "llm_evidence": "组合式扩散用于双臂机器人操作",
+      "canonical_evidence": "组合式扩散用于双臂机器人操作",
+      "llm_tldr_en": "BiCompoDiff uses compositional diffusion and energy-based optimization for bimanual object reorientation, directly applying diffusion models to robot control.",
+      "llm_tldr_cn": "双臂物体重定向在碰撞和运动约束下充满挑战。本文提出BiCompoDiff，组合预训练抓取扩散模型与双臂规划能量模型，在逆扩散过程中注入梯度引导以强制执行约束，最终实现多目标优化的抓取、交接和放置。这是扩散策略在机器人控制中的直接应用。",
+      "llm_tldr": "双臂物体重定向在碰撞和运动约束下充满挑战。本文提出BiCompoDiff，组合预训练抓取扩散模型与双臂规划能量模型，在逆扩散过程中注入梯度引导以强制执行约束，最终实现多目标优化的抓取、交接和放置。这是扩散策略在机器人控制中的直接应用。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.20992v1",
+      "source": "arxiv",
+      "title": "Distributed Model-Based Diffusion For Scalable Multi-Robot Trajectory Optimization",
+      "abstract": "Trajectory optimization for multi-robot systems remains a critical challenge, particularly when navigating highly non-convex, non-linear, and non-differentiable environments. While Model-Based Diffusion (MBD) has recently emerged as a promising sampling-based optimization paradigm for single-robot trajectory generation, extending it to multi-robot systems results in a centralized, high-dimensional inference problem that (i) suffers from poor sample efficiency due to the curse of dimensionality and (ii) requires global access to all robots' dynamics, constraints, and objectives. To address this, we propose Distributed Model-Based Diffusion (DMBD), a distributed server-robot framework that decomposes the reverse diffusion process into local conditional reverse diffusion processes. This decomposition enables each robot to iteratively perform denoising independently within its own control subspace while conditioning on the current trajectory estimates of the other robots that are aggregated and broadcast by the server. Extensive simulations in goal swapping, multi-floor coverage, parking, and rush-hour scenarios demonstrate that DMBD achieves strong scalability, solving many challenging coordination tasks in sub-seconds and significantly outperforming existing baselines.",
+      "authors": [
+        "Haejoon Lee",
+        "Xinyi Wang",
+        "Taekyung Kim",
+        "Dimitra Panagou"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-23T07:16:59+00:00",
+      "link": "https://arxiv.org/pdf/2607.20992v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "distributed model-based diffusion for multi-robot trajectory optimization",
+      "llm_evidence_cn": "分布式模型扩散用于多机器人轨迹优化",
+      "llm_evidence": "分布式模型扩散用于多机器人轨迹优化",
+      "canonical_evidence": "分布式模型扩散用于多机器人轨迹优化",
+      "llm_tldr_en": "DMBD decomposes centralized diffusion into local processes in a server-robot framework for scalable multi-robot trajectory optimization.",
+      "llm_tldr_cn": "DMBD针对多机器人系统轨迹优化中的高维挑战，提出分布式服务器-机器人框架，将反向扩散过程分解为本地计算，每个机器人独立优化自身轨迹而服务器协调耦合约束。该方法避免了集中扩散带来的维度灾难和全局信息需求，在非凸、非线性环境中展示了可扩展性。",
+      "llm_tldr": "DMBD针对多机器人系统轨迹优化中的高维挑战，提出分布式服务器-机器人框架，将反向扩散过程分解为本地计算，每个机器人独立优化自身轨迹而服务器协调耦合约束。该方法避免了集中扩散带来的维度灾难和全局信息需求，在非凸、非线性环境中展示了可扩展性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.18060v1",
+      "source": "arxiv",
+      "title": "RoboHarness: Memory-Driven Orchestration of Heterogeneous Robot Policies for Long-Horizon Planning",
+      "abstract": "Long-horizon robotic tasks require diverse capabilities that no single policy can reliably provide. Heterogeneous policies offer complementary strengths, but orchestrating them requires reasoning over uncertain capability boundaries and cross-policy distribution mismatch, which are largely overlooked by existing planning methods built on homogeneous, predefined skills with fixed applicability. We propose RoboHarness, a unified framework that encapsulates independently developed robot control systems as reusable agentic skills. Although instantiated in this work with VLAs, RL policies, and task-and-motion planning (TAMP) systems, RoboHarness is designed as a general framework compatible with a broader range of robot policies, such as navigation policies, model predictive controllers, and world-action models. RoboHarness uses multi-modal execution memory and online evidence to characterize policy capability boundaries for capability-aware decomposition and routing. To stabilize policy handoffs, its Memory Bridge retrieves execution trajectories associated with the next policy, estimates its in-distribution state region, and guides the robot toward that region without joint policy retraining. Extensive experiments on three public benchmarks, 500 customized tasks, and 135 real-robot experiments demonstrate effective capability-aware routing and stable policy orchestration, yielding substantial improvements in zero-shot long-horizon planning and out-of-distribution robustness.",
+      "authors": [
+        "Jinbang Huang",
+        "Yuanzhao Hu",
+        "Zhiyuan Li",
+        "Ran Qi",
+        "Yixin Xiao",
+        "Zhanguang Zhang",
+        "Mark Coates",
+        "Tongtong Cao",
+        "Yingxue Zhang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-20T15:27:13+00:00",
+      "link": "https://arxiv.org/pdf/2607.18060v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "orchestrates heterogeneous robot policies, including imitation learning policies",
+      "llm_evidence_cn": "编排异构机器人策略，包括模仿学习策略",
+      "llm_evidence": "编排异构机器人策略，包括模仿学习策略",
+      "canonical_evidence": "编排异构机器人策略，包括模仿学习策略",
+      "llm_tldr_en": "RoboHarness provides a unified framework to orchestrate heterogeneous robot policies (VLAs, RL, TAMP) for long-horizon planning, which could be relevant to imitation learning systems.",
+      "llm_tldr_cn": "长 horizon 机器人任务需要多种能力，但现有规划方法依赖同质技能。本文提出RoboHarness，将独立开发的机器人控制系统封装为可复用智能技能，并通过记忆驱动编排它们，兼容多种策略类型（包括模仿学习策略），为实现复杂模仿学习系统提供了基础框架。",
+      "llm_tldr": "长 horizon 机器人任务需要多种能力，但现有规划方法依赖同质技能。本文提出RoboHarness，将独立开发的机器人控制系统封装为可复用智能技能，并通过记忆驱动编排它们，兼容多种策略类型（包括模仿学习策略），为实现复杂模仿学习系统提供了基础框架。",
+      "llm_tags": [
+        "query:imitation:composite"
+      ],
+      "matched_query_tag": "query:imitation:composite",
+      "matched_query_text": "Papers central to 搜索机器人模仿学习、JEPA、diffusion policy相关论文, especially work that connects or combines: imitation learning in robotics; robot imitation learning methods and algorithms; JEPA joint embedding predictive architecture; diffusion policy for robot control; recent advances in imitation learning for robotic manipulation; What are recent advances in robot imitation learning using JEPA?; How is diffusion policy applied to robot learning from demonstration?.",
+      "matched_requirement_id": "req-composite-imitation",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.19190v2",
+      "source": "arxiv",
+      "title": "Agentic Real2Sim: Physics-based World Modeling with Vision-Language Agents",
+      "abstract": "Real-to-sim conversion for robotic interaction with objects remains labor-intensive because it requires more than visual reconstruction: a streamlined real2sim process must recover scene geometries and object states, infer physical parameters, and assemble actors, objects, cameras, poses, and trajectories into a runnable physical simulation. Today this process still depends on manual tuning of visual foundation models, mesh cleanup, coordinate-frame alignment, and brittle workflow glue across visual perception tools and simulators. We introduce \\textit{Agentic Real2Sim}, a framework for generalized physical world modeling with vision-language agents, converting a real-world recording of object-robot interaction into a simulatable episodic twin which preserves observations, geometries, robot interactions, and object states. We evaluate Agentic Real2Sim on rigid-object manipulation, deformable-object interaction, and humanoid motion scenes, spanning domains that are usually handled by separate Real2Sim pipelines, marking a first step toward scalable conversion. The framework's agentic decisions can be driven by an open-weight VLM backend at a small fraction of the cost of frontier models, while attaining comparable conversion success rate. We aim to use the resulting real-world-aligned twins for downstream robotics tasks, specifically policy learning and evaluation. The project site is available at https://agentic-real2sim.github.io/.",
+      "authors": [
+        "Guanxiong Chen",
+        "Qianjun Xia",
+        "Jiawei Peng",
+        "Heng Zhang",
+        "Bole Ma",
+        "Justin Qian",
+        "Ziyi Jiao",
+        "Bingyang Zhou",
+        "Luoxin Ye",
+        "Kaifeng Zhang",
+        "Kunyi Wang",
+        "Weijia Zeng",
+        "Yunuo Chen",
+        "Pengzhi Yang",
+        "Ziqiu Zeng",
+        "Huamin Wang",
+        "Chao Liu",
+        "Alan Yuille",
+        "Fan Shi",
+        "Changxi Zheng",
+        "Yunzhu Li",
+        "Chenfanfu Jiang",
+        "Peter Yichen Chen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-21T15:23:38+00:00",
+      "link": "https://arxiv.org/pdf/2607.19190v2",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "real2sim conversion enabling simulation for imitation learning data generation",
+      "llm_evidence_cn": "真实到仿真转换，为模仿学习数据生成提供仿真环境",
+      "llm_evidence": "真实到仿真转换，为模仿学习数据生成提供仿真环境",
+      "canonical_evidence": "真实到仿真转换，为模仿学习数据生成提供仿真环境",
+      "llm_tldr_en": "Agentic Real2Sim automates real-to-sim conversion for robotic manipulation using vision-language agents, enabling simulation-ready episodic twins from real recordings.",
+      "llm_tldr_cn": "Agentic Real2Sim框架利用视觉语言代理自动完成真实到仿真的转换过程，将真实世界中的物体-机器人交互记录转化为可运行的仿真场景。该方法恢复几何、物理参数并组装仿真组件，减少了手动调参和脚本胶水代码的需求，为机器人模仿学习中的仿真数据生成提供了高效途径。",
+      "llm_tldr": "Agentic Real2Sim框架利用视觉语言代理自动完成真实到仿真的转换过程，将真实世界中的物体-机器人交互记录转化为可运行的仿真场景。该方法恢复几何、物理参数并组装仿真组件，减少了手动调参和脚本胶水代码的需求，为机器人模仿学习中的仿真数据生成提供了高效途径。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

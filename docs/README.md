@@ -6,35 +6,37 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-24
-- 运行时间：2026-07-24 20:09:06 UTC
+- 最新运行日期：2026-07-25
+- 运行时间：2026-07-25 20:09:55 UTC
 - 运行状态：成功
 - 本次总论文数：5
 - 精读区：2
 - 速读区：3
 
 ### 今日简报（AI）
-今日精读2篇高分论文，速读3篇聚焦机器人操作与组合技能，重点关注可解释视觉注意力机制。最值得看的方向是GuidedAttention在模仿学习中处理分布外场景的鲁棒性与可纠正性，以及专家行为先验强化学习。建议普通读者优先精读《GuidedAttention: Interpretable and Correctable Visual Attention for OOD-Robust Robot Manipulation via Imitation Learning》，以掌握提升机器人泛化能力的实用方法。
-- 详情：[/202607/24/README](/202607/24/README)
+1) 今日5篇论文聚焦机器人容错与双手操作，精读两篇均获8分高分。  
+2) 最值得关注《EgoRecovery》中通过人类演示教机器人故障恢复，以及《Grasp, Handover, Rotate》用扩散模型实现双手物体重定向。  
+3) 建议优先精读这两篇，理解机器人如何从示教中学习自主恢复和复杂操作，对工程应用启发最大。
+- 详情：[/202607/25/README](/202607/25/README)
 
 ### 精读区论文标签
-1. [GuidedAttention: Interpretable and Correctable Visual Attention for OOD-Robust Robot Manipulation via Imitation Learning](/202607/24/2607.21049v1-guidedattention-interpretable-and-correctable-visual-attention-for-ood-robust-robot-manipulation-via-imitation-learning)  
-   标签：评分：10.0/10、query:imitation
-   evidence：机器人模仿学习结合扩散策略
-2. [Expert Behavior Prior Reinforcement Learning](/202607/24/2607.21302v1-expert-behavior-prior-reinforcement-learning)  
+1. [EgoRecovery: Acquiring Failure Recovery Ability Through Human Recovery Demonstration](/202607/25/2607.19745v2-egorecovery-acquiring-failure-recovery-ability-through-human-recovery-demonstration)  
    标签：评分：8.0/10、query:imitation
-   evidence：利用示范的专家行为先验强化学习
+   evidence：利用人类恢复演示进行机器人模仿学习
+2. [Grasp, Handover, Rotate: Bimanual Object Reorientation via Compositional Diffusion and Energy-Based Optimization](/202607/25/2607.21341v1-grasp-handover-rotate-bimanual-object-reorientation-via-compositional-diffusion-and-energy-based-optimization)  
+   标签：评分：8.0/10、query:imitation
+   evidence：组合式扩散用于双臂机器人操作
 
 ### 速读区论文标签
-1. [Emergent Compositional Skills in Mixture-of-Experts VLAs](/202607/24/2607.20771v1-emergent-compositional-skills-in-mixture-of-experts-vlas)  
+1. [Distributed Model-Based Diffusion For Scalable Multi-Robot Trajectory Optimization](/202607/25/2607.20992v1-distributed-model-based-diffusion-for-scalable-multi-robot-trajectory-optimization)  
    标签：评分：7.0/10、query:imitation
-   evidence：利用MoE从专家示范中涌现组合技能
-2. [RoboInter1.5: A Holistic Intermediate Representation Suite for Embodied World Modeling and Robotic Manipulation](/202607/24/2607.18709v1-robointer15-a-holistic-intermediate-representation-suite-for-embodied-world-modeling-and-robotic-manipulation)  
+   evidence：分布式模型扩散用于多机器人轨迹优化
+2. [RoboHarness: Memory-Driven Orchestration of Heterogeneous Robot Policies for Long-Horizon Planning](/202607/25/2607.18060v1-roboharness-memory-driven-orchestration-of-heterogeneous-robot-policies-for-long-horizon-planning)  
    标签：评分：6.0/10、query:imitation
-   evidence：面向机器人操控的全面中间表示套件，支持模仿学习
-3. [AXIS: A Growable Community-Driven Data Engine for Scalable Robot Manipulation](/202607/24/2607.21588v1-axis-a-growable-community-driven-data-engine-for-scalable-robot-manipulation)  
+   evidence：编排异构机器人策略，包括模仿学习策略
+3. [Agentic Real2Sim: Physics-based World Modeling with Vision-Language Agents](/202607/25/2607.19190v2-agentic-real2sim-physics-based-world-modeling-with-vision-language-agents)  
    标签：评分：6.0/10、query:imitation
-   evidence：机器人操作演示收集引擎
+   evidence：真实到仿真转换，为模仿学习数据生成提供仿真环境
 
 
 <div class="dpr-home-promo-card">

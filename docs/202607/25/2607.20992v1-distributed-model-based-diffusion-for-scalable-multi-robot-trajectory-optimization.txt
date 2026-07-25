@@ -1,0 +1,1295 @@
+Title: Distributed Model-Based Diffusion For Scalable Multi-Robot Trajectory Optimization
+
+URL Source: https://arxiv.org/pdf/2607.20992v1
+
+Published Time: Fri, 24 Jul 2026 00:42:53 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+# Distributed Model-Based Diffusion For Scalable Multi-Robot Trajectory Optimization 
+
+Haejoon Lee, Xinyi Wang, Taekyung Kim, and Dimitra Panagou 
+
+Abstract — Trajectory optimization for multi-robot systems remains a critical challenge, particularly when navigating highly non-convex, non-linear, and non-differentiable envi-ronments. While Model-Based Diffusion (MBD) has recently emerged as a promising sampling-based optimization paradigm for single-robot trajectory generation, extending it to multi-robot systems results in a centralized, high-dimensional infer-ence problem that (i) suffers from poor sample efficiency due to the curse of dimensionality and (ii) requires global access to all robots’ dynamics, constraints, and objectives. To address this, we propose Distributed Model-Based Diffusion (DMBD), a distributed server-robot framework that decomposes the reverse diffusion process into local conditional reverse diffusion processes. This decomposition enables each robot to iteratively perform denoising independently within its own control sub-space while conditioning on the current trajectory estimates of the other robots that are aggregated and broadcast by the server. Extensive simulations in goal swapping, multi-floor coverage, parking, and rush-hour scenarios demonstrate that DMBD achieves strong scalability, solving many challenging co-ordination tasks in sub-seconds and significantly outperforming existing baselines. [Project Page] a
+
+I. I NTRODUCTION 
+
+Trajectory optimization for collision-free multi-robot co-ordination within shared workspaces remains a critical chal-lenge. One of the most popular approaches is the gradient-based methods that use gradient of the cost function to move toward the optimal solutions [1]–[4]. However, these meth-ods often struggle in highly nonconvex or non-differentiable settings, where they are susceptible to poor local minima and can incur substantial computational costs. To circumvent the limitations of gradient-based optimiza-tion methods, sampling-based optimization (SBO) methods have emerged as a powerful alternative. By casting the trajectory planning problem as a probabilistic inference prob-lem over the trajectory space, SBO planners have proven highly successful at navigating complex, non-smooth, and non-convex environments [5]–[8]. Representative examples include the Cross Entropy Method (CEM) [5], [9], Model Predictive Path Integral (MPPI) [6], [10], and variational MPCs [11], [12]. Recently, Model-Based Diffusion (MBD) has emerged as a promising SBO method inspired by generative denoising diffusion probabilistic models [7], [13]. While algorithmi-cally similar, it departs from other SBO approaches, as MBD leverages the diffusion framework to optimize over a multi-modal trajectory distribution via iterative denoising        
+
+> All authors are with the Robotics Department, University of Michi-gan, Ann Arbor, MI, USA {haejoonl, xinywa, taekyung, dpanagou }@umich.edu
+> aProject Page: https://distributed-mbd.github.io/dmbd.github.io/
+
+process. Furthermore, in contrast to other diffusion-based planners that rely on score networks learned from offline datasets [14]–[16], MBD directly exploits known system dynamics and task objectives during inference, enabling 
+
+learning-free generation of diverse, low-cost trajectories. Since its introduction, several extensions of MBD have been proposed. For example, gradual constraint enforcement was introduced in [17] to progressively improve solution quality throughout the denoising process, while strict safety guarantees were incorporated directly into the denoising pro-cedure in [18]. Related diffusion-inspired denoising schemes are adopted in [8] to present a real-time controller. MBD’s ability to optimize over multi-modal trajectory distributions is appealing for multi-robot planning, where deadlocks often arise from local minima. However, despite its success in single-agent settings, extending MBD to multi-robot systems remains challenging for two reasons. First, MBD suffers from the curse of dimensionality as the number of robots increases. Because the dimension of the joint trajectory space grows with the number of robots [19], MBD, like other SBO methods, experiences exponentially decreasing sampling efficiency and optimization performance in large-scale multi-robot settings. D4orm [20] mitigates this issue through iterative deformation updates, but its reverse diffusion process remains centralized, requiring a single processor to sample and denoise trajectories in the joint trajectory space. A recent work [21] combines individu-ally executed MBD planning with centralized deconfliction, which may require numerous rounds of deconfliction and subsequent MBD replanning in congested environments. Second, MBD assumes centralized access to all objec-tives, constraints, and robot dynamics to perform denoising. In practical multi-robot systems, particularly heterogeneous teams, robots often possess distinct objectives, dynamics, and local constraints. Aggregating this information can incur substantial communication overhead and places a significant computational and memory burden on a single machine, further limiting scalability. To address these challenges, this paper introduces Dis-tributed Model-Based Diffusion (DMBD), a distributed, server-robot framework for multi-robot trajectory optimiza-tion, reflecting deployment architectures commonly found in warehouse and delivery systems [22], [23]. DMBD de-composes the global trajectory optimization problem into local inference subproblems executed independently and in parallel by each robot. Rather than estimating the score function and performing denoising over the full joint tra-jectory distribution, each robot performs local conditional arXiv:2607.20992v1 [cs.RO] 23 Jul 2026 denoising updates using only its own objectives, constraints, and dynamics. During each denoising step, it conditions on the current trajectory estimates of the other robots, which are aggregated and broadcast by the server. In contrast to existing distributed sampling-based ap-proaches [11], [24], which require agents to exchange mul-tiple trajectory samples and therefore incur substantial com-munication overhead, DMBD communicates only a single trajectory per denoising iteration. Compared to [25], our method does not require robots to know other robots’ lo-cal objective functions. Furthermore, unlike gradient-based approaches such as [26], DMBD is entirely zeroth-order and does not assume differentiability. Consequently, DMBD achieves scalable multi-robot coordination while retaining the efficiency and multi-modal trajectory generation of MBD. Our contributions are as follows:  
+
+> •
+
+We propose Distributed Model-Based Diffusion (DMBD) , a server-coordinated distributed variant of MBD that decomposes multi-robot trajectory optimiza-tion into local conditional diffusion processes. Each robot independently performs denoising in its own trajectory space while conditioning on the trajectories of other robots, reducing inference complexity and improving scalability and sample efficiency.  
+
+> •
+
+We characterize the relationship between MBD and DMBD by deriving a theoretical bound on the discrep-ancy between the global score function and the local conditional score function.  
+
+> •
+
+We validate DMBD through extensive simulations across diverse multi-robot scenarios, including goal swapping, multi-floor coverage, parking, and rush-hour tasks, demonstrating superior scalability and consistent performance gains over existing baselines. II. P RELIMINARIES 
+
+We denote the set of non-negative integers by Z≥0 and the p × p identity matrix by Ip.Consider a multi-robot system of N robots connected to a server. Each robot k ∈ R := {1, . . . , N } is modeled by 
+
+xkt+1 = fk(xkt , ukt ), (1) where xkt ∈ X k ⊂ Rnk and ukt ∈ U k ⊂ Rmk are the state and control input at time step t ∈ Z≥0, respectively. We denote n = P 
+
+> k∈R
+
+nk and m = P 
+
+> k∈R
+
+mk. The function 
+
+fk : Xk × U k → X k represents the dynamics of robot k. We stack the states and control inputs of robots at time t into: 
+
+xt =
+
+h
+
+x1 
+
+> t
+> ⊤
+
+· · · xNt
+
+> ⊤
+
+i⊤
+
+∈ X := 
+
+> N
+
+Y
+
+> k=1
+
+Xk, (2) 
+
+ut =
+
+h
+
+u1 
+
+> t
+> ⊤
+
+· · · uNt
+
+> ⊤
+
+i⊤
+
+∈ U := 
+
+> N
+
+Y
+
+> k=1
+
+Uk. (3) Then, the global system can be written as: 
+
+xt+1 = F (xt, ut), (4) where F : X × U → X is the dynamics of all robots. For a planning horizon T ∈ Z>0, we define the control trajectory of all robots as 
+
+Y := Y ⊤ 
+
+> 1
+
+· · · Y ⊤
+
+> N
+
+⊤ ∈ U T := 
+
+> T
+
+Y
+
+> q=1
+
+U ∈ RmT ,
+
+where 
+
+Yk := (uk 
+
+> 0
+
+)⊤ · · · (ukT −1)⊤⊤ ∈ U Tk := 
+
+> T
+
+Y
+
+> q=1
+
+Uk ∈ Rmk T
+
+denotes the local control trajectory of robot k. We denote 
+
+Y−k as the collection of control trajectories of all robots except robot k.Given the initial local state xk 
+
+> 0
+
+and local control trajectory 
+
+Yk, the state trajectory of robot k is uniquely determined through the recursive rollout of (1), which we denote by 
+
+τk := τk(Yk) = ( xk 
+
+> 0
+
+, f k(xk 
+
+> 0
+
+, uk 
+
+> 0
+
+), f k(fk(xk 
+
+> 0
+
+, uk 
+
+> 0
+
+), uk 
+
+> 1
+
+), · · · ).
+
+Similarly, given the initial global state x0 and global control trajectory Y , the global state trajectory is determined through the recursive rollout of (4), which we denote by 
+
+τ := τ (Y ). We further denote by τ−k := τ−k(Y−k) the collection of state trajectories of all robots except robot k.Each robot k aims to minimize a local objective function 
+
+Jk(Yk) := Jk(Yk, τ k(Yk)) = lT,k (xkT ) +  
+
+> T−1
+
+X
+
+> t=0
+
+lt,k (xkt , ukt ),
+
+where lT,k : Xk → R and lt,k : Xk × U k → R are terminal and stage costs. In addition, robot k is subject to a set of local constraints 
+
+Ck, where |C k|= Ck ∈ Z≥0. A constraint p ∈ C k is given as 
+
+gk,p (Y ) := gk,p (τk, τ −k),
+
+which are satisfied when non-positive. Constraint p may depend not only on its own state trajectory but also on the state trajectories of other robots. We denote the index set of robots involved in this constraint including robot k
+
+by Rk,p ⊆ R. We assume that whenever robots are in involved in the same constraint function, they all share the same knowledge of the functional form and parameters of the constraints. That is, 
+
+Assumption 1. For any k ∈ R , p ∈ C k, and j ∈ R k,p ,the coupled constraint is symmetric with respect to the participating robots, i.e., gk,p (Y ) = gj,p (Y ), ∀Y ∈ U T .We make no assumptions regarding the convexity or continuity of Jk and gk,p to reflect the complexities of real-world robotic tasks. Under these definitions, the centralized trajectory opti-mization problem is given by argmin 
+
+> Y
+
+J(Y ) = 
+
+> N
+
+X
+
+> k=1
+
+Jk(Yk) (5a) s.t. xt+1 = F (xt, ut), ∀t ∈ { 0, . . . , T − 1}, (5b) 
+
+ut ∈ U , ∀t ∈ { 0, . . . , T − 1}, (5c) 
+
+gk,p (Y ) ≤ 0, ∀p ∈ C k, ∀k ∈ R . (5d) Traditionally, solving (5) requires solving a nonlinear program. However, such approaches often converge to poor local minima and may even fail to converge when applied to non-convex and non-smooth optimization problems. 
+
+A. Sampling-Based Trajectory Optimization 
+
+An alternative paradigm that has recently gained signifi-cant attention is sampling-based optimization (SBO) which essentially casts the problem as an inference problem over the trajectory space [6], [7]. We first reformulate the cen-tralized problem (5) through the lens of central probabilistic inference. Note that we redefine the inference problem into the distributed form later in Section III. We define a target distribution p0(Y ) over the space of trajectories: 
+
+p0(Y ) ∝ exp( −ϕ(Y )/λ ), (6) with temperature λ > 0, where we define global cost function 
+
+ϕ(Y ) := J(Y ) + X
+
+> k∈R ,p ∈C k
+
+1
+
+|R k,p | gk,p (Y ). (7) This formulation converts the constrained problem (5) into an unconstrained probabilistic formulation by defining p0
+
+such that lower-cost trajectories receive higher probability mass while penalizing constraint violations. Hence, trajecto-ries with smaller cost ϕ(Y ) are more likely under p0.
+
+B. Model-Based Diffusion (MBD) 
+
+In a centralized setting, since J, gk,p , and F are all known, we can evaluate the probability p0(Y ) of a trajectory Y ∈UT . Nevertheless, because ϕ can be an arbitrary function, sampling directly from p0 is generally intractable. Thus, MBD iteratively refines samples starting from a Gaussian distribution [7]. Specifically, MBD is characterized by two distinct processes: 
+
+Forward (noising) process: The forward process grad-ually transforms a clean trajectory Y (0) ∼ p0 into white noise over M discrete steps. Given a variance schedule 
+
+{β1, . . . , β M }, we define αi := 1 − βi and ¯αi := Qij=1 αj .The noising step at iteration i is defined by: 
+
+Y (i) = √αiY (i−1) + √1 − αiϵi, ϵi ∼ N (0 , I mT ), (8) By utilizing the property of Gaussian sums, we can directly sample Y (i) from Y (0) as: 
+
+pi|0(· | Y (0) ) = N (√¯αiY (0) , (1 − ¯αi)ImT ). (9) As M → ∞, the distribution pM (Y (M )) approaches a Gaussian distribution N (0 , I mT ).
+
+Reverse (denoising) process: The reverse process aims to recover a low-cost trajectory by starting from Y (M ) ∼N (0 , I mT ) and moving back toward the target distribution defined by p0. Unlike traditional diffusion models [14]–[16] that learn score functions via neural networks, MBD utilizes knowledge of J, F , and gk,p to perform a Monte Carlo Score Ascent [7]. At each denoising step i ∈ { M, . . . , 1},the following update is performed: 
+
+Y (i−1) = 1
+
+√αi
+
+
+
+Y (i) + (1 − ¯αi)∇Y (i) log pi(Y (i))
+
+
+
+. (10) The score function ∇Y (i) log pi(Y (i)) is estimated with S
+
+candidate trajectories {Y (i) 
+
+> s
+
+}Ss=1 sampled from the distribu-tion N
+
+ Y (i)  
+
+> √¯αi
+
+,
+
+ 1¯αi − 1
+
+
+
+ImT 
+
+
+
+as below: 
+
+∇Y (i) log pi(Y (i)) ≈ − Y (i)
+
+1 − ¯αi
+
++
+
+√¯αi
+
+1 − ¯αi
+
+Y (i), (11) where Y (i) is a weighted average of the sampled candidate control trajectories {Y (i) 
+
+> s
+
+}Ss=1 , i.e., 
+
+Y (i) =
+
+PSs=1 Y(i) 
+
+> s
+
+p0(Y(i) 
+
+> s
+
+)
+
+PSs=1 p0(Y(i) 
+
+> s
+
+) . (12) This estimated score (11) acts as the steepest gradient that shifts the current estimate Y (i) into the direction that minimizes the function ϕ (7). In essence, at each denoising step, MBD exploits explicit 
+
+knowledge of the model , including dynamics, objectives, and constraints, to iteratively sample, evaluate, and refine candidate trajectories toward the optimal solution under the manifold of p0, without requiring any learning process. For further details on its convergence properties and the underlying intuition, we refer readers to [27]. III. D ISTRIBUTED MODEL -B ASED DIFFUSION (DMBD) While MBD provides an efficient mechanism for sampling low-cost trajectories under p0, it has two key limitations. First, it assumes access to the global objective J, global dynamics F , and all constraint functions gk,p . In a multi-robot setting, however, each local objective Jk, dynamics fk,and constraints gk,p may only be available to robot k ∈ R .Second, MBD scales poorly with the number of robots, since the dimensionality of the joint control space grows with N ,reducing sampling efficiency and thus performance. To address these issues, we propose Distributed Model-Based Diffusion (DMBD), a server-robot framework that de-composes the joint reverse diffusion process into distributed conditional denoising processes. DMBD shares the same noising process as vanilla MBD but differs in its denoising process. At each denoising step, robot k locally updates its control trajectory Yk ∈ UTk using its local objective, dynamics, and constraints, while conditioning on the current state trajectory estimates of other robots aggregated and broadcast by the server. Each robot then transmits its updated state trajectory back to the server, which aggregates and rebroadcasts them for the next step (see Figure 1). Fig. 1. Visualization of Distributed Model-Based Diffusion (DMBD). For every denoising step, each robot independently (i) performs local conditional denoising updates on its control trajectory while being conditioned on the state trajectories of other robots aggregated and broadcast by a server and (ii) transmit its updated state trajectory back to the server, which aggregates and rebroadcasts them. 
+
+We first define a local conditional target distribution for each robot k ∈ R :
+
+pk 
+
+> 0
+
+(Yk | τ−k) ∝ exp( −ϕk(Yk)/λ ), (13) where the local cost function 
+
+ϕk(Yk) := Jk(Yk) + X
+
+> p∈C k
+
+gk,p (τk, τ −k), (14) and λ > 0.DMBD begins with each robot k ∈ R sampling Y (M ) 
+
+> k
+
+∼N (0 , I mk T ) and sending its state trajectory τ (M ) 
+
+> k
+
+:= 
+
+τk(Y (M ) 
+
+> k
+
+) to the server, which aggregates into 
+
+τ (M ) := τ (Y (M )) = 
+
+h
+
+τ (M )1 · · · τ (M )
+
+> N
+
+i
+
+(15) and broadcasts (15) back to each robot. Upon receiving 
+
+τ (M ), each robot k performs the local conditioning denoising process over M steps. 
+
+Local conditional reverse (denoising) process: At each step i = M, . . . , 1, it samples and refines its control input trajectory Y (i) 
+
+> k
+
+with respect to its local cost ϕk (14) while conditioning on the shared state trajectories of other robots 
+
+τ (i) 
+
+> −k
+
+:= τ−k(Y (i) 
+
+> −k
+
+). The denoising update is given by 
+
+Y (i−1)  
+
+> k
+
+= Y (i)
+
+> k
+
+√αi
+
++ 1 − ¯αi
+
+√αi
+
+∇Y (i)
+
+> k
+
+log pki
+
+
+
+Y (i) 
+
+> k
+
+| τ (i)
+
+> −k
+
+
+
+. (16) Unlike the centralized update (10), each robot 
+
+k estimates its local conditional score function 
+
+∇Y (i)
+
+> k
+
+log pki
+
+
+
+Y (i) 
+
+> k
+
+| τ (i)
+
+> −k
+
+
+
+. The score function is estimated by sampling and evaluating Sk candidate control trajectories {Y (i)
+
+> k,s
+
+}Sk 
+
+> s=1
+
+of its own from the distribution 
+
+N
+
+ Y (i)  
+
+> k√¯αi
+
+,
+
+ 1¯αi − 1
+
+
+
+Imk T
+
+
+
+while fixing τ (i)
+
+> −k
+
+. Thus, we have 
+
+∇Y (i)
+
+> k
+
+log pki
+
+
+
+Y (i) 
+
+> k
+
+| τ (i)
+
+> −k
+
+
+
+≈ − Y (i)
+
+> k
+
+1 − ¯αi
+
++
+
+√¯αi
+
+1 − ¯αi
+
+Y (i) 
+
+> k
+
+, (17) where 
+
+Y (i) 
+
+> k
+
+=
+
+PSk 
+
+> s=1
+
+Y(i)
+
+> k,s
+
+pk
+
+> 0
+
+
+
+Y(i) 
+
+> k,s
+
+| τ (i)
+
+> −k
+
+PSk 
+
+> s=1
+
+pk
+
+> 0
+
+
+
+Y(i) 
+
+> k,s
+
+| τ (i)
+
+> −k
+
+ . (18) Intuitively, Y (i) 
+
+> k
+
+is a locally weighted average of candidate control trajectories for robot k, where the weights depend on the conditional likelihood induced by the local target distribution pk 
+
+> 0
+
+(· | τ (i)
+
+> −k
+
+).After the update, the robot obtains its new state trajectory 
+
+{τ (i−1)  
+
+> k
+
+}k∈R through rollout and transmits to the server, which aggregates them into the global trajectory τ (i−1) as in (15), and broadcasts it back to all robots. This cycle iterates until i = 1 , as detailed in Algorithm 1. 
+
+Remark 1. By distributing the denoising computation across robots, DMBD decomposes the global high-dimensional in-ference problem into local inference problems. This reduces the optimization dimension from the joint trajectory space P 
+
+> k∈R
+
+mkT , which scales with team size N , to the individ-ual trajectory space mkT . Thus, DMBD enjoys improved sample efficiency and scalability with respect to N .
+
+Remark 2. We highlight that the local objective, constraints, and dynamics of robot k are only available to robot k and Algorithm 1: Distributed MBD (DMBD) 
+
+Inputs : noise schedule {¯αi}Mi=1 , denoising steps M ,numbers of samples {Sk }Nk=1 , temperature 
+
+λ > 0
+
+Outputs : optimized trajectories {Y (0)  
+
+> k
+
+}Nk=1 
+
+// Trajectory Initialization  
+
+> 1
+
+for k = 1 , . . . , N do  
+
+> 2
+
+Sample Y (M ) 
+
+> k
+
+∼ N (0 , I mk T ) 
+
+> 3
+
+Send local state trajectory τ (M ) 
+
+> k
+
+to server  
+
+> 4
+
+for i = M, . . . , 1 do 
+
+// Server Aggregation  
+
+> 5
+
+Aggregate and broadcast τ (i) = [ τ (i)1 , . . . , τ (i) 
+
+> N
+
+] 
+
+> 6
+
+for k = 1 , . . . , N do 
+
+// Executed in parallel by robot k 
+
+> 7
+
+Receive state trajectories of other robots τ (i) 
+
+> −k
+> 8
+
+Sample {Y (i)
+
+> k,s
+
+}Sk 
+
+> s=1
+
+∼ N 
+
+ Y (i)  
+
+> k√¯αi
+
+,
+
+ 1¯αi − 1
+
+
+
+Imk T
+
+ 
+
+> 9
+
+Compute Y (i) 
+
+> k
+
+according to (18)  
+
+> 10
+
+Estimate ∇Y (i)
+
+> k
+
+log pki
+
+
+
+Y (i) 
+
+> k
+
+| τ (i)
+
+> −k
+
+
+
+via (17)  
+
+> 11
+
+Update Y (i−1)  
+
+> k
+
+with (16)  
+
+> 12
+
+Send local state trajectory τ (i−1)  
+
+> k
+
+to the server  
+
+> 13
+
+return {Y (0)  
+
+> k
+
+}Nk=1 
+
+are not shared with the server or other robots. This enables a more modular and scalable framework, as each robot does not require access to or storage of global system information. While DMBD decomposes the centralized reverse diffu-sion process into local conditional processes, this modifies the underlying reverse dynamics. Since the intermediate distribution pi(Y ) at denoising step i is defined over the joint trajectory space UT , coupled constraints create dependencies among robots, causing the local conditional score to differ from the centralized score. The following proposition bounds such discrepancy at each denoising step: 
+
+Proposition 1. Let Assumption 1 hold. Suppose that, for each k ∈ R , the local denoiser μk,i (Y (i) 
+
+> k
+
+, z ) := E[Y (0)  
+
+> k
+
+|
+
+Y (i) 
+
+> k
+
+, τ (0)  
+
+> −k
+
+= z] is Hk-Lipschitz in z, i.e., ∥μk,i (Y (i) 
+
+> k
+
+, z ) −
+
+μk,i (Y (i) 
+
+> k
+
+, z ′)∥≤ Hk∥z − z′∥ for all Y (i) 
+
+> k
+
+, z, z ′ and i ∈{1, . . . , M }. Then for all denoising steps i ∈ { M, . . . , 1},
+
+∇Y (i)
+
+> k
+
+log pi(Y (i)) − ∇ Y (i)
+
+> k
+
+log pki
+
+
+
+Y (i) 
+
+> k
+
+| τ (i)
+
+> −k
+
+
+
+≤√¯αi
+
+1 − ¯αi
+
+Hk E
+
+h
+
+∥τ (0)  
+
+> −k
+
+− τ (i)
+
+> −k
+
+∥| Y (i) i
+
+. (19) 
+
+Proof. For simplicity, we drop the notation (i) for the rest of the proof. By Assumption 1, we can rewrite ϕ (6) into 
+
+ϕ(Y ) = J(Y ) + X
+
+> k∈R ,p ∈C k
+
+1
+
+|R k,p | gk,p (Y )= Jk(Yk) + X
+
+> p∈C k
+
+gk,p (τk, τ −k)
+
+| {z }  
+
+> ϕk(Yk)
+
++ϕ−k(Y−k)
+
+where ϕ−k is a function that does not depend on Yk. Because 
+
+ϕ−k(Y−k) is constant with respect to Yk, we get 
+
+p0(Y (0)  
+
+> k
+
+| Y (0)  
+
+> −k
+
+) = pk 
+
+> 0
+
+(Y (0)  
+
+> k
+
+| τ (0)  
+
+> −k
+
+). (20) Under the forward diffusion process, the diffusion noises are independent across robots. Thus, we get 
+
+pi|0(Y | Y (0) ) = 
+
+> N
+
+Y
+
+> k=1
+
+pki|0(Yk | Y (0)  
+
+> k
+
+). (21) By Tweedie’s formula, we get: 
+
+∇Yk log pi(Y ) = 
+
+√¯αi E[Y (0)  
+
+> k
+
+| Y ] − Yk
+
+1 − ¯αi
+
+, (22a) 
+
+∇Yk log pki (Yk | τ−k) = 
+
+√¯αi μk,i (Yk, τ −k) − Yk
+
+1 − ¯αi
+
+. (22b) From (22), we get 
+
+∇Yk log pi(Y ) − ∇ Yk log pki (Yk | τ−k) =
+
+√¯αi
+
+1 − ¯αi
+
+E[Y (0)  
+
+> k
+
+| Y ] − μk,i (Yk, τ −k) . (23) Using the tower property, we get 
+
+E[Y (0)  
+
+> k
+
+| Y ] = E
+
+h
+
+E[Y (0)  
+
+> k
+
+| Yk, Y −k, Y (0)  
+
+> −k
+
+] | Y
+
+i
+
+From (21), we know that Y−k is generated purely from 
+
+Y (0)  
+
+> −k
+
+via independent forward noise. Therefore, given the clean trajectory Y (0)  
+
+> −k
+
+, the noisy counterpart Y−k is con-ditionally independent of the clean local trajectory Y (0)  
+
+> k
+
+.Furthermore, from (20), the distribution of Y (0)  
+
+> k
+
+depends on 
+
+Y (0)  
+
+> −k
+
+strictly through τ (0)  
+
+> −k
+
+= τ−k(Y (0)  
+
+> −k
+
+). Thus, we have: 
+
+E[Y (0)  
+
+> k
+
+| Y ] = E
+
+h
+
+E[Y (0)  
+
+> k
+
+| Yk, Y −k, Y (0)  
+
+> −k
+
+] | Y
+
+i
+
+(24a) 
+
+= E
+
+h
+
+E[Y (0)  
+
+> k
+
+| Yk, τ (0)  
+
+> −k
+
+] | Y
+
+i
+
+(24b) 
+
+= E
+
+h
+
+μk,i (Yk, τ (0)  
+
+> −k
+
+) | Y
+
+i
+
+. (24c) Applying (24), Jensen’s inequality (with the convexity of the norm), and Lipschitz continuity of μk,i , we get 
+
+E[Y (0)  
+
+> k
+
+| Y ] − μk,i (Yk, τ −k) (25) 
+
+= E
+
+h
+
+μk,i (Yk, τ (0)  
+
+> −k
+
+) | Y
+
+i
+
+− μk,i (Yk, τ −k)
+
+= E
+
+h
+
+μk,i (Yk, τ (0)  
+
+> −k
+
+) − μk,i (Yk, τ −k) | Y
+
+i
+
+≤ E
+
+h
+
+μk,i (Yk, τ (0)  
+
+> −k
+
+) − μk,i (Yk, τ −k) | Y
+
+i
+
+≤ HkE
+
+h
+
+∥τ (0)  
+
+> −k
+
+− τ−k∥ | Y
+
+i
+
+.
+
+Combining (23) with (25), we get (19). Proposition 1 characterizes the discrepancy between the centralized score and local conditional score functions at each denoising step. The bound depends on (i) the deviation of other robots’ optimal trajectories from their current esti-mates and (ii) the Lipschitz constant Hk, which measures the sensitivity of robot k’s denoiser to other robots’ trajectories. One thing to note is that when the constraints are fully decoupled, i.e., gk,p depends only on robot k’s state trajectory (Rk,p = {k}), the denoiser is independent of τ−k and thus Hk = 0 . Consequently, when all robots run DMBD without any coupled constraints, that is equivalent to robots individually running MBD, as expected. 
+
+Remark 3. The bound in Proposition 1 is stated for the exact score functions. In practice, however, both MBD and DMBD estimate these scores using finite sets of samples (as in (11) and (17)). Consequently, (19) characterizes the asymptotic behavior as the number of particles satisfies 
+
+S → ∞ and Sk → ∞. With finite samples, additional approximation errors arise from estimation, so the empirical discrepancy may actually violate (19). Establishing a finite-sample analysis remains a future work. 
+
+Remark 4. Proposition 1 depends on the Lipschitz assump-tion of the local denoiser μk,i (·, z ) with respect to z. Such assumption can be satisfied when pk 
+
+> 0
+
+(· | z) varies Lipschitz continuously in 1-Wasserstein distance [28, Remark 6.5]. IV. S IMULATIONS 
+
+In this section, we present simulation results to evaluate our method. Specifically, we aim to address two questions: 
+
+Q1. Is DMBD scalable with respect to the number of robots 
+
+N ? Q2. Can robots generate trajectories that minimize the global cost without global knowledge (e.g., global dynam-ics, objective, and constraints)? All simulations are coded in python with JAX [29] for GPU acceleration and were conducted on a computer with a 12th Gen Intel® Core™ i9-12900KF CPU, 64 GB of RAM, and an Nvidia RTX 3080 Ti GPU. While our algorithm can be used for online trajectory planning, we focus on offline planning only. We consider two systems. First, double integrator dy-namics with state xkt = pk⊤ 
+
+> t
+
+vk⊤
+
+> t
+
+⊤ and control 
+
+ukt = akx,t aky,t 
+
+⊤, where pkt = xkt ykt
+
+⊤ and vkt =
+
+vkx,t vky,t 
+
+⊤. The system evolves as 
+
+pkt+1 = pkt + vkt ∆t + 12 ukt ∆t2,
+
+vkt+1 = vkt + ukt ∆t, 
+
+(26) with ∥ukt ∥∞≤ 1 and ∥vkt ∥∞≤ 5, where ∆t = 0 .1 is the sampling time. Second, we consider kinematic bicycle dynamics [30] with state xkt = xkt ykt θkt vkt
+
+⊤ and control ukt =
+
+akt δkt
+
+⊤, subject to |vkt |≤ 5, |akt |≤ 1, and |δkt |≤ 0.25 .The dynamics are 
+
+xkt+1 = xkt + vkt cos( θkt )∆ t, (27a) 
+
+ykt+1 = ykt + vkt sin( θkt )∆ t, (27b) 
+
+θkt+1 = θkt + vkt
+
+Lk tan( δkt )∆ t, (27c) 
+
+vkt+1 = vkt + akt ∆t, (27d) where ∆t = 0.25 is the sampling time and Lk is the wheelbase length of agent k.We consider two robot geometries: circular and rectan-gular. A circular robot k is modeled by its radius Rk
+
+> col
+
+,and collision avoidance between robots k and j is enforced through 
+
+hk,j  
+
+> cir
+
+(xkt , x jt ) = max {0, (Rk 
+
+> col
+
++ Rj
+
+> col
+
+)2 − ∥ pkt − pjt ∥22}
+
+where pkt = xkt ykt
+
+⊤. Collision checks among rectan-gular robots with dimensions d1,k × d2,k are handled using the separating axis theorem (SAT) [31], denoted 
+
+hk,j  
+
+> rec
+
+(xkt , x jt ) = Ψ SAT (xkt , x jt ),
+
+where ΨSAT (xkt , xjt ) = 0 indicates that robots k and j do not overlap.We want to enforce such constraint for all t ∈T := {0, . . . , T }. Thus, the robot k has a collision constraint 
+
+p ∈ C k with robot j ∈ R p,k = {k, j } as 
+
+gk,p (Y ) = 
+
+(
+
+max t∈T hk,j  
+
+> cir
+
+(xkt , xjt ), circular robots ,
+
+max t∈T hk,j  
+
+> rec
+
+(xkt , xjt ), rectangular robots .
+
+(28) To enforce collision avoidance with the static circular obstacles Oq , we define the obstacle collision constraint 
+
+p ∈ C k analogously to (28). Specifically, 
+
+gk,p (Y ) = 
+
+(
+
+max t∈T hk,q  
+
+> cir
+
+(xkt , Oq ), circular robots ,
+
+max t∈T hk,q  
+
+> rec
+
+(xkt , Oq ), rectangular robots ,
+
+with hk,q  
+
+> cir
+
+denoting the distance-based circle-to-circle colli-sion test and hk,q  
+
+> rec
+
+the closest-point projection test between an oriented rectangle and a circular obstacle [31]. 
+
+Q1. Scalability: To answer Q1 , we compare DMBD against four SBO baselines across different environments: Cross-Entropy Method (CEM) [9], Model Predictive Path Integral (MPPI) [6], MBD [7], and D4orm [20]. All methods  
+
+> •
+
+optimize trajectories in the control-input space with the same planning horizon T and denoising steps (iterations for CEM and MPPI) M , 
+
+> •
+
+sample 500 candidate control trajectories per robot to match the total number of samples, and  
+
+> •
+
+use cost parameters tuned once using the MBD on the case with N = 2 for each scenario. For CEM, we use a 2% elite set (10 samples per robot), while D4orm uses two deformation iterations ( 2M denoising steps). To evaluate them, we measure each method using two metrics: (i) the success rate , defined as the percentage of trials that produce a collision-free solution, and (ii) the 
+
+planning time , measured as the time required to generate a trajectory from the initial states x0.
+
+1) Goal-Swap : We evaluate a circular goal-swapping task with (i) circular robots of radius Rk 
+
+> col
+
+= 1 .5 m under (26) and (ii) rectangular robots of size 3.0×5.0 under (27) with Lk =3.0. Robots are initialized uniformly on circles of radius 
+
+17 .5 m and 25 .0 m , respectively, with diametrically opposite goals (shown in Figure 2). We consider N ∈ { 2, . . . , 20 },set M = 150 , and increase the horizon from T = 200 by 5 steps per additional robot. A trial succeeds if all robots Fig. 2. DMBD’s local conditional denoising process for goal swapping with N = 20 (a) circular and (b) rectangular robots.        
+
+> Fig. 3. Success rates and average planning time across 50 trials for varying
+> N. Baseline methods fail at N= 20 due to out-of-memory errors.
+
+remain collision-free and reach within 2.5 m of their goals. We run 50 trials with varying seeds. 
+
+2) Multi-Floor Coverage : We consider a heterogeneous team of rectangular robots navigating a two-story building. The team consists of smaller robots E = {1, . . . , N/ 2} with dimensions 2.0×4.5 and larger robots R\E with dimensions 
+
+2.5 × 6.5. All robots follow the kinematic model (27) with augmented state xkt = xkt ykt zkt θkt vkt
+
+⊤, where zkt
+
+denotes the floor height. The wheelbase is Lk = 3 .0 for 
+
+k ∈ E and Lk = 4 .2 otherwise. Smaller robots may move up to the second floor ( z = 5 ) only through four elevator zones, whereas larger robots remain on the first floor ( z = 0 ). Eight         
+
+> TABLE I SUCCESS RATE AND PLANNING TIME ACROSS DIFFERENT TASKS
+> Metric Parking Rush Hour Success (%) Planning Time (s)
+> 92 0.52 96 0.39
+
+cylindrical obstacles of radius 1.0 m are placed at (±20 , 0, z )
+
+and (0 , ±20 , z ), z ∈ { 0, 5}.We evaluate team sizes N ∈ { 2, . . . , 10 } with M = 200 
+
+denoising steps and increase the horizon from T = 250 by 25 steps per additional robot. A trial succeeds if all robots remain collision-free and reach their assigned goals within 
+
+5.0 m on the correct floor. We run each configuration 50 times with randomly generated initial states (xk 
+
+> 0
+
+, y k 
+
+> 0
+
+, z k 
+
+> 0
+
+) ∈
+
+[−30 , 30] 2 × { 0}, θk 
+
+> 0
+
+∈ [−π, π ], and vk 
+
+> 0
+
+= 0 , and goals in 
+
+[−20 , 20] 2 × { 0, 5}, where smaller and larger robots have 
+
+z = 5 and z = 0 , respectively. 
+
+3) Results and Discussions : As shown in Fig. 3, DMBD generally achieves the best performance in both success rate and planning time as N increases. DMBD solves goal-swapping tasks in sub-second runtimes even for large teams. In contrast, baselines suffer from rapidly increasing planning time and decreasing success rate. D4orm performs comparably to DMBD in the circular-robot goal-swapping scenario but requires approximately 10 × longer planning time. They also eventually fail at N = 20 due to out-of-memory (OOM) errors when sampling from the high-dimensional joint trajectory space. This scalability advantage arises because baseline methods optimize over the coupled trajectory space of dimension 
+
+(PNk=1 mk)T , which grows with team size, whereas DMBD decomposes inference into per-robot trajectory spaces of di-mension mkT . Furthermore, the performance gap widens as task complexity increases, from circular robots to rectangular robots and multi-floor coverage, where rectangular-body col-lision constraints and elevator dynamics introduce additional non-smoothness. These results highlight the advantage of DMBD for challenging coordination problems. 
+
+Q2. Coordination without global knowledge: To answer 
+
+Q2 , we consider two challenging environments to evaluate whether robots can cooperatively solve the global optimiza-tion problem without access to global information, including global objectives, dynamics, and constraints. 
+
+4) Parking : We consider a parking scenario with two rectangular robots under the kinematic bicycle model (27), shown in Figure 4(a). To reach their designated parking spots, robot 1 (red) must temporarily leave its goal location, allowing robot 2 (blue) to park, before returning. A trial is considered successful if both robots reach within 2.5 m of their goal locations without collisions. We run 50 trials with robot 2’s initial position sampled uniformly from (xk 
+
+> 0
+
+, y k 
+
+> 0
+
+) ∈
+
+[−15 , 15] × [17 .5, 25] and θk 
+
+> 0
+
+∈ [0 , 2π] with vk 
+
+> 0
+
+= 0 .
+
+5) Rush Hour : We consider a four-robot “Rush Hour” puzzle in which each rectangular robot is restricted to longitudinal motion with state xkt = [ xkt , y kt , θ kt , v kt ]⊤ and dy-namics (27a), (27b), and (27d). As illustrated in Figure 4(b), Fig. 4. Visualizations of representative planned trajectories through DMBD for the (a) parking and (b) rush hour scenarios. 
+
+robot 1 must exit the environment, but its path is blocked by other robots whose motions are mutually constrained. Robots 2-4 seek only to minimize their own control effort. A trial is successful if robot 1 reaches within 1.5 m of its goal without collisions. We evaluate 50 trials with randomized initial longitudinal positions of the robots 2-4. 
+
+6) Results and Discussions : These tasks require robots to coordinate and execute strategically suboptimal local actions without knowing others’ goals, while considering highly non-convex and non-smooth local objectives and constraints. Nevertheless, DMBD achieves over 90% success rates across both tasks within sub-second planning times (Table I). The resulting coordination emerges without sharing the global ob-jectives, demonstrating that distributed inference is sufficient to recover globally coordinated behavior. V. C ONCLUSIONS 
+
+We present Distributed Model-Based Diffusion (DMBD), a scalable server-robot framework for multi-robot trajectory optimization. By distributing the reverse diffusion process, DMBD enables each robot to perform local conditional denoising using only local information while conditioning on the trajectory estimates from other robots. We characterize the relationship between the global and local conditional denoising updates by deriving theoretical error bounds. Ex-tensive simulations across diverse scenarios demonstrate that DMBD outperforms existing baselines. REFERENCES [1] J. Nocedal and S. J. Wright, Numerical optimization . Springer, 2006. [2] R. Van Parys and G. Pipeleers, “Distributed mpc for multi-vehicle systems moving in formation,” Robotics and Autonomous Systems ,vol. 97, pp. 144–152, 2017. [3] L. Ferranti, L. Lyons, R. R. Negenborn, T. Keviczky, and J. Alonso-Mora, “Distributed nonlinear trajectory optimization for multi-robot motion planning,” IEEE Transactions on Control Systems Technology ,vol. 31, no. 2, pp. 809–824, 2023. [4] O. Shorinwa, T. Halsted, J. Yu, and M. Schwager, “Distributed optimization methods for multi-robot systems: Part 1—a tutorial [tutorial],” IEEE Robotics & Automation Magazine , vol. 31, no. 3, pp. 121–138, 2024. [5] R. Rubinstein, “The cross-entropy method for combinatorial and continuous optimization,” Methodology and computing in applied probability , vol. 1, no. 2, pp. 127–190, 1999. [6] G. Williams, P. Drews, B. Goldfain, J. M. Rehg, and E. A. Theodorou, “Information-theoretic model predictive control: Theory and applica-tions to autonomous driving,” IEEE Transactions on Robotics , vol. 34, no. 6, pp. 1603–1622, 2018. [7] C. Pan, Z. Yi, G. Shi, and G. Qu, “Model-based diffusion for trajectory optimization,” Advances in Neural Information Processing Systems ,vol. 37, pp. 57 914–57 943, 2024. [8] H. Xue, C. Pan, Z. Yi, G. Qu, and G. Shi, “Full-order sampling-based mpc for torque-level locomotion control via diffusion-style annealing,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 4974–4981. [9] Z. I. Botev, D. P. Kroese, R. Y. Rubinstein, and P. L’ecuyer, “The cross-entropy method for optimization,” in Handbook of statistics . Elsevier, 2013, vol. 31, pp. 35–59. [10] T. Kim, G. Park, K. Kwak, J. Bae, and W. Lee, “Smooth model predictive path integral control without smoothing,” IEEE Robotics and Automation Letters , vol. 7, no. 4, pp. 10 406–10 413, 2022. [11] C. Jiang, “Distributed sampling-based model predictive control via be-lief propagation for multi-robot formation navigation,” IEEE Robotics and Automation Letters , vol. 9, no. 4, pp. 3467–3474, 2024. [12] V. Pacelli, A. Ratheesh, and E. A. Theodorou, “Sampling-based control via entropy-regularized optimal transport,” arXiv preprint arXiv:2605.02147 , 2026. [13] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,” Advances in neural information processing systems , vol. 33, pp. 6840–6851, 2020. [14] M. Janner, Y. Du, J. B. Tenenbaum, and S. Levine, “Plan-ning with diffusion for flexible behavior synthesis,” arXiv preprint arXiv:2205.09991 , 2022. [15] Z. Zhong, D. Rempe, D. Xu, Y. Chen, S. Veer, T. Che, B. Ray, and M. Pavone, “Guided conditional diffusion for controllable traffic simulation,” in 2023 IEEE international conference on robotics and automation (ICRA) . IEEE, 2023, pp. 3560–3566. [16] J. Liang, S. Koenig, and F. Fioretto, “Discrete-guided diffusion for scalable and safe multi-robot motion planning,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 40, no. 28, 2026, pp. 23 417–23 424. [17] R. Mishra and I. R. Manchester, “Eb-mbd: Emerging-barrier model-based diffusion for safe trajectory optimization in highly constrained environments,” arXiv preprint arXiv:2510.07700 , 2025. [18] T. Kim, K. Majd, H. Okamoto, B. Hoxha, D. Panagou, and G. Fainekos, “Safe model predictive diffusion with shielding,” arXiv preprint arXiv:2512.06261 , 2025. [19] J. E. Hopcroft, J. T. Schwartz, and M. Sharir, “On the complexity of motion planning for multiple independent objects; pspace-hardness of the” warehouseman’s problem”,” The international journal of robotics research , vol. 3, no. 4, pp. 76–88, 1984. [20] Y. Zhang, K. Okumura, H. Woo, A. Shankar, and A. Prorok, “D4orm: Multi-robot trajectories with dynamics-aware diffusion denoised defor-mations,” in 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . IEEE, 2025, pp. 14 118–14 123. [21] Z. He, B. Li, J. Dou, Y. Zhang, and C. Liu, “Motion planning with model-based diffusion via constraint optimization and adaptive scheduling,” arXiv preprint arXiv:2607.14455 , 2026. [22] P. R. Wurman, R. D’Andrea, and M. Mountz, “Coordinating hundreds of cooperative, autonomous vehicles in warehouses,” AI magazine ,vol. 29, no. 1, pp. 9–9, 2008. [23] J. Gielis, A. Shankar, and A. Prorok, “A critical review of communi-cations in multi-robot systems,” Current robotics reports , vol. 3, no. 4, pp. 213–225, 2022. [24] N. Wan, A. Gahlawat, N. Hovakimyan, E. A. Theodorou, and P. G. Voulgaris, “Cooperative path integral control for stochastic multi-agent systems,” in American Control Conference (ACC) , 2021, pp. 1262– 1267. [25] L. Streichenberg, E. Trevisan, J. J. Chung, R. Siegwart, and J. Alonso-Mora, “Multi-agent path integral control for interaction-aware motion planning in urban canals,” arXiv preprint arXiv:2302.06547 , 2023. [26] J. Pavlasek, J. J. Z. Mah, R. Xu, O. C. Jenkins, and F. Ramos, “Stein variational belief propagation for multi-robot coordination,” 
+
+IEEE Robotics and Automation Letters , vol. 9, no. 5, pp. 4194–4201, 2024. [27] Z. Yi, C. Pan, G. Shi, and G. Qu, “Global convergence of sampling-based nonconvex optimization through diffusion-style smoothing,” 
+
+arXiv preprint arXiv:2605.16520 , 2026. [28] C. Villani et al. , Optimal transport: old and new . Springer, 2009, vol. 338. [29] J. Bradbury, R. Frostig, P. Hawkins, M. J. Johnson, Y. Katariya, C. Leary, D. Maclaurin, G. Necula, A. Paszke, J. VanderPlas, S. Wanderman-Milne, and Q. Zhang, “JAX: composable transforma-tions of Python+NumPy programs,” 2018. [30] P. Polack, F. Altch´ e, B. d’Andr´ ea Novel, and A. de La Fortelle, “The kinematic bicycle model: A consistent model for planning feasible tra-jectories for autonomous vehicles?” in 2017 IEEE intelligent vehicles symposium (IV) . IEEE, 2017, pp. 812–818. [31] C. Ericson, Real-Time Collision Detection . Morgan Kaufmann, 2005.
