@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-26",
+  "date": "2026-07-26",
+  "generated_at": "2026-07-26T19:56:55",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/26/2607.20202v1-jepa-cfm-a-joint-embedding-predictive-architecture-based-channel-foundation-model-for-robust-fluid-antenna-systems",
+      "section": "deep",
+      "title_en": "JEPA-CFM: A Joint Embedding Predictive Architecture-based Channel Foundation Model for Robust Fluid Antenna Systems",
+      "authors": "Yuan Gao, Yiming Liu, Jun Jiang, Jianbo Du, Shunqing Zhang, Xiaoli Chu, Kai-Kit Wong",
+      "date": "2026-07-22",
+      "pdf": "https://arxiv.org/pdf/2607.20202v1",
+      "score": "9.0",
+      "evidence": "利用联合嵌入预测架构进行信道建模",
+      "tldr": "针对流体天线系统(FAS)中信道状态信息获取难、空间相关性高和观测数据稀疏的问题，提出基于联合嵌入预测架构(JEPA)的信道基础模型(CFM)。该模型通过在高维特征空间中预测抽象结构而非逐像素重建，结合掩码自编码器重构损失、JEPA潜在预测损失和切片各向同性高斯正则化项进行预训练。在DeepMIMO城市场景中，该方法在信道外推和无线定位任务上显著优于常规掩码自编码器基线。",
+      "tags": "query:imitation",
+      "abstract_en": "Fluid antenna systems (FAS) have emerged as a promising technology for sixth-generation (6G) wireless networks. By allowing antenna elements to move freely within a compact region, FAS can exploit rich spatial diversity without additional hardware. However, acquiring real-time channel state information (CSI), extrapolating channel values to unmeasured antenna ports, and determining accurate user positions remain major obstacles. These challenges stem mainly from strong spatial correlations within the limited aperture and the scarcity of observable data. To overcome these limitations, this paper introduces joint embedding predictive architecture (JEPA)-based channel foundation model (CFM) specifically designed for FAS. The model adopts JEPA to learn versatile representations by extracting high-level latent embeddings of masked or unobserved channel segments. Unlike conventional approaches that attempt pixel-by-pixel reconstruction of raw CSI coefficients, JEPA-CFM focuses on predicting abstract structures in a compact feature space. The pre-training objective combines three complementary loss terms: the standard masked autoencoder reconstruction loss, the JEPA latent prediction loss, and a sliced isotropic Gaussian regularization (SIGReg) term. Together, these components prevent representation collapse and significantly enhance robustness under severe spatial correlation and highly sparse observations. After pre-training, the encoder is frozen, and lightweight task-specific heads are attached: a decoder for channel extrapolation and a global average pooling layer followed by a multi-layer perceptron regression head for wireless positioning. Extensive simulations in the realistic DeepMIMO urban scenario demonstrate that JEPA-CFM substantially outperforms the conventional masked autoencoder baseline in channel extrapolation and wireless positioning.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

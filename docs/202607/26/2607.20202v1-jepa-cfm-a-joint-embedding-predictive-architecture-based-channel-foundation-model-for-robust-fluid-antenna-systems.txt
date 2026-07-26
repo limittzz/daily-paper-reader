@@ -1,0 +1,720 @@
+Title: JEPA-CFM: A Joint Embedding Predictive Architecture-based Channel Foundation Model for Robust Fluid Antenna Systems
+
+URL Source: https://arxiv.org/pdf/2607.20202v1
+
+Published Time: Thu, 23 Jul 2026 01:00:20 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> 1
+
+# JEPA-CFM: A Joint Embedding Predictive Architecture-based Channel Foundation Model for Robust Fluid Antenna Systems 
+
+Yuan Gao, Member, IEEE , Yiming Liu, Jun Jiang, Jianbo Du, Member, IEEE , Shunqing Zhang, Senior Member, IEEE , Xiaoli Chu, Senior Member, IEEE , Kai-Kit Wong, Fellow, IEEE 
+
+Abstract —Fluid antenna systems (FAS) have emerged as a promising technology for sixth-generation (6G) wireless net-works. By allowing antenna elements to move freely within a compact region, FAS can exploit rich spatial diversity without additional hardware. However, acquiring real-time channel state information (CSI), extrapolating channel values to unmeasured antenna ports, and determining accurate user positions remain major obstacles. These challenges stem mainly from strong spatial correlations within the limited aperture and the scarcity of observable data. To overcome these limitations, this paper introduces joint embedding predictive architecture (JEPA)-based channel foundation model (CFM) specifically designed for FAS. The model adopts JEPA and, during its self-supervised pre-training phase, learns versatile representations by extracting high-level latent embeddings of masked or unobserved channel segments. Unlike conventional approaches that attempt pixel-by-pixel reconstruction of raw CSI coefficients, JEPA-CFM focuses on predicting abstract structures in a compact feature space. The pre-training objective combines three complementary loss terms: the standard masked autoencoder reconstruction loss, the JEPA latent prediction loss, and a sliced isotropic Gaussian regular-ization (SIGReg) term. Together, these components prevent rep-resentation collapse and significantly enhance robustness under severe spatial correlation and highly sparse observations. After pre-training, the encoder is frozen, and lightweight task-specific heads are attached: a decoder for channel extrapolation and a global average pooling layer followed by a multi-layer perceptron regression head for wireless positioning. Extensive simulations in the realistic DeepMIMO urban scenario demonstrate that JEPA-CFM substantially outperforms the conventional masked autoen-coder baseline in channel extrapolation, especially under severe sparsity conditions (5%–15% known CSI) and across various signal-to-noise ratio (SNR) levels. For wireless positioning, the model further achieves sub-3 m accuracy using only 25% known CSI, highlighting strong data efficiency and robustness even with limited observations. 
+
+This work was supported in part by Shanghai Natural Science Foundation under Grant 22ZR1422200, and in part supported by the 6G Science and Tech-nology Innovation and Future Industry Cultivation Special Project of Shanghai Municipal Science and Technology Commission under Grant 24DP1501001. Yuan Gao, Yiming Liu and Shunqing Zhang are with the School of Com-munication and Information Engineering, Shanghai University, China, email: gaoyuansie@shu.edu.cn, 1975231949@shu.edu.cn and shunqing@shu.edu.cn. Jun Jiang is with School of Advanced Technolog, Xi’an Jiaotong-Liverpool University, Suzhou, China, email: Jun.Jiang25@student.xjtlu.edu.cn. Jianbo Du is with the School of Communication and Information Engineer-ing, Xi’an University of Posts and Telecommunications, Xi’an, China, e-mail: dujianboo@163.com. Xiaoli Chu is with the Department of Electronic and Electrical Engineering, the University of Sheffield, UK, e-mail: x.chu@sheffield.ac.uk. K. K. Wong is with the Department of Electronic and Electrical Engineer-ing, University College London, Torrington Place, WC1E 7JE, United King-dom and he is also affiliated with the Department of Electronic Engineering, Kyung Hee University, Yongin-si, Korea, e-mail: kai -kit .wong@ucl .ac .uk 
+
+Index Terms —Channel foundation model, joint embedding pre-dictive architecture, fluid antenna systems, channel extrapolation, positioning 
+
+I. I NTRODUCTION 
+
+The drive for greater spectral efficiency, energy efficiency, and reliability in sixth-generation (6G) wireless networks has spurred the development of innovative antenna technologies. Among these, fluid antenna systems (FAS) have emerged as a particularly promising advance [1–3]. Unlike conventional fixed-position multiple-input multiple-output (MIMO) or re-configurable intelligent surface (RIS) systems, FAS allows ra-diating elements to be repositioned continuously or discretely within a compact region. This capability dynamically captures spatial diversity and mitigates deep fades without additional radio-frequency (RF) chains or hardware overhead [4, 5]. This positional flexibility, however, introduces significant challenges in acquiring and utilizing real-time channel state information (CSI). Critical tasks, such as extrapolating chan-nel values to unmeasured antenna ports, selecting optimal ports for transmission, and determining accurate user posi-tions—become major bottlenecks. The difficulties stem mainly from strong spatial correlations within the limited FAS aper-ture and the prohibitive overhead of exhaustive pilot-based estimation in fast-changing environments [6–9]. Traditional model-based methods for FAS, which rely on stochastic geometry or deterministic ray-tracing, suffer from high computational complexity and poor scalability as the fluid region expands or environmental dynamics intensify. These ap-proaches also struggle to capture the complex, non-stationary channel statistics induced by antenna movement [10, 11]. Data-driven supervised learning offers greater adaptability yet typically requires task-specific neural networks trained on massive labeled datasets for each individual problem (e.g., sep-arate regressors for channel prediction or classification heads for port selection). The result is fragmented architectures with limited cross-task generalization and heightened vulnerability to distribution shifts in real-world deployments [12]. These shortcomings are especially acute in FAS scenarios, where instantaneous channel conditions must be inferred rapidly from sparse observations. This situation underscores the urgent need for a unified self-supervised representation learning framework that can extract generalizable channel embeddings directly from unlabeled data—one area where channel foundation arXiv:2607.20202v1 [eess.SP] 22 Jul 2026 2
+
+models (CFMs) have shown initial promise but have not yet fully embraced predictive self-supervision. Existing CFMs are primarily built on generative paradigms, such as masked autoencoders that reconstruct raw channel coefficients, or discriminative paradigms based on contrastive learning. While effective in certain settings, both approaches exhibit notable limitations for wireless channel modeling. Generative methods focus on pixel-level or coefficient-level re-construction, rendering them sensitive to noise, high-frequency artifacts, and irrelevant signal details that produce suboptimal representations for downstream inference tasks. Discriminative methods, conversely, depend heavily on carefully designed data augmentations and struggle to model the strong spatial correlations and predictive dynamics inherent in fluid antenna channels. Consequently, they often display limited general-ization across diverse propagation environments and demand substantial labeled data when adapted to specific FAS tasks such as channel extrapolation, port selection, and positioning. In contrast, the joint embedding predictive architecture (JEPA) provides a more powerful alternative by predicting abstract latent embeddings of masked or future channel seg-ments in a high-level representation space, rather than recon-structing raw signals or relying on hand-crafted augmentations [13, 14]. This latent predictive objective naturally discards unpredictable noise and high-frequency components while explicitly learning higher-order semantic structures, including spatial correlations, multi-port dependencies, environmental dynamics, and spatio-temporal evolution. The resulting rep-resentations are more robust, data-efficient, and transferable for inference-oriented tasks [13]. In wireless communications, JEPA has demonstrated encouraging early success in pioneer-ing works such as WirelessJEPA for multi-antenna IQ data [15], JEPA-MSAC for multimodal sensing-assisted commu-nications [16], and extensions for structured CSI dynamics modeling and cooperative perception. Nevertheless, its adop-tion remains nascent. Most applications target fixed-antenna or discrete MIMO setups rather than continuous-position FAS; predictor networks often require careful regularization to avoid representation collapse under the extreme spatial correlations of compact FAS apertures; and scalability to real-time port dynamics, online adaptation, and validation under realistic 3GPP channel models or hardware-in-the-loop testbeds is still limited. These gaps motivate the present work. To bridge these limitations, we propose JEPA-CFM, a novel unified framework that extends the CFM paradigm to FAS by adopting JEPA as the core self-supervised encoder. Our primary contributions are threefold and directly address the challenges outlined above.  
+
+> •
+
+This paper introduces JEPA as the central self-supervised learning paradigm for CFM. Rather than reconstructing raw channel coefficients at the pixel or complex-value level, the model learns to predict high-level latent embed-dings of masked or unobserved channel segments within a compact representation space.  
+
+> •
+
+The pre-training objective integrates three complementary loss terms: the standard masked autoencoder reconstruc-tion loss, the JEPA latent prediction loss, and a sliced isotropic Gaussian regularization (SIGReg) term. This multi-objective formulation not only enforces faithful reconstruction over masked regions but also promotes stable, non-collapsing latent representations, significantly enhancing generalization under the severe spatial corre-lations and sparse observations typical of compact FAS apertures.  
+
+> •
+
+Third, extensive simulations in a realistic urban ray-tracing scenario using DeepMIMO rigorously validate the practical superiority of JEPA-CFM. The framework consistently outperforms the conventional masked au-toencoder baseline on both channel extrapolation and wireless positioning tasks. It achieves substantially lower extrapolation error under severe pilot sparsity (5 %–15 % known CSI) and across realistic SNR levels (0 dB, 10 dB, and 20 dB), while delivering superior positioning accuracy, reaching sub-3 m error at 25 % known CSI. The remainder of this paper is structured as follows: Sec-tion II provides a comprehensive review of related literature on FAS technologies, channel foundation models, and self-supervised learning frameworks. Section III presents the sys-tem model of FAS and the downstream tasks formulation. Sec-tion IV details the proposed JEPA-CFM architecture, including the pretraining objective, encoder design, and mathematical formulation of the predictive latent space. Section V elabo-rates on the simulation settings and analysis. Finally, Section VI concludes the paper with discussions on limitations and promising directions for future research, such as multi-user extensions and online continual pretraining. II. R ELATED WORKS 
+
+FAS have attracted rapidly growing research interest owing to their distinctive ability to reposition radiating elements dynamically within a compact region. This section reviews the current state of the art on the three core FAS tasks examined in this paper: channel extrapolation, port selection, and positioning. For each task, we categorize existing solutions into three groups—model-based schemes, task-specific AI schemes, and multi-task AI schemes—while highlighting their respective strengths and limitations. These limitations, taken together, underscore the need for a unified foundation-model approach. 
+
+A. Channel extrapolation for FAS 
+
+Model-based schemes for FAS channel extrapolation typ-ically rely on classical statistical channel models, such as Jake’s model [11], geometry-based stochastic models, or the Karhunen-Lo` eve expansion [17]. These approaches exploit spatial correlation within the compact fluid region by formulat-ing extrapolation as an analytic extension problem, using tech-niques such as linear or nonlinear interpolation, kernel-based methods, or Nyquist-sampling-based reconstruction. However, they offer limited accuracy in non-stationary or rich-scattering environments, as they struggle to capture complex multi-port dependencies and the high-resolution spatial variations induced by continuous antenna positioning. Task-specific AI schemes have advanced the field by treating channel extrapolation as an image-reconstruction or super-vised regression problem. Representative examples include 3
+
+the ConvNeXt-based CANet with context-adaptive and cross-scale attention mechanisms [18], SSNet that employs self-supervised masked modeling for flexible and robust extrapola-tion [6], and diffusion-model-based posterior sampling estima-tors that effectively capture two-dimensional spatial correlation structures [7]. Although these methods achieve superior accu-racy over model-based baselines, they require large amounts of task-specific labeled data, exhibit poor generalization across environments, and incur high retraining costs for new FAS configurations. Multi-task AI schemes remain relatively scarce in this sub-domain. Most existing efforts focus on isolated extrapolation modules with limited integration into joint frameworks that simultaneously address port selection or other downstream tasks. Recent designs empowered by large language models begin to explore unified extrapolation within broader FAS optimization pipelines [8]. Nevertheless, these approaches still lack a truly universal encoder that supports efficient multi-task adaptation using lightweight heads. 
+
+B. Port selection for FAS 
+
+Model-based port selection schemes typically optimize criteria such as instantaneous signal-to-noise ratio, channel capacity, or outage probability through exhaustive search, greedy algorithms, or convex relaxations (e.g., joint convex relaxation for fluid-MIMO). These methods provide theoretical insights and optimality guarantees under perfect channel state information but become computationally prohibitive as the number of ports grows and suffer performance degradation under imperfect or partial observations [19, 20]. Task-specific AI schemes dominate the recent literature and have made substantial practical advances in FAS port selection. Early foundational work [19] introduced machine-learning-based fast port selection algorithms that achieve significant outage probability reduction by using only 10% of the ob-served ports and exploiting strong spatial correlations. Subse-quent efforts include LSTM-based temporal-spatial predictors for efficient channel estimation and port selection, as well as various deep reinforcement learning frameworks for dynamic and switching-cost-aware port selection [21]. More recent developments incorporate graph neural net-works for joint port position and beamforming optimization [22], along with large-language-model-assisted predictors such as Port-LLM [23] for mobility-aware port selection. These techniques consistently reduce the number of required ob-served ports to 10-20% while approaching near-optimal perfor-mance in terms of signal-to-noise ratio or sum-rate. However, they are typically designed for single-objective optimization (e.g., signal-to-noise ratio maximization or energy efficiency) and lack inherent cross-task transferability to channel extrap-olation or positioning. Although multi-task AI schemes have begun to emerge that jointly optimize port selection with beamforming or precoding in multi-user and integrated sensing and communication scenarios [24, 25], they generally rely on separate models or tightly coupled end-to-end networks. Such designs scale poorly and require full retraining when tasks or environments change. Consequently, the absence of a shared, generalizable representation continues to hinder efficient simultaneous handling of port selection alongside channel extrapolation and positioning. 
+
+C. Positioning for FAS 
+
+Model-based positioning schemes leverage the spatial di-versity of FAS through enhanced angle-of-arrival, time-of-arrival, or received-signal-strength-indicator-based algorithms, often combined with Fisher information analysis to derive fun-damental Cram´ er-Rao lower bounds [26]. These approaches benefit from the angular diversity gained by fluid port switch-ing but remain sensitive to calibration errors, non-line-of-sight conditions, and the discrete nature of port sampling. Task-specific AI schemes employ deep learning models, such as deep reinforcement learning for antenna positioning in integrated sensing and communication or unmanned aerial ve-hicle scenarios [27], received-signal-strength-indicator-based neural networks that exploit inter-port correlation for multi-point maximum-likelihood estimation [28], and transformer-based collaborative learning for three-dimensional localization. These methods exploit the rich spatial sampling provided by FAS to achieve sub-meter accuracy improvements over fixed-antenna systems. Nevertheless, they are trained end-to-end for localization alone and suffer from high data requirements and limited robustness to distribution shifts. Multi-task AI schemes in this area are still nascent. A few frameworks integrate positioning with communication tasks (e.g., FAS-assisted integrated sensing and communication), but most still use decoupled modules rather than a unified representation. This fragmentation prevents seamless joint optimization of localization, channel extrapolation, and port selection within a single lightweight architecture [29]. 
+
+D. Limitations of existing research 
+
+Overall, while substantial progress has been made on indi-vidual FAS tasks, the literature reveals a clear gap: the pre-dominance of task-specific or narrowly multi-task models that lack a universal, self-supervised encoder capable of supporting multiple downstream tasks with minimal adaptation overhead. This motivates the proposed JEPA-CFM framework. III. S YSTEM MODEL AND PROBLEM FORMULATION 
+
+A. System model 
+
+Consider a single-cell downlink wireless communication scenario wherein a base station (BS) equipped with a conven-tional uniform linear array (ULA) provides spatial multiplex-ing services to a mobile user equipment (UE). The BS ULA consists of M fixed-position antennas, where M = 8 , sepa-rated by a normalized inter-element spacing of dBS = 0 .5λ,with λ denoting the operating carrier wavelength. Conversely, the UE is equipped with an innovative two-dimensional FAS, which enables a fluidic radio-frequency (RF) radiating element to dynamically migrate within a continuous rectangular two-dimensional area of physical dimensions WX × WY.To facilitate digital processing and tractability, the con-tinuous physical aperture of the 2D FAS is discretized into 4
+
+a uniform grid comprising NS = NX × NY switchable ports along the horizontal and vertical axes, respectively. In accordance with the concrete implementation parameters, the grid configuration is specified as NX = 64 and NY = 64 ,yielding a total of NS = 4096 discrete port locations. The uniform spatial port spacings along the x-axis and y-axis are explicitly given by 
+
+dX = WX
+
+NX − 1 , dY = WY
+
+NY − 1 . (1) Let p(i, j ) = [( i − 1) dX, (j − 1) dY, 0] T ∈ R3×1 represent the three-dimensional spatial coordinates of a port located at the grid index (i, j ), where 1 ≤ i ≤ NX and 1 ≤ j ≤ NY.For the n-th channel observation sample, the narrowband complex-valued channel matrix between the BS ULA and the full grid of the UE 2D FAS is denoted as Hn ∈ CNS×M .To faithfully encapsulate the site-specific physical propaga-tion characteristics, electromagnetic scattering, and spatial topology, Hn is generated via a deterministic ray-tracing simulation framework based on the DeepMIMO O128 dataset. Specifically, the wireless channel is characterized by a multi-path geometric propagation model comprising L = 5 distinct physical paths. Let βn,ℓ ∈ C denote the complex path gain of the ℓ-th multi-path component for the n-th sample. The azimuth and elevation angles of arrival (AoA) at the UE for the ℓ-th path are designated as θn,ℓ and ϕn,ℓ , respectively, while the corresponding angle of departure (AoD) from the BS ULA is denoted as ψn,ℓ .The spatial array response vector at the BS ULA for the 
+
+ℓ-th path is expressed as 
+
+aBS (ψn,ℓ ) = 
+
+h
+
+1, exp (j2 πd BS sin ψn,ℓ ) , . . . , 
+
+exp (j2 π(M − 1) dBS sin ψn,ℓ )
+
+iT
+
+,
+
+(2) where j = √−1 represents the imaginary unit. Concurrently, the spatial steering vector of the 2D FAS at the UE corre-sponding to the port index s, which maps bijectively to the grid coordinates (i, j ) via s = ( j − 1) NX + i, is defined by its components as 
+
+[aUE (θn,ℓ , ϕ n,ℓ )] s =exp j 2πλ
+
+ sin θn,ℓ cos ϕn,ℓ (i − 1) dX
+
++ sin θn,ℓ sin ϕn,ℓ (j − 1) dY
+
+!
+
+. (3) By accumulating the contributions from all L dominant scattering paths, the individual complex channel coefficient 
+
+hn(i, j, m ) between the m-th antenna of the BS ULA and the (i, j )-th port of the UE FAS for the n-th sample is mathematically formulated as 
+
+hn(i, j, m ) = 
+
+> L
+
+X
+
+> ℓ=1
+
+βn,ℓ exp j 2πλ
+
+ sin θn,ℓ cos ϕn,ℓ (i − 1) dX
+
++ sin θn,ℓ sin ϕn,ℓ (j − 1) dY
+
+!
+
+× exp ( −j2 π(m − 1) dBS sin ψn,ℓ ) , (4) where 1 ≤ m ≤ M . The collective full-grid channel state information (CSI) matrix Hn thus establishes a rigid bijective mapping between the discrete physical port arrangements and the spatial-domain multi-path multi-input multi-output (MIMO) channel characteristics. 
+
+B. Problem formulation 
+
+AI/ML is considered as a key enabler for 6G, 3GPP has prioritized AI/ML in air interface, including CSI acquisition, wireless positioning and beam management [30, 31]. 
+
+1) CSI acquisition: Channel extrapolation has shown its great potential to acquire CSI with limited overhead [32]. Channel extrapolation aims to predict unknown CSI in re-source elements, subbands, bandwidth parts (BWPs), com-ponent carriers (CCs), or future time instances based on limited observed measurements. Channel extrapolation is gen-erally classified into time-domain, frequency and antenna-domain [9]. Time-domain CSI extrapolation is particularly critical in mobile communications, especially in scenarios with rapidly changing channels (e.g., high-mobility users), where accurate CSI extrapolation can optimize resource allocation, beamforming, and precoding design. Frequency-domain CSI extrapolation is particularly valuable in scenarios like FDD and multi-band systems, where reducing feedback overhead and enhancing spectral efficiency are critical. Antenna-domain channel extrapolation aims to infer the CSI of unmeasured an-tennas on the same panel using CSI from a subset of antennas, thereby reducing DL training and feedback overhead. The objective of channel extrapolation is to find F∗ to min-imize the mean squared error (MSE) between the extrapolated CSI bH′ = F∗(Hknown ) and the ground truth CSI H in time-domain, frequency-domain, antenna-domain or a mix of above domains, which is formulated as follows: 
+
+min 
+
+> F∗
+
+(|cH′ − H|2). (5) 
+
+2) Wireless positioning: In 5G NR networks, positioning reference signals (PRS) are transmitted by one or multiple gNBs with configurable density, periodicity, and bandwidth to enable high-precision downlink positioning through mea-surements such as Time of Arrival (TOA), Time Difference of Arrival (TDOA), and Angle of Arrival (AOA) [33]. This positioning task can be naturally formulated as a regression problem, where an AI model directly predicts the UE coordi-nates from processed PRS observations. Specifically, a neural network gθ learns to map input features HPRS (e.g., correlation peaks, channel estimates, or multi-TRP measurement vectors derived from PRS) to the 2D/3D position vector p. The corresponding optimization problem is given by 
+
+min 
+
+> θ
+
+1
+
+N
+
+> N
+
+X
+
+> i=1
+
+∥gθ (HPRS ) − p∗ 
+
+> i
+
+∥22 , (6) where p∗ 
+
+> i
+
+denotes the ground-truth position, thereby allow-ing data-driven models to achieve superior accuracy and robustness in multipath and NLOS environments compared to conventional geometric methods. 5
+
+IV. P ROPOSED MODEL 
+
+The proposed model is first pre-trained via masked recon-struction as illustrated in Fig. 1, where the novel JEAP loss and sliced isotropic Gaussian regularization (SIGReg) loss are in-cooperated with the reconstruction loss. Specifically, the JEAP loss is proposed to avoid exclusively relying on high-dimensional raw signal reconstruction and obtain general-purpose features for downstream tasks. The SIGReg loss is integrated to avoid representation collapse. We then adopted the pre-training encoder and JEPA encoder for downstream task fine-tuning, which is illustrated in Fig. 4. 
+
+A. Model architecture 1) CSI Tensorization and Normalization: To render the high-dimensional complex-valued channel state information compatible with deep vision backbones such as the Vision Transformer, the raw CSI matrix Hn must be mapped onto a real-valued spatial tensor framework. Utilizing the individual complex channel coefficients hn(i, j, m ) derived in (4), the complex spatial characteristics are first reorganized into a third-order tensor Hn ∈ CM ×NX×NY . To project this rep-resentation into the real domain R, the complex tensor is decoupled by segregating its real and imaginary parts along the channel dimension, thereby generating an unnormalized real input tensor Xn, raw ∈ R2M ×NX×NY . Let c denote the channel index of the tensor, where 1 ≤ c ≤ 2M . The tensor splitting and concatenation operations are formally defined as 
+
+[Xn, raw ]c,i,j =
+
+(
+
+Re ( hn(i, j, c )) , 1 ≤ c ≤ M, 
+
+Im ( hn(i, j, c − M )) , M < c ≤ 2M, 
+
+(7) where 1 ≤ i ≤ NX and 1 ≤ j ≤ NY, while Re( ·) and Im( ·)
+
+denote the operators extracting the real and imaginary parts of a complex scalar, respectively. To eliminate macroscopic variations stemming from path loss and large-scale shadowing across distinct communication blocks, a sample-wise normalization strategy is applied. This step ensures that the foundation model concentrates on cap-turing local spatial correlations rather than scaling differences. For each observation, a scalar channel energy scale factor 
+
+αn ∈ R is computed using the Frobenius norm of Xn, raw ,which is expressed as 
+
+αn = ∥Xn, raw ∥F =
+
+vuut 2MX
+
+> c=1
+> NX
+
+X
+
+> i=1
+> NY
+
+X
+
+> j=1
+
+([ Xn, raw ]c,i,j )2. (8) Furthermore, to prevent numerical instability or division-by-zero errors when the 2D FAS experiences severe localized deep fading, a protective threshold is integrated into the normalization denominator. The standardized dimensionless input tensor Xn ∈ R2M ×NX×NY is rigorously constructed as 
+
+Xn = Xn, raw 
+
+αn + ϵ , (9) where ϵ = 10 −8 denotes the deep-fading protection regular-izer. The resulting standardized tensor Xn acts as the pristine structural representation utilized during the self-supervised masked pre-training phase as well as the downstream multi-task finetuning evaluations. 
+
+2) Encoder: Following the CSI preprocessing and stabi-lization steps formulated in (9), the standardized channel state information must be mapped into a high-dimensional latent space to extract robust spatial representations. As illustrated in Fig. 2 , to reflect the actual hardware constraints and pilot overhead reductions within the fluid antenna system topology, the encoder operates exclusively on the observed port configurations. Let Ub ∈ RNo×2M denote the observable port CSI matrix compiled after applying the random spatial mask, where 2 accounts for the decoupled real and imaginary parts. The parameter No defines the number of observable ports remaining under a strict mask ratio Mr, such that 
+
+No = ⌊NS(1 − Mr)⌋.To map these localized channel signatures into the hidden embedding space, the input matrix Ub is passed through a learnable linear projection layer characterized by the projec-tion weight matrix Wp ∈ R2M ×dmodel , where dmodel = 192 
+
+specifies the encoder hidden dimension. This feature trans-formation yields the initial latent patch embedding matrix 
+
+Xp ∈ RNo×dmodel , which is expressed as 
+
+Xp = UbWp. (10) To systematically embed the underlying spatial coordinate relationships of the physical 2D FAS ports into the feature sequence, a channel-model-invariant two-dimensional sine-cosine positional embedding matrix Epos ∈ RNo×dmodel is su-perposed element-wise. This operation produces the spatially augmented feature matrix X′ 
+
+> p
+
+∈ RNo×dmodel , which is given by 
+
+X′ 
+
+> p
+
+= Xp + Epos . (11) For any given antenna port situated at grid coordinates (i, j )
+
+within the discrete planar surface, its corresponding positional embedding vector Epos (i, j ) ∈ R1×dmodel is constructed by concatenating horizontal and vertical frequency components as 
+
+Epos (i, j ) = Concat ( Erow (i), Ecol (j)) , (12) where Erow (i) ∈ R1×(dmodel /2) and Ecol (j) ∈ R1×(dmodel /2) 
+
+represent the horizontal and vertical coordinate encodings, respectively. Let k denote the frequency index variable. The individual elements of the row encoding vector are explicitly defined as 
+
+[Erow (i)] 2k = sin( i · ωk), (13) 
+
+[Erow (i)] 2k+1 = cos( i · ωk), (14) where 0 ≤ k < ⌊dmodel /4⌋. The angular frequency pro-gression ωk is governed by an exponential decay schedule formulated as 
+
+ωk = 110000 2k/d model 
+
+. (15) The column encoding vector components [Ecol (j)] 2k and 
+
+[Ecol (j)] 2k+1 are derived analogously for the vertical index j
+
+utilizing the identical frequency schedule ωk, ensuring that the structural grid dimensions map uniquely without losing spatial topology info. 6
+
+Figure 1: The architecture of the proposed model. 
+
+Figure 2: The architecture of the encoder. To capture the high-dimensional non-linear channel correla-tions across the visible ports, the augmented latent matrix X′
+
+> p
+
+is routed through a series of specialized encoder blocks. In order to enhance feature extraction and boost resilience against deep fading noise, each constituent block is designed as an in-terleaved micro-topology combining multi-head self-attention (MSA ) modules, sparse Mixture-of-Experts ( MoE ) layers, and standard multi-layer perceptron feed-forward networks ( FFN ). Layer normalization ( LN ) and residual connections encompass each operation to ensure numerical stability. Within a given block, the input features are first contextualized by the primary attention pass according to 
+
+X′′  
+
+> p
+
+= LN  X′ 
+
+> p
+
++ MSA  X′
+
+> p
+
+ . (16) Subsequently, the intermediate features X′′  
+
+> p
+
+are injected into the MoE layer. This architecture comprises E parallel expert networks {E 1, . . . , EE } and a trainable gating network 
+
+G, where the total number of experts is configured as E = 4 .Each individual expert Ej executes a non-linear coordinate mapping parameterized as 
+
+Ej
+
+ X′′ 
+
+> p
+
+ = σ
+
+
+
+X′′  
+
+> p
+
+W (j)e1 
+
+
+
+W (j)e2 , (17) where σ(·) denotes the Gaussian Error Linear Unit ( GELU )activation function, while W (j)e1 ∈ Rdmodel ×dh and W (j)e2 ∈
+
+Rdh×dmodel represent the trainable expert weight layers with a hidden dimension expansion profile of dh = 4 dmodel = 768 .Concurrently, the gating network evaluates the routing affinity vector g ∈ RNo×E using a linear projection layer combined with a softmax activation operator as 
+
+g = softmax  X′′  
+
+> p
+
+Wg + 1bTg
+
+ . (18) where Wg ∈ Rdmodel ×E is the learnable gating weight matrix, 
+
+bg ∈ RE×1 is the gating bias vector, and 1 ∈ RNo×1 denotes a vector of all ones. To maintain a lightweight computational footprint, a top-K sparse activation mechanism filters the gating scores such that only K = 2 experts are activated per port token: 
+
+{sk}Kk=1 = TopK( g, K ). (19) The definitive output of the MoE layer aggregates the weighted expert outputs combined with a dropout regulariza-tion operator of probability p = 0 .1, which is given by 
+
+X′′′  
+
+> p
+
+= Dropout 
+
+> K
+
+X
+
+> k=1
+
+sk · E lk
+
+ X′′ 
+
+> p
+
+!
+
+, (20) where lk represents the exact index of the k-th selected expert network. Following the expert aggregation layer, the tokens are further propagated through a secondary MSA pass and a standard multi-layer perceptron block to finalize the intra-block representation stream: 
+
+X′′′′  
+
+> p
+
+= LN  X′′′  
+
+> p
+
++ MSA  X′′′ 
+
+> p
+
+ , (21) 
+
+X′′′′′  
+
+> p
+
+= LN  X′′′′  
+
+> p
+
++ FFN  X′′′′ 
+
+> p
+
+ . (22) This comprehensive sequence of block operations is repeated over a depth of Nblocks /2 times, yielding the definitive en-coder latent feature matrix Xenc ∈ RNo×dmodel . The output representation matrix Xenc effectively compresses the non-linear spatial dependencies of the fluid antenna channel while 7
+
+Figure 3: The architecture of the JEPA latent predictor and decoder. maintaining strict physical spatial order, acting as the pri-mary anchor sequence before entering the lightweight decoder framework. 
+
+3) JEPA Latent Predictor: To optimize the channel foun-dation model without relying exclusively on high-dimensional raw signal reconstruction, the pre-training framework incor-porates a JEPA branch, which is illustrated in Fig. 3. This predictive mechanism directs the encoder to learn structurally robust channel representations by forecasting the latent embed-dings of the unobserved segments within a highly compressed feature space. The target latent representations are generated via a par-allel full-view pass through the identical encoder backbone formulated in Section B. Let Xn ∈ R2M ×NX×NY denote the complete, unmasked standardized channel state information tensor of the n-th sample. During this target generation phase, the spatial masking operator is deactivated by enforcing a mask ratio of 0.0, thereby ensuring that all Kp = 1024 patch segments remain visible. By propagating this uncorrupted full-view sequence through the linear projection layer and the cascaded Transformer blocks, a full-view latent feature matrix Xfull ∈ RKp×dmodel is achieved. To isolate the target characteristics corresponding to the unobserved wireless ports, the true masked latent matrix Xmask ,true ∈ RKmask ×dmodel 
+
+is constructed by extracting the row configurations indexed by the complement masked subset Imask ,n , where Kmask =
+
+Kp − No = 768 . The extraction is mathematically expressed as 
+
+[Xmask ,true ]k, : = [ Xfull ]Imask ,n (k),: . (23) where 1 ≤ k ≤ Kmask . To minimize memory footprints and satisfy the architectural conditions of the JEPA paradigm, the gradient propagation stream through this full-view target pass is deactivated, yielding a detached target representation matrix. Concurrently, the latent predictor network synthe-sizes these unobserved patch features within the embedding domain, relying solely on the visible latent feature matrix 
+
+Xenc ∈ RNo×dmodel obtained in (22). The visible token sequence is first projected into a localized predictive space via a trainable linear layer parameterized by the weight ma-trix Wlp ,v ∈ Rdmodel ×dmodel , producing the projected visible matrix Vn ∈ RNo×dmodel as 
+
+Vn = Xenc Wlp ,v. (24) For the unobserved segments, a learnable mask token vector 
+
+μpred ∈ R1×dmodel acts as a uniform spatial placeholder for each missing patch. To maintain physical coordinate awareness within the predictor layer, a trainable predictor positional embedding matrix Epred ,pos ∈ RKmask ×dmodel is superposed element-wise onto these placeholders, defining the masked token matrix Mn ∈ RKmask ×dmodel via its components: 
+
+[Mn]k, : = μpred + [ Epred ,pos ]k, :. (25) The rows of the projected visible feature matrix Vn and the spatially augmented placeholder matrix Mn are subsequently recombined and restored to their original physical grid index configurations. This sorting process yields the unified initial predictor input matrix Yn, 0 ∈ RKp×dmodel , which strictly respects the spatial grid topology of the 2D FAS layout. The recombined matrix Yn, 0 is propagated through 
+
+Npred blocks = 2 lightweight Transformer blocks to model global contextual dependencies across the complete grid aper-ture. Each block contains an MSA pass and an FFN layer configured with a compact hidden expansion profile. Let 
+
+Yn,N pred blocks designate the definitive feature matrix generated by the terminal predictor block. Following a layer normaliza-tion operation, the contextualized features at the masked index locations Imask ,n are isolated and mapped through a linear pre-diction head with weight matrix Whead ∈ Rdmodel ×dmodel . The final predicted masked latent matrix ˆXmask ∈ RKmask ×dmodel 
+
+is formally modeled as 
+
+[ ˆXmask ]k, : = LN 
+
+Yn,N pred blocks 
+
+
+
+> Imask ,n (k),:
+
+
+
+×Whead .
+
+(26) The optimization objective of the JEPA branch minimizes the mean squared error between the forecasted embeddings and the true target representations within the latent do-main, penalizing structural discrepancies without incurring pixel-level high-dimensional decoding overhead. The self-supervised JEPA loss function LJEPA is defined as 
+
+LJEPA = 1
+
+Kmask 
+
+ˆXmask − Xmask ,true  
+
+> 2F
+
+. (27) By computing the loss strictly within the compact embed-ding space, the model bypasses the computational burdens of raw coefficient generation, forcing the encoder to learn stable, high-level geometric patterns of the multi-path propagation medium. 
+
+4) Decoder and Channel Extrapolation: To project the latent representation stream back into the physical domains and achieve full-grid channel state information reconstruction, a lightweight masked autoencoder (MAE) decoder architecture is deployed. As illustrated in Fig. 3, the decoder serves as the optimization head for Task A, synthesizing the visible features from the encoder and the forecasted features from the JEPA predictor to counteract localized spatial field-of-view blockages. Let Zenc ∈ R(1+ No)×dm denote the definitive output se-quence generated by the masked-view encoder pass, where 
+
+No represents the number of observable ports and dm is the encoder hidden dimension. We isolate the visible port token matrix Xenc ∈ RNo×dm from the row space of Zenc 
+
+spanning indices 2 to 1 + No, and let zcls ∈ R1×dm be 8
+
+the companion encoder classification token. Concurrently, let 
+
+ˆXmask ∈ RNm×dm represent the predicted latent matrix for the Nm = NS − No masked ports. The structural attributes are first projected into a lower-dimensional space via a trainable linear layer characterized by the weight matrix Wd ∈ Rdm×dd ,where dd = 64 defines the compact decoder hidden profile. The dimension-reduced token blocks are mathematically for-mulated as 
+
+Ho = Xenc Wd, (28) 
+
+Hm = ˆXmask Wd, (29) where Ho ∈ RNo×dd and Hm ∈ RNm×dd .To restore the strict spatial coordinate relationships of the 2D FAS grid apertures, the projected visible and predicted masked sequences are integrated. The matrices are first con-catenated along the spatial axis to construct an intermediate grid set Hc = [ HTo , HTm]T ∈ RNS×dd . A spatial permutation operator parameterized by the deterministic binary matching matrix Π ∈ {0, 1}NS×NS is applied sample-wise to map the sequence back into its planar topology layout, yielding the ordered matrix Hs = ΠHc. Prepending the decoder classification token hcls = zcls Wd at index 0 and superposing a fixed two-dimensional decoder positional embedding matrix 
+
+Ed ∈ R(1+ NS)×dd , the collective initial feature sequence 
+
+Y0 ∈ R(1+ NS)×dd is achieved as 
+
+Y0 = hcls Hs
+
+ + Ed. (30) The spatially aligned representation sequence Y0 is prop-agated through a deep vision backbone composed of Nd =4 identical cascaded Transformer decoding blocks. Let Yf
+
+designate the output matrix of the f -th block layer, where 
+
+1 ≤ f ≤ Nd. Utilizing layer normalization and residual con-nections, the intra-block representation updates are governed by the following expressions: 
+
+Y ′ 
+
+> f
+
+= Yf −1 + MSA (LN ( Yf −1)) , (31) 
+
+Yf = Y ′ 
+
+> f
+
++ FFN  LN  Y ′
+
+> f
+
+ . (32) Upon execution of the final block layer, the sequence is normalized, and the classification token at index 0 is stripped to isolate the decoded spatial matrix Hout ∈ RNS×dd . A linear reconstruction head characterized by the layer weight matrix 
+
+Wr ∈ Rdd×2M maps the latent representation directly into the real coefficient space, yielding the reconstructed full-grid standardized channel tensor ˆX = Hout Wr ∈ RNS×2M .The fundamental optimization objective of Task A is to enforce pixel-level reconstruction fidelity specifically over the unobserved channel regions. Let Xn ∈ RNS×2M and 
+
+ˆXn ∈ RNS×2M denote the ground-truth clean channel tensor and the reconstructed tensor for the n-th sample, respectively. Let xT 
+
+> n,k
+
+and ˆxT 
+
+> n,k
+
+represent the k-th rows of these matrices, corresponding to the 2M -dimensional real-valued CSI vector at port index k. Let mn,k ∈ { 0, 1} define the mask indicator variable, where mn,k = 1 if port k is masked during training and mn,k = 0 if it is observable. Accumulating the errors over a training batch size of B, the self-supervised MAE reconstruction loss function LMAE is formulated as 
+
+LMAE =
+
+PBn=1 
+
+PNS 
+
+> k=1
+
+mn,k ∥ˆxn,k − xn,k ∥22
+
+PBn=1 
+
+PNS 
+
+> k=1
+
+mn,k + ϵ , (33) where ϵ = 10 −8 represents the numerical protection regular-izer. 
+
+5) Sliced Isotropic Gaussian Regularization: To prevent representation collapse within the latent embedding space and safeguard the foundation network against mapping diverse channel state signatures into a trivial invariant manifold, a Sliced Isotropic Gaussian Regularization (SIGReg) mechanism is integrated. This regularizer guides the distribution of the generated latent embeddings toward an isotropic standard normal distribution by minimizing the sliced characteristic function distance. Let V ∈ RNe×dm denote a sub-sampled matrix of latent feature vectors extracted from either the full-view or visible token stream during pre-training, where dm represents the embedding dimension and Ne is the regularizer evaluation batch size bounded by a maximum threshold of 2048 . To eval-uate the multidimensional distribution properties efficiently, the high-dimensional features are projected onto a group of uniform random directions. Let A ∈ RNs×dm represent the slice direction matrix containing Ns = 128 distinct projection vectors. Each individual row vector aT 
+
+> s
+
+of the slice matrix A
+
+is normalized to unit length according to 
+
+as = ˜as
+
+∥˜as∥2 + ζ , (34) where ˜as ∈ Rdm×1 is a random vector drawn from an indepen-dent and identically distributed standard normal distribution 
+
+N (0, I), 1 ≤ s ≤ Ns, and ζ = 10 −6 represents a minor numerical stabilization parameter. The projected representa-tions are captured via the matrix multiplication P = V A T ∈
+
+RNe×Ns , where the scalar element pn,s = [ P ]n,s represents the one-dimensional coordinate projection of the n-th token embedding along the s-th random slice direction. The SIGReg framework enforces a statistical penalty based on the Cramer-von Mises distance between the empirical char-acteristic function (ECF) of these projected coordinates and the theoretical characteristic function of a standard Gaussian distribution. For a given slice direction s and a real-valued evaluation frequency parameter t ∈ R, the theoretical Gaussian characteristic function is designated as ϕ(t) = exp( −0.5t2),while the corresponding ECF computed over the sampled token distribution is defined as 
+
+ˆϕs(t) = 1
+
+Ne
+
+> Ne
+
+X
+
+> n=1
+
+exp(j tp n,s ), (35) where j = √−1 represents the imaginary unit. To approximate the integral distance over a continuous spectral span, a uniform grid consisting of Nt = 17 points is defined across the domain 
+
+[τmin , τ max ] = [ −5.0, 5.0] . Let T = {t1, t 2, . . . , t Nt } denote this uniform evaluation array, where the consistent grid interval is expressed as ∆t = ( τmax − τmin )/(Nt − 1) .9
+
+Figure 4: The pipeline of using pre-trained encoder and JEPA encoder for downstream task positioning. By evaluating the discrepancy at each discrete grid fre-quency via a trapezoidal integration rule, the localized distri-bution misalignment for the s-th slice direction is quantified by the scalar integral value Is, which is mathematically formulated as 
+
+Is = ∆ t
+
+"
+
+12 ˆϕs(t1) − ϕ(t1) 2
+
++ 12 ˆϕs(tNt ) − ϕ(tNt ) 2
+
++
+
+> Nt−1
+
+X
+
+> k=2
+
+ˆϕs(tk) − ϕ(tk) 2
+
+#
+
+.
+
+(36) The definitive self-supervised statistical regularization loss function LSIGReg is obtained by averaging the computed trapezoidal grid integrals across all random slice directions, yielding 
+
+LSIGReg = 1
+
+Ns
+
+> Ns
+
+X
+
+> s=1
+
+Is. (37) By computing this objective within a non-parametric charac-teristic domain, the SIGReg loss isolates and smooths out distribution anomalies across the latent spaces without re-quiring explicit density reconstruction, thereby stabilizing the underlying backbone against representation collapse. 
+
+B. Downstream wireless positioning 
+
+To evaluate the capability of the learned channel foundation representations in capturing fine-grained spatial propagation geometries, the pre-trained encoder backbone is adapted to the downstream task of high-precision wireless localization. This task seeks to map the complex multi-path spatial fingerprints recorded across the full aperture of the two-dimensional FAS directly onto the three-dimensional physical coordinates of the UE. During the downstream fine-tuning phase, the pre-trainind encoder and JEPA encoder are utilized. The general features 
+
+ˆXmask generated through the masked-view encoder pass is passed to a global average pooling (GAP) operation is per-formed across the entire physical patch token sequence to aggregate the multi-path geometric components. The pooled spatial representation vector xgap ∈ R1×dm is formally defined as 
+
+xgap = 1
+
+Kp1+ Kp
+
+X
+
+> k=2
+
+[ ˆXmask ]k, :. (38) The pooled fingerprint vector xgap is then propagated through a dedicated position regression head consisting of 
+
+Figure 5: The layout of the simulation scenario. an expanded and deep multi-layer perceptron (MLP) struc-ture. The regression framework sequentially maps the hid-den features through hidden dimensions of 512 and 256 
+
+before projecting onto the three-dimensional coordinate space. Utilizing the Gaussian error linear unit ( GELU ) non-linear operator σ(·), the intermediate coordinate mapping layers are formulated as 
+
+h1 = σ  xgap Wl1 + bTl1 
+
+ , (39) 
+
+h2 = σ  h1Wl2 + bTl2 
+
+ . (40) where Wl1 ∈ Rdm×512 and Wl2 ∈ R512 ×256 denote the trainable layer weight matrices, while bl1 ∈ R512 ×1 and 
+
+bl2 ∈ R256 ×1 represent the corresponding bias vectors. The final estimated relative coordinate vector ˆyn ∈ R1×3 is generated via a terminal linear projection layer as 
+
+ˆyn = h2Wl3 + bTl3 . (41) where Wl3 ∈ R256 ×3 and bl3 ∈ R3×1 define the terminal layer weight and bias parameters, respectively. Let yn, pos = [xn, y n, z n] ∈ R1×3 denote the absolute ground-truth physical coordinate vector of the UE in the phys-ical simulation area. To safeguard numerical gradient stability during the backpropagation sequence, the absolute positions are scaled down by a constant spatial normalization factor of 
+
+350 .0 m , yielding the standardized target relative coordinate vector yn = yn, pos /350 .0. The downstream regression head and the underlying encoder backbone are optimized jointly over a training batch size of B by minimizing the mean absolute error ( L1 loss) function, which is expressed as 
+
+Lloc = 1
+
+B
+
+> B
+
+X
+
+> n=1
+
+∥ˆyn − yn∥1 . (42) V. S IMULATION RESULTS AND ANALYSIS 
+
+A. Simulation Settings 
+
+To thoroughly evaluate the performance of the proposed joint embedding predictive architecture-based channel foun-dation model (JEPA-CFM), we conducted extensive numer-ical simulations. The propagation environment is modeled using the site-specific ray-tracing DeepMIMO O1 28 scenario, which represents a typical urban outdoor deployment (Fig. 5). The base station is equipped with a uniform linear array comprising M = 8 antennas spaced at dBS = 0 .5λ. At the 10 Number of epochs      
+
+> 0100 200 300 400 500
+> Loss
+> -30
+> -20
+> -10
+> 0
+> 10
+> 20
+> 30
+> 40
+> Testing loss
+> Training loss
+
+Figure 6: The training and testing loss of the proposed JEPA-CFM. user equipment, a two-dimensional fluid antenna system spans a continuous rectangular aperture that is discretized into an 
+
+NX × NY = 64 × 64 grid, yielding a total of NS = 4096 
+
+switchable ports with uniform spacing dX = dY = 0 .1λ.The channel responses are synthesized from L = 5 dominant propagation paths. A dataset of 30,000 independent channel realizations was generated via ray-tracing and divided into blocks of 5,000 samples to facilitate efficient storage and processing. The full dataset was partitioned into training and testing sets using a 9:1 ratio, resulting in 27,000 training samples and 3,000 independent test samples. To assess the model across the two primary tasks, we established the following benchmarks: 1) For the spatial channel extrapolation task (Task A), the proposed JEPA-CFM framework is compared against a conventional pure masked autoencoder (Pure MAE) base-line to demonstrate the benefits of predictive latent-space representation learning under severe aperture blockages. 2) For the downstream wireless localization task (Task B), the coordinate regression head attached to the pre-trained encoder is evaluated against a traditional mathematical fingerprint-matching algorithm to demonstrate the high-resolution geometric awareness captured by the learned embeddings under complex multipath conditions. 
+
+B. Model Training and Loss Formulations 
+
+The JEPA-CFM framework is trained in two distinct phases: self-supervised multi-objective pre-training followed by task-specific fine-tuning. Pre-training was performed on a dis-tributed multi-GPU system using two nodes. The process ran for 700 epochs with the AdamW optimizer and a mini-batch size of Bpre = 128 . A random spatial mask with ratio 
+
+Mr = 0 .75 was applied throughout, limiting the encoder to only 25% of the total fluid antenna ports. The overall pre-training objective minimizes the combined loss 
+
+Lpre = γLMAE + λJEPA LJEPA + λSIGReg LSIGReg , (43) where the scaling factor γ = 10000 .0 balances the pixel-level reconstruction term against the latent constraints, while Table I: Simulation settings and training hyper-parameters                                                   
+
+> Simulation Parameters Values
+> Simulation scenario DeepMIMO O1 28 BS antenna array 8-element ULA BS antenna spacing dBS 0.5λ
+> FAS port NX×NY64 ×64
+> Total selectable physical ports NS4096 FAS port spacing dX, d Y0.1λ
+> Number of dominant propagation paths L5Total simulated CSI samples 30000 Data block chunk processing size 5000 Dataset partition training/testing split ratio 9:1
+> Training Hyper-parameters Values
+> Pre-training Mini-batch Size Bpre 128 Total number of pre-training epochs 500 Base learning rate parameter ηpre 5.0×10 −4
+> Weight decay coefficient 0.05 Random spatial mask ratio variable Mr0.75 Weight of JEPA loss λJEPA 0.2 Weight of SIGReg loss λSIGReg 0.02 Weight of MAE loss γ10000.0 Deep-fading regularizer constant ϵ10 −8
+> Downstream positioning training Values
+> Fine-tuning mini-batch Size Bft 36 Fine-tuning initial learning rate ηft 2.0×10 −4
+> Fine-tuning weight decay parameter 0.0 Fine-tuning operational mask ratio Mr0.75 Physical coordinate normalization factor 350 .0 m
+
+λJEPA = 0 .2 and λSIGReg = 0 .02 weight the JEPA prediction and regularization terms, respectively. The evolution of train-ing and testing loss is shown in Fig. 6. To quantify extrap-olation accuracy on the test set, we employ the normalized mean squared error (NMSE) computed exclusively over the unobserved (masked) regions: 
+
+NMSE = 
+
+PBn=1 
+
+PNS 
+
+> k=1
+
+mn,k ∥ˆxn,k − xn,k ∥22
+
+PBn=1 
+
+PNS 
+
+> k=1
+
+mn,k ∥xn,k ∥22 + ϵ . (44) This metric ensures that evaluation focuses solely on the model’s ability to infer hidden ports, thereby validating its universal extrapolation capability. After pre-training, the base encoder parameters are frozen for the downstream positioning task. Fine-tuning is performed on four computing nodes with a mini-batch size of Bft = 36 , a learning rate of 2.0 × 10 −4,and no weight decay (the mask ratio remains Mr = 0 .75 ). The position regression head is optimized by minimizing the mean absolute error Lloc defined in (42). All simulation parameters and training hyper-parameters are summarized in Table I. 
+
+1) Channel extrapolation: Fig. 7 illustrates the core per-formance trend under nominal high-SNR conditions. The proposed JEPA-CFM consistently achieves lower extrapolation error than the conventional MAE baseline, with the largest gains appearing in the most practically relevant regime of highly sparse observations (5%–15% known CSI). This ad-vantage originates directly from the JEPA latent-prediction objective, which guides the encoder toward abstract, high-level spatial structures instead of attempting noisy pixel-level coefficient reconstruction. At moderate observation densities (15%–20%), the two approaches reach comparable accuracy. 11 Percentage of known CSI (%)     
+
+> 510 15 20 25
+> Channel extrapolation error (dB)
+> -30
+> -25
+> -20
+> -15
+> -10
+> -5
+> 0
+> Proposed
+> MAE-based
+
+Figure 7: The testing performance of the proposed model and MAE-based baseline for channel extrapolation. Percentage of known CSI (%)     
+
+> 510 15 20 25
+> Channel extrapolation error (dB)
+> -20
+> -15
+> -10
+> -5
+> 0
+> Proposed 20 dB
+> Proposed 10 dB
+> Proposed 0 dB
+> MAE-based 20 dB
+> MAE-based 10 dB
+> MAE-based 0 dB
+
+Figure 8: The robustness the proposed model and MAE-based baseline at various SNR levels for channel extrapolation. At 25% known CSI the pure MAE baseline shows a steeper error reduction, as expected when abundant visible data favors direct reconstruction. These results underscore the foundation-model design philosophy: JEPA-CFM is intentionally opti-mized for robust, data-efficient generalization under realistic FAS constraints rather than for peak reconstruction accuracy when observations are plentiful. Fig. 8 extends the analysis by examining robustness across three representative SNR levels (20 dB, 10 dB, and 0dB), thereby simulating the thermal noise, interference, and deep fading conditions typical of mobile 6G deployments. Across all tested SNRs, JEPA-CFM maintains its perfor-mance lead in the low-observation regime that dominates real-world operation. Moreover, the gap between the JEPA-CFM and MAE curves remains stable or widens slightly as SNR decreases, confirming that the combination of latent predictive learning and sliced isotropic Gaussian regularization effectively mitigates noise amplification that affects conven-tional reconstruction-based methods. Both models exhibit the expected monotonic improvement with increasing known-CSI percentage and higher SNR, yet the JEPA-CFM curves are consistently lower and flatter at low observation ratios, Percentage of known CSI (%)     
+
+> 510 15 20 25
+> Positioning error (m)
+> 2.5
+> 3
+> 3.5
+> 4
+> 4.5
+> 5
+> 5.5
+> 6
+> 6.5
+> Proposed
+> MAE-based
+
+Figure 9: The testing performance of the proposed model and MAE-based baseline for positioning. Percentage of known CSI (%)     
+
+> 510 15 20 25
+> Positioning error (m)
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> Proposed 20 dB
+> Proposed 10 dB
+> Proposed 0 dB
+> MAE-based 20 dB
+> MAE-based 10 dB
+> MAE-based 0 dB
+
+Figure 10: The robustness the proposed model and MAE-based baseline at various SNR levels for positioning. demonstrating superior noise resilience and better exploitation of spatial correlations even under 0 dB conditions. 
+
+2) Wireless positioning: Fig. 9 illustrates the mean posi-tioning error under nominal (noise-free) conditions as a func-tion of the percentage of known CSI. As shown, the proposed JEPA-CFM model and the MAE-based baseline exhibit very similar performance across the entire range of observation den-sities. The two curves are nearly overlapping, particularly from 10% to 25% known CSI, indicating no significant difference in localization accuracy between the two methods in the absence of noise. Even in the low-observation regime (5%–15% known CSI), the gap remains minimal. At 25% known CSI, both approaches achieve positioning errors around 2.7–3.0 m, with the proposed model showing only a marginal advantage. This suggests that under ideal channel conditions, the predictive latent objective and spatial embeddings in JEPA-CFM do not provide a substantial edge over the reconstruction-based MAE baseline for this positioning task. Fig. 10 further examines the robustness of both models under varying SNR levels (20 dB, 10 dB, and 0 dB). Here, the performance gap becomes more apparent. At each SNR, the JEPA-CFM curves consistently lie below those of the 12 
+
+MAE-based baseline, with the advantage being most visible in the low-observation regime (5%–15% known CSI). As SNR decreases to 0 dB, the MAE baseline suffers more pronounced degradation, while the proposed model maintains relatively better performance. Both methods show the expected mono-tonic decrease in positioning error with increasing known-CSI percentage and higher SNR. However, the JEPA-CFM curves are generally flatter, highlighting improved noise resilience stemming from its latent predictive training and FAS-specific spatial embeddings, which appear to better suppress noise amplification compared to direct reconstruction. VI. C ONCLUSIONS 
+
+This paper proposed JEPA-CFM, the first channel founda-tion model for FAS built upon the JEPA. Unlike conventional masked autoencoders that reconstruct raw complex channel coefficients at the pixel level, JEPA-CFM learns robust, high-level latent representations by predicting abstract embeddings of unobserved channel segments in a compact feature space. To further stabilize training and prevent representation collapse under the strong spatial correlations inherent in compact FAS apertures, the pre-training objective integrates three carefully balanced losses: the standard masked autoencoder reconstruc-tion loss, the proposed JEPA latent prediction loss, and a SI-GReg term. This multi-objective design enables a unified, self-supervised encoder that generalizes effectively across down-stream tasks with minimal adaptation overhead. Extensive ray-tracing simulations in the realistic DeepMIMO urban scenario confirm the practical advantages of the proposed framework. For channel extrapolation, JEPA-CFM consistently achieves lower normalized mean squared error than the pure masked autoencoder baseline, with the performance gap being most pronounced under severe pilot sparsity (5 %–15 % known CSI) and across a wide range of SNR conditions (0 dB, 10 dB, and 20 dB). The latent predictive objective and SIGReg regularization together provide superior noise resilience and better exploitation of spatial correlations compared with pixel-level reconstruction methods. For the wireless positioning task, the pre-trained encoder with a lightweight regression head delivers sub-3 m mean localization error at only 25 % known CSI, demonstrating strong geometric awareness even when most ports remain unobserved. REFERENCES 
+
+[1] H. Hong, K.-K. Wong, C.-B. Chae, H. Xu, X. Guo, F. R. Ghadi, Y. Chen, Y. Xu, B. Liu, K.-F. Tong et al. , “A contemporary survey on fluid antenna systems: Fundamentals and network-ing perspectives,” IEEE Transactions on Network Science and Engineering , 2025. [2] D. Bepari, S. Mondal, A. Bhowal, K. Singh, H. Shin, K.-K. Wong, and D. W. K. Ng, “Fluid antennas: Pioneering a new era in next-generation wireless communications,” IEEE Communications Surveys & Tutorials , vol. 28, pp. 5596–5631, 2026. [3] B. Liu, K.-F. Tong, K.-K. Wong, C.-B. Chae, and H. Wong, “Be water, my antennas: Riding on radio wave fluctuation in nature for spatial multiplexing using programmable meta-fluid antenna,” arXiv preprint arXiv:2502.04693 , 2025. [4] W. K. New, K.-K. Wong, H. Xu, C. Wang, F. R. Ghadi, J. Zhang, J. Rao, R. Murch, P. Ram´ ırez-Espinosa, D. Morales-Jimenez et al. , “A tutorial on fluid antenna system for 6g networks: Encompassing communication theory, optimization methods and hardware designs,” IEEE Communications Surveys & Tutorials , vol. 27, no. 4, pp. 2325–2377, 2024. [5] K.-K. Wong, A. Shojaeifard, K.-F. Tong, and Y. Zhang, “Fluid antenna systems,” IEEE Transactions on Wireless Communica-tions , vol. 20, no. 3, pp. 1950–1962, 2020. [6] Y. Gao, Y. Liu, R. Yu, S. Liu, Y. Jin, S. Zhang, S. Xu, and X. Chu, “SSNet: Flexible and robust channel extrapolation for fluid antenna systems enabled by an self-supervised learning framework,” IEEE Journal on Selected Areas in Communica-tions , pp. 1–1, Oct. 2025. [7] E. Tang, W. Guo, H. He, S. Song, J. Zhang, and K. B. Letaief, “Accurate and fast channel estimation for fluid antenna systems with diffusion models,” arXiv preprint arXiv:2505.04930 , 2025. [8] C. Wang, K.-K. Wong, Z. Li, L. Jin, and C.-B. Chae, “Large language model empowered design of fluid antenna systems: Challenges, frameworks, and case studies for 6g,” IEEE Wireless Communications , 2025. [9] Y. Gao, Z. Lu, X. Wu, W. Yu, S. Liu, J. Du, Y. Jin, S. Zhang, X. Chu, and S. Xu, “Ai-driven channel state information (csi) extrapolation for 6g: Current situations, challenges and future research,” IEEE Communications Surveys & Tutorials , 2026. [10] Y. Gao, Y. Liu, R. Yu, S. Liu, Y. Jin, S. Zhang, S. Xu, and X. Chu, “SSNet: Flexible and robust channel extrapolation for fluid antenna systems enabled by an self-supervised learning framework,” IEEE Journal on Selected Areas in Communica-tions , vol. 44, pp. 1276–1289, Jan. 2026. [11] H. Zhang, J. Wang, C. Wang, C.-C. Wang, K.-K. Wong, B. Wang, and C.-B. Chae, “Learning-induced channel extrapo-lation for fluid antenna systems using asymmetric graph masked autoencoder,” IEEE Wireless Communications Letters , vol. 13, no. 6, pp. 1665–1669, 2024. [12] J. Jiang, Y. Gao, X. Wu, and S. Xu, “Towards channel foundation models (CFMs): Motivations, methodologies and opportunities,” arXiv preprint arXiv:2507.13637 , Aug. 2025. [13] R. Balestriero and Y. LeCun, “LeJEPA: Provable and scalable self-supervised learning without the heuristics,” arXiv preprint arXiv:2511.08544 , 2025. [14] Y. LeCun et al. , “A path towards autonomous machine intelli-gence,” Open Review , vol. 62, no. 1, pp. 1–62, 2022. [15] V. Chu, O. Mashaal, and H. Abou-Zeid, “WirelessJEPA: A Multi-Antenna Foundation Model using Spatio-temporal Wire-less Latent Predictions,” arXiv preprint 2601.20190 , Jan. 2026. [16] C. Zheng, J. He, G. Cai, N. Li, M. Bennis, H. Wymeersch, and M. Debbah, “JEPA-MSAC: A Joint-Embedding Predictive Ar-chitecture for Multimodal Sensing-Assisted Communications,” 
+
+arXiv preprint arXiv:2603.29796 , Mar. 2026. [17] Y. Wu, Z. Zhang, H. Jiang, K.-K. Wong, and C.-B. Chae, “Learned-approximate message passing under karhunen-lo` eve modeling for fluid antenna systems,” IEEE Wireless Communi-cations Letters , 2026. [18] Y. Jin, R. Yu, Y. Gao, S. Liu, X. Chu, K.-K. Wong, and C.-B. Chae, “Context-aware deep learning for robust chan-nel extrapolation in fluid antenna systems,” arXiv preprint arXiv:2507.04435 , 2025. [19] Z. Chai, K.-K. Wong, K.-F. Tong, Y. Chen, and Y. Zhang, “Port selection for fluid antenna systems,” IEEE Communications Letters , vol. 26, no. 5, pp. 1180–1184, 2022. [20] C. N. Efrem and I. Krikidis, “Transmit and receive antenna port selection for channel capacity maximization in fluid-mimo sys-tems,” IEEE Wireless Communications Letters , vol. 13, no. 11, pp. 3202–3206, 2024. [21] J. Liu, K. Liang, L. Zhao, G. Zheng, H. Gu, K.-K. Wong, and C.-B. Chae, “Switching-cost-aware deep reinforcement learning for dynamic port selection in fluid antenna systems,” IEEE Communications Letters , vol. 30, pp. 1548–1552, 2026. [22] S. Xu, K.-K. Wong, Y. Du, H. Hong, C.-B. Chae, B. Liu, and K.-F. Tong, “Toward practical fluid antenna systems: Co-optimizing hardware and software for port selection and beamforming,” 13 
+
+IEEE Transactions on Wireless Communications , 2025. [23] Y. Zhang, H. Yin, W. Li, E. Bj¨ ornson, and M. Debbah, “Port-llm: A port prediction method for fluid antenna based on large language models,” IEEE Transactions on Communica-tions , 2025. [24] A. Salem, H. Xu, K.-K. Wong, C.-B. Chae, and Y. Zhang, “Secure ISAC with fluid antenna systems: Joint precoding and port selection,” arXiv preprint arXiv:2509.26572 , 2025. [25] L. Zhang, H. Yang, Y. Zhao, and J. Hu, “Joint port selection and beamforming design for fluid antenna assisted integrated data and energy transfer,” IEEE Wireless Communications Letters ,vol. 13, no. 7, pp. 1833–1837, 2024. [26] A. Salem, K.-K. Wong, H. Shin, and Y. Zhang, “Fundamental limits of localization with fluid antenna systems: A fisher information analysis,” arXiv preprint arXiv:2512.13941 , 2025. [27] S. Yang, J. Yao, J. Tang, T. Wu, M. Elkashlan, C. Yuen, M. Debbah, H. Shin, and M. Valenti, “Towards intelligent antenna positioning: Leveraging DRL for FAS-aided ISAC systems,” IEEE Internet of Things Journal , 2025. [28] W. Liu, Z. Rong, X. Liu, Y. Jiang, and X. Zhu, “RSSI Positioning with Fluid Antenna Systems,” arXiv preprint arXiv:2503.00980 , 2025. [29] T. Zhang, Q. Li, S. Wang, W. Ni, J. Zhang, R. Wang, K.-K. Wong, and C.-B. Chae, “Indoor fluid antenna systems enabled by layout-specific modeling and group relative policy optimization,” IEEE Transactions on Wireless Communications ,2025. [30] 3GPP, “3rd generation partnership project; technical specifica-tion group radio access network; study on artificial intelligence (AI)/machine learning (ML) for NR air interface (Release 19),” 3GPP, Tech. Rep. TS 38.843 V19.0.0, Sep 2025. [31] Y. Gao, X. Wu, J. Jiang, B. Hu, J. Du, Q. Ye, S. Zhang, F. R. Yu, and S. Xu, “AI/ML for mobile networks: Current status in Rel. 19 and challenges ahead,” arXiv preprint arXiv:2603.14317 ,Mar. 2026. [32] Y. Gao, Z. Lu, Y. Wu, Y. Jin, S. Zhang, X. Chu, S. Xu, and C.-X. Wang, “Enabling 6G through multi-domain channel ex-trapolation: Opportunities and challenges of generative artificial intelligence,” IEEE Communications Magazine , vol. 64, no. 1, pp. 222–228, Jan. 2026. [33] Y. Gao, G. Pan, Z. Zhong, Z. Jinm, Y. Hu, Y. Jin, , and S. Xu, “Sidelink positioning: Standardization advancements, challenges and opportunities,” IEEE Communications Maga-zine , vol. 64, no. 4, pp. 128–134, Feb. 2026.

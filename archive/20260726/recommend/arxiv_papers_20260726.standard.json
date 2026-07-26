@@ -1,0 +1,56 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-26T19:55:31.930177+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 0,
+    "quick_skim_target": 11,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2607.20202v1",
+      "source": "arxiv",
+      "title": "JEPA-CFM: A Joint Embedding Predictive Architecture-based Channel Foundation Model for Robust Fluid Antenna Systems",
+      "abstract": "Fluid antenna systems (FAS) have emerged as a promising technology for sixth-generation (6G) wireless networks. By allowing antenna elements to move freely within a compact region, FAS can exploit rich spatial diversity without additional hardware. However, acquiring real-time channel state information (CSI), extrapolating channel values to unmeasured antenna ports, and determining accurate user positions remain major obstacles. These challenges stem mainly from strong spatial correlations within the limited aperture and the scarcity of observable data. To overcome these limitations, this paper introduces joint embedding predictive architecture (JEPA)-based channel foundation model (CFM) specifically designed for FAS. The model adopts JEPA to learn versatile representations by extracting high-level latent embeddings of masked or unobserved channel segments. Unlike conventional approaches that attempt pixel-by-pixel reconstruction of raw CSI coefficients, JEPA-CFM focuses on predicting abstract structures in a compact feature space. The pre-training objective combines three complementary loss terms: the standard masked autoencoder reconstruction loss, the JEPA latent prediction loss, and a sliced isotropic Gaussian regularization (SIGReg) term. Together, these components prevent representation collapse and significantly enhance robustness under severe spatial correlation and highly sparse observations. After pre-training, the encoder is frozen, and lightweight task-specific heads are attached: a decoder for channel extrapolation and a global average pooling layer followed by a multi-layer perceptron regression head for wireless positioning. Extensive simulations in the realistic DeepMIMO urban scenario demonstrate that JEPA-CFM substantially outperforms the conventional masked autoencoder baseline in channel extrapolation and wireless positioning.",
+      "authors": [
+        "Yuan Gao",
+        "Yiming Liu",
+        "Jun Jiang",
+        "Jianbo Du",
+        "Shunqing Zhang",
+        "Xiaoli Chu",
+        "Kai-Kit Wong"
+      ],
+      "primary_category": "eess.SP",
+      "categories": [
+        "eess.SP"
+      ],
+      "published": "2026-07-22T14:24:32+00:00",
+      "link": "https://arxiv.org/pdf/2607.20202v1",
+      "tags": [
+        "keyword:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "uses joint embedding predictive architecture for channel modeling",
+      "llm_evidence_cn": "利用联合嵌入预测架构进行信道建模",
+      "llm_evidence": "利用联合嵌入预测架构进行信道建模",
+      "canonical_evidence": "利用联合嵌入预测架构进行信道建模",
+      "llm_tldr_en": "JEPA-CFM applies joint embedding predictive architecture to fluid antenna channel modeling.",
+      "llm_tldr_cn": "该论文将联合嵌入预测架构（JEPA）应用于流体天线系统的信道建模，提出了基于JEPA的信道基础模型。该模型通过预测架构学习空间相关性，解决信道状态信息获取和外推难题。实验证明模型在信道外推和用户定位中具有鲁棒性。",
+      "llm_tldr": "该论文将联合嵌入预测架构（JEPA）应用于流体天线系统的信道建模，提出了基于JEPA的信道基础模型。该模型通过预测架构学习空间相关性，解决信道状态信息获取和外推难题。实验证明模型在信道外推和用户定位中具有鲁棒性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}

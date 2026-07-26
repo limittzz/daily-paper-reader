@@ -6,37 +6,24 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-25
-- 运行时间：2026-07-25 20:09:55 UTC
+- 最新运行日期：2026-07-26
+- 运行时间：2026-07-26 19:56:48 UTC
 - 运行状态：成功
-- 本次总论文数：5
-- 精读区：2
-- 速读区：3
+- 本次总论文数：1
+- 精读区：1
+- 速读区：0
 
 ### 今日简报（AI）
-1) 今日5篇论文聚焦机器人容错与双手操作，精读两篇均获8分高分。  
-2) 最值得关注《EgoRecovery》中通过人类演示教机器人故障恢复，以及《Grasp, Handover, Rotate》用扩散模型实现双手物体重定向。  
-3) 建议优先精读这两篇，理解机器人如何从示教中学习自主恢复和复杂操作，对工程应用启发最大。
-- 详情：[/202607/25/README](/202607/25/README)
+今日精读1篇高分论文《JEPA-CFM》，关注鲁棒流体天线系统。核心方向是基于联合嵌入预测架构的信道基础模型，值得深入其抗干扰与泛化能力。建议重点关注该模型在动态信道场景下的实测表现与对比基线。
+- 详情：[/202607/26/README](/202607/26/README)
 
 ### 精读区论文标签
-1. [EgoRecovery: Acquiring Failure Recovery Ability Through Human Recovery Demonstration](/202607/25/2607.19745v2-egorecovery-acquiring-failure-recovery-ability-through-human-recovery-demonstration)  
-   标签：评分：8.0/10、query:imitation
-   evidence：利用人类恢复演示进行机器人模仿学习
-2. [Grasp, Handover, Rotate: Bimanual Object Reorientation via Compositional Diffusion and Energy-Based Optimization](/202607/25/2607.21341v1-grasp-handover-rotate-bimanual-object-reorientation-via-compositional-diffusion-and-energy-based-optimization)  
-   标签：评分：8.0/10、query:imitation
-   evidence：组合式扩散用于双臂机器人操作
+1. [JEPA-CFM: A Joint Embedding Predictive Architecture-based Channel Foundation Model for Robust Fluid Antenna Systems](/202607/26/2607.20202v1-jepa-cfm-a-joint-embedding-predictive-architecture-based-channel-foundation-model-for-robust-fluid-antenna-systems)  
+   标签：评分：9.0/10、query:imitation
+   evidence：利用联合嵌入预测架构进行信道建模
 
 ### 速读区论文标签
-1. [Distributed Model-Based Diffusion For Scalable Multi-Robot Trajectory Optimization](/202607/25/2607.20992v1-distributed-model-based-diffusion-for-scalable-multi-robot-trajectory-optimization)  
-   标签：评分：7.0/10、query:imitation
-   evidence：分布式模型扩散用于多机器人轨迹优化
-2. [RoboHarness: Memory-Driven Orchestration of Heterogeneous Robot Policies for Long-Horizon Planning](/202607/25/2607.18060v1-roboharness-memory-driven-orchestration-of-heterogeneous-robot-policies-for-long-horizon-planning)  
-   标签：评分：6.0/10、query:imitation
-   evidence：编排异构机器人策略，包括模仿学习策略
-3. [Agentic Real2Sim: Physics-based World Modeling with Vision-Language Agents](/202607/25/2607.19190v2-agentic-real2sim-physics-based-world-modeling-with-vision-language-agents)  
-   标签：评分：6.0/10、query:imitation
-   evidence：真实到仿真转换，为模仿学习数据生成提供仿真环境
+- 本次无速读推荐。
 
 
 <div class="dpr-home-promo-card">
