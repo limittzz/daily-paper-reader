@@ -1,0 +1,819 @@
+Title: GRACE: Gradient-Free Robot Action Generation via Combined Diffusion-MPPI Posterior Mean Estimation
+
+URL Source: https://arxiv.org/pdf/2607.21661v1
+
+Published Time: Mon, 27 Jul 2026 00:02:38 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+> 1
+
+# GRACE: Gradient-Free Robot Action Generation via Combined Diffusion–MPPI Posterior Mean Estimation 
+
+Leesai Park 1, Jiho Hong 1, and Sanghyun Kim 1,2,∗
+
+Abstract —Diffusion policies generate multimodal robot ac-tion sequences from demonstrations, but steering them toward deployment-time constraints typically relies on differentiable guidance costs. This excludes many practical safety constraints, such as binary collision checks, joint limits, and black-box rollout costs that are nondifferentiable. We propose Gradient-free Robot Action generation via Combined diffusion–MPPI posterior mean Estimation (GRACE), which guides a pretrained diffusion policy with Model Predictive Path Integral (MPPI) control using only forward cost evaluations. Building on the common score-ascent structure of diffusion and MPPI, GRACE constructs a cost-conditioned guidance posterior at each reverse step and estimates its mean with a single MPPI update centered at the diffusion reverse mean. For differentiable costs, GRACE recovers conventional gradient guidance under a first-order, matched-covariance approximation. GRACE attains higher suc-cess rates than diffusion-based and sampling-based baselines in simulation. On a real 7-DoF manipulator, GRACE avoids a deployment-time obstacle that the unguided prior collides with in every trial. Code and experiment videos are available at https://anonymous.4open.science/w/grace-70BB/. 
+
+Index Terms —Diffusion policies, MPPI, motion planning, pos-terior estimation, gradient-free guidance. 
+
+I. INTRODUCTION 
+
+# ROBOT trajectory generation is a longstanding problem in robotics. An autonomous system must produce tra-jectories that are dynamically feasible, satisfy task objectives, and remain adaptable to environments that change between deployments. Traditional planners such as A ∗ [1] and Rapidly-exploring Random Tree (RRT) [2] explore the state or config-uration space to find feasible paths, while trajectory optimizers such as Covariant Hamiltonian Optimization for Motion Plan-ning (CHOMP) [3] and Stochastic Trajectory Optimization for Motion Planning (STOMP) [4] refine an initial trajectory by minimizing costs that encode feasibility, smoothness, and task objectives. These methods have served as the workhorse of deployed robotic systems for decades, but they typically converge to a single mode of the solution space and cannot capture the multiple qualitatively distinct trajectories that are valid in many manipulation and navigation tasks [5]. 
+
+This research was supported by the National Research Foundation of Korea (NRF) grant funded by the Korea government (MSIT) (No. RS-2026-25491322), by the Industrial Strategic Technology Development Program (No. RS-2025-25449039) funded by the Ministry of Trade, Industry & Energy (MOTIE), and by the Korea Basic Science Institute (National Research Facilities and Equipment Center) grant funded by the Ministry of Science and ICT (No. RS-2025-00564593). 
+
+> 1
+
+School of Mechanical Engineering, Kyung Hee University, Yongin, Re-public of Korea. {leesai2000, jihojihyuk }@khu.ac.kr 
+
+> 2
+
+Advanced Institute of Convergence Technology (AICT), Suwon, Republic of Korea. 
+
+> ∗
+
+Corresponding author: Sanghyun Kim. × 𝑵 
+
+GRACE         
+
+> Denoise
+> MPPI
+> guidance
+> Constraint -aware actions for unseen obstacles
+> 1. Predicting revers emean 2. Estimating posterior mean 3. Sampling next iterate
+> •
+> Denoising step
+> How to stay safe? →Gradient -free guidance
+> Which way to go? →Multimodal prior, no retraining
+
+Fig. 1. The multimodal diffusion prior decides which way to go without retraining, while gradient-free guidance decides how to stay safe. At each denoising step (top), GRACE predicts the diffusion reverse mean (yellow), estimates the cost-conditioned posterior mean (cyan) from MPPI rollouts (orange), and samples the next iterate (magenta). Over the denoising process (bottom), the trajectory is refined to avoid unseen obstacles. Green and red markers denote the start and goal. 
+
+Generative learning-based methods address this limitation by modeling distributions over trajectories from demonstra-tion data. In particular, diffusion generative models [6] can represent high-dimensional, multimodal distributions through an iterative denoising process and have been applied to robot trajectory generation [7] and visuomotor policy learning [8]. The resulting trajectory prior captures the multimodal structure present in the demonstrations. However, sampling from this learned distribution alone does not necessarily ensure that the generated trajectories satisfy a particular task objective or constraint. Steering the generation process toward such task-specific requirements is the role of guidance. Guidance can inject the task objective at training time or at inference time. Classifier [9] and classifier-free guidance [10] fold the objective into the prior during training, and therefore require the relevant constraints to be known before the prior is learned. Many deployment-time constraints, such as obstacles that appear only after training, violate this assumption and must instead be imposed at inference time without retrain-ing [11]. Existing inference-time methods steer the reverse diffusion process using gradients of task-specific objectives evaluated on intermediate denoising samples. MPD [12] uses gradients of differentiable motion-planning costs to bias sam-ples toward low-cost trajectories, while EDMP [13] runs paral-lel guided denoising processes using an ensemble of collision-cost formulations and guidance schedules. DynaGuide [14] instead derives the guidance gradient from a latent outcome-matching objective evaluated through an external learned dy-namics model. arXiv:2607.21661v1 [cs.RO] 22 Jul 2026 2
+
+However, these approaches require differentiable guidance objectives and may converge to poor local solutions when the resulting optimization landscape is non-convex [15]. Gradient-free methods remove the differentiability requirement by generating candidate trajectories and scoring them through forward cost evaluations. Diffusion-ES [16] uses an outer evo-lutionary loop that evaluates clean trajectories with a black-box reward and mutates high-scoring samples through truncated diffusion. JM2D [17] instead jointly denoises a plan and a model-based optimization output using a Monte Carlo estimate of their interaction potential. We present Gradient-free Robot Action generation via Com-bined diffusion–MPPI posterior mean Estimation (GRACE), a sampling-based guidance framework that integrates MPPI directly into each step of the diffusion denoising process. Mo-tivated by the score-ascent correspondence between diffusion and MPPI [18], [19], GRACE constructs a cost-conditioned guidance posterior around the diffusion reverse mean at each reverse step and estimates its first moment using cost-weighted MPPI rollouts. The estimated posterior mean then parameter-izes the mean of a projected reverse kernel, from which the next iterate is sampled, as illustrated in Fig. 1. The resulting method accommodates unseen, potentially nondifferentiable deployment-time constraints without retraining while preserv-ing the stochastic structure of reverse diffusion. The contributions of this paper are as follows:  
+
+> •
+
+MPPI-guided reverse diffusion. GRACE uses the score-ascent correspondence between diffusion and MPPI to incorporate sampling-based guidance into each reverse step, enabling adaptation to unseen deployment-time con-straints without retraining.  
+
+> •
+
+Posterior-mean guidance. GRACE estimates the mean of a cost-conditioned guidance posterior from cost-weighted rollouts, supporting nondifferentiable costs and recovering one-step gradient guidance under differentia-bility and matched covariance.  
+
+> •
+
+Improved planning performance. GRACE achieves the highest success rates in both simulated tasks, reduces constraint violations relative to gradient-guided diffusion baselines, preserves prior multimodality, and transfers to real hardware. II. PRELIMINARIES 
+
+A. Diffusion Models for Trajectory Generation 
+
+We adopt the Denoising Diffusion Probabilistic Model (DDPM) formulation [6] for trajectory generation. Let U(0) ∈
+
+RH×m denote an action sequence of horizon H drawn from a demonstration distribution pdata . The forward diffusion process gradually corrupts U(0) by Gaussian noise over N
+
+steps, 
+
+q(U(i) | U(i−1) ) = N
+
+
+
+U(i);
+
+p
+
+α(i) U(i−1) , (1 − α(i))I
+
+
+
+, (1) where α(i) = 1 − β(i) for a predefined noise schedule 
+
+{β(i)}Ni=1 . The i-step forward noising distribution can be written in closed form as 
+
+q(U(i) | U(0) ) = N
+
+
+
+U(i);
+
+p
+
+¯α(i) U(0) , (1 − ¯α(i))I
+
+
+
+, (2) where ¯α(i) = Qij=1 α(j). Equivalently, it can be reparameter-ized as 
+
+U(i) =
+
+p
+
+¯α(i) U(0) +
+
+p
+
+1 − ¯α(i) ϵ, ϵ ∼ N (0 , I). (3) Generation reverses this process through a learned Gaussian kernel 
+
+pθ (U(i−1) | U(i)) = N
+
+
+
+U(i−1) ; μθ (U(i), i ), Σ(i)
+
+, (4) whose mean is parameterized through a learned noise predictor 
+
+ϵθ as 
+
+μθ (U(i), i ) = 1
+
+√α(i)
+
+
+
+U(i) − β(i)
+
+√1 − ¯α(i) ϵθ (U(i), i )
+
+
+
+, (5) trained by minimizing the denoising objective 
+
+Ldiff (θ) = Ei, U(0) ,ϵ
+
+h
+
+ϵ − ϵθ (U(i), i ) 22
+
+i
+
+. (6) 
+
+B. Model Predictive Path Integral Control 
+
+Consider a discrete-time system xt+1 = f (xt, vt) with state xt ∈ Rn and applied control vt ∈ Rm. Let V =(v0, . . . , vH−1) denote an applied control sequence. Given x0,the rollout cost is 
+
+J(V) = 
+
+> H−1
+
+X
+
+> t=0
+
+ℓ(xt, vt) + ϕ(xH ). (7) The information-theoretic formulation [20] yields the optimal control distribution 
+
+q⋆(V) = 1
+
+η e− 1 
+
+> λJ(V)
+
+N (V; eU, Σ), (8) where λ > 0 is a temperature, N (V; eU, Σ) is a Gaussian base measure centered at eU, and the normalizer is 
+
+η =
+
+Z
+
+e− 1 
+
+> λJ(V)
+
+N (V; eU, Σ)dV. (9) The common uncontrolled choice is eU = 0 . MPPI approxi-mates q⋆ within the Gaussian family N (V; U, Σ), optimizing only the mean U while holding the covariance Σ fixed, by minimizing 
+
+U⋆ = arg min  
+
+> U
+
+DKL (q⋆(V) ∥ N (V; U, Σ)) . (10) For fixed Σ, this gives the moment-matching solution 
+
+U⋆ = Eq⋆ [V]. (11) Substituting (8) into (11) and expanding the normalizer us-ing (9) yields a normalized weighted expectation under the Gaussian base measure. We then rewrite this expectation under the proposal N (V; U, Σ) using importance sampling. Since the base and proposal distributions share the covariance Σ,their density ratio can be absorbed into the cost, giving 
+
+U⋆ =
+
+EN (U,Σ)
+
+h
+
+V e− 1 
+
+> λeJ(V)
+
+i
+
+EN (U,Σ)
+
+h
+
+e− 1 
+
+> λeJ(V)
+
+i , (12) where the augmented cost is 
+
+eJ(V) = J(V) + λ
+
+> H−1
+
+X
+
+> t=0
+
+(ut − eut)⊤Σ−1vt. (13) 3Offline learning 
+
+> Guidance -independent
+> diffusion prior
+> Constraint -free demos
+> Diffusion model
+> training
+
+Inference  – combined Diffusion -MPPI posterior  mean  estimation    
+
+> 1) Predict diffusion reverse mean 2) Sample MPPI rollouts 3) Estimate posterior mean 4) Sample for next iteration
+
+Input  Output    
+
+> State, Goal Constraint -aware
+> action sequence
+> Projected
+> reverse kernel
+> Sample drawn from
+> projected kernel
+> Exploration
+> kernel
+> Guidance
+> posterior
+> MPPI samples
+> Diffusion
+> reverse mean
+> Unseen
+> obstacle Reweighted
+> distribution
+> Guidance
+> posterior mean
+> Unseen obstacle
+
+Fig. 2. The GRACE inference pipeline. A diffusion prior learned offline from demonstrations predicts the reverse mean at each denoising step. GRACE samples MPPI rollouts from an exploration kernel centered at this mean and reweights them using deployment-time constraint costs to estimate the guidance posterior mean. The estimated mean defines a projected reverse kernel that retains the diffusion schedule covariance, from which the next iterate is sampled, enabling constraint-aware action generation without differentiating the cost or the dynamics. 
+
+Using samples kV = U + kδU with kδU ∼ N (0 , Σ), the Monte Carlo estimator of (12) is 
+
+U⋆ = U +
+
+> K
+
+X
+
+> k=1
+> k
+
+w · kδU, (14) where 
+
+> k
+
+w = e− 1  
+
+> λeJ(kV)
+
+PKl=1 e− 1  
+
+> λeJ(lV)
+
+. (15) III. PROPOSED METHOD In this section, we develop GRACE from the shared score-ascent structure of diffusion and MPPI, which motivates a cost-conditioned posterior whose mean can be estimated through gradient-free MPPI rollouts. The overall inference pipeline is illustrated in Fig. 2. 
+
+A. Diffusion and MPPI as Score Ascent 
+
+Differentiating the log of (2) yields 
+
+∇U(i) log q(U(i) | U(0) ) = −ϵ
+
+√1 − ¯α(i) , (16) which shows that the noise target ϵ is proportional to the score of the forward conditional distribution. At the optimum of the denoising objective (6), the noise predictor recovers the conditional expectation of ϵ given U(i). The resulting learned score is 
+
+sθ (U(i), i ) = − ϵ⋆θ (U(i), i )
+
+√1 − ¯α(i) , (17) which matches ∇U(i) log q(U(i)), where q(U(i)) denotes the forward marginal induced by the data distribution and the forward noising process. Substituting (17) into (5) expresses the reverse mean approximately as a score-ascent step, 
+
+μθ (U(i), i ) ≈ U(i) + β(i) sθ (U(i), i ). (18) The same view extends to MPPI. Dropping the control prior in (13) reduces the augmented cost to J, so the denominator of (12) becomes 
+
+Ψ( U) := EV∼N (U,Σ)
+
+h
+
+e− 1 
+
+> λJ(V)
+
+i
+
+. (19) Here, Ψ( U) quantifies the expected Boltzmann weight under Gaussian perturbations around U, and its normalized form 
+
+¯Ψ( U) := Ψ( U)/Z , where Z := R Ψ( U) dU, defines a density over U. Substituting V = U + ( V − U) into (12) gives 
+
+U⋆ = U +
+
+EN (U,Σ)
+
+h
+
+(V − U) e − 1 
+
+> λJ(V)
+
+i
+
+Ψ( U) . (20) Using the Gaussian identity 
+
+∇UN (V; U, Σ) = Σ−1(V − U) N (V; U, Σ) (21) and that e− 1  
+
+> λJ
+
+is independent of U,
+
+∇UΨ( U) = Σ−1EN (U,Σ)
+
+h
+
+(V − U) e − 1 
+
+> λJ(V)
+
+i
+
+. (22) Since Z is constant, ∇U log ¯Ψ = ∇UΨ/Ψ. Left-multiplying (22) by Σ and dividing by Ψ shows that the second term of (20) equals Σ ∇U log ¯Ψ( U), so 
+
+U⋆ = U + Σ ∇U log ¯Ψ( U). (23) Thus the MPPI update (23) and the approximate diffusion reverse step (18) share the same score-ascent form, each advancing the iterate along a scaled score of an underlying distribution, q(U(i)) for diffusion and ¯Ψ for MPPI. 
+
+B. Cost-Conditioned Guidance Posterior 
+
+The shared score-ascent structure of Section III-A suggests that steering the reverse process toward low-cost trajectories amounts to combining the two ascent directions, which cor-responds to targeting the product of the diffusion reverse kernel and a cost-induced likelihood at each step. Bayes’ 4
+
+rule provides exactly this product when the deployment-time objective is represented as a conditioning event C whose likelihood decreases with the rollout cost J. Applying Bayes’ rule to the reverse step gives 
+
+p(U(i−1) | U(i),C) = p(C| U(i−1) ,U(i)) pθ (U(i−1) |U(i))
+
+p(C | U(i)) . (24) The event C depends only on the action sequence U(i−1) and is conditionally independent of U(i) given U(i−1) . Furthermore, the denominator is independent of U(i−1) . Consequently, 
+
+p(U(i−1) | U(i), C) ∝ p(C | U(i−1) ) pθ (U(i−1) | U(i)). (25) A Boltzmann likelihood p(C | U(i−1) ) ∝ e− 1 
+
+> λJ(U(i−1) )
+
+is adopted, consistent with the cost-induced target of Sec-tion III-A. For compactness, let μ(i) := μθ (U(i), i ) and 
+
+p(i) 
+
+> θ
+
+(U(i−1) ) := pθ (U(i−1) | U(i)) denote the diffusion reverse mean and the diffusion reverse kernel at step i, respec-tively. Substituting the diffusion reverse kernel (4) into (25) gives the reverse-kernel posterior 
+
+πi(U(i−1) |U(i), C)= e− 1 
+
+> λJ(U(i−1) )
+
+N(U(i−1) ;μ(i),Σ(i))
+
+Zi
+
+, (26) where the normalizer is 
+
+Zi =
+
+Z
+
+e− 1  
+
+> λJ(U(i−1) )
+
+N (U(i−1) ; μ(i), Σ(i)) dU(i−1) . (27) The reverse-kernel posterior shares the product form of the MPPI optimal distribution (8), with the Gaussian centered at 
+
+μ(i), so its mean can be estimated from cost-weighted rollouts sampled from N (μ(i), Σ(i)). However, as the schedule drives 
+
+Σ(i) → 0 for i → 1, the rollouts concentrate near μ(i),restricting the range over which cost weighting can shift the posterior mean. Accordingly, an exploration kernel centered at the diffusion reverse mean and equipped with an independently controlled covariance is introduced: 
+
+r(i) 
+
+> g
+
+(U(i−1) | U(i)) := N (U(i−1) ; μ(i), Σ(i) 
+
+> g
+
+), (28) where Σ(i) 
+
+> g
+
+≻ 0 is a guidance covariance. When Σ(i) 
+
+> g
+
+−Σ(i) ⪰ 0,this exploration kernel is the diffusion reverse kernel con-volved with an additional Gaussian exploration kernel, 
+
+r(i) 
+
+> g
+
+(U(i−1) | U(i)) = p(i) 
+
+> θ
+
+(U(i−1) )∗N  U(i−1) ;0,Σ(i) 
+
+> g
+
+−Σ(i),
+
+(29) which preserves the diffusion reverse mean while inflating only the spread. Applying Bayes’ rule to r(i) 
+
+> g
+
+(U(i−1) | U(i)) gives the exploration-kernel posterior, hereafter referred to as the guidance posterior, 
+
+ρi(U(i−1) |U(i), C)= e− 1
+
+> λJ(U(i−1) )
+
+N (U(i−1) ;μ(i),Σ(i) 
+
+> g
+
+)
+
+Z(i)
+
+> g
+
+, (30) where the normalizer is 
+
+Z(i) 
+
+> g
+
+=
+
+Z
+
+e− 1  
+
+> λJ(U(i−1) )
+
+N (U(i−1) ; μ(i), Σ(i) 
+
+> g
+
+) dU(i−1) . (31) This is the exact cost-conditioned posterior associated with the exploration kernel r(i) 
+
+> g
+
+(U(i−1) | U(i)). When Σ(i) 
+
+> g
+
+= Σ(i), the exploration kernel coincides with the diffusion reverse kernel 
+
+p(i) 
+
+> θ
+
+and ρi reduces to πi.
+
+Algorithm 1 GRACE inference procedure for gradient-free diffusion policy guidance. 
+
+Require: denoiser ϵθ ; state x0; cost J; reverse covariances 
+
+{Σ(i)}Ni=1 ; guidance covariances {Σ(i) 
+
+> g
+
+}Ni=1 ; samples K;temperature λ; execution horizon Hexec  
+
+> 1:
+
+Sample U(N ) ∼ N (0 , I) 
+
+> 2:
+
+for i = N, N − 1, . . . , 1 do  
+
+> 3:
+
+Compute reverse mean μ(i) = μθ (U(i), i ) from (5)  
+
+> 4:
+
+for k = 1 , . . . , K do  
+
+> 5:
+
+Sample kδU(i) ∼ N (0 , Σ(i) 
+
+> g
+
+) 
+
+> 6:
+
+Form k ¯U(i−1) = μ(i) + kδU(i) 
+
+> 7:
+
+Roll out and evaluate J(k ¯U(i−1) ) 
+
+> 8:
+
+end for  
+
+> 9: k
+
+w(i) ← e− 1  
+
+> λJ(k¯U(i−1) )
+
+PKl=1 e− 1   
+
+> λJ(l¯U(i−1) )
+> 10:
+
+bU(i−1) ← μ(i) + P
+
+> k k
+
+w(i) · kδU(i) 
+
+> 11:
+
+if Σ(i)̸ = 0 then  
+
+> 12:
+
+Sample U(i−1) ∼ N   bU(i−1) , Σ(i) 
+
+> 13:
+
+else  
+
+> 14:
+
+U(i−1) ← bU(i−1)  
+
+> 15:
+
+end if  
+
+> 16:
+
+end for  
+
+> 17:
+
+Execute first Hexec actions of U(0) ; replan. 
+
+C. KL Projection and MPPI Mean Estimation 
+
+Although the exploration-kernel posterior ρi is well de-fined, the nonlinear and binary terms in J preclude closed-form expressions for its normalizer and moments, and direct sampling from ρi is not readily available. Instead of handling 
+
+ρi in full, it is projected onto a Gaussian reverse kernel whose mean is free and whose covariance is fixed to Σ(i),which reduces the problem to a single moment that admits Monte Carlo estimation. Fixing the covariance to Σ(i) ensures that the resulting transition remains in the same schedule-covariance family as the diffusion reverse kernel, while the cost-conditioned information contained in ρi is transferred through the mean. The corresponding forward-KL projection is 
+
+U⋆(i−1)  
+
+> g
+
+:= arg min  
+
+> ν
+
+DKL 
+
+
+
+ρi N  U(i−1) ; ν, Σ(i)
+
+. (32) Since the covariance of the approximating Gaussian is fixed to Σ(i), the forward-KL minimizer is obtained by matching the first moment of ρi,
+
+U⋆(i−1)  
+
+> g
+
+= Eρi
+
+h
+
+U(i−1) i
+
+. (33) Substituting the exploration-kernel posterior (30) into (33) gives 
+
+U⋆(i−1)  
+
+> g
+
+=
+
+EU(i−1) ∼N 
+
+> 
+> μ(i),Σ(i)
+> g
+> 
+
+h
+
+U(i−1) e− 1 
+
+> λJ(U(i−1) )
+
+i
+
+EU(i−1) ∼N 
+
+> 
+> μ(i),Σ(i)
+> g
+> 
+
+h
+
+e− 1 
+
+> λJ(U(i−1) )
+
+i . (34) Although this first moment remains unavailable in closed form, both expectations are now taken under the Gaussian 
+
+N (μ(i), Σ(i) 
+
+> g
+
+), removing the need to sample from ρi or to evaluate Z(i) 
+
+> g
+
+. This ratio has the same form as the MPPI 5
+
+(a)  (b) 
+
+> Fig. 3. Simulation environments for the 2D and 3D planning tasks. (a) Planar point-mass navigation, where the red obstacles are absent during training and introduced only at inference time. (b) 7-DoF FR3 manipulator goal-reaching with randomly placed obstacles, all of which are introduced only at inference time.
+
+update (12) and is estimated with cost-weighted rollouts. Denoting the resulting Monte Carlo estimate by bU(i−1) ,consistency of the estimator gives 
+
+bU(i−1) −→ U⋆(i−1)  
+
+> g
+
+as K −→ ∞ . (35) The estimated mean of the exploration-kernel posterior is then used to define the projected guided reverse kernel 
+
+q(i)
+
+> g
+
+ U(i−1) | U(i), C := N  U(i−1) ; bU(i−1) , Σ(i). (36) The overall GRACE reverse process based on this construction is summarized in Algorithm 1. 
+
+D. Gradient Guidance as a Differentiable Special Case 
+
+To relate GRACE to gradient-based diffusion guidance, we analyze the first-order behavior of (34) for differentiable costs. Define the deviation from the diffusion reverse mean as δ := 
+
+U(i−1) −μ(i). Under the exploration kernel, the induced distri-bution of δ is N (0, Σ(i) 
+
+> g
+
+). Let ∇Ji := ∇UJ(U)|μ(i) . The cost is locally approximated as J(μ(i) + δ) ≈ J(μ(i)) + δ⊤∇Ji.Substitution into (34) cancels the common factor e− 1 
+
+> λJ(μ(i))
+
+and leaves the perturbation exponent 
+
+− 12 δ⊤ Σ(i)
+
+> g
+
+−1δ − 1
+
+λ δ⊤∇Ji. (37) Completing the square factors the resulting integrand into the Gaussian density N (δ; −λ−1Σ(i) 
+
+> g
+
+∇Ji, Σ(i) 
+
+> g
+
+) and a constant independent of δ. This constant is common to the numerator and the denominator of (34) and cancels in the ratio, which then reduces to the mean of δ under the shifted Gaussian. Since U(i−1) = μ(i) + δ, it follows that 
+
+U⋆(i−1)  
+
+> g
+
+≈ μ(i) − 1
+
+λ Σ(i) 
+
+> g
+
+∇Ji. (38) Substituting (38) into (36) gives, under the first-order cost approximation and in the infinite-sample limit, 
+
+U(i−1) ∼ N 
+
+
+
+μ(i) − 1
+
+λ Σ(i) 
+
+> g
+
+∇Ji, Σ(i)
+
+
+
+. (39) When Σ(i) 
+
+> g
+
+= Σ(i), (39) reduces to the Taylor-linearized one-step gradient-guided update of [12]. Thus, gradient guidance is recovered as the differentiable, matched-covariance special case of GRACE.                
+
+> TABLE I EXPERIMENTAL SETUP FOR THE TWO EVALUATION ENVIRONMENTS .Point-mass FR3 Action 2D velocity ∆q
+> Prior training data 10,000 (fixed) 20,000 (obs.-free) Planning horizon 16 32 Executed per replan 816 Goal tolerance 0.05 m 0.03 rad Step budget 1,000 5,000 Obstacles at inference fixed + added 6 random
+
+IV. EXPERIMENTS In this section, we validate the effectiveness of GRACE on two simulated domains, a planar point-mass navigation task and a goal-reaching task on a 7-DoF Franka Research 3 (FR3) manipulator, as well as on a real-world experiment with the FR3 manipulator. Complete hyperparameter settings for GRACE and all baselines, implementation details, code, and experiment videos are available on the anonymous project page at https://anonymous.4open.science/w/grace-70BB/. 
+
+A. Experimental Setup 
+
+All experiments were performed on an NVIDIA GeForce RTX 4060 GPU. We use a goal-conditioned Diffusion Pol-icy [8] with either a FiLM-conditioned 1D temporal UNet, denoted GRACE (UNet) , or a lightweight FiLM-conditioned 1D residual CNN, denoted GRACE (CNN) .
+
+Environments. Table I summarizes the setup of the two evaluation environments. The first is the planar point-mass navigation environment of MPD [12], shown in Fig. 3a, where the prior is trained on planner-generated demonstra-tions collected on a map with fixed obstacles. The start and goal are randomly generated, and additional obstacles absent during training are introduced only at inference time. In this environment, we conduct two evaluations: feasible navigation under unseen obstacles over 30 random trials, and trajectory multimodality on a fixed episode. For the latter, we cluster 20 successful trajectories per method after uniform arc-length resampling, treating each cluster as one trajectory mode. The second environment evaluates a 7-DoF manipulator reaching goal joint configurations among 3D obstacles, as shown in Fig. 3b. The prior is trained on obstacle-free feedback-tracking demonstrations, while the obstacles and the start and goal configurations are randomly generated at inference time over 30 trials. For both environments, a trial succeeds if the system reaches the target within the task-specific tolerance without timeout or safety violations. 
+
+Cost Formulation. Let do(xt) be the signed distance from state xt to obstacle o, with penetration depth po(xt) =max(0 , −do(xt)) . We define the obstacle cost over the horizon 
+
+H as 
+
+Jobs =
+
+> H
+
+X
+
+> t=1
+
+1obs (xt) + X
+
+> o∈O
+
+ po(xt)
+
+ℓo
+
+2!
+
+, (40) where 1obs is the exact binary collision indicator used for constraint checking, ℓo is a per-obstacle normalization length, and the second term is a continuous soft-penetration penalty that provides a gradient signal where the binary term does not. 6                                             
+
+> TABLE II QUANTITATIVE COMPARISON OF PLANNING METHODS IN THE 2D POINT -MASS NAVIGATION TASK .Method Success [%] Collision Failures Path Length [m] CEM 8/30 (26.7%) 0/30 1.247 ±0.143
+> MPPI 8/30 (26.7%) 0/30 1.241 ±0.123
+> DA-MPPI 8/30 (26.7%) 0/30 1.233 ±0.120
+> PO-DP 18/30 (60.0%) 12/30 2.657 ±1.021
+> GG-DP 18/30 (60.0%) 12/30 2.302 ±1.115
+> Diffusion-ES 7/30 (23.3%) 23/30 2.700 ±0.832
+> GRACE (CNN) 20/30 (66.7%) 0/30 3.681 ±1.659
+> GRACE (UNet) 25/30 (83.3%) 2/30 3.372 ±1.538
+
+For diffusion-guided methods the goal is supplied by the prior, so the total cost is 
+
+J = wobs Jobs + wprior Jprior , (41) where Jprior penalizes deviation from the prior, and the diffusion-free baselines replace Jprior with an explicit goal cost Jgoal . In the 2D environment all methods share the same cost in (40) over the exact geometry, so that the comparison isolates the difference between sampling- and gradient-based optimization under identical conditions. In the 3D environment the gradient-guided methods instead operate on a smoothed approximate geometry, whereas the sampling-based methods, which require no gradient, evaluate the exact geometry through the binary term alone. The 3D setting further adds self-collision, floor contact, and joint-limit constraints, aggregated as Jsafe = wobs Jobs + wself Jself + wfloor Jfloor + wjl Jjl , which replaces wobs Jobs in (41). 
+
+Baselines. We compare against three families. The first consists of diffusion-free sampling-based planners, namely 
+
+MPPI [20], [21], CEM [22], and DA-MPPI , a Diffusion-Annealed MPPI variant inspired by DIAL-MPC [19] that anneals the sampling variance across updates. The second fam-ily consists of gradient-guided diffusion policies. Gradient-Guided Diffusion Policy (GG-DP) applies in-loop refine-ment during denoising following MPD [12], whereas Post-Optimized Diffusion Policy (PO-DP) applies gradient refine-ment once after denoising. The third family is sampling-based diffusion guidance, represented by Diffusion-ES [16], which applies gradient-free evolutionary search outside the denoising loop. All diffusion-based baselines use the same UNet prior as GRACE. Following MPD [12], both GG-DP and GRACE apply guidance only over the final denoising steps, where the reverse mean is informative, rather than at early steps dominated by noise. This reduces guidance computation and is applied identically to both methods for a fair comparison. For all sampling-based planners and the MPPI guidance in GRACE, we apply the same control perturbation across the time horizon for each sample, following the single-instance sampling scheme of [23], which improves sample efficiency and yields smoother rollouts. 
+
+B. Results 
+
+2D navigation. Table II summarizes the planar results. The diffusion-free planners, CEM, MPPI, and DA-MPPI, all reach 
+
+26 .7% success with no collisions. They are conservative with respect to obstacles, but lacking any prior they are driven by the goal cost alone, so their uninformed proposal distributions 
+
+(a)  (b)  
+
+> Fig. 4. Multimodality evaluation in the 2D point-mass navigation task. (a) Number of trajectory modes produced by each method, measuring the diversity of generated plans. (b) Representative trajectories of the three modes produced by GRACE (UNet), one per mode.
+
+favor short, near-straight routes rather than feasible detours and often become trapped in local minima of the goal cost. Consequently, their success-only path lengths of around 1.24 mmainly reflect success on easy configurations rather than better planning quality. PO-DP and GG-DP both reach 60 .0% suc-cess but incur 12 collision failures. This follows from the local nature of gradient guidance. The collision gradient pushes a colliding segment along the steepest local cost decrease, yet this direction need not lead to a feasible passage. A narrow gap lowers the collision cost locally, so successive gradient steps draw the segment into the gap even when it is too narrow to pass, settling in an infeasible local minimum. Deterministic gradient refinement therefore does not reliably resolve narrow-gap constraint interactions. Diffusion-ES reaches only 23 .3% success and incurs the largest number of collision failures at 23 , because the cost only scores clean samples in an outer loop while every candidate still comes from the diffusion prior, which was never trained on the unseen obstacles and cannot propose the detours needed to avoid them. GRACE (CNN) reaches 66 .7% success with no collisions and GRACE (UNet) 83 .3% with only 2 collisions, which occur when every sampled rollout at a reverse step intersects an obstacle and their cost-weighted average therefore remains in collision, a limitation inherent to averaging-based guidance. The GRACE variants have the longest average successful-path lengths because they detour around clutter to solve harder configurations that the other methods fail outright, reflecting broader coverage rather than inefficient planning. We also assess whether the guidance preserves the multi-modality of the prior. Fig. 4a reports the number of distinct trajectory modes produced by each method. The diffusion-free planners show limited diversity and concentrate around a short route, whereas the diffusion-based methods produce multiple detour patterns. For Diffusion-ES, repeated selection and mutation progressively concentrate the population, result-ing in fewer recovered modes than the other diffusion-based methods. GRACE, in contrast, applies cost-weighted guidance in-loop to shift the reverse mean while retaining the diffusion schedule covariance, allowing it to improve constraint satisfac-tion without collapsing the prior’s multimodality to a single path. Fig. 4b shows a representative trajectory from each mode 70s  1.5s  6s 4.5s 3s                                                                                                      
+
+> Fig. 5. Representative execution snapshots of GRACE in the 3D FR3 manipulator goal-reaching task. The manipulator reaches the target configuration while satisfying multiple safety constraints. TABLE III QUANTITATIVE COMPARISON OF PLANNING METHODS IN THE 7-D OF FR3 MANIPULATOR GOAL -REACHING TASK .Method Success [%] Failure Modes Computation Time [ms] Guidance Time [ms] Obstacle Self-collision Joint-limit Floor Timeout CEM 24/30 (80.0%) 10005153 .45 ±2.55 −
+> MPPI 23/30 (76.7%) 2050029 .88 ±0.49 −
+> DA-MPPI 23/30 (76.7%) 60001154 .22 ±2.49 −
+> PO-DP 11/30 (36.7%) 62623647 .30 ±15 .83 220 .01 ±8.76
+> GG-DP 15/30 (50.0%) 52314671 .59 ±9.00 244 .72 ±5.45
+> Diffusion-ES 12/30 (40.0%) 16 00201664 .35 ±6.72 217 .87 ±0.70
+> GRACE (CNN) 27/30 (90.0%) 30000179 .23 ±1.91 90 .53 ±0.71
+> GRACE (UNet) 27/30 (90.0%) 30000497 .64 ±7.08 85 .88 ±0.52
+
+recovered by GRACE (UNet). 
+
+3D goal-reaching. Unlike the 2D task, where the prior encodes detours that no goal cost recovers, the prior here is trained on obstacle-free feedback-tracking demonstrations and converges directly to the goal, so performance depends on how the guidance handles the multiple safety constraints. As shown in Table III, the diffusion-free sampling planners remain competitive, with CEM reaching 80 .0% success and MPPI and DA-MPPI reaching 76 .7% , and the failures of each planner concentrate in the mode that matches the sampling update of that planner. MPPI keeps a fixed exploration variance and fails predominantly on joint limits, consistent with the tendency of MPPI to emit aggressive joint-space samples. DA-MPPI anneals this variance, and the failures of DA-MPPI are mostly obstacle collisions, consistent with insufficient late-stage exploration to escape obstacle interactions. CEM refits to elite samples and rarely collides, and the failures of CEM are mostly timeouts from convergence to near-goal plateaus. The gradient-guided diffusion policies underperform the diffusion-free sampling planners and GRACE, reaching 36 .7% 
+
+for PO-DP and 50 .0% for GG-DP. The gradients of all safety penalties are combined into a single weighted direction, so differences in scale and conflicting directions can cause an up-date that reduces one penalty to leave others unresolved. Their failures accordingly span all five modes, with self-collision occurring only for these two methods. The higher success of GG-DP over PO-DP suggests that in-loop refinement is more effective than a single post-denoising update, though the guidance of both methods is costly, requiring 220 .01 ms and 
+
+244 .72 ms per step. Similar to the 2D task, Diffusion-ES struggles to adapt prior trajectories to unseen obstacles, reaching only 40 .0% success with by far the most obstacle collisions, and it incurs the largest total computation time at 1664 .35 ms from generating and refining multiple complete trajectories. GRACE achieves the best success rate at 90 .0% for both backbones, with only three obstacle collisions per backbone, arising from the same averaging limitation as in the 2D task, and no other safety violations. GRACE requires the least guidance computation among all methods, 90 .53 ms for GRACE (CNN) and 85 .88 ms for GRACE (UNet), as the sampled trajectories are evalu-ated in parallel through forward rollouts alone. The lower total computation of GRACE (CNN) at 179 .23 ms, against 
+
+497 .64 ms for GRACE (UNet), comes from the faster predic-tion of the lightweight CNN, which attains the same success rate as the UNet backbone. Fig. 5 shows a representative GRACE (UNet) execution in which the manipulator reaches the target while satisfying the safety constraints in the cluttered environment. 
+
+C. Real-World Experiments 
+
+GRACE is validated on a physical 7-DoF FR3 manipulator that places a grasped object on a bookshelf while avoiding an obstacle introduced next to the shelf at deployment time. The diffusion prior is trained on demonstrations collected in a simulated replica of the workspace without the obstacle, and is deployed without retraining. The action is the joint configuration q with the gripper command, and the release is produced by the policy rather than triggered externally. Each trial begins from a fixed start configuration perturbed by random noise, with the object already grasped, and targets the bottom shelf, where the obstacle most affects the reaching motion. The obstacle, self-collision, and workspace-bound costs are the only terms added at inference time. Ten trials are run each for GRACE (UNet) and for the unguided diffusion prior (UNet). The unguided prior collides with the obstacle in every trial, following the demonstrated approach that the obstacle now blocks. GRACE succeeds in 9
+
+of the 10 trials, with no collision in any trial. The single failure is a placement inaccuracy, in which the manipulator clears the obstacle but misplaces the object on the shelf. The guidance thus turns a motion that collides in every trial into one that consistently detours around the obstacle. Fig. 6 visualizes the 8
+
+(a)  (b) 
+
+Fig. 6. Real-world experiment. (a) GRACE avoids the obstacle introduced at deployment time (red box) and places the object on the shelf. (b) The unguided diffusion prior collides with the obstacle. 
+
+robot motions of GRACE and the unguided diffusion prior during task execution. V. CONCLUSION This paper presented GRACE, a gradient-free framework that integrates MPPI-based cost guidance into each diffusion reverse step by shifting the reverse mean while preserving the diffusion schedule covariance. This enables diffusion policies to incorporate binary, discontinuous, and forward-evaluable deployment-time costs without retraining or backpropagated cost gradients. Across the 2D and 3D simulation tasks, GRACE achieved the highest success rates while preserving the multimodality of the learned prior, and on the real ma-nipulator it avoided an unseen obstacle in all trials that the unguided prior collided with. These results demonstrate the value of combining learned motion priors with gradient-free online cost evaluation for diffusion-based planning in clut-tered, constraint-rich environments. Future work will extend GRACE to a broader range of robotic tasks and investigate a single diffusion prior that captures multiple task behaviors, developing guidance that steers the shared prior toward a desired task at inference time without training separate models. REFERENCES [1] P. E. Hart, N. J. Nilsson, and B. Raphael, “A formal basis for the heuristic determination of minimum cost paths,” IEEE Transactions on Systems Science and Cybernetics , vol. 4, no. 2, pp. 100–107, 1968. [2] S. M. LaValle and J. J. Kuffner, “Rapidly-exploring random trees: Progress and prospects,” in Algorithmic and Computational Robotics: New Directions , B. R. Donald, K. M. Lynch, and D. Rus, Eds. A K Peters, 2001, pp. 293–308. [3] N. Ratliff, M. Zucker, J. A. Bagnell, and S. Srinivasa, “Chomp: Gradient optimization techniques for efficient motion planning,” in 2009 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2009, pp. 489–494. [4] M. Kalakrishnan, S. Chitta, E. Theodorou, P. Pastor, and S. Schaal, “Stomp: Stochastic trajectory optimization for motion planning,” in 2011 IEEE International Conference on Robotics and Automation (ICRA) .IEEE, 2011, pp. 4569–4574. [5] T. Osa, “Multimodal trajectory optimization for motion planning,” The International Journal of Robotics Research , vol. 39, no. 8, pp. 983–1001, 2020. [6] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,” in Advances in Neural Information Processing Systems (NeurIPS) ,H. Larochelle, M. Ranzato, R. Hadsell, M. Balcan, and H. Lin, Eds., vol. 33. Curran Associates, Inc., 2020, pp. 6840–6851. [7] A. Ajay, Y. Du, A. Gupta, J. B. Tenenbaum, T. S. Jaakkola, and P. Agrawal, “Is conditional generative modeling all you need for decision-making?” in International Conference on Learning Represen-tations (ICLR) , 2023. [8] C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song, “Diffusion policy: Visuomotor policy learning via action diffusion,” The International Journal of Robotics Research , vol. 44, no. 10-11, pp. 1684–1704, 2025. [9] M. Janner, Y. Du, J. B. Tenenbaum, and S. Levine, “Planning with diffusion for flexible behavior synthesis,” in International Conference on Machine Learning (ICML) , 2022. [10] J. Ho and T. Salimans, “Classifier-free diffusion guidance,” in NeurIPS 2021 Workshop on Deep Generative Models and Downstream Applica-tions , 2021. [11] Y. Wang, L. Wang, Y. Du, B. Sundaralingam, X. Yang, Y.-W. Chao, C. P´ erez-D’Arpino, D. Fox, and J. Shah, “Inference-time policy steering through human interactions,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 15 626–15 633. [12] J. Carvalho, A. T. Le, M. Baierl, D. Koert, and J. Peters, “Motion planning diffusion: Learning and planning of robot motions with diffu-sion models,” in 2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . IEEE, 2023, pp. 1916–1923. [13] K. Saha, V. Mandadi, J. Reddy, A. Srikanth, A. Agarwal, B. Sen, A. Singh, and M. Krishna, “Edmp: Ensemble-of-costs-guided diffu-sion for motion planning,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2024, pp. 10 351–10 358. [14] M. Du and S. Song, “Dynaguide: Steering diffusion polices with active dynamic guidance,” in Advances in Neural Information Processing Systems , vol. 38, 2025, pp. 44 192–44 221. [15] Y. Luo, C. Sun, J. B. Tenenbaum, and Y. Du, “Potential based diffusion motion planning,” arXiv preprint arXiv:2407.06169 , 2024. [16] B. Yang, H. Su, N. Gkanatsios, T.-W. Ke, A. Jain, J. Schneider, and K. Fragkiadaki, “Diffusion-es: Gradient-free planning with diffusion for autonomous and instruction-guided driving,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2024, pp. 15 342–15 353. [17] W. Jung, U. A. Mishra, N. R. Arachchige, Y. Chen, D. Xu, and S. Kousik, “Joint model-based model-free diffusion for planning with constraints,” in 9th Annual Conference on Robot Learning , 2025. [18] Y. Li and M. Chen, “Unifying model predictive path integral control, reinforcement learning, and diffusion models for optimal control and planning,” arXiv preprint arXiv:2502.20476 , 2025. [19] H. Xue, C. Pan, Z. Yi, G. Qu, and G. Shi, “Full-order sampling-based mpc for torque-level locomotion control via diffusion-style annealing,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 4974–4981. [20] G. Williams, P. Drews, B. Goldfain, J. M. Rehg, and E. A. Theodorou, “Information-theoretic model predictive control: Theory and applications to autonomous driving,” IEEE Transactions on Robotics , vol. 34, no. 6, pp. 1603–1622, 2018. [21] G. Williams, A. Aldrich, and E. A. Theodorou, “Model predictive path integral control: From theory to parallel computation,” Journal of Guidance, Control, and Dynamics , vol. 40, no. 2, pp. 344–357, 2017. [22] R. Rubinstein, “The cross-entropy method for combinatorial and contin-uous optimization,” Methodology and computing in applied probability ,vol. 1, no. 2, pp. 127–190, 1999. [23] D. Kim, E. Im, Y. Kim, M. Lim, and Y. Lee, “Single-instance sampling for computationally efficient and accurate real-time task space mppi control,” IEEE Transactions on Robotics , vol. 41, pp. 6327–6344, 2025.

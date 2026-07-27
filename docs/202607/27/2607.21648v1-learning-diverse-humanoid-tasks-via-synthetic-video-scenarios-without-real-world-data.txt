@@ -1,0 +1,345 @@
+Title: Learning Diverse Humanoid Tasks via Synthetic Video Scenarios without Real World Data
+
+URL Source: https://arxiv.org/pdf/2607.21648v1
+
+Published Time: Mon, 27 Jul 2026 00:02:00 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# Learning Diverse Humanoid Tasks via Synthetic Video Scenarios without Real World Data 
+
+Yun-Hao Tsai, Cong-Thanh Vu, and Yen-Chen Liu 
+
+Abstract —The human-like morphology of humanoid robots grants them exceptional potential for agile and versatile motor capabilities, but it also introduces significant challenges in ac-quiring complex skills. Traditional Learning-from-Demonstrations methods are often constrained by the high cost of collecting real-world data, the difficulty of capturing motion-specific behaviors, and the limited diversity of demonstrations across individuals. Moreover, even for the same task, humans may execute the motion in multiple distinct ways. In this paper, we propose a new framework that leverages the power of Generative AI to convert textual prompts into realistic and diverse sequences of human body movements, enabling the robot to observe multiple variations of how a single task can be performed. These synthetic demonstrations are then used as a training resource, allowing the robot to learn a broad range of task-execution styles without requiring direct human intervention. We evaluate the proposed method across four simulation scenarios. Experimental results show that the robot not only completes the tasks successfully but also demonstrates strong adaptability to complex variations in motion. 
+
+I. I NTRODUCTION 
+
+In recent years, mobile robots have been increasingly de-ployed across a wide range of domains [1], from assisting in daily tasks [2], [3]. However, most conventional platforms rely on wheeled locomotion, which limits their effectiveness in unstructured or highly dynamic environments. Humanoid robots have therefore become a major focus in modern robotics due to their superior adaptability in human-centered settings. With a morphology modeled after the human body, these robots have the potential to replace humans in labor-intensive tasks and perform complex motor skills [4]. Nevertheless, coordinating systems with many degrees of freedom and maintaining sta-bility in a floating-base structure remain difficult challenges, especially when aiming to reproduce natural and efficient human locomotion [5]. Passive dynamic walking provides a promising and biolog-ically inspired solution. McGeer’s seminal work [6] showed that simple mechanical systems can walk stably down a slope using gravity alone, compensating energy losses from friction and impact without any active control. Subsequent research explored improvements such as optimized foot geometry [7], nonlinear stability analysis [8], and designs that integrate                  
+
+> This work was supported in part by the Higher Education Sprout Project, Ministry of Education, to the Headquarters of University Advancement at National Cheng Kung University (NCKU), and by the National Science and Technology Council (NSTC), Taiwan, under Grant NSTC 114-2628-E-006-010. All authors are with the Department of Mechanical Engineering, National Cheng Kung University (NCKU), Tainan 70101, Taiwan. Email: sean901109@gmail.com ,vuthanh.cdt@gmail.com ,
+> yliu@mail.ncku.edu.tw.
+
+passive mechanics with autonomous locomotion [9]. How-ever, purely passive systems suffer from limited disturbance rejection, narrow operating ranges, and strong sensitivity to environmental variations. To overcome these limitations, recent work has shifted to-ward data-driven methods. For example, Vu et al. [10] use Reinforcement Learning (RL) to refine locomotion patterns rooted in passive dynamics, leveraging the naturally emerging gait properties to achieve more robust and adaptive behaviors. Although passive locomotion offers high energy efficiency, efficiency alone is not sufficient for humanoid robots intended to operate in everyday human environments. Beyond maintain-ing balance or walking at a fixed speed, robots must exhibit flexible, natural, and task-aware whole-body motions. In real scenarios, locomotion is tightly coupled with task execution [11]. Robots must not only move between locations but also manipulate objects, navigate confined spaces, carry loads, or adjust posture while interacting with their surroundings [12]. Achieving coordinated whole-body motion that balances lower-body stability with upper-body dexterity remains a highly challenging nonlinear control problem [13]. To enable more expressive motion, data-driven imitation-learning frameworks such as DeepMimic [14] and Adversarial Motion Priors (AMP) [15] have demonstrated impressive per-formance in human motion synthesis. Originally developed for character animation in physics-based simulation, these methods have since been extended to humanoid and quadrupedal robots, with several improvements targeting robustness and sim-to-real transfer [16], [11], [17], [18]. Despite their great potential for generating natural motion and practical applicability, a core challenge remains: these models rely heavily on human demonstration data, especially for complex tasks. Actions such as carrying loads, climbing, maintaining balance while interacting with the environment, or coordinating multiple limbs require highly accurate motion capture systems, tightly controlled recording environments, and meticulous calibration procedures. Moreover, real-world tasks are inherently diverse and highly individualized. Even for the same task, different people perform actions in different ways, producing a wide spectrum of motion with subtle variations rather than following a single pre-recorded demonstration. Recent advances in Generative AI, including GPT, Gem-ini, and modern video-generation models, have significantly improved the synthesis and understanding of complex human behaviors. In particular, video-based generative models [19], [20] can now produce realistic and diverse human motions across a wide range of scenarios, creating new opportunities for arXiv:2607.21648v1 [cs.RO] 22 Jul 2026 Instruction prompt User prompt Prompt      
+
+> Video 3D Pose Reference motion
+> Pose Extraction Motion Retargeting
+> Motion 1 Motion 2
+> Actor
+> Critic
+> Value
+> Robot
+> Action 𝒐 𝒕 𝒐 𝒑𝒓𝒊𝒗 ,𝒕
+> Observation Motion Command
+> Retarget Motion
+> Policy Deployment
+> Reference Motion RL-Based Motion Tracking Prompt-Driven Robot Motion Generation Fig. 1. Overview of the proposed framework. Multi-modal prompts guide the Veo 3.1 model to generate human motion videos, which are converted into humanoid-compatible reference motions via pose extraction and retargeting. A motion chaining module combines multiple segments into a continuous target motion, which is used as input for RL-based motion tracking.
+
+robot learning, planning, and control. In this work, we present a framework that leverages these generative models to train humanoid robots. By producing realistic human-motion videos from task-specific prompts, the framework enables the creation of diverse action variations for each task, greatly enriching the training data. Our main contributions are:  
+
+> •
+
+A learning framework that replaces real human demon-strations with synthetic motion data generated through prompt-based generative models.  
+
+> •
+
+A mechanism for learning tasks from multiple motion variations per prompt, improving behavioral naturalness and diversity.  
+
+> •
+
+Experimental validation on four scenarios with the Unitree G1, demonstrating robust and versatile motion generation. II. A RCHITECTURE OVERVIEW 
+
+An overview of the framework is shown in Fig. 1. It consists of three components: (1) converting generated videos into humanoid motion, (2) chaining reference motions, and (3) learning motion policies. Training data are first produced by generative models conditioned on a task-specific prompt, allowing multiple videos to be generated for the same task. Each video is processed to extract human skeletal motion, which is then converted into a robot-compatible representation. To extend policy capability, we introduce a motion-chaining mechanism that merges multiple skills from different videos into a single sequence. The robot is then trained to imitate these references, enabling natural and accurate behavior reproduction. To represent whole-body humanoid motion, we define the robot state as 
+
+q = [ proot , q root , θ 1, . . . , θ n]T ∈ Rn+7 , (1) where proot ∈ R3 is the global root position, qroot ∈ S3 is the root orientation (unit quaternion), and θi are joint angles. Although the robot aims to follow a reference trajectory qref ,strict tracking is impractical due to high DoF and human–robot morphological differences. Enforcing exact alignment of root states often destabilizes balance and degrades task performance. To address this, we adopt an RL framework inspired by Deep-Mimic [14], which relaxes strict tracking while encouraging human-like motion. However, prior DeepMimic-style methods rely heavily on MoCap data, which is costly, limited in diver-sity, and unable to capture the natural variability with which humans perform the same task. Motivated by this limitation, we leverage Generative AI to produce diverse, task-conditioned video demonstrations. III. P ROMPT -D RIVEN ROBOT MOTION GENERATION 
+
+A. Generate Video to Humanoid Reference Motion 
+
+We adopt a motion-conversion pipeline that transforms AI-generated videos into humanoid reference trajectories. A structured prompt is used to ensure consistent visual conditions—full-body visibility, static camera placement, and physically realistic human motion—so that the resulting videos are suitable for downstream reconstruction. For each task, we append a user-specified action prompt to generate videos depicting the desired motion, as shown in Fig. 2. These constraints improve consistency, physical plausibility, and the overall quality of the extracted data, allowing multiple motion variations to be generated for the same task. Once the task-specific videos are obtained, processing pro-ceeds in two stages. First, 3D human motion is reconstructed by estimating high-fidelity SMPL-X [21] parameters using a vision-transformer model enhanced with bounding-box cues, Instruction prompt      
+
+> �Generate a video with full-body visibility and clear observability throughout the entire sequence. The video should feature a single adult humanoid subject, with the entire body visible from head to toe at all times. The subject remains fully within the frame for the entire duration and wears tight-fitting, motion-capture –
+> style clothing.
+> �Use a stable, static camera with an eye-level, neutral perspective. There should be no camera movement, no cuts, no zoom, no slow motion, and no motion blur.
+> �The scene takes place in a realistic indoor room. The room must have clearly visible walls, floor, and corners. The floor plane should be fully visible and well-defined.
+> �Ensure the human motion is physically plausible and biomechanically accurate. All motions must respect natural joint limits, realistic center-of-mass behavior, balance, gravity, inertia, and ground contact. Avoid exaggerated or stylized movements.
+> �The output should be a high-quality video suitable for motion reconstruction, clearly showing all joint movements and interactions with the environment.
+> Generate a video of a human carrying a box. User prompt
+
+Fig. 2. Prompts used in the proposed method: the instruction prompt defines the requirements for generating the video, while the user prompt specifies the desired content of the video provided by the user. 
+
+body-shape priors, and a temporal module that aggregates information across frames to reduce ambiguity and improve temporal coherence. Second, the reconstructed motion is retargeted to the hu-manoid using GMR [22]. The human and robot initial poses are aligned, limb lengths are scaled to compensate for geometric mismatch, and artifacts such as foot sliding and ground penetra-tion are mitigated. A final inverse-kinematics optimization min-imizes joint-rotation and end-effector errors under strict joint-limit constraints, producing robot-feasible motion trajectories that preserve the essential characteristics of the original human movements, as illustrated in Fig. 3. 
+
+B. Motion Stitching 
+
+Because each motion sequence in our framework is extracted from an independently generated video, every sequence is de-fined in its own local coordinate system. Directly concatenating them leads to physical discontinuities, most notably abrupt changes in the root pose due to differing camera viewpoints and initial human poses, and sudden joint-angle jumps caused by mismatched joint configurations. These discontinuities produce unrealistic transitions and can destabilize control in simulation. To resolve this, we introduce an automated motion-stitching procedure consisting of two steps. First, root coordinate align-ment transforms the second sequence so that its initial root pose matches the terminal root pose of the first sequence, ensuring a continuous and physically consistent root trajectory. Second, joint-configuration smoothing addresses residual discontinuities by inserting a short transition buffer in which joint angles are interpolated smoothly, yielding gradual, physically plausible transitions. The final stitched sequence is formed by concatenating the first motion, the interpolated transition buffer, and the aligned second motion, producing a continuous and simulation-stable trajectory suitable for downstream policy training. 
+
+Fig. 3. Human skeletal motion is extracted from Generative AI video data and subsequently retargeted to produce robot-compatible motion trajectories. 
+
+IV. RL-B ASED MOTION TRACKING 
+
+A. Observation Space 
+
+The observation vector follows a root-relative state repre-sentation in the robot’s local frame. All kinematic features are expressed relative to the root to provide invariance to global translations and rotations. At each time step t, the observation captures the robot’s full-body state together with task-specific guidance from the reference motion. Specifically, it includes the relative positions and orientations of all links, their linear and angular velocities, the previous action at−1, and the per-link tracking error with respect to the reference motion. Formally, the observation vector is defined as: 
+
+ot = prel 
+
+1: n, q rel 
+
+1: n, v rel 
+
+1: n, ω rel 
+
+1: n, e 1: n, a t−1
+
+ , (2) where prel 
+
+1: n, qrel 
+
+1: n, vrel 
+
+1: n, and ωrel 
+
+1: n are the link-wise positions, orientations (quaternions), linear velocities, and angular veloc-ities, respectively, all expressed in the root frame. The per-link tracking error is defined as: 
+
+e1: n =
+
+
+
+prel 
+
+1: n − pref 
+
+1: n , q rel 
+
+1: n ⊖ qref 
+
+1: n
+
+
+
+, (3) where pref i and qref i are extracted from the reference motion 
+
+qref .For the critic network, a privileged observation opriv ,t is provided, containing full, noise-free kinematics along with the target reference poses: 
+
+opriv ,t =
+
+h
+
+prel 
+
+1: n, q rel 
+
+1: n, v rel 
+
+1: n, ω rel 
+
+1: n, p ref 
+
+1: n , q ref 
+
+1: n , e 1: n
+
+i
+
+. (4) Here, pref 
+
+1: n and qref 
+
+1: n denote the reference link positions and orientations. The actor outputs target joint orientations for all actuated joints, which are subsequently tracked via PD control at the lower-level control stage. 
+
+B. Reward Function 
+
+The reward function is composed of two primary compo-nents, adapted from DeepMimic [14]: the motion tracking reward (imitation objective) and the base reward (regularization penalties). The motion tracking reward rIt measures how accurately the robot follows the reference trajectory, which is encoded in the motion command. This objective is formulated as a weighted sum of terms based on kinematic differences between the robot’s state and the reference motion. It is further decomposed into components that reward the matching of joint orientations, joint velocities, end-effector positions, and the center of mass. 
+
+rIt = wprpt + wv rvt + weret + wcrct , (5) where wp, wv , we, and wc are empirically chosen weights. Each individual reward component is defined using the root-relative features introduced in the observation space. Specifi-cally, rpt corresponds to per-link position tracking, rvt to linear and angular velocity tracking, ret to end-effector pose tracking, and rct to center-of-mass tracking. The pose reward rpt encourages the robot to match the joint orientations of the reference motion. Based on the defined relative orientations, it is computed as follows, where ⊖ denotes the quaternion difference and ∥q∥ computes the scalar rotation of a quaternion about its axis in radians: 
+
+rpt = exp − αpnX
+
+> i=1
+
+∥qrel i ⊖ qref i ∥2
+
+!
+
+, (6) where αp is a weighting factor that controls the influence of joint orientation errors on the total reward. The velocity reward rvt is computed from the difference in local joint angular velocities. The target angular velocity ωref i
+
+is derived from the reference motion: 
+
+rvt = exp − αvnX
+
+> i=1
+
+∥ωrel i − ωref i ∥2
+
+!
+
+, (7) where αv adjusts the contribution of velocity matching to the overall reward. The end-effector reward ret encourages the robot’s end-effectors (e.g., hands and feet) to match their corresponding positions in the reference motion. Here, E denotes the set of end-effector indices: 
+
+ret = exp − αe
+
+X
+
+> e∈E
+
+∥prel e − pref e ∥2
+
+!
+
+, (8) where αe controls the relative importance of end-effector posi-tion tracking. The center of mass reward rct penalizes deviations of the robot’s center of mass prel c from the reference center of mass 
+
+pref c :
+
+rct = exp 
+
+
+
+− αc∥prel c − pref c ∥2
+
+, (9) where αc weights the influence of center-of-mass deviations on the overall reward. The base reward is designed to enforce physically plausible and smooth behavior. It includes penalties that constrain joint positions within soft limits, reduce high-frequency variations in control actions, and prevent excessive self-collisions. Specifi-cally, these terms correspond to the joint limit penalty rlimit , the action smoothness penalty rsmooth , and the self-collision penalty 
+
+rcontact , which are defined as follows. The joint limit penalty rlimit discourages the robot from exploring joint configurations that approach mechanical limits. It is formulated as a quadratic penalty when a joint angle qi
+
+exceeds the predefined lower bound qmin  
+
+> i
+
+or upper bound qmax  
+
+> i
+
+:
+
+rlimit = wlimit 
+
+> n
+
+X
+
+> i=1
+
+
+
+max(0 , q i − qmax  
+
+> i
+
+)2 + max(0 , q min  
+
+> i
+
+− qi)2
+
+.
+
+(10) The action smoothness penalty rsmooth minimizes high-frequency oscillations and ensures continuous, natural control signals. It penalizes large variations between consecutive ac-tions output by the policy: 
+
+rsmooth = wsmooth ∥at − at−1∥2. (11) The self-collision penalty rcontact prevents physically impossi-ble self-intersections or undesirable impacts between the robot’s own body segments. It is computed by penalizing the number of invalid contact events: 
+
+rcontact = wcontact 
+
+X
+
+> k∈Cinvalid
+
+Icontact (k), (12) where Cinvalid denotes the set of body links explicitly forbidden from colliding (e.g., arms intersecting the torso), and the indicator function Icontact (k) equals 1 if an invalid contact occurs at link k, and 0 otherwise. By integrating these tracking objectives and regularization penalties, the robot is encouraged to accurately track the reference motion while maintaining stability, smoothness, and physical feasibility. The overall reward function rt at each time step is defined as: 
+
+rt = rIt − rlimit − rsmooth − rcontact (13) To balance robustness and stability across diverse motions, we apply a minimal set of randomizations targeting key factors affecting generalization: ground friction and restitution, nom-inal joint configuration (to model joint offset errors in both actions and observations), and torso center of mass. In addition, random velocity perturbations are introduced to enhance robust-ness against external disturbances. In our training process, the empirical weightings and scaling factors are set as follows. For the imitation objective, the component weights are wp = 0 .65 ,
+
+wv = 0 .1, we = 0 .15 , and wc = 0 .1. The corresponding scaling factors for the exponential functions are chosen as αp = 2 .0,
+
+αv = 0 .1, αe = 40 .0, and αc = 10 .0. For the regularization penalties, the weights are set to wlimit = 1 .0, wsmooth = 0 .1, and 
+
+wcontact = 0 .1.V. R ESULTS AND DISCUSSION 
+
+A. Experimental Setup 
+
+The proposed framework is trained in the NVIDIA Isaac Lab environment, where CUDA-accelerated parallelism enables efficient large-scale learning. The Unitree G1 policy is trained with 4096 parallel agents on a workstation equipped with an Fig. 4. Qualitative results from four experiments evaluating policies trained using generative AI with a single prompt. All motions are executed on the humanoid robot via RL-based tracking and include full-body transitions and manipulation tasks such as lie-and-stand, boxing, and pick-and-place. 0.8                       
+
+> 1.0
+> Height [m]
+> End-Effector Position Tracking: Left Wrist Yaw
+> target z-pos actual z-pos
+> 0.0
+> 0.2
+> End-Effector Position Tracking: Left Ankle Roll
+> target z-pos actual z-pos
+> 0
+> 10
+> Torque [Nm]
+> Joint Torque (With Box Payload)
+> shoulder pitch joint
+> shoulder roll joint
+> shoulder yaw joint
+> elbow joint
+> wrist roll joint
+> wrist pitch joint
+> wrist yaw joint
+> 0
+> 50
+> Joint Torque (With Box Payload)
+> hip pitch joint
+> hip yaw joint
+> ankle pitch joint
+> hip roll joint
+> knee joint
+> ankle roll joint
+> 0246810 12 14 16 18
+> Time [s]
+> 10
+> 20
+> Total Torque [Nm]  Total Torque Comparison
+> w/ box payload w/o box payload
+> 0246810 12 14 16 18
+> Time [s]
+> 0
+> 100
+> 200
+> Total Torque Comparison
+> w/ box payload w/o box payload
+
+Fig. 5. Evaluation of the learned policy for the box pick-and-place task, showing upper- and lower-body joint positions, vertical trajectories of the left wrist and ankle, and joint torque profiles with and without a 0.5 kg payload. 
+
+Intel Xeon W5-3435X CPU and an RTX 4000 Ada GPU. Training follows the PPO algorithm [23] with an asymmetric actor–critic architecture. Both networks are fully connected with three hidden layers of sizes [512, 256, 128] and ELU activations. The policy is supervised using reference trajectories extracted from AI-generated human motion, which provide structured guidance for learning natural and accurate behaviors. We evaluate the method through two studies: (1) assessing the ability of Generative AI to produce videos that yield robot-compatible motion trajectories, and (2) evaluating the perfor-mance of the trained policy using these AI-derived reference motions. 
+
+B. Motion Generation Evaluation Results 
+
+To evaluate the capability of the generative model in pro-ducing diverse and task-consistent motion videos from user-specified prompts, we utilize the Google Veo 3 API. A total of 50 everyday task prompts were tested, and for each prompt, 10 distinct videos were generated depicting the corresponding behavior required for the robot. During validation, a task was considered successful if the generated motions were physically plausible and correctly represented the intended behavior. The results indicate that, for most everyday tasks, the generative model produces accurate and diverse motion sequences. However, for high-speed actions such as backflips, certain segments exhibited temporal incon-sistencies, leading to unrealistic motion. This highlights the current limitations of the model in generating rapid or highly dynamic movements. 
+
+C. Policy Evaluation Results 
+
+Fig. 4 illustrates action sequences generated from AI videos and their corresponding policy executions. Using user-specified prompts, the proposed method generates diverse motion varia-tions for the same task, producing physically feasible trajec-tories while preserving the structure of human motion. The robot can then follow these reference motions to imitate target behaviors in a natural manner. Fig. 5 presents a detailed evaluation of the pick-and-place task. The close alignment between target and executed trajecto-Lie & Stand 
+
+> Boxing
+> Pick (W/ Box)
+> Pick (W/O Box)
+> Place (W/ Box)
+> Place (W/O Box)
+> Upper Body
+> 0.00
+> 0.02
+> 0.04
+> 0.06
+> 0.08
+> 0.10
+> MAE [rad]
+> Lie & Stand
+> Boxing
+> Pick (W/ Box)
+> Pick (W/O Box)
+> Place (W/ Box)
+> Place (W/O Box)
+> Lower Body
+> 0.00
+> 0.02
+> 0.04
+> 0.06
+> 0.08
+> 0.10
+
+Fig. 6. MAE of joint positions for both upper and lower body across the tasks lie-and-stand, boxing, and pick-and-place under loaded and unloaded conditions. 
+
+ries along the vertical axis of the wrist and ankle indicates accu-rate spatial tracking. The joint torque profiles show coordinated upper- and lower-body control for stable manipulation. Under a 0.5 kg payload, the lower body remains largely unchanged, while the upper body exhibits increased torque to compensate for the load. Quantitatively, the mean absolute error (MAE) of joint positions across the body ranges from 0.04 m to 0.07 m for dynamic tasks such as boxing and pick-and-place. Under loaded conditions, upper-body errors increase noticeably, while lower-body errors remain stable, indicating that external loads primarily affect upper-body control. Overall, the results demonstrate that generative video data can provide diverse and realistic motion for robot training, reducing reliance on real demonstrations while improving be-havioral diversity and robustness. VI. C ONCLUSIONS 
+
+In this study, we present a framework that leverages Gen-erative AI to synthesize human motion data and train hu-manoid robots without relying on traditional motion capture systems. By converting prompt-driven video generation into humanoid-compatible reference motions, the proposed pipeline enables scalable and diverse motion acquisition for complex tasks. In addition, the reference motion chaining mechanism allows multiple motion segments to be seamlessly integrated, enabling a single policy to execute extended and compound behaviors. Results in a simulation environment demonstrate that the proposed method can successfully learn a wide range of dynamic and manipulation tasks. The learned policies achieve accurate motion tracking while maintaining stability using data generated by the generative model. Future work will focus on improving sim-to-real transfer, enhancing physical consistency in generated motions, and extending the framework to more complex tasks. REFERENCES [1] A.-T. Nguyen, V.-T. Nguyen, X.-T. Nguyen, and C.-T. Vu, “Development of a multiple-sensor navigation system for autonomous guided vehicle localization,” in Intelligent Systems and Networks (D.-T. Tran, G. Jeon, T. D. L. Nguyen, J. Lu, and T.-D. Xuan, eds.), (Singapore), pp. 402–410, Springer Singapore, 2021. [2] C.-T. Vu and Y.-C. Liu, “Autonomous adjustment of tracking position in dynamic environments for human-following robots using deep reinforce-ment learning,” in 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pp. 16863–16869, 2025. [3] C.-T. Vu, H.-H. Huang, and Y.-C. Liu, “Autonomous navigation for human-following robots based on optimized position tracking,” in 2025 10th International Conference on Control and Robotics Engineering (ICCRE) , pp. 23–27, 2025. [4] T. Uthai, H. You, M. Wang, K. Smith, E. Spackman, Z. Ryan, S. Li, and J. Du, “Opportunities challenges and roadmap for humanoid robots in construction,” Scientific Reports , 2025. [5] Z. Gu, J. Li, W. Shen, W. Yu, Z. Xie, S. McCrory, X. Cheng, A. Shamsah, R. Griffin, C. K. Liu, et al. , “Humanoid locomotion and manipulation: Current progress and challenges in control, planning, and learning,” arXiv preprint arXiv:2501.02116 , 2025. [6] T. McGeer, “Passive dynamic walking,” The international journal of robotics research , vol. 9, no. 2, pp. 62–82, 1990. [7] J. Kim, C.-H. Choi, and M. W. Spong, “Passive dynamic walking with symmetric fixed flat feet,” in 2007 IEEE International Conference on Control and Automation , pp. 24–30, 2007. [8] Y. Iwatani and T. Kinugasa, “A necessary condition for passive dynamic walking,” in 2022 American Control Conference (ACC) , pp. 1885–1890, 2022. [9] R. C. Luo, C. H. Chen, Y. H. Pu, and J. R. Chang, “Towards active actuated natural walking humanoid robot legs,” in 2011 IEEE/ASME International Conference on Advanced Intelligent Mechatronics (AIM) ,pp. 886–891, 2011. [10] C.-T. Vu, C.-C. Lai, and Y.-C. Liu, “Learning virtual passive dynamic walking using the kneed walker model for guiding policies,” in 2025 IEEE-RAS 24th International Conference on Humanoid Robots (Hu-manoids) , pp. 1094–1100, 2025. [11] Q. Liao, T. E. Truong, X. Huang, Y. Gao, G. Tevet, K. Sreenath, and C. K. Liu, “Beyondmimic: From motion tracking to versatile humanoid control via guided diffusion,” arXiv preprint arXiv:2508.08241 , 2025. [12] Y. Tong, H. Liu, and Z. Zhang, “Advancements in humanoid robots: A comprehensive review and future prospects,” IEEE/CAA Journal of Automatica Sinica , vol. 11, no. 2, pp. 301–328, 2024. [13] X. Cheng, Y. Ji, J. Chen, R. Yang, G. Yang, and X. Wang, “Ex-pressive whole-body control for humanoid robots,” arXiv preprint arXiv:2402.16796 , 2024. [14] X. B. Peng, P. Abbeel, S. Levine, and M. van de Panne, “Deepmimic: example-guided deep reinforcement learning of physics-based character skills,” ACM Trans. Graph. , vol. 37, July 2018. [15] X. B. Peng, Z. Ma, P. Abbeel, S. Levine, and A. Kanazawa, “Amp: adversarial motion priors for stylized physics-based character control,” 
+
+ACM Trans. Graph. , vol. 40, July 2021. [16] Y. Yan, E. V. Mascaro, T. Egle, and D. Lee, “I-ctrl: Imitation to control humanoid robots through bounded residual reinforcement learning,” IEEE Robotics & Automation Magazine , vol. 32, no. 1, pp. 59–67, 2025. [17] R. Watanabe, C. Li, and M. Hutter, “Dfm: Deep fourier mimic for ex-pressive dance motion learning,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) , pp. 9644–9650, 2025. [18] L. Zhao, Z. Luo, Y. Han, J. Zhang, Y. Chen, Y. Liu, and P. Lu, “Learning aggressive animal locomotion skills for quadrupedal robots solely from monocular videos,” npj Robotics , vol. 3, no. 1, p. 32, 2025. [19] W. Kong, Q. Tian, Z. Zhang, R. Min, Z. Dai, J. Zhou, J. Xiong, X. Li, B. Wu, J. Zhang, et al. , “Hunyuanvideo: A systematic framework for large video generative models,” arXiv preprint arXiv:2412.03603 , 2024. [20] T. Wan, A. Wang, B. Ai, B. Wen, C. Mao, C.-W. Xie, D. Chen, F. Yu, H. Zhao, J. Yang, et al. , “Wan: Open and advanced large-scale video generative models,” arXiv preprint arXiv:2503.20314 , 2025. [21] G. Pavlakos, V. Choutas, N. Ghorbani, T. Bolkart, A. A. Osman, D. Tzionas, and M. J. Black, “Expressive body capture: 3d hands, face, and body from a single image,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pp. 10975–10985, 2019. [22] J. P. Araujo, Y. Ze, P. Xu, J. Wu, and C. K. Liu, “Retargeting matters: General motion retargeting for humanoid motion tracking,” arXiv preprint arXiv:2510.02252 , 2025. [23] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, “Prox-imal policy optimization algorithms,” arXiv preprint arXiv:1707.06347 ,2017.
