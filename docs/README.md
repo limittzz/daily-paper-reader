@@ -6,40 +6,41 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-27
-- 运行时间：2026-07-27 21:20:37 UTC
+- 最新运行日期：2026-07-28
+- 运行时间：2026-07-28 21:00:57 UTC
 - 运行状态：成功
-- 本次总论文数：6
-- 精读区：3
-- 速读区：3
+- 本次总论文数：7
+- 精读区：6
+- 速读区：1
 
 ### 今日简报（AI）
-1. 今日精选6篇机器人学习论文，精读聚焦无梯度动作生成与合成视频驱动的人形任务学习。  
-2. 最值得看的两大方向：GRACE通过扩散-MPPI后验估计实现高效无梯度动作规划；基于合成视频的人形任务学习无需真实数据即可多样泛化。  
-3. 建议重点精读GRACE与合成视频范式，其核心思想可迁移至其他复杂机器人控制场景。
-- 详情：[/202607/27/README](/202607/27/README)
+今日精读6篇，聚焦高精度机器人操作的数据缩放律与仿人机器人运动模仿两大方向。最值得关注的是《The Curse of Precision》提出精度诅咒下的数据缩放规律，以及《Learning Reusable Hybrid Motion Priors》展示的可复用运动先验框架。建议从这两篇高分论文入手，理解数据精度与迁移学习在机器人控制中的关键作用。
+- 详情：[/202607/28/README](/202607/28/README)
 
 ### 精读区论文标签
-1. [GRACE: Gradient-Free Robot Action Generation via Combined Diffusion-MPPI Posterior Mean Estimation](/202607/27/2607.21661v1-grace-gradient-free-robot-action-generation-via-combined-diffusion-mppi-posterior-mean-estimation)  
-   标签：评分：10.0/10、query:imitation
-   evidence：结合扩散策略与MPPI的机器人动作生成
-2. [Learning Diverse Humanoid Tasks via Synthetic Video Scenarios without Real World Data](/202607/27/2607.21648v1-learning-diverse-humanoid-tasks-via-synthetic-video-scenarios-without-real-world-data)  
+1. [The Curse of Precision: A Data Scaling Law for High-Precision Robotic Manipulation](/202607/28/2607.23108v1-the-curse-of-precision-a-data-scaling-law-for-high-precision-robotic-manipulation)  
    标签：评分：9.0/10、query:imitation
-   evidence：利用生成式AI从文本生成多样化人体运动序列，使机器人能从合成演示中学习，直接解决模仿学习数据稀缺问题。
-3. [On the Identifiability of Controlled World Models](/202607/27/2607.22430v1-on-the-identifiability-of-controlled-world-models)  
+   evidence：高精度机器人操作中模仿学习的数据缩放定律
+2. [Learning Reusable Hybrid Motion Priors for Humanoid Locomotion from Motion Imitation](/202607/28/2607.24083v1-learning-reusable-hybrid-motion-priors-for-humanoid-locomotion-from-motion-imitation)  
+   标签：评分：9.0/10、query:imitation
+   evidence：利用运动模仿学习人形机器人运动先验
+3. [PAC-DP: PAC-Bayesian Diffusion Policy Learning](/202607/28/2607.24296v1-pac-dp-pac-bayesian-diffusion-policy-learning)  
+   标签：评分：9.0/10、query:imitation
+   evidence：用于机器人操作的扩散策略的PAC-Bayesian正则化
+4. [WorldDiT: A Unified Diffusion Architecture for World and Action Modeling](/202607/28/2607.23909v1-worlddit-a-unified-diffusion-architecture-for-world-and-action-modeling)  
    标签：评分：8.0/10、query:imitation
-   evidence：JEPA可识别性理论分析
+   evidence：用于机器人动作生成与世界建模的统一扩散变换器
+5. [LeapBot-WA: World-Anchor Action Models via Predictive Latent Alignments](/202607/28/2607.23969v1-leapbot-wa-world-anchor-action-models-via-predictive-latent-alignments)  
+   标签：评分：8.0/10、query:imitation
+   evidence：将JEPA作为世界锚点应用于行动模型
+6. [KAI: A Kinematic-Aware Interface for Data-Efficient Articulated Object Manipulation](/202607/28/2607.24493v1-kai-a-kinematic-aware-interface-for-data-efficient-articulated-object-manipulation)  
+   标签：评分：8.0/10、query:imitation
+   evidence：运动学感知中间表示，用于从演示中高效学习操作
 
 ### 速读区论文标签
-1. [Ordered Action Tokens for Visuomotor Policy Learning](/202607/27/2607.21670v1-ordered-action-tokens-for-visuomotor-policy-learning)  
+1. [PRISM: Polynomial Representations for Interaction-Structured Motor Control](/202607/28/2607.23473v1-prism-polynomial-representations-for-interaction-structured-motor-control)  
    标签：评分：7.0/10、query:imitation
-   evidence：动作分词化方法用于视觉运动策略学习，可应用于模仿学习
-2. [Embodying Multi-Hand Manipulation Policies by Searching the Assignment and Null Spaces](/202607/27/2607.22020v1-embodying-multi-hand-manipulation-policies-by-searching-the-assignment-and-null-spaces)  
-   标签：评分：7.0/10、query:imitation
-   evidence：在多臂机器人上执行从示范学习的操作策略
-3. [Learning Spatiotemporal Decision Priors for Efficient Path Planning under Partial Observability](/202607/27/2607.22166v1-learning-spatiotemporal-decision-priors-for-efficient-path-planning-under-partial-observability)  
-   标签：评分：6.0/10、query:imitation
-   evidence：从演示轨迹中学习
+   evidence：摘要中提及模仿学习
 
 
 <div class="dpr-home-promo-card">

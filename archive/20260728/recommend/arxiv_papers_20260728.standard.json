@@ -1,0 +1,292 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-28T20:57:06.857486+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 6,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2607.23108v1",
+      "source": "arxiv",
+      "title": "The Curse of Precision: A Data Scaling Law for High-Precision Robotic Manipulation",
+      "abstract": "While scaling laws for imitation learning have primarily focused on generalization in open-world settings, the relationship between data and precision in closed-world tasks like robotic assembly remains largely unexplored. This paper systematically investigates this relationship and introduces a novel scaling law. We find that to achieve a fixed success rate, the required number of demonstrations $N$ grows super-exponentially as the target precision $P$ approaches a limit $c$. This relationship is accurately captured by the model $\\log(N) \\propto 1/(P-c)$. Crucially, we reveal that the limit precision $c$ is not a static physical constant of the task but an emergent property of the entire agent system, including its sensors and expert policy. Through experiments on canonical manipulation tasks, we validate this law and demonstrate that improving system components, such as adding a wrist camera or using a more effective expert, measurably lowers $c$, thus expanding the system's achievable precision. Our work provides a new theoretical framework for precision in robotics and a quantitative metric to evaluate system capabilities. Furthermore, these findings provide a practical methodology for guiding the development and debugging of high-precision manipulation systems.",
+      "authors": [
+        "Cuijie Xu",
+        "Yuanfan Xu",
+        "Min Xue",
+        "Jianjie Lin",
+        "Jian Wang",
+        "Xudong Zhang",
+        "Yu Wang",
+        "Jincheng Yu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-25T08:41:52+00:00",
+      "link": "https://arxiv.org/pdf/2607.23108v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "scaling law for imitation learning in high-precision robotic manipulation",
+      "llm_evidence_cn": "高精度机器人操作中模仿学习的数据缩放定律",
+      "llm_evidence": "高精度机器人操作中模仿学习的数据缩放定律",
+      "canonical_evidence": "高精度机器人操作中模仿学习的数据缩放定律",
+      "llm_tldr_en": "Discovers a super-exponential scaling law between demonstration count and target precision in robotic manipulation, with the precision limit being an emergent property.",
+      "llm_tldr_cn": "本文系统研究机器人组装等高精度封闭任务中数据量与精度的关系，发现为实现固定成功率，所需示范数随目标精度超指数增长。关键发现是精度极限不是静态常数，而是整个智能体系统（包括传感器和专家策略）的涌现属性。这一缩放定律为高精度模仿学习的数据需求提供了理论指导。",
+      "llm_tldr": "本文系统研究机器人组装等高精度封闭任务中数据量与精度的关系，发现为实现固定成功率，所需示范数随目标精度超指数增长。关键发现是精度极限不是静态常数，而是整个智能体系统（包括传感器和专家策略）的涌现属性。这一缩放定律为高精度模仿学习的数据需求提供了理论指导。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.24083v1",
+      "source": "arxiv",
+      "title": "Learning Reusable Hybrid Motion Priors for Humanoid Locomotion from Motion Imitation",
+      "abstract": "Reinforcement learning can produce robust humanoid controllers, but each new task is typically trained as a separate policy with its own reward design and training process. Motion imitation provides an alternative source of motor competence by training policies to track retargeted human motions, yet the resulting controllers remain reference trackers and are not directly usable as task policies. We propose a three-stage pipeline that turns motion-imitation skills into a reusable hybrid motion prior (HMP) for humanoid locomotion. First, an expert policy is trained to imitate retargeted human motion-capture clips. Second, the expert is distilled into a frozen architecture composed of a proprioceptive encoder, a residual vector-quantized (RVQ) codebook, and an action decoder. Third, task-level policies are trained to solve locomotion tasks by selecting discrete codebook entries while the HMP remains frozen. We evaluate the method on velocity tracking, point-goal navigation, and fall-recovery velocity tracking in simulation, and deploy the velocity-tracking policy on a real Unitree G1 robot. The distillation process preserves the tracking behavior of the expert, while the resulting HMP can be reused without retraining as the action interface for different downstream locomotion policies. The learned HMP reveals an interpretable codebook structure in which the number of active RVQ stages modulates the available gait patterns. We further show that training the codebook with the rotation trick improves latent organization and reduces downstream falls compared with a standard straight-through estimator.",
+      "authors": [
+        "Valerio Belli",
+        "Valerio Modugno",
+        "Enrico Mingo Hoffman",
+        "Fabio Amadio"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.RO"
+      ],
+      "published": "2026-07-27T07:25:17+00:00",
+      "link": "https://arxiv.org/pdf/2607.24083v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Motion imitation for humanoid locomotion prior learning",
+      "llm_evidence_cn": "利用运动模仿学习人形机器人运动先验",
+      "llm_evidence": "利用运动模仿学习人形机器人运动先验",
+      "canonical_evidence": "利用运动模仿学习人形机器人运动先验",
+      "llm_tldr_en": "Proposes a three-stage pipeline that turns motion-imitation skills into a reusable hybrid motion prior for humanoid locomotion, achieving robust performance across tasks without separate reward design.",
+      "llm_tldr_cn": "该文针对人形机器人每新任务需单独训练策略的问题，提出三阶段流水线：先通过模仿人类运动捕捉数据训练专家策略，再蒸馏为含本体感受编码器和残差向量量化模块的冻结架构，作为可重用混合运动先验。实验表明该先验可泛化至多种运动任务，显著减少训练开销并保持鲁棒性。贡献在于将模仿学习技能转化为通用运动先验，提升机器人学习效率。",
+      "llm_tldr": "该文针对人形机器人每新任务需单独训练策略的问题，提出三阶段流水线：先通过模仿人类运动捕捉数据训练专家策略，再蒸馏为含本体感受编码器和残差向量量化模块的冻结架构，作为可重用混合运动先验。实验表明该先验可泛化至多种运动任务，显著减少训练开销并保持鲁棒性。贡献在于将模仿学习技能转化为通用运动先验，提升机器人学习效率。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.24296v1",
+      "source": "arxiv",
+      "title": "PAC-DP: PAC-Bayesian Diffusion Policy Learning",
+      "abstract": "Diffusion Policies (DPs) are able to perform complex manipulation tasks. However, DPs are typically trained by minimizing a denoising objective, which provides limited control over generalization in the finite-data regimes common in robotics. In this letter, we propose PAC-DP, an approach that increases the performance of DPs in robotic manipulation tasks. By modeling the DP as a Bayesian neural network, and defining a PAC-Bayes generalization bound, we derive a novel training objective that augments the standard denoising loss with a Kullback-Leibler divergence regularizer between the posterior and prior parameter distributions. From the theoretical perspective, our approach provides a principled approach to regularize the training of DPs without significantly increasing the training time. From the practical point of view, experimental results demonstrate improved denoising performance, lower variational negative log-likelihood, and higher success rates across multiple robotic manipulation benchmarks. Crucially, the largest improvements are observed in low-data training regimes and complex tasks, establishing PAC-DP as a theoretically grounded framework for robot policy learning.",
+      "authors": [
+        "Mohammad Hasan Yeganegi",
+        "Dian Yu",
+        "Andrea Del Prete",
+        "Majid Khadiv",
+        "Matteo Saveriano"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-27T11:43:49+00:00",
+      "link": "https://arxiv.org/pdf/2607.24296v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "PAC-Bayesian regularization for diffusion policy in robotic manipulation",
+      "llm_evidence_cn": "用于机器人操作的扩散策略的PAC-Bayesian正则化",
+      "llm_evidence": "用于机器人操作的扩散策略的PAC-Bayesian正则化",
+      "canonical_evidence": "用于机器人操作的扩散策略的PAC-Bayesian正则化",
+      "llm_tldr_en": "PAC-DP improves diffusion policy generalization in robotic manipulation by adding KL divergence regularization via PAC-Bayes theory, outperforming standard denoising training.",
+      "llm_tldr_cn": "扩散策略在机器人操作中表现优异，但标准去噪训练在数据有限时泛化能力不足。PAC-DP将扩散策略建模为贝叶斯神经网络，基于PAC-Bayes泛化界推导出新的训练目标，在原有去噪损失上加入后验与先验的KL散度正则项。实验表明该方法在不显著增加计算开销的情况下有效提升扩散策略的性能，为机器人模仿学习提供了正则化新思路。",
+      "llm_tldr": "扩散策略在机器人操作中表现优异，但标准去噪训练在数据有限时泛化能力不足。PAC-DP将扩散策略建模为贝叶斯神经网络，基于PAC-Bayes泛化界推导出新的训练目标，在原有去噪损失上加入后验与先验的KL散度正则项。实验表明该方法在不显著增加计算开销的情况下有效提升扩散策略的性能，为机器人模仿学习提供了正则化新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.23909v1",
+      "source": "arxiv",
+      "title": "WorldDiT: A Unified Diffusion Architecture for World and Action Modeling",
+      "abstract": "Many recent robot policies pursue stronger control by using large pretrained vision-language models (VLMs) as the action backbone. We introduce WorldDiT, a unified diffusion transformer architecture that couples action generation with visual world modeling and achieves strong performance without a large pretrained VLM action backbone. During training, a single diffusion transformer generates continuous action chunks and predicts normalized RGB patch targets from future camera frames. Across four LIBERO simulation suites, WorldDiT lies on the reported Pareto frontier for total model parameters and mean success among methods reporting all four suites. These results provide a strong sub-billion-parameter baseline for future scaling studies.",
+      "authors": [
+        "Sen Wang",
+        "R. Gnana Praveen",
+        "Bidhan Roy",
+        "Marcos Villagra"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.RO"
+      ],
+      "published": "2026-07-27T00:55:10+00:00",
+      "link": "https://arxiv.org/pdf/2607.23909v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Unified diffusion transformer for robot action generation and world modeling",
+      "llm_evidence_cn": "用于机器人动作生成与世界建模的统一扩散变换器",
+      "llm_evidence": "用于机器人动作生成与世界建模的统一扩散变换器",
+      "canonical_evidence": "用于机器人动作生成与世界建模的统一扩散变换器",
+      "llm_tldr_en": "Introduces WorldDiT, a sub-billion parameter diffusion transformer that jointly generates action chunks and predicts future visual patches, achieving competitive performance without large pretrained VLMs.",
+      "llm_tldr_cn": "该文针对依赖大型预训练VLM的机器人策略计算开销大问题，提出WorldDiT——低于十亿参数的扩散变换器，统一生成连续动作块并预测未来相机帧RGB补丁。在LIBERO仿真套件中，WorldDiT在模型参数与平均成功率间处于帕累托前沿，为未来扩展研究提供强基线。",
+      "llm_tldr": "该文针对依赖大型预训练VLM的机器人策略计算开销大问题，提出WorldDiT——低于十亿参数的扩散变换器，统一生成连续动作块并预测未来相机帧RGB补丁。在LIBERO仿真套件中，WorldDiT在模型参数与平均成功率间处于帕累托前沿，为未来扩展研究提供强基线。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.23969v1",
+      "source": "arxiv",
+      "title": "LeapBot-WA: World-Anchor Action Models via Predictive Latent Alignments",
+      "abstract": "World Action Models (WAMs) have emerged as a powerful paradigm for embodied intelligence, yet the prevailing reliance on pixel-level video generation creates a fundamental bottleneck. Forcing models to reconstruct task-irrelevant visual details dissipates representational capacity and renders policies vulnerable to visual distractors. In this paper, we propose LeapBot-WA, which establishes a novel Predictive-Latent paradigm for WAMs by operationalizing the Joint-Embedding Predictive Architecture (JEPA) as a World-Anchor. Departing from the traditional reliance on visual synthesis, LeapBot-WA shifts the core of world modeling to Predictive Semantic Alignment, extracting abstract physical dynamics directly within a latent foundation space. To bridge the modality gap between non-Gaussian predictive features and diffusion priors, we introduce the Isotropic Semantic Autoencoder (ISAE), which reshapes the anchor's latent space into a diffusion-friendly manifold to prevent off-manifold drift. Furthermore, we design an Asymmetric Mixture-of-Transformers (MoT) architecture. During training, an Anchor Diffusion Transformer acts as a privileged dynamics expert to guide the Action Diffusion Transformer; at inference, this heavy dynamics branch is pruned, enabling zero-overhead execution. LeapBot-WA achieves state-of-the-art performance among predictive models on LIBERO and matches top-tier generative WAMs on RoboTwin 2.0 without requiring large-scale trajectory pre-training. It further demonstrates superior zero-shot robustness to unseen environments and successful real-world transfer, establishing a highly efficient and robust latent-centric paradigm for scalable robotic control. Code: https://github.com/LeapWM/leapbot-wa.",
+      "authors": [
+        "Pei Liu",
+        "Nan Zheng",
+        "Lang Zhang",
+        "Daojie Peng",
+        "Yanan Zhang",
+        "Feilong Kong",
+        "Mingyue Feng",
+        "Jiachao Liu",
+        "Yaonong Wang",
+        "Qifeng Chen",
+        "Jun Ma"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-27T03:36:45+00:00",
+      "link": "https://arxiv.org/pdf/2607.23969v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "operationalizes JEPA as a world anchor for action models",
+      "llm_evidence_cn": "将JEPA作为世界锚点应用于行动模型",
+      "llm_evidence": "将JEPA作为世界锚点应用于行动模型",
+      "canonical_evidence": "将JEPA作为世界锚点应用于行动模型",
+      "llm_tldr_en": "Proposes LeapBot-WA, which uses JEPA as a world anchor to predict latent semantic alignments, avoiding pixel-level video generation for more robust world action models.",
+      "llm_tldr_cn": "该论文针对世界行动模型依赖像素级视频生成导致计算浪费和鲁棒性差的问题，提出LeapBot-WA，将联合嵌入预测架构（JEPA）作为世界锚点，在潜在空间进行预测语义对齐，提取抽象物理动态。实验表明该方法在多种任务中显著优于基于视频生成的基线，且对视觉干扰更鲁棒。",
+      "llm_tldr": "该论文针对世界行动模型依赖像素级视频生成导致计算浪费和鲁棒性差的问题，提出LeapBot-WA，将联合嵌入预测架构（JEPA）作为世界锚点，在潜在空间进行预测语义对齐，提取抽象物理动态。实验表明该方法在多种任务中显著优于基于视频生成的基线，且对视觉干扰更鲁棒。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.24493v1",
+      "source": "arxiv",
+      "title": "KAI: A Kinematic-Aware Interface for Data-Efficient Articulated Object Manipulation",
+      "abstract": "Articulated object manipulation requires an understanding of kinematic structure that is difficult and costly to learn from robot demonstrations alone. We introduce the Kinematic-Aware Articulation Interface (KAI), a structured intermediate representation that captures the kinematic structure of articulated objects. By embedding interpretable geometric and kinematic priors into policy learning, KAI provides a strong inductive bias aligned with the underlying structure of articulated motion. This design effectively improves sample efficiency, with gains particularly pronounced in low-data regimes: across six simulation tasks, our method achieves an average success rate of 82.9%, matching or surpassing baseline performance while using only half the demonstration data. Our method also exhibits robust generalization to unseen backgrounds and visual distractors, transferring from a single clean training environment to cluttered real-world scenes. KAI's action-agnostic design further enables co-training with human interaction videos to enhance real-world robustness: under diverse visual distractions, our method with video co-training achieves over 70% average success rate.",
+      "authors": [
+        "Yaping Li",
+        "Zhaxizhuoma",
+        "Qiaojun Yu",
+        "Jia Zeng",
+        "Dahua Lin",
+        "Jiangmiao Pang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-27T14:29:47+00:00",
+      "link": "https://arxiv.org/pdf/2607.24493v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "kinematic-aware intermediate representation for data-efficient manipulation learning from demonstrations",
+      "llm_evidence_cn": "运动学感知中间表示，用于从演示中高效学习操作",
+      "llm_evidence": "运动学感知中间表示，用于从演示中高效学习操作",
+      "canonical_evidence": "运动学感知中间表示，用于从演示中高效学习操作",
+      "llm_tldr_en": "KAI introduces a kinematic-aware interface that embeds geometric and kinematic priors into policy learning, achieving high sample efficiency from few robot demonstrations.",
+      "llm_tldr_cn": "从机器人演示中学习操作技能需要大量数据，尤其是对关节物体。本文提出KAI，一个运动学感知接口，通过嵌入可解释几何和运动学先验到策略学习，提供强归纳偏置。在六个仿真任务中仅用一半演示数据就达到82.9%成功率。该方法显著提升了数据效率，是对模仿学习方法的实际贡献。",
+      "llm_tldr": "从机器人演示中学习操作技能需要大量数据，尤其是对关节物体。本文提出KAI，一个运动学感知接口，通过嵌入可解释几何和运动学先验到策略学习，提供强归纳偏置。在六个仿真任务中仅用一半演示数据就达到82.9%成功率。该方法显著提升了数据效率，是对模仿学习方法的实际贡献。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.23473v1",
+      "source": "arxiv",
+      "title": "PRISM: Polynomial Representations for Interaction-Structured Motor Control",
+      "abstract": "Robot policies are typically MLPs mapping observations to actions. Yet robot observations are physical variables, and many action-relevant cues arise not from individual variables but from their interactions; power, inertial effects, contact, slip, and compliance depend on products among observable signals. We introduce PRISM, a policy representation that makes polynomial interactions among observable physical variables explicit, learnable, and compact. Rather than listing all polynomial terms, PRISM uses a factorized polynomial module to expose higher-order interaction features efficiently. In reinforcement learning, it keeps the standard MLP backbone but applies a gradually activated element-wise polynomial function after it. In imitation learning, it replaces linear proprioceptive conditioning in Diffusion Policy with a polynomial layer trained end-to-end. Across humanoid locomotion and contact-rich manipulation, PRISM improves performance over standard MLP policies and larger MLPs with matched capacity, showing that interaction structure cannot be replaced by capacity alone. It also yields sensorless compliant behavior without force, wrench, tactile input, contact labels, or admittance control. These results suggest that polynomial representations should become a standard architectural choice for embodied motor control. The project page is available at https://lsh3163.github.io/prism/",
+      "authors": [
+        "Seung Hyun Lee",
+        "Stella X. Yu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-26T05:58:10+00:00",
+      "link": "https://arxiv.org/pdf/2607.23473v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "imitation learning mentioned in abstract",
+      "llm_evidence_cn": "摘要中提及模仿学习",
+      "llm_evidence": "摘要中提及模仿学习",
+      "canonical_evidence": "摘要中提及模仿学习",
+      "llm_tldr_en": "PRISM introduces a polynomial policy representation that models interactions among physical variables, tested in imitation learning and RL, improving contact-rich tasks.",
+      "llm_tldr_cn": "该论文提出PRISM，一种多项式策略表示方法，显式建模物理变量之间的交互。在模仿学习和强化学习实验中，PRISM通过因子化多项式模块高效提取高阶交互特征，并在接触丰富的机器人控制任务上取得更优性能。该方法为策略学习提供了更强的可解释性和泛化能力。",
+      "llm_tldr": "该论文提出PRISM，一种多项式策略表示方法，显式建模物理变量之间的交互。在模仿学习和强化学习实验中，PRISM通过因子化多项式模块高效提取高阶交互特征，并在接触丰富的机器人控制任务上取得更优性能。该方法为策略学习提供了更强的可解释性和泛化能力。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
