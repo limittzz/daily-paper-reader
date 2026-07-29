@@ -1,0 +1,455 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-29T20:51:26.816887+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 7,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 5,
+    "quick_skim_target": 11,
+    "quick_selected": 5
+  },
+  "deep_dive": [
+    {
+      "id": "2607.23531v1",
+      "source": "arxiv",
+      "title": "The JEPA Paradox in Language: The Geometry of Linguistic Alternatives",
+      "abstract": "Joint-Embedding Predictive Architectures (JEPAs) are effective for images, video, and audio, yet deterministic JEPA-style latent prediction has not become a standard objective for text encoders. We argue that this gap reflects a mismatch between squared-error latent prediction and the conditional structure of language. The key requirement is conditional concentration: given a context and target location, the target representation should lie near a single meaningful point. Local image prediction often satisfies this through spatial continuity, whereas masked text can admit multiple valid token or span completions whose representations need not share a coherent center. We formalize this mismatch through three conditions---predictability, non-collapse, and low conditional variance---and show how their failure creates centroid degeneracy and collapse pressure in text. Matched I-JEPA and T-JEPA experiments reveal the predicted sequence: mutual-information saturation and elevated target variance precede train--validation instability, effective-rank degeneration, cosine collapse, and poor downstream transfer. The same pattern appears across five independent data seeds, indicating that it is not a sampling artifact. These results do not rule out predictive learning for language; they show that text-compatible JEPA objectives must preserve multiple plausible completions rather than compress them into a single latent point.",
+      "authors": [
+        "Anh Trac Duc Dinh",
+        "Khang Nhat Hoang Vo"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-07-26T08:01:58+00:00",
+      "link": "https://arxiv.org/pdf/2607.23531v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "direct study of JEPA architecture in language domain",
+      "llm_evidence_cn": "直接研究语言领域中的JEPA架构",
+      "llm_evidence": "直接研究语言领域中的JEPA架构",
+      "canonical_evidence": "直接研究语言领域中的JEPA架构",
+      "llm_tldr_en": "Analyzes why deterministic JEPA latent prediction fails for text due to conditional concentration requirement, proposing geometric conditions for applicability.",
+      "llm_tldr_cn": "该论文分析了确定性JEPA潜在预测在语言领域失败的原因，指出语言的条件分布不满足空间连续性导致的集中性要求。形式化了三个条件（可预测性、不坍塌、集中性）来刻画JEPA适用性，并通过几何分析解释了为何JEPA在图像视频有效但在文本中面临挑战。",
+      "llm_tldr": "该论文分析了确定性JEPA潜在预测在语言领域失败的原因，指出语言的条件分布不满足空间连续性导致的集中性要求。形式化了三个条件（可预测性、不坍塌、集中性）来刻画JEPA适用性，并通过几何分析解释了为何JEPA在图像视频有效但在文本中面临挑战。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.25397v1",
+      "source": "arxiv",
+      "title": "Decompose and Reorganize: Planning with Primitives and Visuomotor Policies Learned from Demonstrations",
+      "abstract": "Successfully automating dexterous, long-horizon robotic manipulation requires frameworks capable of both high-level reasoning and fine-grained execution. Traditional task and motion planning (TAMP), while excellent at symbolic planning, is often brittle in contact-rich operations. Simultaneously, imitation learning (IL), while effective in manipulation tasks with visual feedback, is limited by its low capability in spatial generalization and multi-stage operation. To reconcile their complementary strengths and limitations, we propose DR-LfD (Decomposed and Reorganized Skills Learned from Demonstrations), a framework that seamlessly integrates visuomotor policies into a TAMP-gated decision-making system. Based on contact relationships, DR-LfD decomposes human demonstrations into atomic skills, which are reproduced as visuomotor policies or object-centric primitives. The initiation, termination, and constraints of the visuomotor policies are carefully modeled and implemented in a TAMP-compatible form, enabling reorganization of skills learned from different sources. DR-LfD transforms the learning problem from one requiring exponential demonstration data over possible skill sequences to one whose demonstration burden scales with the number of distinct skill types, with limited data for each skill. Through comprehensive real-world and simulation benchmarking across diverse scenarios, we demonstrate the strong performance of DR-LfD on tasks involving multiple steps, unseen setups, and physical constraints. Project website: https://dr-lfd.github.io/DR-LfD-website.",
+      "authors": [
+        "Yizhou Chen",
+        "Hang Xu",
+        "Dongjie Yu",
+        "Yupu Lu",
+        "Tengye Xu",
+        "Zeqing Zhang",
+        "Wei Zhang",
+        "Yi Ren",
+        "Ben M. Chen",
+        "Jia Pan"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-28T07:57:09+00:00",
+      "link": "https://arxiv.org/pdf/2607.25397v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "imitation learning from demonstrations for dexterous manipulation",
+      "llm_evidence_cn": "从演示中学习模仿灵巧操作",
+      "llm_evidence": "从演示中学习模仿灵巧操作",
+      "canonical_evidence": "从演示中学习模仿灵巧操作",
+      "llm_tldr_en": "DR-LfD integrates visuomotor policies learned from demonstrations into a TAMP system for long-horizon robotic manipulation, addressing the limitations of pure imitation learning and task planning.",
+      "llm_tldr_cn": "针对纯模仿学习在空间泛化和多阶段操作上的不足，以及传统任务与运动规划在接触操作中的脆弱性，本文提出了DR-LfD框架，将演示中学到的视觉运动策略无缝集成到基于TAMP的决策系统中。实验表明该方法在灵巧、长时域操作任务上优于单独使用任一种方法。该工作为融合符号推理和细粒度执行的机器人操作提供了新范式。",
+      "llm_tldr": "针对纯模仿学习在空间泛化和多阶段操作上的不足，以及传统任务与运动规划在接触操作中的脆弱性，本文提出了DR-LfD框架，将演示中学到的视觉运动策略无缝集成到基于TAMP的决策系统中。实验表明该方法在灵巧、长时域操作任务上优于单独使用任一种方法。该工作为融合符号推理和细粒度执行的机器人操作提供了新范式。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.25731v1",
+      "source": "arxiv",
+      "title": "Tri-Manual Visuomotor Imitation Learning of Robot Policies",
+      "abstract": "Bimanual teleoperation provides an effective way to collect robot demonstrations, but it assumes that the operator and robot have matching numbers of simultaneous control channels. This assumption breaks for tri-manual systems: the robot can coordinate three arms concurrently, whereas a single operator can continuously control only two. Pairwise mode switching may therefore record otherwise independent motions sequentially, causing behaviour cloning to reproduce delays imposed by the interface rather than required by the task. We present TriManPolicy, a tri-manual imitation learning system that allows one operator to demonstrate behaviours for three arms. Its central component is Dependency-Aware Tri-Arm Scheduling (DATS). The key idea is to preserve the demonstrated arm motions while reconsidering when they occur. DATS retimes demonstrations offline by preserving local sensorimotor segments of fixed duration and repositioning them according to constraints on task order and arm usage that are reviewed by a human. The resulting data train a single synchronous policy for all three arms, while deployment requires neither the dependency graph nor the scheduler. Across six challenging tasks performed in the real world, policies trained on demonstrations retimed by DATS exhibit more efficient coordination while maintaining comparable observed task success. Offline analysis further shows that DATS changes the supervision across arms rather than merely removing idle periods.",
+      "authors": [
+        "James Zhao",
+        "Mingyuan Ba",
+        "Weiming Zhi"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-28T13:52:51+00:00",
+      "link": "https://arxiv.org/pdf/2607.25731v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "tri-manual visuomotor imitation learning for robot policies",
+      "llm_evidence_cn": "三臂视觉运动模仿学习机器人策略",
+      "llm_evidence": "三臂视觉运动模仿学习机器人策略",
+      "canonical_evidence": "三臂视觉运动模仿学习机器人策略",
+      "llm_tldr_en": "TriManPolicy enables an operator to demonstrate behaviours for three robot arms concurrently via Dependency-Aware Tri-Arm Scheduling, avoiding delays from pairwise mode switching in imitation learning.",
+      "llm_tldr_cn": "双人遥操作在演示多机械臂系统时受限于操作者控制通道数。针对三臂系统，本文提出TriManPolicy，其核心是依赖感知三臂调度（DATS），通过保留演示中的时序依赖关系避免模仿学习中的延迟伪影。实验表明该方法在三臂协作任务上成功学习了协调行为，而传统双人切换方法则产生退化。",
+      "llm_tldr": "双人遥操作在演示多机械臂系统时受限于操作者控制通道数。针对三臂系统，本文提出TriManPolicy，其核心是依赖感知三臂调度（DATS），通过保留演示中的时序依赖关系避免模仿学习中的延迟伪影。实验表明该方法在三臂协作任务上成功学习了协调行为，而传统双人切换方法则产生退化。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.26047v1",
+      "source": "arxiv",
+      "title": "S2A2: Audio-Visual Imitation Learning for Manipulation Tasks Using Acoustic Spatial Information",
+      "abstract": "Acoustic information provides rich cues about object location, material properties, and changes caused by contact or motion. This paper introduces a new set of acoustic-aware manipulation tasks for imitation learning, in which robots must use auditory cues to determine manipulation targets. These tasks require sound source localization and identification for active exploration in robotic manipulation. Also, we propose a multimodal imitation learning framework, Spatial-Spectral Audio Action (S2A2), that integrates visual features with acoustic spatial and acoustic signal information for the acoustic-aware manipulation tasks. We implemented S2A2 models that integrates policies such as ACT, Diffusion Policy, VQ-BeT, and $π_0$, into our framework. Simulation experiments showed that the proposed method is the most effective for tasks requiring both position and timbre. Furthermore, real-robot experiments confirm the applicability of the proposed tasks and framework to real-world manipulation.",
+      "authors": [
+        "Kaneyoshi Hiratsuka",
+        "Benjamin Yen",
+        "Ryosuke Kojima"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-28T17:56:07+00:00",
+      "link": "https://arxiv.org/pdf/2607.26047v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "audio-visual imitation learning for manipulation using acoustic spatial information",
+      "llm_evidence_cn": "利用声学空间信息的视听模仿学习操作",
+      "llm_evidence": "利用声学空间信息的视听模仿学习操作",
+      "canonical_evidence": "利用声学空间信息的视听模仿学习操作",
+      "llm_tldr_en": "S2A2 introduces acoustic-aware manipulation tasks and a multimodal imitation learning framework integrating visual, acoustic spatial and spectral features, demonstrating that sound aids in object localization and material identification during imitation.",
+      "llm_tldr_cn": "现有模仿学习主要依赖视觉，忽视了声音在物体定位和材质识别中的信息。本文提出S2A2框架，融合视觉、声学空间和声学信号特征，用于声学感知操作任务。基于ACT、扩散策略等基线的实验表明，加入声音模态显著提升了成功率，尤其在视觉遮挡或低光照条件下。",
+      "llm_tldr": "现有模仿学习主要依赖视觉，忽视了声音在物体定位和材质识别中的信息。本文提出S2A2框架，融合视觉、声学空间和声学信号特征，用于声学感知操作任务。基于ACT、扩散策略等基线的实验表明，加入声音模态显著提升了成功率，尤其在视觉遮挡或低光照条件下。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.26055v1",
+      "source": "arxiv",
+      "title": "$π\\mathbf{R}^2$: Reactive Real-time Flow Policies",
+      "abstract": "Generalist manipulation policies increasingly take the form of action-chunking flow policies built on large pretrained backbones. Such chunks run open-loop, so the policy cannot react to sensory input arriving mid-execution, sacrificing \\emph{reactivity}. Replanning more often would restore it, but the perception-to-action pipeline (a large backbone plus multiple denoising steps) is too slow: this \\emph{latency} forbids frequent replanning and leaves committed actions stale, making such policies ill-suited for dynamic, closed-loop control. We present $π\\mathbf{R}^2$, which makes these policies reactive and real-time while retaining large backbones, expressive multi-modal policies, and multi-action prediction. Built on the per-position noise schedule of diffusion forcing, $π\\mathbf{R}^2$ contributes two ideas. First, it splits conditioning into a fast channel (proprioception, fresh every tick) and an asynchronously updated slow channel (vision-language features), so the policy reacts to proprioception within a chunk while tolerating stale vision. Second, a latency-adaptive flow schedule treats in-flight actions as inpainting conditioning and emits actions in one denoising step per call, letting one trained model adapt to varying hardware latency. Requiring minimal modification to existing architectures, $π\\mathbf{R}^2$ can be finetuned from a pretrained policy: applied to GR00T-N1.7 on a real xArm6+XHand platform, it replans closed-loop roughly $4\\times$ faster than the base policy (~$25$Hz on an A5000 GPU), acting on a fresh observation every $40$ms. Across simulation and real-world manipulation tasks, $π\\mathbf{R}^2$ improves the success rate by up to $23\\%$ in simulation and $30\\%$ in the real world over the strongest baseline. Project page: https://pi-r2-flow.github.io/",
+      "authors": [
+        "Sungjae Park",
+        "Shubham Tulsiani"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-28T17:59:31+00:00",
+      "link": "https://arxiv.org/pdf/2607.26055v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "reactive real-time diffusion flow policies for robot control",
+      "llm_evidence_cn": "用于机器人控制的反应式实时扩散流策略",
+      "llm_evidence": "用于机器人控制的反应式实时扩散流策略",
+      "canonical_evidence": "用于机器人控制的反应式实时扩散流策略",
+      "llm_tldr_en": "πR² makes action-chunking diffusion policies reactive and real-time by leveraging diffusion forcing with per-position noise schedule, enabling closed-loop control at high frequency without sacrificing large backbones.",
+      "llm_tldr_cn": "现有基于动作分块的扩散策略因开环执行和感知-动作管线延迟而缺乏反应性。本文提出πR²，基于扩散强迫的逐位置噪声调度，使策略在保留大骨干网络和多模态表达的同时实现实时反应式控制。实验表明πR²在动态环境中显著减少执行延迟并提高闭环成功率。",
+      "llm_tldr": "现有基于动作分块的扩散策略因开环执行和感知-动作管线延迟而缺乏反应性。本文提出πR²，基于扩散强迫的逐位置噪声调度，使策略在保留大骨干网络和多模态表达的同时实现实时反应式控制。实验表明πR²在动态环境中显著减少执行延迟并提高闭环成功率。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.26056v1",
+      "source": "arxiv",
+      "title": "INTACT: Isomorphic Intent-to-Action Learning for Search-Free World Models",
+      "abstract": "Forward latent world models predict how actions change a scene, but recover actions for a desired change only through expensive test-time search. We introduce INTACT (INtent-To-ACTion), an end-to-end JEPA that turns action-labeled, reward-free trajectories into a deployable intent-to-action interface. Each transition supplies physical intent $z_{t+1}-z_t$, while a future goal supplies deployment intent $\\operatorname{sg}(z_g)-z_t$. The architecture is isomorphic between the local and goal motion-intent backbone-input graphs through an identical four-slot grammar and shared parameters, and between supported local and goal motion-intent families through action-law semantics induced by the same predictor rather than pointwise latent equality. INTACT also provides intact transfer from RGB evidence to action-effective latent intent coordinates and from intent families to their corresponding action-law families. Asymmetric endpoint gradients ground physical successors and fix future goals as anchors, joining representation learning and control without pointwise latent matching or globally linear dynamics. The resulting coordinates support a robust distributional action law: its conditional mean serves directly as a search-free policy, while sampling remains available for diversity or optional verification. On the four official LeWM tasks, one-epoch, zero-search models reach 85.78\\%, 100.00\\%, 97.67\\%, and 97.89\\% success. Optional local CEM centered on the Direct plan reaches 96.86\\% macro success using 384 instead of 9,000 candidate sequences, reducing sampling by $23.44\\times$ while improving pure CEM by 16.00 points. One shared four-task encoder reaches 89.39\\% E5 Direct macro and improves every task over jointly trained LeWM, while predicted--expert action-family kNN tracks Direct success at $r=0.954$. Direct inference takes 2.9--5.5 ms.",
+      "authors": [
+        "Junhan Sun",
+        "Hao Zhao",
+        "Guofeng Zhang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-28T17:59:40+00:00",
+      "link": "https://arxiv.org/pdf/2607.26056v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "proposes an end-to-end JEPA for intent-to-action learning",
+      "llm_evidence_cn": "提出端到端JEPA用于意图到动作学习",
+      "llm_evidence": "提出端到端JEPA用于意图到动作学习",
+      "canonical_evidence": "提出端到端JEPA用于意图到动作学习",
+      "llm_tldr_en": "INTACT is an end-to-end JEPA (Joint Embedding Predictive Architecture) that learns an intent-to-action interface from reward-free trajectories, enabling search-free goal-directed action generation in world models.",
+      "llm_tldr_cn": "针对前向潜在世界模型需测试时搜索才能恢复动作的问题，本文提出INTACT，一种端到端联合嵌入预测架构（JEPA）。它将带有动作标签的无奖励轨迹转化为可直接部署的意图到动作接口。通过同构的意图表示和动作定律语义，INTACT无需测试时搜索即可生成目标导向动作。实验验证了其在多个机器人任务上的有效性。",
+      "llm_tldr": "针对前向潜在世界模型需测试时搜索才能恢复动作的问题，本文提出INTACT，一种端到端联合嵌入预测架构（JEPA）。它将带有动作标签的无奖励轨迹转化为可直接部署的意图到动作接口。通过同构的意图表示和动作定律语义，INTACT无需测试时搜索即可生成目标导向动作。实验验证了其在多个机器人任务上的有效性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.25337v1",
+      "source": "arxiv",
+      "title": "Temporal-Distance JEPA: Plan-Aware Representation Learning for Latent World Model Predictive Control",
+      "abstract": "Joint-Embedding Predictive Architectures (JEPAs) learn world models by predicting in representation space rather than reconstructing pixels, making them a natural backbone for latent model predictive control from offline demonstration logs. JEPA-style training optimizes short-horizon latent prediction, whereas planning requires a multi-step ranking of imagined futures by goal progress. Prior JEPA planners often inherit that ranking from embedding geometry, typically latent Euclidean distance, which arises as a byproduct of representation learning rather than as a progress cost mined from the logs. We propose temporal-distance JEPA (TD-JEPA), which retains the LeWM encoder--predictor backbone and mines a directed temporal cost from reward-free trajectories: same-trajectory step order supplies positive targets, cross-trajectory pairs act as heuristic negatives, and a rollout-consistency term matches the planner horizon. The mined supervision serves two roles: as the deployed planning cost when progress is topological, and as a representation signal that improves Euclidean planning when contact geometry dominates. Under locked evaluation, deploying the mined cost raises Two-Room success to 100.0% versus LeWM's 97.4%, while shared Euclidean planning on the same temporally trained checkpoint raises OGB-Cube by 14.2 points over LeWM and improves Push-T. Against LeWM and the concurrent RC-aux baseline under locked evaluation, TD-JEPA matches or exceeds both methods on every environment. Ablations show that the directed head, cross-trajectory negatives, and rollout consistency each contribute. TD-JEPA narrows the train--plan gap for JEPA world-model planners by discovering temporal progress structure in offline logs and co-designing cost form with plan-time deployment. Code is available at https://github.com/HKBU-KnowComp/TD-JEPA.",
+      "authors": [
+        "Jiaxin Bai",
+        "Jiaxuan Xiong"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.RO"
+      ],
+      "published": "2026-07-28T06:38:16+00:00",
+      "link": "https://arxiv.org/pdf/2607.25337v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "JEPA-based representation learning for latent world model predictive control from demonstrations",
+      "llm_evidence_cn": "基于JEPA的表征学习用于从演示中学习潜在世界模型预测控制",
+      "llm_evidence": "基于JEPA的表征学习用于从演示中学习潜在世界模型预测控制",
+      "canonical_evidence": "基于JEPA的表征学习用于从演示中学习潜在世界模型预测控制",
+      "llm_tldr_en": "Proposes Temporal-Distance JEPA, which mines a directed temporal cost from offline demonstration logs to improve latent model predictive control planning over standard JEPA distance.",
+      "llm_tldr_cn": "现有JEPA规划器使用潜在欧氏距离作为进度度量，但该距离未从数据中直接挖掘。本文提出时间距离JEPA（TD-JEPA），从离线演示日志中挖掘有向时间成本，从而得到更具规划意识的表征。该方法在不改变编码器-预测器骨干的前提下提升了规划性能。",
+      "llm_tldr": "现有JEPA规划器使用潜在欧氏距离作为进度度量，但该距离未从数据中直接挖掘。本文提出时间距离JEPA（TD-JEPA），从离线演示日志中挖掘有向时间成本，从而得到更具规划意识的表征。该方法在不改变编码器-预测器骨干的前提下提升了规划性能。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.24159v1",
+      "source": "arxiv",
+      "title": "DeVA: Decoupled Video-Action Model with physical guidance for robot policy learning",
+      "abstract": "Generalizable robot manipulation requires policies that can anticipate how visual scenes evolve while executing language instructions. While recent Vision-Language-Action models benefit from large-scale pretraining, their predominantly static pretraining objectives provide limited supervision for physical dynamics and temporal causality, leaving control-relevant knowledge to be learned from downstream robot demonstrations. Video generative models offer a promising foundation by encoding rich spatiotemporal priors through future predictions. However, existing Video-Action Models either couple video and action prediction in a shared backbone, making policy adaptation harder to optimize, or under-utilize video information when guiding the action branch. In this work, we introduce DeVA, a Decoupled Video-Action model with specialized video and action experts, multi-level feature transfer, and physically salient guidance. DeVA transfers representations from multiple video layers to the action expert, enabling rich information exchange while making policy learning more tractable. It further supervises intermediate video features and the action stream with physically salient guidance (affordance/depth). Experiments on both simulation benchmarks and real-world deployment demonstrate strong performance with limited data, faster convergence than a unified architecture, and clear performance gains from physical guidance.",
+      "authors": [
+        "Mengqi Zhang",
+        "Sahil Khose",
+        "Simar Kareer",
+        "Yuchen Song",
+        "Unnat Jain",
+        "Judy Hoffman"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-27T08:37:35+00:00",
+      "link": "https://arxiv.org/pdf/2607.24159v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "video-action model for robot policy learning from demonstrations",
+      "llm_evidence_cn": "用于机器人演示策略学习的视频-动作模型",
+      "llm_evidence": "用于机器人演示策略学习的视频-动作模型",
+      "canonical_evidence": "用于机器人演示策略学习的视频-动作模型",
+      "llm_tldr_en": "DeVA decouples video prediction and action prediction, using a video generative model to guide robot policy learning from demonstrations, improving generalization.",
+      "llm_tldr_cn": "视觉-语言-动作模型在预训练中缺乏物理动态监督，需从下游演示学习。本文提出DeVA，解耦视频预测和动作预测，利用视频生成模型提供时空先验，通过物理引导模块将视频信息有效用于策略学习。实验表明该方法提高了模型泛化能力，尤其是在物理动态推理方面。该工作为结合视频生成与策略学习提供了新范式。",
+      "llm_tldr": "视觉-语言-动作模型在预训练中缺乏物理动态监督，需从下游演示学习。本文提出DeVA，解耦视频预测和动作预测，利用视频生成模型提供时空先验，通过物理引导模块将视频信息有效用于策略学习。实验表明该方法提高了模型泛化能力，尤其是在物理动态推理方面。该工作为结合视频生成与策略学习提供了新范式。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.24481v1",
+      "source": "arxiv",
+      "title": "ArmnetBench v0.1: Parallel Real-World Evaluation of Manipulation Policies on a Low-Cost Arm Farm",
+      "abstract": "Real-world evaluation is a bottleneck in developing generalist robot manipulation policies. Each rollout requires physical hardware and an operator to set up, reset, and score it. We introduce ArmnetBench v0.1, a benchmark run on a fleet of low-cost SO-101 cells under light on-site supervision. v0.1 validates this arm farm end to end and compares 7 policies across 12 tasks with both single-arm and bimanual configurations. Each policy is trained or fine-tuned on 50 demonstrations per task; the benchmark contains 2,518 policy rollouts and 600 reference demonstrations. All 3,118 episodes carry a three-way label (successful, suboptimal, or failure). Policy rollouts are human-scored, while demonstrations are successful by construction. Beyond evaluation, its quality-labelled trajectories support downstream learning, from reward and predictive world models to policies trained on mixed-quality data. The leaderboard is an initial comparison under this shared budget. We release the 3,118 core episodes in LeRobot v3.0 and RoboMeter formats.",
+      "authors": [
+        "Praveen Selvaraj",
+        "Lorenzo Uttini",
+        "Ville Kuosmanen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-27T14:16:43+00:00",
+      "link": "https://arxiv.org/pdf/2607.24481v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "evaluates policies trained on 50 demonstrations per task",
+      "llm_evidence_cn": "评估基于50个演示训练的策略",
+      "llm_evidence": "评估基于50个演示训练的策略",
+      "canonical_evidence": "评估基于50个演示训练的策略",
+      "llm_tldr_en": "ArmnetBench v0.1 is a benchmark for robot manipulation policies, where policies are trained/fine-tuned on 50 demonstrations per task and evaluated on real hardware across 12 tasks, providing insights into imitation-based policy performance.",
+      "llm_tldr_cn": "针对机器人操作策略真实世界评估困难的问题，本文提出ArmnetBench v0.1基准，在低成本机械臂集群上并行评估策略。每个策略基于50个任务演示训练或微调，在12个任务上进行2500多次 rollout 评估。该基准为模仿学习策略的比较提供了标准化平台。",
+      "llm_tldr": "针对机器人操作策略真实世界评估困难的问题，本文提出ArmnetBench v0.1基准，在低成本机械臂集群上并行评估策略。每个策略基于50个任务演示训练或微调，在12个任务上进行2500多次 rollout 评估。该基准为模仿学习策略的比较提供了标准化平台。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.25593v1",
+      "source": "arxiv",
+      "title": "When Does Legacy Data Start to Help? Emergent Transfer in Cross-Configuration Robot Learning",
+      "abstract": "Robotic hardware evolves over time, but demonstration data is often tied to a specific sensor and actuator configuration. This raises a practical and underexplored question: when does legacy data begin to benefit an upgraded robot? We study this question on a wheeled humanoid platform across two hardware generations, where both the camera and gripper are changed while the overall morphology remains fixed. Contrary to the common assumption that more cross-configuration data is always helpful, we observe a grokking-like transition: legacy data remains ineffective until the upgraded configuration acquires a minimum level of task competence, after which co-training gains rise sharply before diminishing near saturation. We hypothesize that this task-dependent transition is governed by a transfer threshold and characterize the resulting three-phase pattern. Across real-robot manipulation tasks, we observe all three phases: no measurable benefit at low competence ($10.0\\% \\rightarrow 10.0\\%$), a sharp gain after crossing the threshold ($23.3\\% \\rightarrow 86.7\\%$ on flower insertion), and diminishing returns at high competence ($85.0\\% \\rightarrow 93.3\\%$ on pen insertion). We provide a theoretical account based on gradient alignment and residual policy uncertainty, and derive a phase-aware rule for deciding when to collect more new-hardware data and when to reuse legacy demonstrations. We further validate this three-phase pattern on a mobile dual-arm watering task, with results consistent with our predictions.",
+      "authors": [
+        "Tao Wang",
+        "Hudson Hou",
+        "Yingdong Hu",
+        "Yufeng Liu",
+        "Qinghai Li",
+        "Yingjie Jiang",
+        "Yingzhi Wang",
+        "Cheng Ma",
+        "Richard Wang",
+        "Yang Gao"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-28T11:24:52+00:00",
+      "link": "https://arxiv.org/pdf/2607.25593v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "study of when legacy demonstration data benefits upgraded robot learning",
+      "llm_evidence_cn": "关于旧演示数据何时有益于升级机器人学习的研究",
+      "llm_evidence": "关于旧演示数据何时有益于升级机器人学习的研究",
+      "canonical_evidence": "关于旧演示数据何时有益于升级机器人学习的研究",
+      "llm_tldr_en": "This paper investigates when legacy data from old robot configurations helps learning on upgraded hardware, finding a grokking-like transition where legacy data only helps after the new configuration achieves minimal competence.",
+      "llm_tldr_cn": "机器人硬件升级后，来自旧配置的演示数据是否仍有用？本文在轮式人形平台上研究此问题，发现类似grokking的转变：旧数据只有在升级配置获得基本任务能力后才开始起作用，之后联合训练收益先升高后饱和。该发现为跨配置数据重用提供了洞见。",
+      "llm_tldr": "机器人硬件升级后，来自旧配置的演示数据是否仍有用？本文在轮式人形平台上研究此问题，发现类似grokking的转变：旧数据只有在升级配置获得基本任务能力后才开始起作用，之后联合训练收益先升高后饱和。该发现为跨配置数据重用提供了洞见。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.25895v1",
+      "source": "arxiv",
+      "title": "HiFi-UMI: Learning Deployable Manipulation Policies from High-Fidelity UMI Data Alone",
+      "abstract": "Learning deployable manipulation policies is bottlenecked by the scarcity of data that is both high-fidelity and scalable. Real-robot teleoperation is accurate but costly to scale; robot-free UMI capture scales readily, and current practice uses the resulting data mainly for pre-training, adding a small real-robot \"anchor\" at post-training. We ask whether raising the fidelity of robot-free UMI data, rather than shrinking the real-robot fraction, can remove that anchor. We present HiFi-UMI, a portable UMI data-production system co-designed for trajectory accuracy, inter-gripper relative pose, synchronization, and field of view: head-mounted offline stereo-inertial SLAM, native rather than reconstructed relative pose, a shared microsecond GPIO trigger, and two wide-angle cameras per hand covering ~200 degrees. It reaches 3 mm workspace-local end-effector accuracy without external tracking infrastructure. Using this corpus, we demonstrate zero-robot post-training: a policy post-trained solely on HiFi-UMI demonstrations deploys directly on a real robot and matches in-domain teleoperation across three backbones spanning the vision-language-action and world-action-model families, with success-rate differences of -2.5, +3.1, and -0.6 percentage points on StarVLA-QwenPI, OpenPI-pi_0.5, and LingBot-VA; the strongest policy reaches 85% on a precision insertion task, even though the teleoperation baseline is collected in the evaluation scene and no HiFi-UMI trajectory is. Pre-training on 4,000 hours from the same corpus lowers action error on ten unseen tasks by 41% and, on StarVLA-QwenPI, raises real-robot success by a further 18.1 percentage points. We open-source HiFi-UMI-2K, 2,000 hours of microsecond-synchronized, ultra-wide-FoV demonstrations, each automatically reconstructed and validated through simulation replay, as a large-scale, high-fidelity resource for the robot-learning community.",
+      "authors": [
+        "Simple AI",
+        ":",
+        "Yuteng Wei",
+        "Jinming Ma",
+        "Jiawei Wang",
+        "Weitao Zhou",
+        "Yushen Zuo",
+        "Ke Rui",
+        "Minglei Li",
+        "Jinhao Zhang",
+        "Zhikang Pan",
+        "Xiang Wang",
+        "Haoran Jia",
+        "Huan Du",
+        "Zicheng Zeng",
+        "Jun Ma",
+        "Guiyu Qin",
+        "Di Zhang",
+        "Xiaofei Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-07-28T15:52:02+00:00",
+      "link": "https://arxiv.org/pdf/2607.25895v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "learning manipulation policies from high-fidelity UMI data",
+      "llm_evidence_cn": "从高保真UMI数据学习操作策略",
+      "llm_evidence": "从高保真UMI数据学习操作策略",
+      "canonical_evidence": "从高保真UMI数据学习操作策略",
+      "llm_tldr_en": "HiFi-UMI improves fidelity of robot-free UMI data to learn deployable manipulation policies without real-robot fine-tuning.",
+      "llm_tldr_cn": "可部署的操作策略受限于数据的高保真度和可扩展性。本文提出HiFi-UMI数据生产系统，通过头戴式离线立体惯性SLAM、原生相对位姿等设计大幅提升机器人无标注数据质量。实验表明，仅用HiFi-UMI数据训练的策略在真实机器人上可直接部署，无需真实机器人微调，性能与有监督方法相当。",
+      "llm_tldr": "可部署的操作策略受限于数据的高保真度和可扩展性。本文提出HiFi-UMI数据生产系统，通过头戴式离线立体惯性SLAM、原生相对位姿等设计大幅提升机器人无标注数据质量。实验表明，仅用HiFi-UMI数据训练的策略在真实机器人上可直接部署，无需真实机器人微调，性能与有监督方法相当。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

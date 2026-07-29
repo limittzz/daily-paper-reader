@@ -6,41 +6,55 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-28
-- 运行时间：2026-07-28 21:00:57 UTC
+- 最新运行日期：2026-07-29
+- 运行时间：2026-07-29 20:59:34 UTC
 - 运行状态：成功
-- 本次总论文数：7
+- 本次总论文数：11
 - 精读区：6
-- 速读区：1
+- 速读区：5
 
 ### 今日简报（AI）
-今日精读6篇，聚焦高精度机器人操作的数据缩放律与仿人机器人运动模仿两大方向。最值得关注的是《The Curse of Precision》提出精度诅咒下的数据缩放规律，以及《Learning Reusable Hybrid Motion Priors》展示的可复用运动先验框架。建议从这两篇高分论文入手，理解数据精度与迁移学习在机器人控制中的关键作用。
-- 详情：[/202607/28/README](/202607/28/README)
+1）今日精选11篇论文，精读6篇，聚焦语言几何悖论与机器人规划基元两大高分研究。
+2）最值得关注《The JEPA Paradox in Language》对语言替代空间的几何解释，以及《Decompose and Reorganize》的基元+视觉运动策略规划框架。
+3）建议优先精读JEPA相关论文（含速读Temporal-Distance JEPA），再结合DeVA与ArmnetBench了解机器人物理引导与低成本评测。
+- 详情：[/202607/29/README](/202607/29/README)
 
 ### 精读区论文标签
-1. [The Curse of Precision: A Data Scaling Law for High-Precision Robotic Manipulation](/202607/28/2607.23108v1-the-curse-of-precision-a-data-scaling-law-for-high-precision-robotic-manipulation)  
+1. [The JEPA Paradox in Language: The Geometry of Linguistic Alternatives](/202607/29/2607.23531v1-the-jepa-paradox-in-language-the-geometry-of-linguistic-alternatives)  
    标签：评分：9.0/10、query:imitation
-   evidence：高精度机器人操作中模仿学习的数据缩放定律
-2. [Learning Reusable Hybrid Motion Priors for Humanoid Locomotion from Motion Imitation](/202607/28/2607.24083v1-learning-reusable-hybrid-motion-priors-for-humanoid-locomotion-from-motion-imitation)  
+   evidence：直接研究语言领域中的JEPA架构
+2. [Decompose and Reorganize: Planning with Primitives and Visuomotor Policies Learned from Demonstrations](/202607/29/2607.25397v1-decompose-and-reorganize-planning-with-primitives-and-visuomotor-policies-learned-from-demonstrations)  
    标签：评分：9.0/10、query:imitation
-   evidence：利用运动模仿学习人形机器人运动先验
-3. [PAC-DP: PAC-Bayesian Diffusion Policy Learning](/202607/28/2607.24296v1-pac-dp-pac-bayesian-diffusion-policy-learning)  
+   evidence：从演示中学习模仿灵巧操作
+3. [Tri-Manual Visuomotor Imitation Learning of Robot Policies](/202607/29/2607.25731v1-tri-manual-visuomotor-imitation-learning-of-robot-policies)  
    标签：评分：9.0/10、query:imitation
-   evidence：用于机器人操作的扩散策略的PAC-Bayesian正则化
-4. [WorldDiT: A Unified Diffusion Architecture for World and Action Modeling](/202607/28/2607.23909v1-worlddit-a-unified-diffusion-architecture-for-world-and-action-modeling)  
-   标签：评分：8.0/10、query:imitation
-   evidence：用于机器人动作生成与世界建模的统一扩散变换器
-5. [LeapBot-WA: World-Anchor Action Models via Predictive Latent Alignments](/202607/28/2607.23969v1-leapbot-wa-world-anchor-action-models-via-predictive-latent-alignments)  
-   标签：评分：8.0/10、query:imitation
-   evidence：将JEPA作为世界锚点应用于行动模型
-6. [KAI: A Kinematic-Aware Interface for Data-Efficient Articulated Object Manipulation](/202607/28/2607.24493v1-kai-a-kinematic-aware-interface-for-data-efficient-articulated-object-manipulation)  
-   标签：评分：8.0/10、query:imitation
-   evidence：运动学感知中间表示，用于从演示中高效学习操作
+   evidence：三臂视觉运动模仿学习机器人策略
+4. [S2A2: Audio-Visual Imitation Learning for Manipulation Tasks Using Acoustic Spatial Information](/202607/29/2607.26047v1-s2a2-audio-visual-imitation-learning-for-manipulation-tasks-using-acoustic-spatial-information)  
+   标签：评分：9.0/10、query:imitation
+   evidence：利用声学空间信息的视听模仿学习操作
+5. [$π\mathbf{R}^2$: Reactive Real-time Flow Policies](/202607/29/2607.26055v1-mathbfr2-reactive-real-time-flow-policies)  
+   标签：评分：9.0/10、query:imitation
+   evidence：用于机器人控制的反应式实时扩散流策略
+6. [INTACT: Isomorphic Intent-to-Action Learning for Search-Free World Models](/202607/29/2607.26056v1-intact-isomorphic-intent-to-action-learning-for-search-free-world-models)  
+   标签：评分：9.0/10、query:imitation
+   evidence：提出端到端JEPA用于意图到动作学习
 
 ### 速读区论文标签
-1. [PRISM: Polynomial Representations for Interaction-Structured Motor Control](/202607/28/2607.23473v1-prism-polynomial-representations-for-interaction-structured-motor-control)  
+1. [Temporal-Distance JEPA: Plan-Aware Representation Learning for Latent World Model Predictive Control](/202607/29/2607.25337v1-temporal-distance-jepa-plan-aware-representation-learning-for-latent-world-model-predictive-control)  
+   标签：评分：8.0/10、query:imitation
+   evidence：基于JEPA的表征学习用于从演示中学习潜在世界模型预测控制
+2. [DeVA: Decoupled Video-Action Model with physical guidance for robot policy learning](/202607/29/2607.24159v1-deva-decoupled-video-action-model-with-physical-guidance-for-robot-policy-learning)  
    标签：评分：7.0/10、query:imitation
-   evidence：摘要中提及模仿学习
+   evidence：用于机器人演示策略学习的视频-动作模型
+3. [ArmnetBench v0.1: Parallel Real-World Evaluation of Manipulation Policies on a Low-Cost Arm Farm](/202607/29/2607.24481v1-armnetbench-v01-parallel-real-world-evaluation-of-manipulation-policies-on-a-low-cost-arm-farm)  
+   标签：评分：7.0/10、query:imitation
+   evidence：评估基于50个演示训练的策略
+4. [When Does Legacy Data Start to Help? Emergent Transfer in Cross-Configuration Robot Learning](/202607/29/2607.25593v1-when-does-legacy-data-start-to-help-emergent-transfer-in-cross-configuration-robot-learning)  
+   标签：评分：7.0/10、query:imitation
+   evidence：关于旧演示数据何时有益于升级机器人学习的研究
+5. [HiFi-UMI: Learning Deployable Manipulation Policies from High-Fidelity UMI Data Alone](/202607/29/2607.25895v1-hifi-umi-learning-deployable-manipulation-policies-from-high-fidelity-umi-data-alone)  
+   标签：评分：7.0/10、query:imitation
+   evidence：从高保真UMI数据学习操作策略
 
 
 <div class="dpr-home-promo-card">

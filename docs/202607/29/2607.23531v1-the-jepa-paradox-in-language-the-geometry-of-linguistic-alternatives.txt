@@ -1,0 +1,1266 @@
+Title: The JEPA Paradox in Language: The Geometry of Linguistic Alternatives
+
+URL Source: https://arxiv.org/pdf/2607.23531v1
+
+Published Time: Tue, 28 Jul 2026 01:13:43 GMT
+
+Number of Pages: 31
+
+Markdown Content:
+Preprint. Under review. 
+
+# THE JEPA P ARADOX IN LANGUAGE : T HE GEOMETRY OF LINGUISTIC ALTERNATIVES 
+
+Anh Trac Duc Dinh 1,2∗ & Khang Nhat Hoang Vo 3 ∗†
+
+> 1
+
+Center for AI Research (CAIR), VinUniversity, Hanoi, Vietnam 
+
+> 2
+
+Faculty of Computer Science and Engineering Ho Chi Minh City University of Technology (HCMUT), VNU-HCM Ho Chi Minh City, Vietnam 
+
+anh.dinhtracduc@hcmut.edu.vn 
+
+> 3
+
+Mohamed bin Zayed University of Artificial Intelligence Abu Dhabi, United Arab Emirates 
+
+khang.vo@mbzuai.ac.ae 
+
+# ABSTRACT 
+
+Joint-Embedding Predictive Architectures (JEPAs) are effective for images, video, and audio, yet deterministic JEPA-style latent prediction has not become a stan-dard objective for text encoders. We argue that this gap reflects a mismatch be-tween squared-error latent prediction and the conditional structure of language. The key requirement is conditional concentration: given a context and target location, the target representation should lie near a single meaningful point. Local image prediction often satisfies this through spatial continuity, whereas masked text can admit multiple valid token or span completions whose repre-sentations need not share a coherent center. We formalize this mismatch through three conditions—predictability, non-collapse, and low conditional variance—and show how their failure creates centroid degeneracy and collapse pressure in text. Matched I-JEPA and T-JEPA experiments reveal the predicted sequence: mutual-information saturation and elevated target variance precede train–validation insta-bility, effective-rank degeneration, cosine collapse, and poor downstream transfer. The same pattern appears across five independent data seeds, indicating that it is not a sampling artifact. These results do not rule out predictive learning for language; they show that text-compatible JEPA objectives must preserve multiple plausible completions rather than compress them into a single latent point. 
+
+# 1 INTRODUCTION 
+
+Self-supervised learning often succeeds by predicting missing information from context. In lan-guage, this principle is usually implemented as prediction over discrete symbols or probability dis-tributions, as in masked language modeling (MLM) (Devlin et al., 2019), causal language modeling (CLM) (Radford et al., 2019; Brown et al., 2020), denoising pretraining (Lewis et al., 2020; Raffel et al., 2020), and replaced-token detection (Clark et al., 2020). In vision, Joint-Embedding Predic-tive Architectures instead avoid reconstructing raw inputs: a context encoder observes a masked view, a target encoder embeds the unmasked signal, and a predictor learns to match the target rep-resentation in latent space (LeCun, 2022; Assran et al., 2023). This latent-prediction paradigm has achieved strong results on continuous modalities, including images, video, and audio (Assran et al., 2023; Bardes et al., 2024; Tuncay et al., 2025). Yet deterministic JEPA-style latent prediction has not become a standard recipe for text, where the dominant objectives remain distributional. We argue that this gap reflects a statistical mismatch. JEPA is well suited to targets that are condi-tionally concentrated : given a context and a target position, the target representation should lie near a single geometrically meaningful value. Natural images often satisfy this condition locally because 
+
+> ∗
+
+Equal contribution. Authors listed alphabetically. 
+
+> †
+
+Corresponding author: khang.vo@mbzuai.ac.ae .
+
+1arXiv:2607.23531v1 [cs.CL] 26 Jul 2026 Preprint. Under review. The  cat  ? on  the  mat 
+
+sat  lay  slept  rested 
+
+rested plays  steps 
+
+was 
+
+# ...  ... 
+
+Figure 1: Conditional concentration explains the image-text divide in JEPA. In images, spatial con-tinuity constrains masked patches to a low-variance conditional distribution. In text, masking leaves many valid continuations whose embeddings occupy distinct directions in representation space, forc-ing a squared-error predictor to regress toward a centroid over heterogeneous continuations rather than a coherent target. nearby pixels and patches are correlated, and masked regions are constrained by surrounding con-tent (Feige, 2015; He et al., 2022; Assran et al., 2023). Token-level language does not. The same textual context can admit many valid continuations, reflected in the persistent entropy and perplexity of language even under strong models (Shannon, 1951; Brown et al., 2020). As illustrated in Fig-ure 1, an image patch typically has a low-variance conditional target, whereas a masked token may correspond to multiple valid lexical or semantic continuations whose embeddings occupy differ-ent directions. A squared-error JEPA predictor must return a single vector, and therefore regresses toward a centroid over heterogeneous continuations rather than a coherent linguistic target. We formalize this mismatch through three necessary conditions for useful JEPA learning: pre-dictability : the target must have low conditional entropy given the context (spatial smoothness supports this in images; lexical ambiguity imposes an irreducible floor in text); non-collapse : the objective must force distinct inputs to occupy distinct regions of representation space (visual diver-sity creates such pressure, whereas text permits low-rank collapse without geometric penalty); and 
+
+low conditional variance : the reducible loss component must dominate the irreducible one (in im-ages, residual uncertainty is limited to local texture; in text, multiple valid continuations dominate the loss and drive the predictor toward centroid degeneracy). We validate these predictions by constructing a language analogue of JEPA, which we denote T-JEPA. 1, and comparing it with I-JEPA (Assran et al., 2023) under matched training protocols, track-ing mutual-information proxies, effective rank, pairwise cosine similarity, train-validation loss di-vergence, irreducible target variance, and downstream transfer. T-JEPA exhibits early information saturation followed by unstable optimization, rank divergence, cosine-similarity collapse, and poor transfer, while I-JEPA maintains increasing information, non-degenerate rank, and stable generaliza-tion – suggesting that T-JEPA fails not from insufficient capacity or tuning, but because deterministic squared-error latent prediction is misaligned with the conditional geometry of token-level language. Our contributions are threefold. First, we introduce conditional concentration as a condition under which deterministic latent prediction yields useful representations. Second, we identify centroid degeneracy as a failure mode of squared-error latent prediction under ambiguous text continuations. Third, we empirically diagnose T-JEPA through information, rank, cosine-similarity, variance, and downstream metrics, showing that information saturation precedes representation collapse and mo-tivating distributional, contrastive, mixture-based, or semantic-level alternatives. Our results do not imply that predictive representation learning is impossible for language. Rather, they identify the missing inductive bias: language prediction must preserve the multimodal structure of valid contin-uations instead of compressing them into a single latent centroid. 
+
+> 1We use T-JEPA only as a local abbreviation for our text-based JEPA instantiation. It is unrelated to prior methods with the same name for trajectory similarity computation and tabular representation learning (Li et al., 2024; Thimonier et al., 2025).
+
+2Preprint. Under review. 
+
+# 2 RELATED WORK 
+
+Self-supervised representation learning. Self-supervised learning has developed along several complementary paradigms. Contrastive methods such as CPC/InfoNCE (van den Oord et al., 2018), SimCLR (Chen et al., 2020), and MoCo (He et al., 2020) learn by distinguishing compatible views from negative examples. Non-contrastive methods such as BYOL (Grill et al., 2020), Barlow Twins (Zbontar et al., 2021), and VICReg (Bardes et al., 2022) remove explicit negatives through architectural asymmetry, stop-gradient mechanisms, or variance–covariance regularization. Joint-Embedding Predictive Architectures (LeCun, 2022) form a third family: instead of reconstructing inputs or contrasting views, they predict target representations in latent space from a masked context. 
+
+JEPA-style latent prediction across modalities. I-JEPA demonstrated that masked latent predic-tion can learn strong visual representations by predicting the embeddings of masked image regions from visible context (Assran et al., 2023). Subsequent work has extended JEPA-style objectives to video and world modeling (Bardes et al., 2024; Assran et al., 2025; Maes et al., 2026), audio and speech (Fei et al., 2023; Tuncay et al., 2025), and multimodal text-image settings (Vo et al., 2025; Chen et al., 2025). Recent variants also study stability, regularization, and collapse prevention in JEPA-like objectives (Balestriero & LeCun, 2025; Mo & Tong, 2024). This growing family shows that latent prediction is not limited to images. However, most successful JEPA-style applications involve continuous, spatial, temporal, or cross-modal structure, where masked targets are often con-strained by nearby context. Our work asks why the same deterministic latent-prediction recipe has not become a standard general-purpose objective for training text encoders. 
+
+Representation collapse and variance preservation. Collapse is a central failure mode in self-supervised learning, where representations become constant or occupy a low-dimensional sub-space (Jing et al., 2022). Existing methods avoid collapse through negatives, predictor asymme-try, EMA targets, redundancy reduction, or explicit variance constraints (Chen et al., 2020; He et al., 2020; Grill et al., 2020; Zbontar et al., 2021; Bardes et al., 2022). Among these, SIGReg (Balestriero & LeCun, 2025) is a particularly principled and effective collapse-prevention mechanism, but be-cause it constrains only the marginal representation distribution rather than any context-conditional quantity, our analysis in App. K shows it is not, by itself, guaranteed to yield predictable or non-degenerate representations when applied to text. JEPA-style methods inherit stabilization from stop-gradient and EMA target encoders, but this stabilization is most effective when the prediction task supplies a structured target signal. We identify a complementary route to collapse: when the con-ditional target distribution is multimodal, squared-error latent prediction can reduce loss by moving toward a conditional mean or by allowing the encoder to merge distinctions among plausible tar-gets. Thus, our analysis connects collapse to the geometry of the target distribution, not only to optimization dynamics or architectural symmetry. 
+
+Language pretraining preserves uncertainty. Language pretraining has instead converged on objectives that preserve uncertainty over discrete symbols. Masked language modeling (Devlin et al., 2019), causal language modeling (Radford et al., 2019; Brown et al., 2020), denoising sequence-to-sequence pretraining (Lewis et al., 2020; Raffel et al., 2020), and replaced-token detection (Clark et al., 2020) predict token distributions, corrupted-token labels, or reconstructed sequences rather than a single continuous target. data2vec also predicts contextualized latent teacher representa-tions from masked inputs and was evaluated across speech, vision, and language (Baevski et al., 2022), making it an important precursor to modality-general latent prediction. More recent text-involving JEPA variants, such as task-specific Text-JEPA for NL-to-FOL conversion and multimodal TI-JEPA/VL-JEPA models (Le et al., 2026; Vo et al., 2025; Chen et al., 2025), show that JEPA-style objectives can incorporate language in specific settings. Two very recent efforts, LLM-JEPA (Huang et al., 2026) and DLLM-JEPA (Nam, 2026), apply a JEPA-style loss directly to text, but in both cases the JEPA term is trained only as an auxiliary addition on top of a distributional generative anchor rather than observed in isolation, so neither resolves why a purely latent-prediction objective trans-fers from continuous modalities to text at all; we return to a detailed comparison with both systems in App. J. They do not remove the central question studied here: when is a masked textual target itself well represented as a single deterministic latent point? 3Preprint. Under review. 
+
+# 3 JEPA AS DETERMINISTIC LATENT PREDICTION 
+
+We study JEPAs as deterministic latent predictors. A JEPA observes a masked context, encodes the unmasked target with a separate target encoder, and trains a predictor to match the target representa-tion in latent space. This captures the standard image JEPA setting (Assran et al., 2023) and defines the text analogue analyzed in this work. Let x = (x(1) , . . . , x (N )) be an input decomposed into N units. For images, units are non-overlapping patches on a two-dimensional grid; for text, units are discrete tokens in a sequence. A masking procedure samples disjoint context and target sets C, T ⊆ [N ]. The context view xC is passed through a context encoder fθ , producing 
+
+zC = fθ (xC ). (1) The full unmasked input x is passed through an EMA target encoder f¯θ , and the target representation at position j ∈ T is 
+
+z(j) 
+
+> T
+
+= f¯θ (x)(j) ∈ Rd. (2) The target encoder is updated by exponential moving average, 
+
+¯θ ← τ ¯θ + (1 − τ )θ, with τ ∈ (0 , 1) , (3) and is not differentiated through. A predictor gϕ receives the context representation and a positional query pj , then predicts 
+
+ˆz(j) 
+
+> T
+
+= gϕ(zC , p j ). (4) The training objective is the squared-error latent prediction loss 
+
+LJEPA (θ, ϕ ) = Ex,C,T 
+
+ 1
+
+|T |
+
+X
+
+> j∈T
+
+gϕ(fθ (xC ), p j ) − sg 
+
+
+
+f¯θ (x)(j) 22
+
+ , (5) where sg( ·) denotes stop-gradient. Stop-gradient and EMA stabilize training, but the objective does not explicitly require the representation to remain informative, high-rank, or semantically separated. The key property of Eq. 5 is that it is a point-prediction objective. For fixed (zC , p j ), the squared-error optimal predictor is the conditional mean 
+
+g⋆ϕ(zC , p j ) = E
+
+h
+
+z(j) 
+
+> T
+
+| zC , p j
+
+i
+
+. (6) Thus, deterministic JEPA is most suitable when the conditional mean is a representative target. This requires conditional concentration : given the context and target location, valid target representations should cluster around a single meaningful point. When this holds, squared-error prediction provides a stable semantic learning signal. Images often satisfy this condition because neighboring patches, object boundaries, textures, and spatial continuity strongly constrain masked regions. Masked text is less likely to be conditionally concentrated. The same context may admit many valid lexical or semantic completions, while the positional query specifies only where the missing content belongs. The resulting target distribution can therefore be broad or multimodal, making its conditional mean a centroid over incompatible alternatives rather than a coherent completion. Preserving these distinctions weakens point prediction; averaging them away encourages indistinct representations and, ultimately, collapse. 
+
+# 4 THEORETICAL ANALYSIS : W HEN DOES JEPA W ORK ?
+
+We analyze deterministic JEPA through three necessary conditions: predictability (P), non-collapse (NC), and low conditional variance (LV). These conditions are naturally supported in local image prediction, where spatial smoothness and content-dependent visual structure constrain masked tar-gets. In masked text, however, the same context may admit multiple valid token or span completions. If these completions are represented as distinct latent targets, the conditional distribution is not con-centrated around a single point; if they are mapped close together, the representation risks collapse. Formal statements and proofs appear in App. B.1- B.3; metric definitions appear in App. C. 4Preprint. Under review. The three conditions are not independent failure modes. They describe a single mechanism. If the context does not concentrate the target, the squared-error predictor learns a conditional mean over alternatives. If the representation preserves those alternatives, the loss contains irreducible condi-tional variance; if the representation removes them, the model reduces loss by merging distinctions. Thus, ambiguity creates pressure toward either noisy point prediction or representational collapse. 4.1 ARGUMENT I: P REDICTABILITY REQUIRES CONDITIONAL CONCENTRATION 
+
+JEPA can reduce its squared-error loss only when the target representation is predictable from the context. By the Data Processing Inequality, latent representations cannot contain more predictive information than the raw inputs from which they are computed. Thus, the usefulness of deterministic latent prediction is limited by the conditional structure of the data. For images, local smoothness makes nearby patches informative about one another. Under a Lips-chitz target encoder, nearby image patches have nearby target representations: 
+
+E
+
+
+
+f¯θ (x)(j) − f¯θ (x)(i) 22
+
+
+
+≤ L2d(i, j )2. (7) When the context contains patches near j, the masked target is therefore conditionally constrained by visible content. For text, a masked token or span can have several valid completions under the same context. This ambiguity does not automatically imply large latent variance, since an encoder could collapse distinct completions. The key trade-off is therefore: preserving textual distinctions makes the target less predictable as a single point, while removing them reduces uncertainty by discarding information. 
+
+Validation. We track the InfoNCE mutual-information proxy ˆI(zC ; zT ) ≥ log N −LInfoNCE (Poole et al., 2019; van den Oord et al., 2018) together with effective rank. A saturated MI proxy with non-trivial rank suggests limited predictive information; simultaneous rank collapse suggests that the model is reducing uncertainty by merging distinctions. 4.2 ARGUMENT II: N ON -C OLLAPSE REQUIRES A VARIANCE -P RESERVING SIGNAL 
+
+Stop-gradient and EMA target encoders stabilize JEPA training, but the squared-error objective does not explicitly enforce non-degenerate covariance. Whether collapse is discouraged depends on whether the prediction task itself penalizes collapsed representations. In images, a collapsed context representation cannot adapt to content-dependent target variation. If visual targets retain nonzero variation beyond position, then a constant context representation incurs prediction error bounded below by the target variance. This gives image JEPA a natural anti-collapse signal: differ-ent visual contexts are needed to predict different masked regions. Text admits a different route. A text encoder can reduce the conditional variance of ambiguous completions by mapping distinct but plausible targets into a lower-dimensional representation. This can preserve low JEPA loss while weakening the distinctions the representation should encode. Thus, collapse in text can arise not only from optimization dynamics, but from the objective’s incentive to make multimodal targets easier to predict as a single point. 
+
+Validation. We track effective rank, 
+
+erank(Σ z ) = exp − X
+
+> i
+
+pi log pi
+
+!
+
+(8) where 
+
+pi = λi/ X
+
+> j
+
+λj (9) along with mean pairwise cosine similarity, its 95th percentile, and its standard deviation over held-out representations (see App. E). Collapse is indicated by decreasing effective rank, increasing co-sine similarity, and shrinking cosine dispersion. 5Preprint. Under review. 4.3 ARGUMENT III: S QUARED -E RROR PREDICTION LEARNS A CONDITIONAL MEAN 
+
+The JEPA loss decomposes into reducible approximation error and irreducible conditional variance: 
+
+E
+
+
+
+gϕ(zC , p j ) − z(j)
+
+> T
+> 22
+
+
+
+= E
+
+
+
+gϕ(zC , p j ) − E[z(j) 
+
+> T
+
+| zC , p j ] 22
+
+
+
++ E
+
+h
+
+Var( z(j) 
+
+> T
+
+| zC , p j )
+
+i
+
+.
+
+(10) The first term can be reduced by improving the predictor; the second is irreducible for fixed repre-sentations. Deterministic JEPA is therefore well matched to conditionally concentrated targets. For images, the residual uncertainty of a masked patch is often limited to local texture and fine detail, so the conditional variance remains small. For text, let S be a masked span and let s ∼ p(s | xC ) be a candidate completion. If hS (s; xC ) denotes the target representation induced by completing the span with s, then the squared-error optimal predictor is 
+
+g⋆ϕ(zC , S ) = X
+
+> s
+
+p(s | xC )hS (s; xC ). (11) Thus, the predictor returns a centroid over plausible span completions. If multiple completions have non-negligible probability and separated target representations, this centroid need not correspond to any coherent completion. The issue is not autoregression: even when all tokens in a span are predicted in parallel, deterministic squared-error prediction compresses a multimodal conditional distribution into a single Euclidean point. 
+
+Validation. We estimate dVar( z∗ | zC , S ) using K = 16 candidate completions per context. For text, completions are sampled from a frozen masked-language-model oracle and passed through the target encoder. For images, target variability is estimated from augmented variants of the masked region. Estimates are averaged over held-out contexts on both training and validation splits. 
+
+# 5 EMPIRICAL EVIDENCE 
+
+5.1 EXPERIMENTAL SETUP 
+
+We compare image and text instantiations of the same deterministic latent-prediction framework. The goal is not to optimize either modality independently, but to evaluate whether the diagnostics predicted by our theory appear under matched JEPA-style training. 
+
+I-JEPA. For the image setting, we train an I-JEPA model (Assran et al., 2023) on 100K ImageNet-1K images (Deng et al., 2009), using a 90/10 train-validation split and seed 42 . Images are resized to a short side of 256 and randomly cropped to 224 × 224 . Both context and target encoders use a ViT-H/16 backbone (Dosovitskiy et al., 2021) with hidden dimension d = 1 ,280 , 32 layers, and 16 attention heads. The target encoder is updated by EMA ( τ = 0 .996 ). We follow block-wise spatial masking, using encoder scale 0.85-1.0, predictor scale 0.15-0.2, and 4 target blocks per image. 
+
+T-JEPA. For the text setting, we construct a direct text analogue, T-JEPA, trained on 100K English C4 sentences (Raffel et al., 2020), using a 90/10 train–validation split and maximum sequence length 256. Main-text diagnostics use seed 42. To test robustness, we repeat T-JEPA training with five independent seeds, each resampling its own 100K-sentence subset; the resulting MI, variance, rank, loss, and cosine trajectories are reported in App. D. The context and target encoders use a BERT-Large backbone (Devlin et al., 2019) with hidden dimension d = 1 ,024 and 24 layers. The target encoder is updated by EMA with τ = 0 .996 . The predictor is a 6-layer Transformer with hidden dimension 384 and 8 attention heads. We apply random non-overlapping span masking with 1–5 spans per sentence and span lengths of 1–5 tokens. 
+
+Training and diagnostics. Both models are trained for 15 epochs with AdamW, using a 10-epoch linear warmup from 2 × 10 −4 to 10 −3 followed by cosine decay to 10 −6, gradient clipping at 0.3, and weight decay increasing from 0.04 to 0.4. This schedule was chosen to make collapse dynamics observable: fixed learning rates or shorter warmups caused T-JEPA to collapse before the diagnostics could resolve the transition. We monitor five quantities predicted by Sec. 4 – the 6Preprint. Under review. Table 1: Temporal failure signature predicted for T-JEPA. The ordering links the theory to the empirical diagnostics: limited predictability appears before collapse, suggesting that collapse is a response to ambiguous targets rather than the original cause. Stage Diagnostic Interpretation 1 MI proxy saturates Context does not concentrate the target 2 Conditional variance remains high Plausible completions remain separated 3 Train-validation loss diverges Optimization fits unstable signal 4 Effective rank degenerates Encoder merges distinctions among targets 5 Downstream transfer fails Representation loses useful text structure 
+
+Figure 2: Context–target predictability and representation rank for I-JEPA and T-JEPA. Left: In-foNCE mutual-information proxy bI(zC ; zT ). Right: effective rank of the representation covariance 
+
+Σz . Faint curves show training metrics; bold curves show validation metrics. The red dashed line marks T-JEPA’s instability point at step 9,340. InfoNCE mutual-information proxy bI(zC ; zT ) (MoCo queue of 2,048, temperature 0.1), effective rank, pairwise cosine similarity, train–validation JEPA loss, and conditional target variance – which serve as complementary lenses on a single collapse dynamic, so their joint convergence on the same transition corroborates one event rather than five coincidences. Table 1 summarizes the predicted temporal failure signature: T-JEPA does not collapse first and then lose predictability; rather, limited predictability and elevated conditional variance appear before the representation degenerates. 5.2 ARGUMENT I V ALIDATION 
+
+Figure 2 compares the evolution of context–target predictability and representation rank for I-JEPA and T-JEPA. Faint curves denote training metrics and bold curves denote validation metrics; our interpretation focuses on the validation split, which is disjoint from training. 
+
+Predictability saturates before collapse. T-JEPA’s validation MI proxy remains below 0.35 nats throughout training, indicating that the masked target representation is only weakly predictable from the visible context. This behavior matches the mechanism in Consequence I (App. B.1): masked text can leave several plausible completions, so the target representation need not concentrate around a single latent point. I-JEPA shows the opposite pattern. Its validation MI increases steadily, consis-tent with local spatial structure making masked image targets more predictable from nearby context. The ordering of the two diagnostics is critical. T-JEPA’s MI proxy saturates early, while its effective rank is still non-trivial ( ≈4.66 at step 2,000); collapse occurs only later, near the instability point at step 9,340. Thus, low predictability is not an artifact of an already-collapsed representation. Instead, predictability fails first, and representation degeneration follows. This supports the central causal chain of our analysis: lack of conditional concentration weakens the latent prediction signal, creating pressure toward later collapse. 7Preprint. Under review. 
+
+Figure 3: Loss and Effective Rank for I-JEPA and T-JEPA (training and validation, log scale). 
+
+Left: JEPA training and validation loss curves. Right: Effective rank of Σz . Red dashed line marks T-JEPA’s instability point (step 9,340). 5.3 ARGUMENT II V ALIDATION 
+
+MSE Loss. Figure 3 (left) shows a clear divergence between the two models. I-JEPA’s losses decrease smoothly in tandem, reflecting the geometric anti-collapse tension of Prop. B.8. T-JEPA’s losses co-decrease initially, then diverge catastrophically at step 9,340: validation loss spikes while training loss becomes erratic; a pattern of sustained instability rather than clean descent, consistent with the degenerate solution of Prop. B.10: starved of a meaningful gradient signal by the irreducible entropy floor, the optimiser memorises batch-specific noise while generalisation collapses entirely. 
+
+Effective Rank. Figure 3 (right) reveals the representational mechanism underlying the loss diver-gence. I-JEPA’s training and validation ranks grow jointly and converge near 4.7-4.85 , confirming that the encoder learns to spread representations across multiple directions without collapse. T-JEPA’s trajectory is starkly different: the validation rank stabilises near 4.66 from step ∼ 2,000 , then undergoes a sharp upward spike at step 9,340 , briefly plateaus, before collapsing catastrophically to 
+
+1.57 , while the training rank artificially inflates to 494 .39 -545 .44 . This train-val divergence directly instantiates λmin (Σ z ) → 0 on the generalisation distribution as predicted by Prop. B.10: the training objective is simultaneously gamed by overfitting to noise, while the encoder loses all representa-tional structure on held-out data. Loss and rank together constitute the collapse signature: training loss decreases precisely as validation rank collapses, confirming the degenerate solution is loss-free. 5.4 ARGUMENT III V ALIDATION 
+
+I-JEPA’s irreducible variance initially falls sharply to 0.0008 (on both train and val splits) near step 1,500 (Figure 4 ). However, instead of a monotonic decline, it rebounds and plateaus alongside T-JEPA until roughly step 7,000, before decisively dropping again to establish a clear gap. By step 9,340, I-JEPA’s variance falls to 0.0062 (train) and 0.0059 (val), eventually stabilising near 0.0017 for both splits - a small residual consistent with σ2texture (Prop. B.14). T-JEPA’s variance, meanwhile, remains elevated at 0.0149 (train) and 0.0116 (val) at the middle step. This represents roughly dou-ble I-JEPA’s level at this step, reflecting the persistent irreducible floor imposed by lexical ambiguity (Prop. B.16) that no amount of encoder updates can reduce. After step 9,340, T-JEPA’s variance drops sharply, contracting to 0.0010 (train) and 0.0012 (val) between steps 17,500 and 21,000 - not because ambiguity resolves, but because the encoder degenerates and compresses all token embed-dings into a narrow region, consistent with the rank collapse reported in Sec. 5.3. This clear gap during the stable phase, followed by artificial compression at collapse, provides direct empirical support for Consequence III (App. B.3). The same qualitative ordering is reproduced across five independent T-JEPA runs: predictability remains limited before effective-rank degeneration, while the late reduction in target variance coincides with directional collapse rather than improved target concentration (App. D). 8Preprint. Under review. 
+
+Figure 4: Irreducible variance dVar( z∗ | zC , p j ) for I-JEPA and T-JEPA (log and raw scale). T-JEPA’s irreducible variance remains persistently higher than I-JEPA’s throughout training and col-lapses to near-zero only after representational collapse at step ∼15 ,000 . The red dashed line marks T-JEPA’s instability point (step 9,340). Table 2: Downstream performance of T-JEPA and self-supervised baselines across classification and retrieval benchmarks. Bold : best result; underline: best among SSL methods. Retrieval metrics are reported in %. M: mask augmentation; R: replace augmentation. Mean ± std are reported over 5 independent runs.                                                                                                                                                                                                            
+
+> Model IMDB SNLI MTEB/FEVER MTEB/MSMARCO Acc. F1 Acc. F1 nDCG@10 R@100 nDCG@10 R@100
+> BERT 81.91 ±1.35 81.89 ±2.43 59.72 ±1.25 59.11 ±2.31 14.43 ±1.17 38.82 ±1.24 9.494 ±0.93 33.672 ±1.37 Barlow Twins M64.34 ±2.26 64.99 ±1.29 45.55 ±1.31 45.99 ±2.59 0±0.00 0±0.00 0.1082 ±0.009 0.419 ±0.096 VICReg M63.12 ±2.13 68.85 ±2.25 43.93 ±2.27 41.76 ±1.14 0±0.00 0±0.00 0.009 ±0.021 0.115 ±0.035 BYOL M50.23 ±0.72 66.63 ±1.08 34.28 ±1.12 17.02 ±0.99 0±0.00 0±0.00 0±0.00 0±0.00 Barlow Twins R62.02 ±1.33 63.85 ±1.36 43.87 ±1.18 43.10 ±2.21 0±0.00 0±0.00 0.009 ±0.032 0.201 ±0.042 VICReg R59.10 ±1.22 66.56 ±2.12 41.59 ±1.41 41.14 ±1.31 0±0.00 0±0.00 0.004 ±0.001 0.006 ±0.002 BYOL R61.77 ±1.17 67.39 ±1.24 43.99 ±2.28 44.04 ±1.23 0±0.00 0±0.00 0.021 ±0.004 0.358 ±0.012 T-JEPA 50.02 ±0.13 66.68 ±0.41 33.34 ±0.12 16.69 ±0.62 0±0.00 0±0.00 0±0.00 0±0.00
+
+5.5 DOWNSTREAM TRANSFER ACROSS NLP T ASKS 
+
+We next test whether the intrinsic failures observed above translate into poor downstream representa-tions. We compare T-JEPA with BERT and three non-contrastive self-supervised baselines: Barlow Twins, VICReg, and BYOL. All models are pretrained on 3 million English C4 sentences using the 
+
+bert-base-uncased tokenizer with maximum sequence length 256, we also use this model as backbone for all baselines. After pretraining, each encoder is frozen and used as a fixed feature ex-tractor. We evaluate on two classification benchmarks, IMDB and SNLI (Maas et al., 2011; Bowman et al., 2015), and two retrieval benchmarks from MTEB, FEVER and MSMARCO (Muennighoff et al., 2023). Full hyperparameters and protocol details are reported in App. F. Because text lacks the augmentation diversity of images, we evaluate the SSL baselines under two corruption schemes: Mask , where both views are independently span-masked at 15–20% of tokens, and Replace , where one view is the original sentence and the other has 15–20% of tokens replaced via a frozen pretrained BERT proposal distribution (constrained to differ from the originals). T-JEPA uses the same 15–20% span-masking budget. Table 2 shows that BERT, trained with MLM, substantially outperforms all self-supervised base-lines across classification and retrieval. This is consistent with our hypothesis: distributional token prediction preserves uncertainty over plausible completions, whereas deterministic latent regression compresses that uncertainty into a single target. Among the SSL baselines, Barlow Twins under masking performs best on most classification metrics, suggesting that explicit redundancy reduction is comparatively robust to span corruption. In contrast, T-JEPA reaches chance-level classification and zero retrieval performance, matching the intrinsic collapse diagnostics in Sections 5.2–4.3. 9Preprint. Under review. The contrast between BYOL M and BYOL R further supports the role of conditional ambiguity. BYOL with independent masking collapses similarly to T-JEPA, whereas BYOL with replacement corruption remains competitive with VICReg and Barlow Twins. Replacement preserves most of the sentence and keeps the two views globally aligned, reducing the need to resolve multiple missing lexical completions. Masking, by contrast, exposes the predictor to the same multi-hypothesis ambi-guity that drives centroid degeneracy in T-JEPA. The activation-landscape visualizations in App. H provide a qualitative counterpart: BERT retains rich inter-token and intra-vector variation; VICReg, Barlow Twins, and BYOL R retain moderate structure; BYOL M is flatter; and T-JEPA is nearly uni-form and low-amplitude. 
+
+# 6 CONCLUSION 
+
+Deterministic JEPA-style latent prediction works when masked targets have a meaningful condi-tional center. Images often satisfy this through spatial smoothness, whereas masked text admits multiple valid completions, forcing T-JEPA toward either centroid prediction or representational collapse. Our experiments show that limited predictability and elevated variance precede rank de-generation, cosine collapse, and poor transfer. Predictive learning for language must therefore pre-serve multiple plausible completions; related LLM-JEPA, DLLM-JEPA variants avoid this issue by retaining a generative objective alongside JEPA (App. J). 
+
+# REFERENCES 
+
+Mahmoud Assran, Quentin Duval, Ishan Misra, Piotr Bojanowski, Pascal Vincent, Michael Rabbat, Yann LeCun, and Nicolas Ballas. Self-supervised learning from images with a joint-embedding predictive architecture. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 15619–15629, 2023. Mido Assran, Adrien Bardes, David Fan, Quentin Garrido, Russell Howes, Mojtaba Komeili, Matthew Muckley, Ammar Rizvi, Claire Roberts, Koustuv Sinha, Artem Zholus, Sergio Arnaud, Abha Gejji, Ada Martin, Francois Robert Hogan, Daniel Dugas, Piotr Bojanowski, Vasil Khali-dov, Patrick Labatut, Francisco Massa, Marc Szafraniec, Kapil Krishnakumar, Yong Li, Xiaodong Ma, Sarath Chandar, Franziska Meier, Yann LeCun, Michael Rabbat, and Nicolas Ballas. V-JEPA 2: Self-supervised video models enable understanding, prediction and planning, 2025. Alexei Baevski, Wei-Ning Hsu, Qiantong Xu, Arun Babu, Jiatao Gu, and Michael Auli. data2vec: A general framework for self-supervised learning in speech, vision and language. In Proceedings of the 39th International Conference on Machine Learning , volume 162 of Proceedings of Machine Learning Research , pp. 1298–1312. PMLR, 2022. Randall Balestriero and Yann LeCun. LeJEPA: Provable and scalable self-supervised learning with-out the heuristics, 2025. Adrien Bardes, Jean Ponce, and Yann LeCun. VICReg: Variance-invariance-covariance regular-ization for self-supervised learning. In International Conference on Learning Representations ,2022. Adrien Bardes, Quentin Garrido, Jean Ponce, Xinlei Chen, Michael Rabbat, Yann LeCun, Mido Assran, and Nicolas Ballas. Revisiting feature prediction for learning visual representations from video. Transactions on Machine Learning Research , 2024. Featured Certification. Samuel R. Bowman, Gabor Angeli, Christopher Potts, and Christopher D. Manning. A large anno-tated corpus for learning natural language inference. In Llu´ ıs M` arquez, Chris Callison-Burch, and Jian Su (eds.), Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing , pp. 632–642, Lisbon, Portugal, September 2015. Association for Computational Lin-guistics. doi: 10.18653/v1/D15-1075. Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared D. Kaplan, Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, Sandhini Agarwal, Ariel Herbert-Voss, Gretchen Krueger, Tom Henighan, Rewon Child, Aditya Ramesh, Daniel Ziegler, Jeffrey Wu, Clemens Winter, Chris Hesse, Mark Chen, Eric Sigler, Mateusz Litwin, Scott Gray, 10 Preprint. Under review. Benjamin Chess, Jack Clark, Christopher Berner, Sam McCandlish, Alec Radford, Ilya Sutskever, and Dario Amodei. Language models are few-shot learners. In Advances in Neural Information Processing Systems , volume 33, pp. 1877–1901, 2020. Rich Caruana. Multitask learning. Machine Learning , 28(1):41–75, July 1997. ISSN 1573-0565. doi: 10.1023/A:1007379606734. Delong Chen, Mustafa Shukor, Theo Moutakanni, Willy Chung, Jade Yu, Tejaswi Kasarla, Allen Bolourchi, Yann LeCun, and Pascale Fung. VL-JEPA: Joint embedding predictive architecture for vision-language, 2025. Ting Chen, Simon Kornblith, Mohammad Norouzi, and Geoffrey Hinton. A simple framework for contrastive learning of visual representations. In Proceedings of the 37th International Conference on Machine Learning , volume 119 of Proceedings of Machine Learning Research , pp. 1597– 1607. PMLR, 2020. Kevin Clark, Minh-Thang Luong, Quoc V. Le, and Christopher D. Manning. ELECTRA: Pre-training text encoders as discriminators rather than generators. In International Conference on Learning Representations , 2020. Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano, Christopher Hesse, and John Schulman. Training verifiers to solve math word problems, 2021. Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei. ImageNet: A large-scale hierarchical image database. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition , pp. 248–255, 2009. Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. BERT: Pre-training of deep bidirectional transformers for language understanding. In Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Lan-guage Technologies , pp. 4171–4186, Minneapolis, Minnesota, 2019. Association for Computa-tional Linguistics. Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszko-reit, and Neil Houlsby. An image is worth 16x16 words: Transformers for image recognition at scale. In International Conference on Learning Representations , 2021. Zhengcong Fei, Mingyuan Fan, and Junshi Huang. A-JEPA: Joint-embedding predictive architecture can listen, 2023. Uriel Feige. Why are images smooth? In Proceedings of the 2015 Conference on Innovations in Theoretical Computer Science , pp. 229–236. Association for Computing Machinery, 2015. Jean-Bastien Grill, Florian Strub, Florent Altch´ e, Corentin Tallec, Pierre H. Richemond, Elena Buchatskaya, Carl Doersch, Bernardo Avila Pires, Zhaohan Daniel Guo, Mohammad Gheshlaghi Azar, Bilal Piot, Koray Kavukcuoglu, R´ emi Munos, and Michal Valko. Bootstrap your own la-tent: A new approach to self-supervised learning. In Advances in Neural Information Processing Systems , volume 33, pp. 21271–21284, 2020. Kaiming He, Haoqi Fan, Yuxin Wu, Saining Xie, and Ross Girshick. Momentum contrast for unsupervised visual representation learning. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 9726–9735, 2020. Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr Doll´ ar, and Ross Girshick. Masked au-toencoders are scalable vision learners. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 16000–16009, 2022. Hai Huang, Yann LeCun, and Randall Balestriero. LLM-JEPA: Large language models meet joint embedding predictive architectures. In The Fourteenth International Conference on Learning Representations , 2026. 11 Preprint. Under review. Max Jaderberg, Volodymyr Mnih, Wojciech Marian Czarnecki, Tom Schaul, Joel Z Leibo, David Silver, and Koray Kavukcuoglu. Reinforcement learning with unsupervised auxiliary tasks. In 
+
+International Conference on Learning Representations , 2017. Li Jing, Pascal Vincent, Yann LeCun, and Yuandong Tian. Understanding dimensional collapse in contrastive self-supervised learning. In International Conference on Learning Representations ,2022. Trong Le, Phat Thai, Sang Nguyen, Minh Hua, Ngan Pham, Thang Bui, Tho Quan, and Tuan Bui. Text-JEPA: A joint embedding predictive architecture for the conversion of natural language into first-order logic. In Computational Collective Intelligence , volume 16138 of Lecture Notes in Computer Science , pp. 200–214. Springer, 2026. Yann LeCun. A path towards autonomous machine intelligence. Technical report, Meta AI, 2022. Mike Lewis, Yinhan Liu, Naman Goyal, Marjan Ghazvininejad, Abdelrahman Mohamed, Omer Levy, Veselin Stoyanov, and Luke Zettlemoyer. BART: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension. In Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics , pp. 7871–7880, Online, 2020. Association for Computational Linguistics. Lihuan Li, Hao Xue, Yang Song, and Flora Salim. T-jepa: A joint-embedding predictive architecture for trajectory similarity computation. In Proceedings of the 32nd ACM International Conference on Advances in Geographic Information Systems , SIGSPATIAL ’24, pp. 569–572, New York, NY, USA, 2024. Association for Computing Machinery. ISBN 9798400711077. doi: 10.1145/ 3678717.3691271. URL https://doi.org/10.1145/3678717.3691271 .Nicholas Locascio, Karthik Narasimhan, Eduardo DeLeon, Nate Kushman, and Regina Barzilay. Neural generation of regular expressions from natural language with minimal domain knowledge. In Jian Su, Kevin Duh, and Xavier Carreras (eds.), Proceedings of the 2016 Conference on Empir-ical Methods in Natural Language Processing , pp. 1918–1923, Austin, Texas, November 2016. Association for Computational Linguistics. doi: 10.18653/v1/D16-1197. Andrew L. Maas, Raymond E. Daly, Peter T. Pham, Dan Huang, Andrew Y. Ng, and Christopher Potts. Learning word vectors for sentiment analysis. In Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies , pp. 142–150, Portland, Oregon, USA, June 2011. Association for Computational Linguistics. Lucas Maes, Quentin Le Lidec, Damien Scieur, Yann LeCun, and Randall Balestriero. LeWorld-Model: Stable end-to-end joint-embedding predictive architecture from pixels, 2026. Shentong Mo and Shengbang Tong. Connecting joint-embedding predictive architecture with con-trastive self-supervised learning. In Advances in Neural Information Processing Systems , vol-ume 37, 2024. Niklas Muennighoff, Nouamane Tazi, Loic Magne, and Nils Reimers. MTEB: Massive text em-bedding benchmark. In Andreas Vlachos and Isabelle Augenstein (eds.), Proceedings of the 17th Conference of the European Chapter of the Association for Computational Linguistics , pp. 2014–2037, Dubrovnik, Croatia, May 2023. Association for Computational Linguistics. doi: 10.18653/v1/2023.eacl-main.148. Sangdae Nam. DLLM-JEPA: Joint embedding predictive architectures for masked diffusion lan-guage models. In ICML 2026 Workshop on Structured Probabilistic Inference & Generative Modeling , 2026. Ben Poole, Sherjil Ozair, Aaron van den Oord, Alex Alemi, and George Tucker. On variational bounds of mutual information. In Kamalika Chaudhuri and Ruslan Salakhutdinov (eds.), Pro-ceedings of the 36th International Conference on Machine Learning , volume 97 of Proceedings of Machine Learning Research , pp. 5171–5180. PMLR, 2019. Alec Radford, Jeff Wu, Rewon Child, David Luan, Dario Amodei, and Ilya Sutskever. Language models are unsupervised multitask learners. OpenAI Blog , 1(8):9, 2019. 12 Preprint. Under review. Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, and Peter J. Liu. Exploring the limits of transfer learning with a unified text-to-text transformer. Journal of Machine Learning Research , 21(140):1–67, 2020. C. E. Shannon. Prediction and entropy of printed english. The Bell System Technical Journal , 30 (1):50–64, 1951. Hugo Thimonier, Jos´ e Lucas De Melo Costa, Fabrice Popineau, Arpad Rimmel, and Bich-Liˆ en Doan. T-JEPA: Augmentation-free self-supervised learning for tabular data. In The Thirteenth International Conference on Learning Representations , 2025. Ludovic Tuncay, Etienne Labb´ e, Emmanouil Benetos, and Thomas Pellegrini. Audio-JEPA: Joint-embedding predictive architecture for audio representation learning. In IEEE International Con-ference on Multimedia and Expo , 2025. Aaron van den Oord, Yazhe Li, and Oriol Vinyals. Representation learning with contrastive predic-tive coding, 2018. Khang H. N. Vo, Duc P. T. Nguyen, Thong T. Nguyen, and Tho T. Quan. TI-JEPA: An innova-tive energy-based joint embedding strategy for text-image multimodal systems. In Information and Communication Technology , volume 2350 of Communications in Computer and Information Science , pp. 141–154. Springer, Singapore, 2025. Jure Zbontar, Li Jing, Ishan Misra, Yann LeCun, and St´ ephane Deny. Barlow twins: Self-supervised learning via redundancy reduction. In Proceedings of the 38th International Conference on Ma-chine Learning , volume 139 of Proceedings of Machine Learning Research , pp. 12310–12320. PMLR, 2021. 13 Preprint. Under review. 
+
+# A APPENDIX OVERVIEW 
+
+AppendixContents Page 
+
+A Appendix Overview (this section) 14 B Formal Proofs 14 B.1 Proofs of Argument I: The Predictability Bound 14 B.2 Proofs of Argument II: Representation Collapse 17 B.3 Proofs of Argument III: Bias-Variance Decomposition 19 C Empirical Metrics: Definitions and Rationale 21 D Multi-Seed Robustness Of The Collapse Diagnostics 23 E Argument II’s Supplementary Metric: Pairwise Cosine Similarity 24 F Experimental Details for Section 5.5 25 G Visualization: The Phenomenon of Centroid Degeneration 26 H Visualization: Representation Activation Heatmaps Across Self-Supervised Models 26 I Visualization: Patterns of T-JEPA’s Representation Collapse 28 J Discussion: JEPA on Top of LLMs versus JEPA Directly on Text 28 K Discussion: SIGReg Prevents Collapse But Does Not Resolve Predictability or Centroid Degeneracy 30 L Mathematical Notations used throughout the paper and appendices 31 Table 3: Structure of the appendix. 
+
+# B FORMAL PROOFS 
+
+B.1 PROOFS OF ARGUMENT I: T HE PREDICTABILITY BOUND 
+
+We first formalize the sense in which JEPA requires the masked target representation to be pre-dictable from the visible context. Let 
+
+zC = fθ (xC ) (12) and 
+
+z(j) 
+
+> T
+
+= f¯θ (x)(j) (13) denote the context representation and the target representation at position j. Since the predictor receives only zC and a positional query pj , the JEPA loss can be small only when z(j) 
+
+> T
+
+is nearly determined by (zC , p j ). Equivalently, the conditional uncertainty 
+
+H
+
+
+
+z(j) 
+
+> T
+
+| zC , p j
+
+
+
+(14) must be small relative to the target uncertainty at that position. By the chain rule of mutual informa-tion, 
+
+I
+
+
+
+zC ; z(j) 
+
+> T
+
+| pj
+
+
+
+= H
+
+
+
+z(j) 
+
+> T
+
+| pj
+
+
+
+− H
+
+
+
+z(j) 
+
+> T
+
+| zC , p j
+
+
+
+. (15) Thus, useful deterministic latent prediction requires the context representation to remove a substan-tial fraction of the target uncertainty. 
+
+Lemma B.1 (Data-processing ceiling) . For deterministic encoders fθ and f¯θ ,
+
+I
+
+
+
+zC ; z(j)
+
+> T
+
+
+
+≤ I(xC ; x) . (16) 
+
+If the target representation at position j is local, in the sense that z(j) 
+
+> T
+
+is a deterministic function of 
+
+x(j), then 
+
+I
+
+
+
+zC ; z(j)
+
+> T
+
+
+
+≤ I
+
+
+
+xC ; x(j)
+
+. (17) 
+
+Proof. Because zC = fθ (xC ) is a deterministic function of xC and z(j) 
+
+> T
+
+= f¯θ (x)(j) is a deter-ministic function of the full input x, the pair (zC , z (j) 
+
+> T
+
+) is obtained from (xC , x ) by deterministic 14 Preprint. Under review. post-processing. The Data Processing Inequality therefore gives Eq. 16: deterministic encoders cannot increase the mutual information available between the raw context and the raw input. Under the additional locality assumption, there exists a deterministic map h¯θ,j such that 
+
+z(j) 
+
+> T
+
+= h¯θ,j 
+
+
+
+x(j)
+
+. (18) Hence zC is a deterministic function of xC , while z(j) 
+
+> T
+
+is a deterministic function of x(j). Applying the Data Processing Inequality to these two post-processings gives 
+
+I
+
+
+
+fθ (xC ); h¯θ,j (x(j))
+
+
+
+≤ I
+
+
+
+xC ; x(j)
+
+, (19) which is Eq. 17. 
+
+Remark B.2 . Lemma B.1 gives an information ceiling, not a collapse result. It says that the la-tent representations cannot contain more predictive information than is already present in the raw context-target relationship. The image-text difference therefore cannot be resolved by encoder ca-pacity alone: it depends on how strongly the visible context constrains the missing target. B.1.1 IMAGES : LOCAL GEOMETRY NARROWS THE TARGET 
+
+Natural images exhibit local spatial regularity: nearby pixels and patches tend to be correlated, and neighboring patches often belong to the same object, boundary, or texture region (Feige, 2015). We use this regularity to formalize the sense in which visible image context can geometrically restrict a masked target. 
+
+Proposition B.3 (Spatial concentration for images) . Let x be a natural image divided into patches on a two-dimensional grid, and let d(i, j ) denote the distance between patch centers. Assume that the image distribution has bounded local variation and that the target representation is locally Lipschitz with respect to patch-level perturbations on the data manifold. Then there exists a constant L > 0
+
+such that, for nearby patches i and j,
+
+E
+
+
+
+f¯θ (x)(j) − f¯θ (x)(i) 22
+
+
+
+≤ L2d(i, j )2. (20) 
+
+Proof. Bounded local variation means that nearby image patches have bounded expected discrep-ancy: 
+
+E
+
+
+
+x(j) − x(i) 22
+
+
+
+≤ G2d(i, j )2 (21) for some constant G > 0. By local Lipschitzness of the target representation on the data manifold, there exists Lf > 0 such that 
+
+f¯θ (x)(j) − f¯θ (x)(i)
+
+> 2
+
+≤ Lf x(j) − x(i)
+
+> 2
+
+. (22) Squaring both sides, taking expectation, and setting L = Lf G gives Eq. 20. 
+
+Remark B.4 . Proposition B.3 does not claim that images are deterministic or that every masked patch has a unique completion. It states that local visual context restricts the range of plausible target representations. When visible patches lie near the masked region, the conditional distribution of z(j) 
+
+> T
+
+given (zC , p j ) is expected to be concentrated up to residual texture-level uncertainty. This is the regime in which squared-error latent prediction is well aligned with the data. B.1.2 TEXT : LEXICAL ALTERNATIVES DISPERSE THE TARGET 
+
+For text, the target unit x(j) is a discrete token from a vocabulary V. Even when the surrounding context is informative, several continuations may remain valid. This creates a prediction geometry different from images: uncertainty is not merely local noise around one value, but a set of plausible lexical alternatives. 15 Preprint. Under review. 
+
+Empirical lexical uncertainty. For a masked token x(j) and context xC , the conditional uncer-tainty is 
+
+H
+
+
+
+x(j) | xC
+
+
+
+= − X
+
+> v∈V
+
+p(v | xC ) log 2 p(v | xC ). (23) A conditional perplexity of 8-32 corresponds to 3-5 bits of uncertainty per token, and classical estimates of English entropy support the broader claim that natural language retains uncertainty even under strong contextual constraints (Shannon, 1951). The precise value depends on tokenization, domain, and context length; the important point is that the conditional distribution is often not concentrated on a single continuation. To connect lexical uncertainty to latent-space uncertainty, we require the encoder to preserve dis-tinctions among plausible completions. Without such a condition, an encoder could trivially make the prediction problem easy by mapping distinct tokens to the same vector, which is precisely the collapse mechanism analyzed below. 
+
+Assumption 1 (Target separation) . For a context xC , define the set of plausible continuations 
+
+Vϵ(xC ) = {v ∈ V : p(v | xC ) > ϵ }. (24) The target encoder preserves distinctions among plausible continuations if there exists ∆ > 0 such that, for all distinct u, v ∈ V ϵ(xC ),
+
+f¯θ (xj←u)(j) − f¯θ (xj←v )(j)
+
+> 2
+
+≥ ∆, (25) where xj←v denotes the sequence obtained by placing token v at position j while keeping the context fixed. 
+
+Proposition B.5 (Non-concentration of separated text targets) . Fix a context xC and suppose there exist at least two plausible continuations u, v ∈ V ϵ(xC ) whose target representations satisfy As-sumption 1. Then the conditional latent target distribution cannot have zero variance around a single point. In particular, any deterministic squared-error predictor must either incur nonzero con-ditional variance or rely on an encoder that reduces the separation between plausible continuations. Proof. For a fixed context, the latent target is the random variable induced by 
+
+v ∼ p(· | xC ), z(j) 
+
+> T
+
+= f¯θ (xj←v )(j). (26) If two plausible continuations have non-negligible probability and their target representations are separated by at least ∆, then z(j) 
+
+> T
+
+places mass on at least two separated points. Therefore it cannot be concentrated at a single vector. Its expected squared error around any deterministic prediction is minimized by the conditional mean, 
+
+E
+
+h
+
+z(j) 
+
+> T
+
+| zC , p j
+
+i
+
+, (27) but the residual conditional variance is nonzero whenever separated alternatives retain nonzero mass. The only way for this variance to vanish is for the encoder to map the plausible continuations to the same, or nearly the same, latent vector, which violates the separation condition and removes the distinctions the representation was meant to preserve. 
+
+Consequence I: Predictability Requires Concentration 
+
+For images, local spatial structure restricts the masked target to a low-variance set of plausible representations. For token-level text, the same context can leave several valid lexical alterna-tives. If the encoder preserves these alternatives, the latent target remains non-concentrated; if it removes them, the representation loses distinctions among valid completions. Deter-ministic JEPA prediction on text therefore faces a trade-off between irreducible prediction variance and loss-reducing collapse. 16 Preprint. Under review. B.2 DETAILED PROOFS FOR ARGUMENT II: R EPRESENTATION COLLAPSE 
+
+B.2.1 THE COLLAPSE PROBLEM 
+
+The JEPA objective in Eq. 5 contains no explicit constraint requiring the representation distribution to remain full-rank. Stop-gradient and EMA stabilize the target branch, but they do not by them-selves rule out degenerate representations. The most extreme solution is a constant representation where 
+
+fθ (xC ) = c, f¯θ (x)(j) = c, gϕ(c, p j ) = c, (28) for all contexts xC , inputs x, and target positions j, where c ∈ Rd is fixed. This solution achieves zero JEPA loss while encoding no information about the input. More generally, partial collapse occurs when the encoder maps inputs to a low-dimensional subset of the representation space. 
+
+Definition B.6 (Representation covariance and collapse) . Let z = fθ (xC ), where xC is drawn from the data distribution. The representation covariance is 
+
+Σz = E(z − E[z])( z − E[z]) ⊤ ∈ Rd×d. (29) 
+
+We say that the representation collapses along a direction u ∈ Rd if 
+
+Var( u⊤z) = u⊤Σz u → 0. (30) 
+
+Full collapse corresponds to Σz = 0 . Dimensional collapse corresponds to variance vanishing along one or more directions, equivalently to a loss of effective rank in Σz .
+
+B.2.2 A SUFFICIENT CONDITION FOR NON -COLLAPSE 
+
+Lemma B.7 (Non-collapse via directional spread) . If there exists γ > 0 such that for every unit vector u ∈ Rd,
+
+Var( u⊤z) = u⊤Σz u ≥ γ, (31) 
+
+then λmin (Σ z ) ≥ γ, and the representation is non-collapsed. Proof. By the variational characterization of eigenvalues, 
+
+λmin (Σ z ) = min  
+
+> ∥u∥2=1
+
+u⊤Σz u. 
+
+If Eq. 31 holds for every unit vector u, then this minimum is at least γ. Conversely, if there exists a unit vector u such that Var( u⊤z) = 0 , then u⊤z is constant almost surely, so the representation carries no variation along that direction. The question is therefore whether the prediction objective supplies pressure for directional spread. We argue that local image prediction provides such pressure through content-dependent targets, whereas token-level text admits a collapse route because many distinct continuations can be made equivalent under the latent loss. B.2.3 IMAGES : CONTENT -DEPENDENT PREDICTION DISCOURAGES COLLAPSE 
+
+Natural images contain spatially local structure, but they are not determined by position alone. A patch at a fixed location can contain different objects, textures, colors, and boundaries across images. If the context encoder collapses, the predictor receives no image-dependent information from zC and is left only with the positional query pj . Such a predictor cannot explain content-dependent variation in the target representation. 
+
+Assumption 2 (Non-degenerate visual targets) . For each target position j, the target representation has nonzero variation beyond position: 
+
+E
+
+
+
+z(j) 
+
+> T
+
+− E
+
+h
+
+z(j) 
+
+> T
+
+| pj
+
+i 22
+
+
+
+≥ σ2vis (32) for some σ2vis > 0.17 Preprint. Under review. 
+
+Proposition B.8 (Collapsed image context incurs prediction error) . Suppose Assumption 2 holds. If the context encoder collapses to a constant representation zC = c, then any JEPA predictor incurs loss at least σ2vis :
+
+inf 
+
+> gϕ
+
+E
+
+
+
+gϕ(c, p j ) − z(j)
+
+> T
+> 22
+
+
+
+≥ σ2vis . (33) 
+
+Proof. If zC = c for all inputs, then the predictor can depend only on the positional query pj . Under squared-error loss, the optimal predictor is the conditional mean 
+
+g⋆ϕ(c, p j ) = E
+
+h
+
+z(j) 
+
+> T
+
+| pj
+
+i
+
+. (34) The minimum achievable loss is therefore 
+
+E
+
+
+
+z(j) 
+
+> T
+
+− E
+
+h
+
+z(j) 
+
+> T
+
+| pj
+
+i 22
+
+
+
+, (35) which is at least σ2vis by Assumption 2. 
+
+Remark B.9 . Proposition B.8 does not claim that image JEPA is immune to collapse in all archi-tectures or optimization regimes. It states that, when target features vary with image content, a collapsed context representation cannot match the prediction loss achievable by a content-aware representation. Spatial locality strengthens this anti-collapse pressure: neighboring visible patches reduce uncertainty about the target, so encoding visual content in zC can lower the loss beyond what position alone permits. B.2.4 TEXT : COLLAPSE CAN REDUCE AMBIGUITY 
+
+For token-level text, the failure mode is different. A masked context often admits several valid con-tinuations. If the target encoder preserves these distinctions, the predictor faces a non-concentrated target distribution. If the encoder removes them, the target distribution becomes easier to predict, but the representation loses information. The JEPA loss itself does not prevent this second route. Consider the sentences “The cat sat on the mat.” and “The dog lay on the rug.” They differ lexically, but share a coarse semantic pattern. A representation that preserves lexical identity must separate them; a representation that keeps only coarse semantics may map them nearby or even identically. The problem is not that such invariance is always bad. The problem is that a deterministic squared-error objective has no intrinsic mechanism for deciding which distinctions should be preserved. 
+
+Proposition B.10 (Low-rank text encodings can minimize JEPA loss) . Let π : X → { 1, . . . , K } be a coarse partition of text inputs into equivalence classes, with K < d . Suppose the context encoder factors through this partition, 
+
+fθ (xC ) = eπ(xC ), (36) 
+
+where {e1, . . . , eK } ⊂ Rd. Then the representation covariance of zC = fθ (xC ) has rank at most 
+
+K − 1, and is therefore rank-deficient whenever K < d . Moreover, if the target representation also depends only on the same class and target position, 
+
+f¯θ (x)(j) = tπ(xC ),j , (37) 
+
+then there exists a predictor gϕ that attains zero JEPA loss on this representation. Proof. Since fθ (xC ) takes values only in the finite set {e1, . . . , eK }, the support of zC lies in the affine span of at most K points. Therefore, 
+
+rank(Σ z ) ≤ K − 1. (38) 18 Preprint. Under review. If K < d , the covariance is rank-deficient. Now assume the target representation is determined by the same equivalence class and target posi-tion. Define the predictor on each class by 
+
+gϕ(ek, p j ) = tk,j . (39) Then, for every example, 
+
+gϕ(fθ (xC ), p j ) = f¯θ (x)(j). (40) Hence the JEPA loss is zero, despite the context representation being supported on at most K points. If the factorization holds only approximately, the same construction yields low loss while the repre-sentation remains low-rank. 
+
+Remark B.11 . Proposition B.10 does not claim that semantic compression is always undesirable. Coarse invariance can be useful for many tasks. The issue is that token-level language contains lexical, syntactic, and semantic distinctions that may all matter, while the JEPA loss only rewards predictability of the target vector. When merging alternatives reduces conditional variance, squared-error latent prediction can favor a lower-rank representation even if it discards useful linguistic structure. 
+
+Consequence II: Collapse as a Low-Variance Escape Route 
+
+For images, a collapsed context representation leaves the predictor with position alone and incurs content-prediction error whenever target features vary with visual content. For token-level text, the objective can reduce ambiguity by mapping several valid continuations or con-texts into a lower-dimensional equivalence class. Thus, collapse is not merely an optimization accident: it is a low-variance escape route made available by deterministic latent prediction. B.3 DETAILED PROOFS FOR ARGUMENT III: B IAS –V ARIANCE DECOMPOSITION 
+
+B.3.1 DECOMPOSITION OF THE JEPA LOSS 
+
+For a fixed context representation and target position, write 
+
+zC = fθ (xC ), z∗ = z(j) 
+
+> T
+
+= f¯θ (x)(j). (41) Even after conditioning on (zC , p j ), the target z∗ may remain random because the visible context need not uniquely determine the masked content. Define the conditional mean target 
+
+¯z(j)(zC , p j ) = E[z∗ | zC , p j ] . (42) 
+
+Proposition B.12 (Bias–variance decomposition of JEPA loss) . For any deterministic predictor gϕ,the per-target JEPA loss decomposes as 
+
+E
+
+h
+
+∥gϕ(zC , p j ) − z∗∥22
+
+i
+
+= E
+
+
+
+gϕ(zC , p j ) − ¯z(j)(zC , p j ) 22
+
+
+
++ E
+
+
+
+z∗ − ¯z(j)(zC , p j ) 22
+
+
+
+. (43) 
+
+The first term is reducible approximation error. The second term is the irreducible conditional variance of the target representation. Proof. Add and subtract the conditional mean: 
+
+gϕ(zC , p j ) − z∗ = gϕ(zC , p j ) − ¯z(j)(zC , p j ) + ¯ z(j)(zC , p j ) − z∗. (44) Expanding the squared norm gives two squared-norm terms and a cross-term. Conditioning on 
+
+(zC , p j ), the cross-term vanishes because gϕ(zC , p j ) and ¯z(j)(zC , p j ) are deterministic functions of 
+
+(zC , p j ), while 
+
+E
+
+h
+
+¯z(j)(zC , p j ) − z∗ | zC , p j
+
+i
+
+= 0 . (45) Taking expectation over (zC , p j ) gives Eq. 43. 19 Preprint. Under review. 
+
+Remark B.13 . Eq. 43 is the central reason squared-error latent prediction requires conditional con-centration. The predictor can reduce the first term by approximating the conditional mean, but the second term remains whenever the target distribution is not concentrated around that mean. Thus, a deterministic JEPA objective is well aligned only when the conditional mean is representative of the target distribution. B.3.2 IMAGES : LOCAL CONTEXT YIELDS CONCENTRATED TARGETS 
+
+In local image prediction, visible neighboring patches strongly constrain the missing target. The remaining uncertainty is not zero, but it is often confined to visually compatible texture, color, or boundary details. Thus, the conditional mean remains a meaningful target rather than an average over unrelated alternatives. 
+
+Assumption 3 (Image target concentration) . For natural images under the masking scheme consid-ered, the target representation satisfies 
+
+E
+
+h
+
+Var 
+
+
+
+z(j) 
+
+> T
+
+| zC , p j
+
+i 
+
+≤ σ2img , (46) where σ2img is small relative to the reducible prediction error during the informative phase of training. 
+
+Proposition B.14 (Image JEPA has a useful reducible signal) . Under Assumption 3, the irreducible component of the image JEPA loss is bounded by σ2img . Consequently, whenever 
+
+E
+
+
+
+gϕ(zC , p j ) − ¯z(j)(zC , p j ) 22
+
+
+
+≫ σ2img , (47) 
+
+loss reduction is dominated by the reducible approximation term, so improving the predictor and context representation yields a meaningful training signal. Proof. By Proposition B.12, the JEPA loss decomposes into a reducible approximation term and an irreducible conditional-variance term. Assumption 3 bounds the irreducible term by σ2img . When the approximation term is much larger than this bound, changes that improve gϕ(zC , p j ) as an estimate of ¯z(j)(zC , p j ) dominate changes in the total loss. 
+
+Remark B.15 . Assumption 3 does not require deterministic reconstruction of the masked patch. It only requires that visible context restrict the target representation enough that the conditional mean is representative. Spatial smoothness and local continuity make this plausible for images: nearby visi-ble patches narrow the set of compatible target representations, leaving residual uncertainty mostly in fine texture or detail. B.3.3 TEXT : MULTI -HYPOTHESIS CONDITIONAL TARGETS 
+
+For token-level text, a fixed context can admit several valid continuations. This is not a problem for distributional language modeling: masked or causal language models predict a distribution over the vocabulary, so multiple valid tokens can all receive probability mass. The issue arises for determin-istic latent prediction, where the model must output a single vector under squared-error loss. Let xj←v denote the sequence obtained by inserting token v at position j while keeping the observed context fixed. Define the target representation induced by continuation v as 
+
+hj (v; xC ) = f¯θ (xj←v )(j). (48) Under the conditional token distribution v ∼ p(· | xC ), the latent target is the random variable 
+
+z∗ = hj (v; xC ). (49) 
+
+Proposition B.16 (Conditional variance under multiple valid continuations) . For a fixed context xC ,the irreducible variance of the text target is 
+
+Var( z∗ | zC , p j ) = X
+
+> v∈V
+
+p(v | xC ) hj (v; xC ) − ¯z(j)(zC , p j ) 22
+
+, (50) 
+
+where 
+
+¯z(j)(zC , p j ) = X
+
+> v∈V
+
+p(v | xC )hj (v; xC ) (51) 
+
+is the conditional mean. If the distribution assigns nonzero mass to multiple separated continuations, then this variance is nonzero. 
+
+20 Preprint. Under review. 
+
+Proof. The expression follows from the definition of conditional variance for the random variable 
+
+z∗ = hj (v; xC ) with v ∼ p(· | xC ). If there exist two continuations u and v with p(u | xC ) > 0,
+
+p(v | xC ) > 0, and 
+
+∥hj (u; xC ) − hj (v; xC )∥2 > 0, (52) then the conditional distribution of z∗ is not a point mass. Therefore its variance around the condi-tional mean is strictly positive. A quantitative lower bound follows under a separation condition. 
+
+Assumption 4 (Separated plausible continuations) . For a context xC , suppose there exist m ≥ 2
+
+plausible continuations v1, . . . , v m such that 
+
+p(vi | xC ) ≥ α for all i, (53) and their target representations are pairwise separated: 
+
+∥hj (vi; xC ) − hj (vℓ; xC )∥2 ≥ ∆ for i̸ = ℓ. (54) 
+
+Proposition B.17 (Lower bound from separated alternatives) . Under Assumption 4, 
+
+Var( z∗ | zC , p j ) ≥ α2m(m − 1) 2 ∆2. (55) 
+
+Proof. For any random vector Z with an independent copy Z′,
+
+Var( Z) = 12 E∥Z − Z′∥22
+
+ , (56) where Var( Z) = E∥Z − EZ∥22. Applying this identity to Z = z∗ and restricting the expectation to the ordered pairs (vi, v ℓ) with i̸ = ℓ gives 
+
+Var( z∗ | zC , p j ) ≥ 12
+
+X
+
+> i̸=ℓ
+
+p(vi | xC )p(vℓ | xC )∆ 2. (57) Since each p(vi | xC ) ≥ α, the bound follows. The squared-error optimal predictor is therefore 
+
+g⋆ϕ(zC , p j ) = ¯ z(j)(zC , p j ) = X
+
+> v∈V
+
+p(v | xC )hj (v; xC ). (58) For text, this point is a centroid over plausible continuations. Unless the continuations are already close in representation space, the centroid need not correspond to any actual continuation. This clarifies why language modeling objectives avoid the same failure mode: they preserve uncertainty by predicting a distribution over tokens, whereas deterministic latent MSE prediction compresses that distribution into one conditional mean. Reducing the variance requires either a distributional or mixture-valued predictor, or an encoder that brings distinct continuations closer together. The latter route is precisely the collapse mechanism analyzed in Sec. B.2. 
+
+Consequence III: Centroid Degeneracy 
+
+Squared-error latent prediction learns a conditional mean. This is appropriate when the target distribution is conditionally concentrated, as in local image prediction. For token-level text, plausible continuations can be separated in representation space. The conditional mean then becomes a centroid over alternatives rather than a representation of a single coherent target. Thus, deterministic latent prediction faces a bias–variance trade-off: preserve distinctions and incur irreducible variance, or reduce variance by collapsing the distinctions the representation should encode. 
+
+# C EMPIRICAL METRICS : D EFINITIONS AND RATIONALE 
+
+Each of the three arguments in Sec. 4 is validated by one or more diagnostic metrics tracked through-out training on held-out validation batches. We define each metric precisely below and explain why it constitutes evidence for the corresponding argument. 21 Preprint. Under review. C.1 METRICS FOR ARGUMENT I: M UTUAL INFORMATION PROXY 
+
+InfoNCE MI proxy. Direct estimation of I(zC ; zT ) is intractable in high-dimensional represen-tation spaces. We therefore use the InfoNCE objective as a relative proxy for context–target pre-dictability (Poole et al., 2019; van den Oord et al., 2018). For a batch or queue of N candidate targets, define 
+
+bINCE (zC ; zT ) = log N − L InfoNCE , (59) where 
+
+LInfoNCE = − E
+
+log exp( s(zC , z T )/τ )
+
+> 1
+> N
+
+PNk=1 exp 
+
+
+
+s(zC , z (k) 
+
+> T
+
+)/τ 
+
+ . (60) Here s(·, ·) is the similarity function; in our experiments we use the dot product, s(zC , z T ) = z⊤ 
+
+> C
+
+zT .Negatives z(k) 
+
+> T
+
+are drawn from a MoCo-style queue of size N = 2 ,048 , with temperature τ = 0 .1.The proxy is high when zC can reliably identify its paired target zT among many distractors, and low when the context contains limited information about the target representation. We use it only as a comparative diagnostic across training: a sustained plateau indicates that context–target pre-dictability has saturated. Under our hypothesis, T-JEPA should plateau early because masked text often admits several plausible continuations, whereas I-JEPA should continue improving as spatial context increasingly constrains the masked image target. C.2 METRICS FOR ARGUMENT II: E FFECTIVE RANK AND COSINE SIMILARITY 
+
+Effective rank. Given the representation covariance 
+
+Σz = E(z − E[z])( z − E[z]) ⊤ , (61) let λ1 ≥ λ2 ≥ · · · ≥ λd ≥ 0 be its eigenvalues. We define the effective rank as the exponential of the spectral entropy: 
+
+erank(Σ z ) = exp −
+
+> d
+
+X
+
+> i=1
+
+pi log pi
+
+!
+
+, pi = λi
+
+Pdj=1 λj
+
+. (62) When the spectrum is spread across many directions, erank(Σ z ) is large; when most variance is concentrated in a few directions, it is small. A drop in effective rank is therefore a spectral signature of dimensional collapse, as predicted by Proposition B.10. In the degenerate case where all eigen-values vanish, the representation is constant; in practice, we compute effective rank with standard numerical stabilization. Effective rank is computed from full-sequence context representations every 10 training steps. 
+
+Pairwise cosine similarity. As a complementary geometry-level collapse indicator, we track pair-wise cosine similarities over a random subsample of N = 2 ,048 held-out representations: 
+
+¯s = 2
+
+N (N − 1) 
+
+X
+
+> i<j
+
+z⊤ 
+
+> i
+
+zj
+
+∥zi∥2 ∥zj ∥2
+
+. (63) We also report the 95th percentile s95 and standard deviation σs of the pairwise cosine distribution. Non-collapsed representations occupy multiple directions, so ¯s remains bounded away from 1 and the distribution retains nontrivial spread. Under directional collapse, representations align, driving 
+
+¯s → 1, s95 → 1, and σs → 0. Together, effective rank and cosine statistics distinguish low-dimensional spectral collapse from mere changes in representation scale. Full results are reported in App. E. C.3 METRICS FOR ARGUMENT III: I RREDUCIBLE VARIANCE ESTIMATOR 
+
+Estimating conditional target variance. We estimate the irreducible component in Proposi-tion B.12 by sampling multiple plausible targets for the same context and measuring their dispersion in target-representation space. For each held-out context and target position, let 
+
+z∗ 
+
+> 1
+
+, . . . , z ∗ 
+
+> K
+
+(64) 22 Preprint. Under review. denote K target representations obtained from alternative completions or perturbations that are com-patible with the same visible context. We estimate 
+
+dVar( z∗ | zC , p j ) = 
+
+> K
+
+X
+
+> k=1
+
+wk ∥z∗ 
+
+> k
+
+− ¯z∗∥22 , ¯z∗ =
+
+> K
+
+X
+
+> k=1
+
+wkz∗ 
+
+> k
+
+, (65) where wk = 1 /K for uniformly sampled variants and P 
+
+> k
+
+wk = 1 for importance-weighted com-pletions. We use K = 16 variants per context, average over N = 200 held-out contexts, and log the estimate every 100 training steps on both train and validation splits. 
+
+Images. For images, alternative targets are generated by applying small pixel-space perturbations to the same image while keeping the mask fixed: 
+
+xk = clip( x + εk, −1, 1) , εk ∼ N (0 , σ 2aug I), (66) with σaug = 0 .2, together with sparse sign-flip perturbations. Each perturbed image is passed through the EMA target encoder f¯θ , and the target embeddings at the masked positions are mean-pooled to obtain z∗ 
+
+> k
+
+∈ R1280 . We then apply Eq. 65 with uniform weights. 
+
+Text. For text, alternative targets are sampled from a frozen masked-language-model oracle. Given the visible context xC , the oracle defines a proposal distribution over span completions. We sample 
+
+K = 16 completions whose token probabilities exceed εmin = 0 .001 , fill the masked span to obtain completed sequences xS←sk , and pass each completed sequence through the EMA target encoder: 
+
+z∗ 
+
+> k
+
+= 1
+
+|S|
+
+X
+
+> j∈S
+
+f¯θ (xS←sk )(j). (67) Completions are weighted by their oracle probabilities, 
+
+wk = q(sk | xC )
+
+PKℓ=1 q(sℓ | xC ) , q(sk | xC ) = Y
+
+> j∈S
+
+p(v(j) 
+
+> k
+
+| xC ). (68) We then compute Eq. 65 using these normalized weights. A persistently larger text variance during the stable phase indicates that multiple plausible com-pletions remain separated in target-representation space. A later drop in this variance is not by itself evidence that ambiguity has disappeared; when accompanied by rank degeneration and co-sine collapse, it indicates that the encoder has reduced variance by compressing the representations themselves. 
+
+# D MULTI -S EED ROBUSTNESS OF THE COLLAPSE DIAGNOSTICS 
+
+To verify that the collapse signature reported for T-JEPA under seed 42 in Sec. 5.1 is not an artifact of a single data sample, we repeat T-JEPA-only training with five independent seeds (0–4), each re-sampling its own 100K-sentence subset from C4 (each seed has it’s own 100K sample sentences); no I-JEPA comparison is included in this appendix, as the goal here is solely to check within-model stability of the diagnostics across data draws. All five T-JEPA runs reproduce the same qualitative failure chain observed for seed 42: the MI proxy stays near zero, well below the entropy ceiling, throughout training (Figure 5, left); effective rank stays near-degenerate for the first five epochs, rises sharply and jointly across seeds between epochs 6–9, then collapses back to near 1 by epoch 12–15 (Figure 5, right; Figure 6, right); validation loss shows sharp transient spikes in the same epoch 9–11 window before settling to a low, degenerate value once rank collapses (Figure 6, left); irre-ducible variance declines monotonically with a common late-training contraction coinciding with rank collapse rather than resolved ambiguity (Figure 7); and pairwise cosine similarity stays pinned near 1.0, with only a brief seed-dependent dip around epochs 9–12 (Figure 8). These results confirm that the predictability-saturation-before-collapse ordering established for T-JEPA in the main text is a property of it’s objective itself, not of any particular data draw. 23 Preprint. Under review. 
+
+Figure 5: T-JEPA validation MI proxy (left) and effective rank (right, log scale) across 5 seeds ( 0–4), each independently re-sampling 100K C4 sentences, confirming early predictability saturation is not a sampling artifact. 
+
+Figure 6: T-JEPA validation loss (left) and effective rank (right, both log scale) across 5 seeds ( 0–4), each independently re-sampling 100K C4 sentences, confirming the loss–rank collapse signature is robust to sampling variation. 
+
+Figure 7: Irreducible variance dVar( z∗ | zC , p j ) for T-JEPA (log scale, left; raw scale, right) across 5 seeds ( 0–4), each independently re-sampling 100K C4 sentences, showing the elevated conditional-variance floor is not seed-specific. 
+
+# E SUPPLEMENTARY METRIC FOR ARGUMENT II (S EED 42) 
+
+Cosine similarity. Figure 9 provides a geometry-level confirmation of the rank-collapse diagnos-tics. I-JEPA maintains a broad pairwise-cosine distribution, with substantial dispersion through-out training, indicating that different inputs continue to occupy diverse directions in representation space. T-JEPA behaves differently: after the instability point at step 9,340, its mean pairwise cosine 24 Preprint. Under review. 
+
+Figure 8: Pairwise cosine-similarity statistics for T-JEPA across 5 seeds ( 0–4, each independently re-sampling 100K C4 sentences): mean similarity (left), std/p95 (center), and early-vs-late histogram averaged over seeds (right), confirming directional collapse is robust to sampling variation. 
+
+Figure 9: Pairwise cosine similarity of I-JEPA and T-JEPA representations. Left: mean pairwise cosine similarity over training. T-JEPA rises to ≈1.0 after the instability point at step 9,340, while I-JEPA remains bounded away from 1. Centre: standard deviation and 95th percentile of validation cosine similarities. After collapse, T-JEPA has vanishing dispersion and near-unit upper quantiles. Right: late-training histogram of pairwise cosine similarities. T-JEPA concentrates at 1.0, indicating directional collapse, while I-JEPA maintains a broad distribution. similarity approaches 1, its dispersion vanishes, and its late-training histogram concentrates at the right edge. Thus, the drop in effective rank is not merely a change in representation scale; held-out inputs are mapped to nearly the same direction in latent space. 
+
+# F EXPERIMENTAL DETAILS FOR SECTION 5.5 
+
+Dataset and benchmarks. All models are pretrained on 3M English C4 sentences with maximum sequence length 256, using the bert-base-uncased tokenizer. After pretraining, encoders are frozen and evaluated as fixed feature extractors. We report classification performance on IMDB and SNLI using accuracy and F1, and retrieval performance on MTEB/FEVER and MTEB/MSMARCO using nDCG@10 and Recall@100. Mean ± std are reported over 5 independent runs. 
+
+Baselines and corruptions. We compare T-JEPA against BERT, VICReg, Barlow Twins, and BYOL. BERT is trained with standard masked language modeling. The two-view SSL baselines are trained under two text corruption schemes. In the Mask setting ( M), both views are independently corrupted by random non-overlapping span masks covering 15–20% of tokens, with span lengths between 1 and 5. In the Replace setting ( R), the first view is the original sentence and the sec-ond replaces 15–20% of tokens using a pretrained bert-base-uncased proposal model, with replacements constrained to differ from the original tokens. T-JEPA uses random span masking with 1–5 non-overlapping spans per sentence, span lengths between 1 and 5, and the same 15–20% masking budget. 
+
+Optimization. All downstream-comparison models are trained for 10 epochs with AdamW, initial learning rate 10 −4, and weight decay 10 −2. We use 100 warmup steps followed by linear learning-25 Preprint. Under review. 
+
+Figure 10: t-SNE visualization of representation geometry for BERT and T-JEPA. Left: sentence-level embeddings from the raw pretrained last hidden state, computed over 10K held-out C4 sen-tences. Middle: token-level embeddings for a single representative sentence, with sequential tokens connected by edges. Right: sentence embeddings after fine-tuning on SNLI, colored by label (en-tailment / neutral / contradiction). rate decay to zero. VICReg uses loss weights λ = 25 , μ = 25 , and ν = 1 ; Barlow Twins uses redundancy-reduction coefficient λ = 0 .005 ; BYOL uses EMA target momentum τbase = 0 .996 
+
+annealed to 1 with cosine scheduling and its standard predictor architecture. T-JEPA uses EMA momentum τ = 0 .9996 .
+
+Relation to the diagnostic setup. The downstream protocol in Sec. 5.5 and the diagnostic pro-tocol in Sec. 5.1 serve different purposes and should not be read as competing configurations. The downstream comparison is deliberately standardized : T-JEPA and every baseline share the same training budget, warmup length, and optimizer schedule, so no method is given a configuration ad-vantage. The diagnostic setup instead uses a longer, 15-epoch warmup for a different reason: not to induce a failure that would otherwise not occur, but to slow down its onset enough that the internal sequence of events – MI saturation, elevated conditional variance, rank degeneration, and cosine collapse – can be resolved as distinct, separately measurable stages rather than a single abrupt event. Critically, T-JEPA does not avoid collapse under the shorter, standardized schedule used in Sec. 5.5; if anything, it collapses faster there, compressing the same five-stage sequence into a window too narrow to dissect on its own (Table 2). The two setups therefore probe the same underlying failure at two different temporal resolutions: the standardized schedule confirms that the failure occurs un-der realistic, no-advantage training conditions, while the extended-warmup schedule is a diagnostic instrument used to slow the failure down enough to explain why it happens. The longer warmup is a measurement choice, not a cause of the collapse. 
+
+# G VISUALIZATION : T HE PHENOMENON OF CENTROID DEGENERATION 
+
+Figure 10 gives a qualitative counterpart to the quantitative collapse diagnostics of Sec. 5.2–5.4. On raw pretrained C4 sentences (left), BERT embeddings spread broadly and continuously across the t-SNE plane, whereas T-JEPA embeddings collapse into a handful of tight, well-isolated clusters – a low-rank, centroid-like geometry consistent with Prop. B.10. The same degeneration is visible at the token level (middle): BERT places tokens at distinct, semantically organized positions, while T-JEPA compresses all tokens of the same sentence into a band spanning a t-SNE range of ∼0.003, indicating near-total loss of token-level distinctions even before any downstream adaptation. Fine-tuning on SNLI (right) does not undo this geometry: BERT’s embeddings reorganize into class-conditional regions that separate entailment, neutral, and contradiction examples, whereas T-JEPA’s embeddings remain confined to a narrow, ring-like manifold with all three classes fully intermixed. This shows that the representational collapse identified during pretraining is not corrected by fine-tuning, and directly explains T-JEPA’s chance-level SNLI performance in Table 2. 
+
+# H VISUALIZATION : R EPRESENTATION ACTIVATION HEATMAPS 
+
+Figures 11 and 12 visualize last hidden-state activations of each context encoder on the same held-out sentence. These plots are intended as qualitative diagnostics of representation geometry, com-plementing the quantitative rank and cosine-similarity metrics in Sec. 4.2 and App. E. 26 Preprint. Under review. 
+
+Figure 11: 3D activation surfaces across self-supervised text encoders. Each surface shows last hidden-state activations for a held-out sentence, with token index on one axis and sampled hidden dimensions on the other. BERT exhibits strong token-wise and dimension-wise variation. VICReg, Barlow Twins, and BYOL retain visible activation structure, with variation across both tokens and dimensions. T-JEPA produces a nearly flat, low-amplitude surface, consistent with the collapse diagnostics in App. B.2. 
+
+Figure 12: Activation heatmaps across self-supervised text encoders. Each heatmap shows last hidden-state activations as a token-by-dimension matrix for the same held-out sentence. BERT and the non-JEPA SSL baselines retain structured variation across tokens and dimensions, whereas T-JEPA is nearly uniform and low-amplitude, matching the effective-rank and cosine-collapse results. 
+
+Qualitative structure. A non-degenerate token representation should vary across tokens and use multiple hidden dimensions. BERT shows the strongest activation structure, with clear token-dependent patterns and substantial variation across dimensions. VICReg, Barlow Twins, and BYOL retain moderate structure, suggesting that their objectives preserve some token-level and dimension-level diversity under the same evaluation protocol. 
+
+T-JEPA collapse. T-JEPA is qualitatively different: its activations are nearly uniform and low-amplitude across both tokens and hidden dimensions. This visual pattern is consistent with the quantitative collapse signatures reported earlier: low effective rank, cosine-similarity saturation, and poor downstream transfer. The heatmaps therefore provide an intuitive view of the same failure mode: T-JEPA does not merely learn weaker features, but compresses the representation geometry itself. 27 Preprint. Under review. 
+
+Figure 13: Per-step representation heatmaps of the T-JEPA context encoder’s last hidden state for the sentence “I enjoy researching natural language processing, information theory, and representations in the fields of machine learning and deep learning” at steps 0, 9,340 , 15 ,000 , 18 ,000 , 19 ,000 , and 
+
+21 ,080 . Rows denote tokens and columns denote hidden dimensions. 
+
+# I VISUALIZATION : T-JEPA C OLLAPSE DYNAMICS 
+
+Figure 13 visualizes the last hidden-state activations of the T-JEPA context encoder at several train-ing steps for the same held-out sentence. Rows correspond to tokens and columns to hidden dimen-sions. 
+
+Token-wise and dimensional compression. The heatmaps show two qualitative trends. First, token-specific variation is weak throughout training: different tokens share similar activation pat-terns, with only coarse dimension-wise structure visible. Second, training progressively compresses the activation landscape. The overall activation magnitude shrinks over time, and the remaining vari-ation becomes concentrated in a small subset of hidden dimensions while most dimensions flatten. This pattern complements the quantitative diagnostics in Sec. 4.2 and App. E. Effective-rank de-generation shows that the covariance spectrum loses dimensions; cosine-similarity saturation shows that different inputs align in representation space; the heatmaps provide a token-level view of the same process. T-JEPA does not merely produce lower-amplitude features. It progressively reduces both token-wise diversity and dimensional usage, consistent with the low-rank collapse predicted by Proposition B.10. 
+
+Why EMA is insufficient. The visualization also clarifies why stop-gradient and EMA do not by themselves prevent this failure mode. EMA stabilizes the target branch by making it track the context encoder slowly, but it does not impose a constraint on the variance or covariance of the representation distribution. If both branches drift toward low-rank activations, the target remains stable while still becoming less informative. Avoiding this failure requires an additional mechanism that preserves variance across examples or dimensions, such as contrastive separation, redundancy reduction, or explicit variance regularization. 
+
+# J COMPARISON WITH JEPA-A UGMENTED LANGUAGE MODELS 
+
+Our analysis shows that a deterministic, squared-error latent prediction objective is mismatched to token-level text: it collapses ambiguous completions into a centroid corresponding to no real token. This might seem to conflict with two recent systems, LLM-JEPA and DLLM-JEPA (Huang et al., 28 Preprint. Under review. Table 4: Comparison of the three text-oriented JEPA studies. T-JEPA is the direct standalone base-line: JEPA applied to text with the same backbone and recipe as I-JEPA, with no auxiliary generative loss. Property T-JEPA (Our) LLM-JEPA DLLM-JEPA Encoder (BERT-style) backbone ✓ × ×
+
+Autoregressive decoder backbone × ✓ ×
+
+Masked diffusion LM backbone × × ✓
+
+JEPA is sole training objective ✓ × ×
+
+JEPA is auxiliary to a generative loss × ✓ ✓
+
+Views from masking a single input ✓ × ✓
+
+Requires external paired dataset × ✓ ×
+
+EMA target encoder + stop-gradient ✓ × ✓
+
+Generative loss resolves token ambiguity × ✓ ✓
+
+Downstream performance improves × ✓ ✓
+
+2026; Nam, 2026), which report gains from adding a JEPA-style loss to language model training. The conflict is only apparent: in both systems the JEPA term never trains alone, and the reported ablations that remove or weaken the generative objective are themselves evidence for our thesis. 
+
+LLM-JEPA cannot drop the language-modelling loss. Huang et al. (2026) sweep the generative-loss weight γ down to zero on NL-RX-SYNTH (Locascio et al., 2016) while holding the JEPA weight λ = 1 : at γ = 0 (JEPA loss alone) accuracy is 0.00% , rising monotonically with γ
+
+to 70 .42% at γ = 1 .0 versus 57 .29% for cross-entropy-only. The authors also report that minimizing 
+
+LLLM alone does not implicitly minimize the JEPA loss. This matches our theory: the generative loss keeps the representation informative about token identity, while JEPA adds structure on top. It also matches what LLM-JEPA’s “views” are: Text and Code are fully-specified sequences, not a masked span with several live completions, so the token-level ambiguity of Proposition B.5 is absorbed by LLLM before JEPA ever touches the representation. 
+
+DLLM-JEPA cannot drop the diffusion loss or its asymmetric views. DLLM-JEPA’s gener-ative term Ldiff is itself a masked, distributional objective, structurally akin to masked language modelling, and is never removed in any reported configuration; Nam (2026) instead ablate only the JEPA side. On LLaDA-8B GSM8K (Cobbe et al., 2021), the diffusion-only baseline reaches 
+
+39 .5% /42 .6% (0-/4-shot). Removing the asymmetric JEPA view construction drops this slightly to 38 .9% /42 .5% ; keeping asymmetric views but replacing the predictor with identity yields only 
+
+43 .2% /44 .4% ; the full method reaches 44 .9% /61 .3% . Ldiff is never weakened in this ablation — it is the JEPA-side components that prove individually insufficient. Consistently, the paper’s own diagnostics show the pooled JEPA embeddings’ effective rank and cosine diversity are essentially unchanged from the pre-trained base, since Ldiff already resolves ambiguity on its own. 
+
+T-JEPA is the missing “JEPA-only” cell. T-JEPA (Section 5) is the natural counterfactual: a pure latent-prediction loss over masked spans with no distributional term, trained under the same recipe as I-JEPA. It exhibits the full failure chain, falling to chance-level classification and zero retrieval — effectively the γ = 0 cell that Huang et al. (2026) show collapses to empty output, and the “no diffusion loss” cell that Nam (2026) never actually train. 
+
+A general pattern, not one specific to JEPA. An auxiliary latent-prediction loss helps once a pri-mary objective already supplies task-relevant structure, but fails, or is never tried, on its own — a pat-tern also seen in multi-task learning (Caruana, 1997) and in auxiliary losses added to reinforcement-learning rewards (Jaderberg et al., 2017). LLM-JEPA and DLLM-JEPA fit the same template: the generative loss resolves ambiguity and keeps condition (P) satisfied, and JEPA then adds structure on top of an already well-formed representation. Table 4 summarizes this: the two properties that correlate with downstream success — a distributional generative anchor and a non-standalone JEPA objective — are exactly what T-JEPA lacks. 29 Preprint. Under review. 
+
+# K DISCUSSION : SIGR EG PREVENTS COLLAPSE BUT DOES NOT RESOLVE 
+
+# PREDICTABILITY OR CENTROID DEGENERACY 
+
+SIGReg (Balestriero & LeCun, 2025) is a distribution-matching regularizer that penalizes devia-tion of the pooled representation distribution from an isotropic Gaussian, proposed as a principled, heuristic-free alternative to stop-gradient asymmetry or explicit negatives for preventing collapse. We show it resolves Argument II but not Arguments I or III, because it constrains a marginal statis-tic while both remaining arguments are properties of the conditional target distribution given a single context. 
+
+SIGReg resolves Argument II. If the SIGReg penalty is minimized, Σz ≈ σ2Id for some σ2 >
+
+0, so u⊤Σz u ≈ σ2 for every unit vector u and Lemma B.7 gives λmin (Σ z ) > 0: the low-rank equivalence-class solution of Prop. B.10 is ruled out. 
+
+A marginal constraint cannot certify a conditional property. Let μ(xC ) = E[z(j) 
+
+> T
+
+| xC ]. By the law of total variance, 
+
+Σz = ExC
+
+h
+
+Cov( z(j) 
+
+> T
+
+| xC )
+
+i| {z }
+
+> irreducible (Arg. III)
+
++ Cov xC (μ(xC )) 
+
+| {z }
+
+> context signal (Arg. I)
+
+. (69) SIGReg constrains only the sum. It has no mechanism that separately bounds either term, so satis-fying it is compatible with any split between them. 
+
+Proposition K.1 (Isotropic marginal, vanishing context signal) . Let z(j) 
+
+> T
+
+= zsig (xC ) + znui with 
+
+znui ∼ N (0 , σ 2Id) independent of xC and ∥zsig (xC )∥2 ≤ ϵ a.s. Then Σz → σ2Id as ϵ → 0
+
+(SIGReg penalty vanishes), while I(zC ; z(j) 
+
+> T
+
+) → 0.Proof. As ϵ → 0, the between-context term in Eq. 69 vanishes while the within-context term sat-urates at σ2Id, so z(j) 
+
+> T
+
+becomes independent of xC and I(xC ; z(j) 
+
+> T
+
+) → 0; Lemma B.1 then gives 
+
+I(zC ; z(j) 
+
+> T
+
+) → 0.This is exactly the failure the MI proxy of Sec. C.1 is designed to catch, and SIGReg supplies no defense against it: Argument I remains open. 
+
+Argument III is also untouched. Even granting nonzero context signal, the within-context term of Eq. 69 is exactly the quantity Prop. B.17 bounds below under Assumption 4, and SIGReg places no constraint on it. The optimal predictor is still the centroid of Eq. 58: SIGReg forbids resolving this term by merging continuations together, but supplies no alternative mechanism for representing them as anything other than an averaged point. 
+
+Consequence IV: Non-Collapse Is Necessary; Not Sufficient 
+
+SIGReg guarantees λmin (Σ z ) > 0, closing the collapse route of Prop. B.10. It gives no corresponding guarantee for predictability or centroid degeneracy: an encoder can satisfy SIGReg exactly while remaining unpredictable from context (Prop. K.1) and while its Bayes-optimal predictor still collapses distinct continuations onto a single non-existent centroid (Prop. B.17). Non-collapse is necessary but, on text, not sufficient. 
+
+Future work. We predict that T-JEPA trained with an added SIGReg penalty would keep effective rank and cosine similarity healthy throughout training, yet still show early MI-proxy saturation, elevated irreducible variance, and downstream transfer well below BERT, i.e. a representation that passes geometric collapse tests without becoming predictable or semantically faithful. Testing this with the full five-metric protocol of Sec. 5 is a natural next step. 30 Preprint. Under review. 
+
+# L MATHEMATICAL NOTATION 
+
+Symbol Description Symbol Description 
+
+Architecture and encoders 
+
+fθ Context encoder; zC = fθ (xC ) f¯θ EMA target encoder 
+
+gϕ Predictor; (zC , p j ) 7 → ˆz(j) 
+
+> T
+
+pj Positional query for target position 
+
+jτ EMA momentum; ¯θ ← τ ¯θ + (1 −
+
+τ )θd Latent representation dimension 
+
+sg( ·) Stop-gradient operator θ, ¯θ, ϕ Context, target, and predictor pa-rameters 
+
+Data and masking 
+
+x Full unmasked input xC Masked context view 
+
+x(j) Unit at position j; patch or token C, T Context and target index sets 
+
+N Number of input units or con-trastive candidates 
+
+V Token vocabulary 
+
+X Input space d(i, j ) Distance between image patch centers 
+
+S Masked text span xj←v Sequence with token v placed at position jxS←s Sequence with span completion s
+
+placed in S
+
+Vϵ(xC ) Plausible token set given context 
+
+xC
+
+Representations and objectives 
+
+zC Context representation z(j) 
+
+> T
+
+Target representation at position jz∗ Target random variable ¯z(j)(zC , p j ) Conditional mean target 
+
+LJEPA JEPA squared-error objective LInfoNCE InfoNCE contrastive loss 
+
+hj (v; xC ) Target representation induced by token vhS (s; xC ) Target representation induced by span completion s
+
+Information-theoretic quantities 
+
+H(X) Shannon entropy H(X | Y ) Conditional entropy 
+
+I(X; Y ) Mutual information bINCE (zC ; zT ) InfoNCE predictability proxy 
+
+Collapse and spectral quantities 
+
+Σz Representation covariance matrix λi Eigenvalue of Σz
+
+erank(Σ z ) Effective rank of Σz ∆ Minimum separation between plausible targets 
+
+¯s Mean pairwise cosine similarity s95 , σ s 95th percentile and standard devia-tion of cosine similarity 
+
+Variance quantities 
+
+Var( z∗ | zC , p j ) Irreducible conditional target vari-ance 
+
+σ2img Bound on image conditional target variance 
+
+σ2vis Nonzero visual target variation be-yond position 
+
+dVar( z∗ | zC , p j ) Empirical target-variance estimate 
+
+K Number of sampled variants or completions 
+
+wk Importance weight for sampled completion k
+
+General notation 
+
+Rd d-dimensional Euclidean space E[·] Expectation 
+
+N (0 , σ 2I) Isotropic Gaussian distribution [N ] Index set {1, . . . , N }
+
+Table 5: Notation used throughout the paper and appendices. 31
