@@ -1,0 +1,170 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-30T20:37:01.114154+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 2,
+    "deep_cap": 6,
+    "deep_selected": 2,
+    "quick_candidates": 2,
+    "quick_skim_target": 11,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2607.26315v1",
+      "source": "arxiv",
+      "title": "MoMo: Dial Motion Mode in Robot Manipulation with Spatiotemporal Action Tokenization",
+      "abstract": "To operate effectively across diverse contexts, robots must not only perform manipulation tasks accurately but also adapt how their actions unfold to the task, object, and interaction setting. We ask whether this execution-level variation can be learned as a reusable behavioral factor shared across tasks. We present \\textbf{MoMo}, a two-stage imitation-learning framework consisting of a spatiotemporal action tokenizer and a behavior-cloning transformer that takes task and a continuous motion-mode condition as inputs. Across six real-robot manipulation tasks, varying this condition produces steady, dynamic, and intermediate behaviors that human raters can distinguish and that differ in joint speed, acceleration, and end-effector approach pitch. On tasks demonstrated in only one mode, MoMo transfers the unseen requested mode while largely preserving task success. Together, these results provide evidence of compositional generalization to unseen task--mode combinations and show that motion mode can be reused across tasks to control how a manipulation skill is performed.",
+      "authors": [
+        "Yuhan Hu",
+        "Hugues Thomas",
+        "Peide Huang",
+        "Mouli Sivapurapu",
+        "Benoit Landry",
+        "Arto Kivila"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-28T22:25:10+00:00",
+      "link": "https://arxiv.org/pdf/2607.26315v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "imitation-learning framework with spatiotemporal action tokenizer and behavior-cloning transformer",
+      "llm_evidence_cn": "包含时空动作分词器和行为克隆变压器的模仿学习框架",
+      "llm_evidence": "包含时空动作分词器和行为克隆变压器的模仿学习框架",
+      "canonical_evidence": "包含时空动作分词器和行为克隆变压器的模仿学习框架",
+      "llm_tldr_en": "MoMo presents a two-stage imitation-learning framework that tokenizes spatiotemporal actions and uses a behavior-cloning transformer conditioned on a continuous motion-mode factor, enabling diverse manipulation behaviors from a single model.",
+      "llm_tldr_cn": "该文提出MoMo框架，通过第一步的时空动作分词器将连续动作离散化为令牌，再以行为克隆变压器结合任务与运动模式条件进行策略学习，在六个真实机器人操作任务上展示了平稳、动态等不同行为模式，且人类评估者能清晰区分，为机器人操作中的行为多样性学习提供了新思路。",
+      "llm_tldr": "该文提出MoMo框架，通过第一步的时空动作分词器将连续动作离散化为令牌，再以行为克隆变压器结合任务与运动模式条件进行策略学习，在六个真实机器人操作任务上展示了平稳、动态等不同行为模式，且人类评估者能清晰区分，为机器人操作中的行为多样性学习提供了新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.26460v1",
+      "source": "arxiv",
+      "title": "RLMM-Flow: A Flow-based Mobile Manipulation Framework with Latent-Space Reinforcement Learning",
+      "abstract": "Mobile manipulation requires generating whole-body action chunks that jointly satisfy goal reaching, collision avoidance, base kinematic constraints, manipulator joint limits, and trajectory smoothness. Flow-based generative policies provide an efficient paradigm for learning multimodal and temporally consistent motion priors from expert demonstrations, but imitation-only training cannot improve policy quality beyond the demonstration distribution. We propose RLMM-Flow, a flow-based mobile manipulation framework that combines expert flow-policy pretraining with latent-space reinforcement learning post-training. The framework first learns a flow policy that captures a multimodal whole-body motion prior from expert demonstrations. The pretrained flow policy is then frozen, while a latent steering network steers its initial noise toward higher-value action chunks. To stabilize high-dimensional latent optimization, we warm up an action-space critic before jointly training the latent critic and latent actor, and introduce coarse-to-fine latent steering that progressively expands control from a horizon-shared latent representation to a full-dimensional residual representation. Experiments on mobile manipulation motion-planning benchmarks show that RLMM-Flow substantially improves task success, collision avoidance, and trajectory quality over imitation-only flow policies and existing reinforcement learning post-training baselines, while preserving fast flow-based inference.",
+      "authors": [
+        "Shuhang Wang",
+        "Ziming Li",
+        "Hui Cheng"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-29T04:22:46+00:00",
+      "link": "https://arxiv.org/pdf/2607.26460v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "flow-based imitation learning with expert demonstrations",
+      "llm_evidence_cn": "基于流的模仿学习利用专家演示",
+      "llm_evidence": "基于流的模仿学习利用专家演示",
+      "canonical_evidence": "基于流的模仿学习利用专家演示",
+      "llm_tldr_en": "Proposes RLMM-Flow combining flow policy pretrained on expert demos with latent-space RL to improve beyond the demonstration distribution.",
+      "llm_tldr_cn": "针对仅靠模仿学习无法超越演示分布限制的问题，提出RLMM-Flow，先利用专家演示学习流策略作为多模态全身运动先验，再通过潜空间强化学习进一步优化策略质量，在移动操作任务上证明结合两者优于单独模仿或强化学习。",
+      "llm_tldr": "针对仅靠模仿学习无法超越演示分布限制的问题，提出RLMM-Flow，先利用专家演示学习流策略作为多模态全身运动先验，再通过潜空间强化学习进一步优化策略质量，在移动操作任务上证明结合两者优于单独模仿或强化学习。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.26579v1",
+      "source": "arxiv",
+      "title": "ContactFlow: A video action conditioning that transfers across embodiments",
+      "abstract": "World models offer a promising route toward robot planning by enabling agents to imagine and verify the consequences of actions before execution. However, current video-based world models often struggle to capture the physical constraints that govern manipulation, particularly contact. Further, their action conditioning is often constrained to specific embodiments such as parallel grippers. We propose \\emph{Contact Flow}, an embodiment-agnostic action representation that encodes manipulation through the trajectory of 3D contact points between an actor and a target object. By discarding actor-specific appearance and kinematics, Contact Flow provides a shared conditioning signal for both human demonstrations and robotic execution. Therefore, we can train a large-scale video generative model on both human and robotic object interaction videos conditioned on Contact Flow, yielding a world model that predicts physically plausible manipulation outcomes. We integrate this model into a propose-imagine-verify-act pipeline, where generated rollouts are assessed by a vision-language model before execution. Experiments on the DROID dataset and real-world tabletop manipulation tasks demonstrate that Contact Flow enables transfer between human demonstrations and different robotic embodiments.",
+      "authors": [
+        "Sami Azirar",
+        "Enrico Pallotta",
+        "Jan Nogga",
+        "Jürgen Gall",
+        "Sven Behnke",
+        "Hermann Blum"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-29T07:59:47+00:00",
+      "link": "https://arxiv.org/pdf/2607.26579v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "embodiment-agnostic action representation for robot learning from human demonstrations",
+      "llm_evidence_cn": "跨实体的动作表征用于机器人从人类演示中学习",
+      "llm_evidence": "跨实体的动作表征用于机器人从人类演示中学习",
+      "canonical_evidence": "跨实体的动作表征用于机器人从人类演示中学习",
+      "llm_tldr_en": "ContactFlow introduces an embodiment-agnostic action representation via 3D contact point trajectories, enabling shared conditioning for human demos and robot execution.",
+      "llm_tldr_cn": "现有视频世界模型难以捕捉操纵中的物理约束，且动作条件受限于特定实体（如平行夹爪）。ContactFlow通过3D接触点轨迹定义与实体无关的动作表征，丢弃执行器外观和运动学，实现人类演示与机器人执行的共享条件信号。该方法为从观察中学习机器人技能提供了新思路。",
+      "llm_tldr": "现有视频世界模型难以捕捉操纵中的物理约束，且动作条件受限于特定实体（如平行夹爪）。ContactFlow通过3D接触点轨迹定义与实体无关的动作表征，丢弃执行器外观和运动学，实现人类演示与机器人执行的共享条件信号。该方法为从观察中学习机器人技能提供了新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.26903v1",
+      "source": "arxiv",
+      "title": "From Passive Video to Editable Experience: Physically Grounded Experience Synthesis for Embodied Intelligence",
+      "abstract": "The key bottleneck in embodied AI is not model architecture but data. Although billions of human manipulation videos exist online, robots cannot directly learn from them due to the embodiment gap between human morphology and robot hardware. We introduce Pegasus, a low-resource framework that bridges this gap by translating human demonstrations into robot-learnable data through structured knowledge transfer. Instead of relying on raw video prompts, Pegasus constructs a graph-based intermediate representation: a Task Graph extracted from human videos is transformed through Affordance and Constraint Graphs into a Robot Planning Graph for robot-conditioned video generation. A hierarchical affordance latent space models the relationship between object states, affordances, and tasks, enabling generalization beyond object identities. A closed-loop physics verifier further filters invalid generations using kinematic feasibility, collision constraints, and joint limits. We evaluate Pegasus across a range of egocentric manipulation benchmarks, including GTEA Gaze+ and EPIC-KITCHENS-100, and diverse robot embodiments, assessing Task Correctness, Executability, State Consistency, and Learnability. Results demonstrate reliable cross-embodiment translation and show that robot data generation can be reframed from a hardware collection problem into a scalable, low-resource knowledge transfer problem.",
+      "authors": [
+        "Jia Luo"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.RO"
+      ],
+      "published": "2026-07-29T13:35:23+00:00",
+      "link": "https://arxiv.org/pdf/2607.26903v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "bridges human demonstrations to robot learning via structured knowledge transfer",
+      "llm_evidence_cn": "通过结构化知识迁移桥接人类演示与机器人学习",
+      "llm_evidence": "通过结构化知识迁移桥接人类演示与机器人学习",
+      "canonical_evidence": "通过结构化知识迁移桥接人类演示与机器人学习",
+      "llm_tldr_en": "Pegasus translates human manipulation videos into robot-learnable data via graph-based structured knowledge transfer, bridging the embodiment gap for imitation learning.",
+      "llm_tldr_cn": "具身智能的关键瓶颈是数据：人类视频丰富但因实体差异无法直接学习。Pegasus通过构建任务图、可及图、约束图到机器人规划图的转换，将人类演示转化为机器人可学习的数据。该方法无需大量标注，为机器人基于互联网视频的模仿学习开辟了新途径。",
+      "llm_tldr": "具身智能的关键瓶颈是数据：人类视频丰富但因实体差异无法直接学习。Pegasus通过构建任务图、可及图、约束图到机器人规划图的转换，将人类演示转化为机器人可学习的数据。该方法无需大量标注，为机器人基于互联网视频的模仿学习开辟了新途径。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
