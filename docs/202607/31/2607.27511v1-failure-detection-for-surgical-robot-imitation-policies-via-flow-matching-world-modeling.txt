@@ -1,0 +1,458 @@
+Title: Failure Detection for Surgical Robot Imitation Policies via Flow-Matching World Modeling
+
+URL Source: https://arxiv.org/pdf/2607.27511v1
+
+Published Time: Fri, 31 Jul 2026 00:17:01 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+# Failure Detection for Surgical Robot Imitation Policies via Flow-Matching World Modeling 
+
+Zhefeng Huang 1, Yilin Cai 1, Ankit Patel 2, Mohammad Hajiha 3, Brendan Browne 3, Yue Chen 4
+
+Abstract — Imitation learning has shown increasing promise for autonomous robotic surgery, yet safe deployment remains challenging due to the safety-critical nature of surgical tasks and the complexity and variability of surgical environments. Failure detection is therefore an essential safeguard, but its development remains difficult due to the challenges of scarce failure data, highly variable manipulation dynamics, and the need to balance missed detections against disruptive false alarms. To address these challenges, we introduce FoMo-FD (Flow-Matching World Model for Failure Detection), afailure detection method that learns nominal short-horizon vi-sual dynamics with an action-conditioned flow-matching world model. FoMo-FD scores the inverse-transport nonconformity of observed endpoint latents, enabling window-level detection of visual-action inconsistencies without requiring failure demon-strations. Detection thresholds are obtained by conformal cal-ibration on successful executions, yielding task-specific alarms without assuming future failure types. We evaluate FoMo-FD on four surgically relevant manipulation tasks with twenty failure modes across simulation and real-world experiments using the da Vinci Research Kit (dVRK). Results show that FoMo-FD outperforms observation-level anomaly baselines and a prediction-error variant of the same world model, with the wrist-camera view achieving the strongest performance, including a 96 .6% failure detection rate (FDR) at a 1.3% false alarm rate (FAR). Source code, trained models, and processed datasets will be released upon acceptance. 
+
+I. I NTRODUCTION 
+
+Autonomy in robot-assisted surgery has the potential to improve procedural consistency, reduce surgeon workload, and expand access to high-quality care. Although most sur-gical robotic systems remain teleoperated, their use provides a practical path toward autonomy. Expert demonstrations can be collected directly during routine procedures and used as training data. Motivated by this opportunity, recent work has explored imitation learning for surgical visuo-motor policies from teleoperated demonstrations [1], [2], [3], [4]. However, learning from demonstrations alone does not guarantee reliable execution. In visually complex and  
+
+> This work has been submitted to the IEEE for possible publication. Copyright may be transferred without notice, after which this version may no longer be accessible.
+> 1Zhefeng Huang and Yilin Cai are with the Department of Mechanical Engineering, Georgia Institute of Technology, Atlanta, GA 30332 USA (e-mail:
+
+zhuang480@gatech.edu ; yilincai@gatech.edu ) 
+
+> 2Ankit Patel is with the Division of General and GI Surgery, Emory University, Atlanta, GA 30322 USA (e-mail:
+
+apatel7@emory.edu )                
+
+> 3Mohammad Hajiha and Brendan Browne are with the Department of Urology, Emory University, Atlanta, GA 30322 USA (e-mail:
+
+mohammad.hajiha@emory.edu ;
+
+brendan.michael.browne@emory.edu )
+
+> 4Yue Chen is with the Department of Biomedical Engineering, Georgia Institute of Technology/Emory University, Atlanta, GA 30332 USA (e-mail:
+
+yue.chen@bme.gatech.edu )
+
+safety-critical surgical environments, deployment shifts can lead to policy failures, making execution monitoring and timely intervention essential. Existing approaches to surgical execution monitoring have used explicit safety models, such as gesture-conditioned classifiers for unsafe events [5] and confidence predictors for supervised human handoff [6]. Although effective in their respective settings, these methods require predefined monitoring targets, such as unsafe-event labels or confidence criteria. More recent work has explored uncertainty-aware learned policies that estimate epistemic uncertainty from surgical policy ensembles and use output disagreement to identify failure-prone executions [7], [8]. However, policy-output uncertainty provides only an indirect failure signal and may not reliably capture deviations from nominal execution. This limitation points to a broader runtime monitoring problem for learned robot policies, in which policy confi-dence alone is insufficient for detecting failures during de-ployment. Sentinel [9] distinguishes between erratic failures, where a policy produces temporally inconsistent actions, and task-progression failures, where the policy remains consistent but fails to advance the task. In our work, we focus on the former setting: fast detection of low-level execution failures, which is particularly important in safety-critical surgical manipulation. VLM-based monitors, including Sentinel’s progress monitor and Code-as-Monitor, provide complemen-tary semantic reasoning, but are primarily defined through task progress, task instructions, or instruction-derived visual constraints [9], [10]. Similarly, SAFE [11] enables timely de-tection using vision-language-action (VLA) internal features, but requires failure episodes for training. In contrast, our goal is to detect low-level execution failures from successful episodes alone without requiring failure demonstrations or task-specific descriptions. To this end, we seek a general monitoring formulation that characterizes nominal low-level execution for any given task from successful examples. Existing methods for timely failure detection often rely on action-level signals, such as ensemble-based policy uncer-tainty [7], [8], temporal action inconsistency [9], or action-chunk entropy [12]. Yet action-only signals may miss fail-ures caused by visual disturbances, unexpected interaction dynamics, or action-execution mismatch. Observation-aware methods address part of this limitation by incorporating visual distributional scores, as in FAILDetect-logpzo [13] and FIPER [12]. However, their visual scores are primarily computed at the observation level, assessing whether an individual frame or visual embedding appears anomalous rather than whether a short observation sequence evolves arXiv:2607.27511v1 [cs.RO] 29 Jul 2026 Online Failure Monitor                                                  
+
+> Intervening action chunk 𝑨𝑨 𝒕𝒕
+> Multi-view Observations
+> (example task: tissue retraction)
+> Frozen DINOv2 Encoder
+> Offline-Trained VAE
+> Encoder
+> Train: Expert Demonstrated Execution (successful only)
+> or
+> Deployment: Visual Policy 𝝅𝝅 𝜽𝜽 (Action Chunk Transformer)
+> …
+> …
+> 𝒕𝒕
+> Latent visual history 𝒁𝒁 𝒕𝒕
+> 𝒂𝒂 𝒕𝒕
+> 𝒛𝒛 𝒕𝒕
+> Conditioning context
+> 𝐜𝐜 𝒕𝒕 =𝒁𝒁 𝒕𝒕 ,𝑨𝑨 𝒕𝒕
+> 𝒛𝒛 𝒕𝒕−𝟏𝟏
+> 𝒛𝒛 𝒕𝒕−𝟐𝟐
+> 𝒛𝒛 𝒕𝒕−𝑳𝑳+𝟏𝟏
+> …
+> 𝒂𝒂 𝒕𝒕+𝑲𝑲−𝟏𝟏
+> 𝒂𝒂 𝒕𝒕+𝟏𝟏
+> 𝒂𝒂 𝒕𝒕+𝟐𝟐
+> …
+> Flow-Matching World Model
+> (endpoint latent prediction)
+> …
+> …
+> Visual
+> Action
+> �𝒛𝒛 𝒕𝒕+𝑲𝑲
+> Base Latent
+> 𝑥𝑥 0∼ 𝒩𝒩 0, 𝜎𝜎 2𝐼𝐼
+> Flow Field
+> 𝐹𝐹 𝜓𝜓 𝑥𝑥 𝜏𝜏 ,𝜏𝜏 ,𝑐𝑐 𝑡𝑡
+> Predicted Endpoint
+> 𝜏𝜏 = 0 𝜏𝜏 = 1
+> �𝒛𝒛 𝒕𝒕+𝑲𝑲
+> condition 𝒄𝒄 𝒕𝒕
+> predict latent dynamics:
+> …
+> …
+> Nonconformity Scoring
+> (window-level score)
+> …
+> …
+> Visual
+> Action
+> 𝒛𝒛 𝒕𝒕+𝑲𝑲
+> 𝜏𝜏 = 0 𝜏𝜏 = 1
+> 𝒛𝒛 𝒕𝒕+𝑲𝑲
+> condition 𝒄𝒄 𝒕𝒕
+> score 𝒓𝒓 𝒕𝒕+𝑲𝑲
+> 𝒓𝒓 𝒕𝒕+𝑲𝑲
+> Scalar Score
+> Inverse Transport
+> Observed Endpoint
+> …
+> …
+> 𝒓𝒓 𝒕𝒕
+> 𝒕𝒕
+> (a) No alarm
+> (b) No alarm
+> (c) Failure alarm
+> …
+> …
+> Fixed Camera
+> Wrist Camera
+> (a) (b)
+> (c)
+> Successful
+> Failed
+> Failed, 𝑟𝑟 𝑡𝑡 >𝜆𝜆
+> Threshold 𝜆𝜆 𝝀𝝀
+
+Fig. 1. Overview of the proposed FoMo-FD framework. Multi-view observations are encoded by a frozen DINOv2 backbone and an offline-trained VAE into compact latent tensors. From successful demonstrations, FoMo-FD trains a flow-matching world model conditioned on the intervening action chunk to predict the endpoint latent of a short execution window. At test time, the observed endpoint latent is scored by inverse transport under the learned nominal dynamics, and the resulting window-level nonconformity score is compared with a calibrated threshold to raise failure alarms. 
+
+consistently with the commanded actions. This distinction is important because some failures may not make any individ-ual frame obviously out-of-distribution (OOD), but instead appear as abnormal transitions over a temporal window. RC-NF [14] moves beyond per-timestep scoring by modeling temporal sequences of segmented object point sets with a robot-conditioned normalizing flow. However, it relies on object segmentation and task-prompt conditioning, both of which can be difficult to obtain in surgical scenes with de-formable anatomy, ambiguous boundaries, and visually com-plex tissue interactions. These limitations motivate window-level monitoring of execution consistency, where abnormal behavior is detected by evaluating whether visual changes over time conform to the commanded actions. A closely related direction is world-model-based failure detection, which learns nominal dynamics and uses devia-tions from those dynamics as runtime evidence of failure. Ward et al. trained a probabilistic, history-informed world model in a pretrained visual latent space and used its predic-tive uncertainty as a nonconformity score for conformal fail-ure detection [15]. While effective, uncertainty-based scoring measures how confident the model is in its forecast, rather than whether the realized execution matches the nominal dy-namics expected under the commanded actions. In contrast, we directly evaluate realized execution consistency with a flow-matching model of nominal visual dynamics. Given a short visual-action window, the detector scores whether the observed visual outcome is consistent with the preceding visual history and commanded actions. In this work, we introduce FoMo-FD (Flow-Matching World Model for Failure Detection), a failure detection method based on a flow-matching visual world model, as illustrated in Fig. 1. Rather than recursively predicting the next frame, FoMo-FD predicts the endpoint latent of a short observation window conditioned on the preceding observation history and the intervening robot actions. It then scores the inverse-transport nonconformity of the observed endpoint latent under the learned nominal dynamics. Because the detector is trained only on successful episodes, it does not require failure demonstrations, which can leverage the corpus of successful and routine robot-assisted surgeries. Detection thresholds are selected through conformal cali-bration [16] using a small set of successful policy rollouts, enabling task-specific thresholding without failure data. We validate FoMo-FD in both simulation and real-world da Vinci Research Kit (dVRK) experiments [17], highlighting how action-conditioned, window-level latent dynamics can reveal execution inconsistencies during surgical manipulation. In summary, this work makes three contributions:  
+
+> •
+
+We develop an endpoint-prediction flow-matching world model for surgical visual dynamics, which predicts the latent endpoint of a short execution window conditioned on visual history and intended robot actions.  
+
+> •
+
+We formulate failure detection as window-level execu-tion monitoring by scoring the inverse-transport non-conformity of observed endpoint latents and calibrating thresholds from successful rollouts, without requiring failure demonstrations. • We evaluate the framework on four surgery-inspired manipulation tasks across simulation and real-world dVRK experiments with twenty diverse failure modes, demonstrating higher FDR than prior baselines while maintaining low FAR. II. P ROBLEM FORMULATION 
+
+We consider a visuomotor imitation policy deployed in a partially observable robotic manipulation environment. At every timestep t, the robot receives a new observation 
+
+ot and the policy πθ outputs a commanded action at =
+
+πθ (ht) based on the available observation-action history 
+
+ht = (o1: t, a 1: t−1). The policy is trained on an expert demonstration dataset D to approximate the expert action mapping conditioned on observation-action history. The goal is to learn a runtime failure detector that monitors execution and raises an alarm when behavior deviates from nominal successful execution. For a window of length H
+
+ending at timestep t, let wt = (ot−H+1: t, a t−H+1: t−1)
+
+denote the recent observation-action history. A detector com-putes a nonconformity score rt = f (wt), where larger values indicate greater deviation from nominal execution. Given a threshold λ calibrated from successful rollouts, the detector induces a binary classifier C:
+
+C(wt) = 
+
+(
+
+1, f (wt) > λ, abnormal 
+
+0, f (wt) ≤ λ, nominal , (1) where C(wt) = 1 indicates a detected failure. III. M ETHOD 
+
+A. World Modeling in Latent Vision Space 
+
+Recent work has advanced surgical world models for surgical video prediction, data augmentation, policy learning, and policy evaluation [18], [19], [20], [21], [22]. How-ever, expert assessment suggests that current surgical video world models may still struggle with causal and procedural plausibility beyond visual realism [23]. In contrast, FoMo-FD has a more focused objective: rather than generating realistic surgical features, it only needs to learn nominal short-horizon latent dynamics with sufficient accuracy to distinguish abnormal execution from nominal behavior. This focused objective motivates modeling dynamics in a latent visual space rather than directly in pixel space. We therefore use DINOv2 [24], a vision foundation model (VFM), to extract latent visual representations, following recent latent visual world models such as DINO-WM [25], DINO-World [26], DINO-Foresight [27], and VFMF [28]. VFMF provides the closest starting point because it combines compact VFM-feature representations with flow-matching-based future prediction. Following VFMF, we compress the DINOv2 patch feature with an offline-trained variational autoencoder (VAE) and train the flow-matching world model on the resulting compact latent tensor. To make this forecasting model suitable for failure de-tection in robot execution, we introduce two adaptations. First, we condition the flow-matching backbone on the intervening robot actions. Second, instead of autoregressively predicting future latents, we predict the endpoint latent of a short execution window. This endpoint formulation captures visual-action consistency over the window with a single prediction for each nonconformity score. The overall pipeline is summarized in Fig. 1. Formally, let Φ denote the frozen DINOv2 encoder, and let yvt = Φ( ovt ) denote the DINOv2 patch features extracted from observation ovt in camera view v, with v ∈ { fix , wrist }.For each view, we train a feature-space β-VAE with encoder 
+
+Evϕ and reconstruction decoder Rvη . Given yvt , the encoder outputs (μvt , σ vt ) = Evϕ(yvt ), which parameterize a diagonal Gaussian distribution denoted by NEvϕ(yvt ). The resulting latent tensor zvt ∈ RN hz ×N wz ×Cz , where N hz , N wz , and Cz
+
+denote the latent height, width, and channel dimensions, respectively, is sampled from this distribution as zvt = μvt +
+
+σvt ⊙ ϵ, with ϵ ∼ N (0 , I ). The VAE is trained with 
+
+LVAE = X
+
+> v
+
+Eyvt , z vt
+
+h
+
+Rvη (zvt ) − yvt
+
+> 22
+
+i
+
++ β X
+
+> v
+
+Eyvt
+
+h
+
+DKL 
+
+
+
+NEvϕ(yvt ) ∥ N (0 , I )
+
+i 
+
++ γ X
+
+> v
+
+Eyvt [Lv
+
+> util
+
+] ,
+
+(2) where Lv 
+
+> util
+
+is a channel-utilization regularizer computed from the normalized per-channel variance of the encoder mean μvt . This regularizer discourages information from concentrating in only a few latent channels. After training, the VAE is frozen, and we use the deterministic posterior mode zvt = μvt as the compact latent representation for all subsequent world-model training and scoring. Given the encoded latent sequence, we define latent history length L and prediction horizon K. For each view v, let 
+
+Zvt = zvt−L+1: t, At = at:t+K−1 (3) where Zvt denotes the latent visual history and At denotes the commanded action chunk over the prediction horizon. Together, they form the conditioning context cvt = ( Zvt , A t).For each view, the world model learns a parameterized approximation pvψ (zvt+K | cvt ) to the nominal endpoint distribution from successful executions. We instantiate this distribution with flow matching [29]. For each enabled view, set xv 
+
+> 1
+
+= zvt+K and sample xv 
+
+> 0
+
+∼N (0 , σ 2I) from the base distribution. Along the standard linear path, for τ ∼ U (0 , 1) ,
+
+xvτ = (1 − τ )xv 
+
+> 0
+
++ τ x v 
+
+> 1
+
+, uvτ = xv 
+
+> 1
+
+− xv 
+
+> 0
+
+(4) The model learns a conditional vector field F vψ (xvτ , τ, c vt )
+
+to match the target velocity uvτ by minimizing: 
+
+LFM = X
+
+> v
+
+Exv  
+
+> 0,x v
+> 1,τ
+
+h
+
+F vψ (xvτ , τ, c vt ) − uvτ
+
+> 22
+
+i
+
+(5) For the fixed- and wrist-camera inputs in this work, the objective sums the losses from two view-specific branches. Each branch receives the latent history Zvt and the interpo-lated endpoint state xvτ , projects them to a hidden dimension, and processes them with a transformer backbone using temporal attention over the history dimension and spatial attention over the latent tensor. The visual branches are view-specific, while the action conditioner is shared across views. The same action chunk At provides action tokens for cross-attention and a global action embedding for adaptive mod-ulation. The conditioned transformer backbone then feeds a final layer that outputs the velocity F vψ (xvτ , τ, c vt ), which transports xvτ along the path toward the endpoint latent zvt+K .In addition to the endpoint flow-matching objective, we add an auxiliary one-step latent prediction loss to regularize the visual-action features learned by the world-model back-bone. For each view, an auxiliary head Gvψ (cvt ) predicts the next latent ˆzvt+1 from the same conditioning context and is trained with 
+
+Laux = X
+
+> v
+
+E
+
+h
+
+Gvψ (cvt ) − zvt+1 
+
+> 22
+
+i
+
+. (6) The full training objective is 
+
+L = λFM LFM + λaux Laux . (7) The auxiliary head is used only during training and is not used for nonconformity scoring at test time. 
+
+B. Nonconformity Scoring and Conformal Failure Detection 
+
+At test time, FoMo-FD scores whether the observed end-point latent is consistent with the preceding visual history and commanded action. For a scoring window ending at time t, the current observation ot is first encoded into visual latents zvt . The nonconformity score rt is computed under the learned transport conditioned on ct−K , which contains the 
+
+L-step latent history ending at t − K and the subsequent K-step action chunk. Thus, the scoring window length in Eq. (1) corresponds to H = L + K. Scoring is performed through inverse transport without requiring an explicit sampled future prediction. Following a log-p(z0)-style inverse-flow criterion [13], we set xv 
+
+> 1
+
+= zvt and integrate the learned flow-matching ODE backward: 
+
+dx vτ
+
+dτ = F vψ (xvτ , τ, c vt−K ), ˆϵvt = xvτ =0 . (8) Here, the inverse-transported variable ˆϵvt should lie near the Gaussian base distribution if the scoring window is consistent with nominal dynamics. We therefore use the squared normalized base-space distance as the view-specific nonconformity score: 
+
+rvt = ˆϵvt
+
+σ
+
+> 22
+
+. (9) This score increases when the observed visual transition is unlikely under the learned nominal transport. In our implementation, scores are computed separately for each view and monitored independently. To obtain failure thresholds without failure data, we collect 
+
+N successful calibration rollouts. For each view v and target miscoverage level α ∈ [1 /(N + 1) , 1) , we compute the (a) Needle Pickup  (b) Ring over Post      
+
+> (c)Tissue Retraction (d)Shunt Insertion
+> Fig. 2. Representative observations from the four tasks. Each panel shows the fixed-camera view on the left and the wrist-camera view on the right. Top row: simulated needle pickup and ring over post. Bottom row: real-world tissue retraction and shunt insertion.
+
+episode-level peak scores svj = max t rvt,j and sort them as 
+
+sv 
+
+> (1)
+
+≤ · · · ≤ sv 
+
+> (N)
+
+. The conformal threshold is then set to 
+
+λv = sv 
+
+> (⌈(N+1)(1 −α)⌉)
+
+. (10) During evaluation, view v raises an alarm whenever rvt >λv . Because calibration uses only successful executions, the resulting threshold is task-specific while avoiding assump-tions about the type or timing of future failures. IV. E XPERIMENTS 
+
+We evaluate FoMo-FD on four surgically relevant ma-nipulation tasks spanning both simulation and real-world dVRK experiments. The simulated tasks are needle pickup and ring over post, while the real-world tasks are tissue retraction and shunt insertion. For each task, the detector is calibrated using successful rollouts and evaluated on held-out successful executions and task-specific failure modes. 
+
+A. Experimental Setup 
+
+Tasks and platforms. The needle-pickup and ring-over-post experiments are conducted in NVIDIA Isaac Sim using anatomically realistic organ scenes adapted from the SuFIA-BC environment [30]. During demonstration collection, a physical dVRK master tool manipulator (MTM) is used to teleoperate the simulated patient-side manipulator (PSM). The tissue-retraction and shunt-insertion experiments are conducted on a physical dVRK. Each setup provides a fixed-camera view of the workspace and a wrist-camera view of the local tool-object interaction, and representative observations from the four tasks are depicted in Fig. 2. 
+
+Policy and detector training. For each task, we train a separate Action Chunking Transformer (ACT) policy [31] from teleoperated expert demonstrations. We replace the default ACT visual encoder with DINOv2 to align the policy representation with the detector representation. All visual observations are resized to 224 × 224 before being processed by the visual backbone. For the detector, we first train view-specific feature-space VAEs on DINOv2 patch features from the same expert demonstrations, using β = 0 .01 and channel-utilization weight γ = 0 .5. After training, the VAEs are frozen and their deterministic posterior modes are used to encode DINOv2 features into latent tensors of size N hz =TABLE I FAILURE DETECTION RESULTS ACROSS FOUR TASKS . E NTRIES REPORT DETECTED ROLLOUTS OVER TOTAL ROLLOUTS ; DETECTIONS IN “N O
+
+FAILURE ” ROWS CORRESPOND TO FALSE ALARMS .                                                                                                                                                                                                                      
+
+> Method / Input WM-NC logpZO RND WM-PE Failure Mode Fixed Wrist Fixed Wrist Fixed Wrist Fixed Wrist Needle Pickup (Sim.)
+> No Failure 2/20 0/20 0/20 0/20 0/20 0/20 1/20 0/20
+> Needle Drop 15/20 20/20 8/20 19/20 8/20 17/20 12/20 17/20 Insecure Grasp 1/20 16/20 0/20 10/20 0/20 13/20 0/20 17/20
+> Blood Occlusion 19/20 20/20 11/20 4/20 11/20 17/20 3/20 13/20 OOD Initial Condition 1/20 20/20 18/20 20/20 15/20 20/20 0/20 18/20 Execution Mismatch 1/20 20/20 0/20 5/20 0/20 7/20 0/20 16/20 Needle Slippage 20/20 20/20 8/20 0/20 6/20 2/20 4/20 3/20
+> Ring Over Post (Sim.)
+> No Failure 0/20 1/20 0/20 3/20 0/20 1/20 0/20 4/20 Post Misalignment 0/20 17/20 2/20 6/20 4/20 4/20 0/20 2/20 Insecure Grasp 0/20 19/20 8/20 19/20 17/20 10/20 0/20 16/20 Ring Drop 0/20 19/20 6/20 9/20 9/20 7/20 1/20 7/20 Blood Occlusion 20/20 20/20 20/20 8/20 20/20 4/20 20/20 6/20 Lateral Grasp Drift 0/20 20/20 13/20 14/20 16/20 7/20 5/20 8/20 Ring Slippage 6/20 20/20 6/20 0/20 5/20 0/20 0/20 0/20
+> Tissue Retraction (Real)
+> No Failure 0/20 0/20 0/20 0/20 0/20 0/20 0/20 2/20
+> Tissue Grasp Loss 8/10 10/10 0/10 7/10 0/10 7/10 0/10 10/10
+> Fixed Tissue Target 10/10 10/10 1/10 2/10 1/10 3/10 2/10 10/10
+> Tissue Disturbance 10/10 10/10 7/10 10/10 6/10 8/10 5/10 4/10 Needle Intrusion 10/10 10/10 1/10 10/10 2/10 9/10 0/10 10/10 Shunt Insertion (Real)
+> No Failure 6/20 0/20 0/20 0/20 0/20 0/20 2/20 0/20
+> Insertion Misalignment 8/10 10/10 1/10 2/10 1/10 2/10 0/10 2/10 Shunt Disturbance 6/10 9/10 0/10 0/10 0/10 0/10 0/10 1/10 Lateral Grasp Drift 2/10 10/10 0/10 0/10 0/10 0/10 0/10 5/10 Camera Freeze 10/10 9/10 0/10 0/10 0/10 0/10 2/10 2/10
+> Overall FAR 10.0% 1.3% 0.0% 3.8% 0.0% 1.3% 3.8% 7.5%
+> Overall FDR 45.9% 96.6% 34.4% 45.3% 37.8% 42.8% 16.9% 52.2%
+
+N wz = 16 with Cz = 8 channels. The flow-matching world model is then trained on the same expert demonstrations in this compressed latent space. Across all experiments, we use a latent history length of L = 4 and an endpoint prediction horizon of K = 4 , yielding a total monitored window length of H = L + K = 8 . The world model is trained with 
+
+λFM = 1 .0 and λaux = 0 .5. After training both the policy and the world model, we evaluate the detector on policy rollouts: successful policy rollouts are split into a calibration set and a held-out set for FAR evaluation, while failed policy rollouts are reserved for FDR evaluation. Thus, policy rollouts are used for threshold calibration and evaluation, not for training the world model. The fixed and wrist views are scored independently, with a separate nonconformity score and conformal threshold per view. 
+
+Failure modes and evaluation protocol. The evaluation contains 20 task-specific failure modes spanning four broad categories: (i) grasp acquisition and retention failures, in-cluding insecure grasps, lateral grasp miss, and unintended release; (ii) spatial-configuration errors, including OOD ini-tial object poses and failed target alignment; (iii) scene disturbances, including object slippage, target displacement, unexpected tissue immobility, and foreign-object intrusion; and (iv) sensing and actuation anomalies, including camera freezing, blood occlusion, and action execution mismatch. Table I provides the complete list of failure modes and corresponding detection results. For each task, we use N = 19 successful policy rollouts for conformal calibration and set α = 0 .05 for all detector configurations. The calibration rollouts are disjoint from the evaluation rollouts. For rollout-level evaluation, each simulated task includes 20 failed policy rollouts per failure mode and 20 held-out successful policy rollouts. Each real-world task includes 10 failed policy rollouts per failure mode and 20 held-out successful policy rollouts. In total, the evaluation set contains 320 failed rollouts and 80 successful rollouts. A failed rollout is counted as detected if the score for the evaluated view exceeds its calibrated threshold at least once during the rollout; a successful rollout is counted as a false alarm under the same criterion. The reported detection experiments are performed of-fline on recorded policy rollouts. To assess computational feasibility for online use, we also measure the end-to-end scoring frequency, including visual encoding and inverse ODE integration. On a desktop workstation with an Intel Core Ultra 9 285K CPU, an NVIDIA RTX 5090 GPU, and 64 GB RAM, the detector processes scoring windows at 13.98 Hz. This exceeds the 10 Hz policy and observation loop used in the real-world experiments, suggesting that the scoring pipeline is computationally feasible for online monitoring. However, the results reported here are computed offline and do not involve online intervention. 
+
+Baselines. We evaluate the world model with two scoring rules. WM-NC denotes the proposed nonconformity score, which transports the observed endpoint latent to the Gaussian base space and scores its normalized squared norm. WM-PE uses the same world model but scores the prediction error between the deterministically predicted and observed endpoint latents. We further compare against two recent representative observation-aware anomaly detectors: logpZO, adapted from FAILDetect [13], and RND, adapted from the observation branch of FIPER [12]. For a controlled comparison, logpZO and RND are trained and evaluated on the same VAE-compressed visual features used by the flow-matching world model. All detector configurations use the same conformal calibration and evaluation rollout splits. 
+
+B. Experimental Results 
+
+Overall Performance. As shown in Table I, WM-NC achieves the strongest overall failure detection performance across the four tasks. In particular, the wrist-view WM-NC detector attains the highest overall FDR while maintaining a low FAR. Compared with WM-PE, which uses the same world model but scores endpoint prediction error, WM-NC provides substantially stronger detection. This suggests that inverse-transport scoring of the realized visual transition provides a more discriminative window-level consistency signal than directly measuring prediction error. WM-NC also outperforms logpZO and RND, suggesting that action-conditioned window-level dynamics provide a more discrim-inative failure signal than observation-level anomaly scoring alone. 
+
+Effect of Camera View. Table I also shows that the wrist view generally provides stronger failure-detection perfor-mance than the fixed view. This pattern is consistent with Needle Pickup    
+
+> Ring over Post
+> Tissue Retraction
+> Shunt Insertion
+> WM -NC logpZO RND WM -PE
+> time
+> score
+
+Fig. 3. Qualitative wrist-view score traces across tasks and detector variants. Rows indicate tasks and columns indicate detectors. Blue dashed curves show the N = 19 successful calibration rollouts, red curves show selected failed rollouts, and gray dash-dot lines show calibrated thresholds. The red failed rollouts are selected by a fixed rule: the first two episodes from each failure mode for the corresponding task. Each panel uses its own score scale. Tissue Retraction: Needle Intrusion Tissue Retraction : Tissue Grasp Loss                       
+
+> (a)
+> (b)
+> (a) (b)
+> (c)
+> (d)
+> (c)(d)
+> (e)
+> (f)
+> (e)(f)
+> (g)
+> (h)
+> (g)(h)
+> Needle Pickup : Blood Occlusion Needle Pickup: Needle Slippage Ring over Pos t:Insecure Grasp Ring over Post: Ring Drop
+> (i)
+> (j)
+> (i)(j)
+> (k)
+> (l)
+> (k)(l)
+> (m)
+> (n)
+> (m)(n)
+> (o)
+> (p)
+> (o)(p)
+> Shunt Insertio n:Insertion Misalignment Shunt Insertion: Lateral Grasp Drift
+
+Fig. 4. Representative failure episodes using the proposed WM-NC wrist-view score. For each example, the score trace is paired with wrist-camera frames corresponding to marked time points on the curve, showing what occurs visually as the failure develops. Horizontal axes indicate rollout time t,and vertical axes indicate rwrist  
+
+> t
+
+. Blue dashed curves show successful calibration rollouts, the red curve shows the selected failed rollout, and the gray dash-dot line shows the calibrated threshold. 
+
+the structure of surgical manipulation tasks, where many failure cues are localized around the instrument tip and occur within a visually cluttered operative field. The wrist camera provides a closer view of this manipulation region, making it better suited for detecting deviations in short visual-action windows. This result is also consistent with recent surgical imitation-learning systems incorporating wrist-camera such as SRT [2] and SRT-H [3], although practical clinical deploy-ment may require different camera placements or endoscopic views. The fixed view remains complementary for broader scene-level disturbances, while the wrist view provides a stronger signal for failures dominated by local manipulation dynamics. Notably, even using only the fixed view, WM-NC improves over the strongest fixed-view baseline from 
+
+37 .8% to 45 .9% FDR, corresponding to a 21 .4% relative improvement. We therefore report view-specific detectors to isolate the effect of camera geometry. Overall, the results suggest that local views are more informative for the failure modes studied here, while FoMo-FD remains view-agnostic and can operate on either local or global visual streams. 
+
+Qualitative Behavior. Motivated by the stronger wrist-view performance, Fig. 3 presents wrist-view score traces across tasks and detector variants. For consistency, the red curves use a fixed selection: the first two failed rollouts from each failure mode. Using this fixed selection, WM-NC more reliably separates failed rollouts from successful calibration rollouts across the four tasks. In contrast, logpZO and RND show weaker separation under the same calibration and Wrist View             
+
+> Fixed View
+> FDR (%)
+> 25
+> 0
+> 50
+> 75
+> 100
+> FAR (%)
+> 0.00
+> 3.75
+> 7.50
+> 11.25
+> 15.00
+> NoAct Tok Mod Mod+Tok Fig. 5. Action conditioning modes are denoted as NoAct, Mod, Tok, and Tok+Mod, corresponding to no action conditioning, global action modulation only, action-token cross-attention only, and their combination.
+
+evaluation episodes, particularly in the visually complex real-world shunt-insertion task. This suggests that observation-level anomaly scores are less robust than the proposed window-level dynamics score in such settings. Meanwhile, WM-PE captures some failures but exhibits less consistent separation than WM-NC, matching the quantitative results in Table I. To further interpret the WM-NC score be-havior, Fig. 4 shows representative failure episodes with marked wrist-camera frames. The marked curve locations are paired with the corresponding frames, illustrating how score increases are driven by visible task deviations within the evaluated visual-action window. These examples provide qualitative evidence for the mechanism of detection: WM-NC rises when the completed visual-action window becomes inconsistent with nominal successful execution. Together with the quantitative results in Table I, these examples show that action-conditioned world-model nonconformity provides an effective failure signal across both simulated and real-world surgically relevant manipulation tasks. V. A BLATION STUDY 
+
+A. Action Conditioning in World Modeling 
+
+We ablate how commanded actions should be incorporated into the world model for failure detection by comparing four conditioning modes: (i) no action conditioning, (ii) global action modulation, (iii) action-token cross-attention, and (iv) their combination. As shown in Fig. 5, the effect is most pronounced in the wrist view. Wrist-view FDR improves from 87 .2% without action conditioning to 88 .8% with action-token cross-attention and 90 .6% with global action modulation, and then increases further to 96 .6% when both mechanisms are used. In contrast, the fixed view is less sensitive to the action-conditioning design, likely because it captures broader scene-level changes rather than local motion tightly coupled to the commanded action. Since the combined design achieves the highest wrist-view FDR while maintaining a low aggregate FAR, we use both action-conditioning pathways across all reported main experiments. 
+
+B. Endpoint Prediction in World Modeling 
+
+We next evaluate the effect of the endpoint prediction horizon K. The model is trained and evaluated with K ∈Wrist View                  
+
+> Fixed View
+> FDR (%)
+> 25
+> 0
+> 50
+> 75
+> 10 0
+> FAR (%)
+> 0.00
+> 3.7 5
+> 7.50
+> 11 .25
+> 15.00
+> 𝐾 =1𝐾 =2𝐾 =3𝐾 =4
+> Fig. 6. Endpoint prediction horizon ablation. Top: rollout-level FDR; bottom: rollout-level FAR, aggregated across the four tasks for the fixed and wrist views. Increasing the endpoint prediction horizon Ksubstantially improves wrist-view FDR while maintaining low FAR, motivating the use of K= 4 in the main experiments.
+
+{1, 2, 3, 4}, while keeping the remaining architecture, cali-bration protocol, and evaluation episodes fixed. As shown in Fig. 6, increasing K substantially improves wrist-view failure detection. The wrist-view FDR increases from 42 .2% 
+
+at K = 1 to 96 .6% at K = 4 , while the FAR remains low. This indicates that short endpoint gaps provide an in-sufficient visual-action consistency signal, whereas a longer endpoint horizon allows deviations to accumulate into a more detectable mismatch with nominal action-conditioned dy-namics. The fixed view shows a weaker and less monotonic trend, with FDR improving from K = 1 to K = 3 , followed by a slight decrease at K = 4 . This is consistent with the fixed camera being less directly focused on local tool-object interactions. Overall, the ablation supports using a multi-step endpoint prediction horizon for failure detection, and we use 
+
+K = 4 in the main experiments. VI. D ISCUSSION AND CONCLUSION 
+
+We presented FoMo-FD, a robot failure detection frame-work built on a flow-matching world model and evaluated on surgically relevant robot manipulation tasks. Rather than relying on failure examples, FoMo-FD learns nominal short-horizon visual dynamics from successful executions and de-tects failures by scoring whether the completed visual-action window is consistent with the learned nominal transport. By operating in a compact DINOv2-VAE latent space and using conformal calibration over successful rollouts, the method provides task-specific failure thresholds without assuming the type or timing of future failures. Across four surgical manipulation tasks spanning simula-tion and real-world dVRK experiments, FoMo-FD achieved stronger failure-detection performance than prediction-error and observation-level anomaly baselines. The wrist-view results highlight the importance of local visual feedback: close-up views of tool-object interactions provide a more informative signal for detecting manipulation failures than the fixed workspace view. These findings suggest that wrist-camera sensing can complement global scene observations and improve execution monitoring in autonomous surgical robot manipulation. We report fixed- and wrist-view detectors separately to isolate the role of camera geometry. A natural next step is to combine local and global visual alarms through a multi-view policy, allowing close-up manipulation cues and broader scene context to contribute jointly. While these results demonstrate the promise of action-conditioned latent world models for surgical failure detec-tion, the current study has two limitations. First, although the flow-matching world model is trained only on expert demonstration data, a small set of successful policy rollouts is still required for conformal calibration. These rollouts cali-brate thresholds under the deployment policy distribution and support the exchangeability assumption used by conformal prediction. Second, we use an episode-level threshold rather than a time-varying conformal band as in FAILDetect [13]. Time-varying calibration can be effective when rollouts are temporally aligned, but surgical manipulation episodes may reach the same task stage at different time steps due to variation in initial conditions, contact dynamics, and policy execution. Future work could replace the time index with a progress- or state-conditioned calibration variable, enabling adaptive thresholds without assuming strict temporal align-ment across rollouts. Overall, these results show that FoMo-FD provides an effective execution-level monitor for failure detection in surgical robot manipulation. Rather than reasoning about task progress, surgical intent, or procedural correctness, the proposed world-model score detects local inconsistencies between commanded actions and observed visual dynam-ics. This makes FoMo-FD complementary to higher-level VLA or task-progress monitoring systems. Such systems can reason about what the robot should do, while FoMo-FD monitors whether the executed interaction remains consistent with nominal dynamics. Future work will combine world-model nonconformity with task-level monitors and multi-view alarm policies to build more robust failure detection systems for autonomous surgical robots. This layered view makes FoMo-FD a step toward surgical autonomy monitors that can detect not only whether the robot is doing the right task, but whether the interaction itself is unfolding safely. REFERENCES [1] K. Kawaharazuka, K. Okada, and M. Inaba, “Robotic constrained imitation learning for the peg transfer task in fundamentals of laparo-scopic surgery,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2024, pp. 606–612. [2] J. W. Kim, T. Z. Zhao, S. Schmidgall, A. Deguet, M. Kobilarov, C. Finn, and A. Krieger, “Surgical robot transformer (srt): Imitation learning for surgical tasks,” in Conference on Robot Learning . PMLR, 2025, pp. 130–144. [3] J. W. Kim, J.-T. Chen, P. Hansen, L. X. Shi, A. Goldenberg, S. Schmidgall, P. M. Scheikl, A. Deguet, B. M. White, D. R. Tsai, 
+
+et al. , “Srt-h: A hierarchical framework for autonomous surgery via language-conditioned imitation learning,” Science robotics , vol. 10, no. 104, p. eadt5254, 2025. [4] J. Haworth, J.-T. Chen, N. Nelson, J. W. Kim, M. Moghani, C. Finn, and A. Krieger, “Suturebot: A precision framework & benchmark for autonomous end-to-end suturing,” Advances in Neural Information Processing Systems , vol. 38, 2026. [5] M. S. Yasar and H. Alemzadeh, “Real-time context-aware detection of unsafe events in robot-assisted surgery,” in 2020 50th Annual IEEE/IFIP International Conference on Dependable Systems and Networks (DSN) . IEEE, 2020, pp. 385–397. [6] M. Kam, H. Saeidi, M. H. Hsieh, J. U. Kang, and A. Krieger, “A confidence-based supervised-autonomous control strategy for robotic vaginal cuff closure,” in 2021 IEEE international conference on robotics and automation (ICRA) . IEEE, 2021, pp. 12 261–12 267. [7] J. Thompson, R. Koe, A. Le, G. Goodman, D. S. Brown, and A. Kuntz, “Early failure detection in autonomous surgical soft-tissue manipula-tion via uncertainty quantification,” arXiv preprint arXiv:2501.10561 ,2025. [8] W. P. Empleo, Y. Kim, H. Kim, T. R. Savarimuthu, and I. Iturrate, “Safe uncertainty-aware learning framework for robotic suturing,” 
+
+IEEE Transactions on Medical Robotics and Bionics , vol. 8, no. 1, pp. 41–53, 2026. [9] C. Agia, R. Sinha, J. Yang, Z. Cao, R. Antonova, M. Pavone, and J. Bohg, “Unpacking failure modes of generative policies: Runtime monitoring of consistency and progress,” in Conference on Robot Learning . PMLR, 2025, pp. 689–723. [10] E. Zhou, Q. Su, C. Chi, Z. Zhang, Z. Wang, T. Huang, L. Sheng, and H. Wang, “Code-as-monitor: Constraint-aware visual programming for reactive and proactive robotic failure detection,” in Proceedings of the Computer Vision and Pattern Recognition Conference , 2025, pp. 6919– 6929. [11] Q. Gu, Y. Ju, S. Sun, I. Gilitschenski, H. Nishimura, M. Itkina, and F. Shkurti, “Safe: Multitask failure detection for vision-language-action models,” Advances in Neural Information Processing Systems ,vol. 38, pp. 40 041–40 076, 2026. [12] R. R¨ omer, A. Kobras, L. Worbis, and A. Schoellig, “Failure prediction at runtime for generative robot policies,” Advances in Neural Infor-mation Processing Systems , vol. 38, pp. 7631–7670, 2026. [13] C. Xu, T. K. Nguyen, E. Dixon, C. Rodriguez, P. Miller, R. Lee, P. Shah, R. A. Ambrus, H. Nishimura, and M. Itkina, “Can We Detect Failures Without Failure Data? Uncertainty-Aware Runtime Failure Detection for Imitation Learning Policies,” in Proceedings of Robotics: Science and Systems , LosAngeles, CA, USA, June 2025. [14] S. Zhou, B. Zhu, J. Yang, X. Zhao, J. Chen, and Y.-G. Jiang, “Rc-nf: Robot-conditioned normalizing flow for real-time anomaly detection in robotic manipulation,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2026, pp. 43 050–43 060. [15] I. R. Ward, M. Ho, H. Liu, A. Feldman, J. Vincent, L. Kruse, S. Cheong, D. Eddy, M. J. Kochenderfer, and M. Schwager, “Founda-tional world models accurately detect bimanual manipulator failures,” 
+
+arXiv preprint arXiv:2603.06987 , 2026. [16] A. N. Angelopoulos and S. Bates, “Conformal prediction: A gentle introduction,” Foundations and Trends in Machine Learning , vol. 16, no. 4, pp. 494–591, 2023. [17] P. Kazanzides, Z. Chen, A. Deguet, G. S. Fischer, R. H. Taylor, and S. P. DiMaio, “An open-source research kit for the da vinci® surgical system,” in 2014 IEEE international conference on robotics and automation (ICRA) . IEEE, 2014, pp. 6434–6439. [18] H. Lin, B. Li, C. W. Wong, J. Rojas, X. Chu, and K. W. S. Au, “World models for general surgical grasping,” in Proceedings of Robotics: Science and Systems , Delft, Netherlands, July 2024. [19] S. Koju, S. Bastola, P. Shrestha, S. Amgain, Y. R. Shrestha, R. P. Poudel, and B. Bhattarai, “Surgical vision world model,” in MICCAI Workshop on Data Engineering in Medical Imaging . Springer, 2025, pp. 1–10. [20] Y. He, P. Guo, M. Xu, Z. Li, A. Myronenko, D. Imans, B. Liu, D. Yang, M. Gu, Y. Ji, Y. Jin, R. Zhao, B. Shen, and D. Xu, “Cosmos-h-surgical: Learning surgical robot policies from videos via world modeling,” 2025. [21] M. K. Turkcan, M. Ballo, F. Filicori, and Z. Kostic, “Towards suturing world models: Learning predictive models for robotic surgical tasks,” 2025. [Online]. Available: https://arxiv.org/abs/2503.12531 [22] L. Zbinden, N. Nelson, J.-T. Chen, X. Chen, J. W. Kim, M. Azizian, A. Krieger, and S. Huver, “Cosmos-surg-dvrk: world foundation model-based automated online evaluation of surgical robot policy learning,” IEEE Robotics and Automation Letters , 2026. [23] Z. Chen, Q. Xu, J. Wu, B. Yang, Y. Zhai, G. Guo, J. Zhang, Y. Ding, N. Navab, and J. Luo, “How far are surgeons from surgical world models? a pilot study on zero-shot surgical video generation with expert assessment,” 2025. [Online]. Available: https://arxiv.org/abs/2511.01775 [24] M. Oquab, T. Darcet, T. Moutakanni, H. Vo, M. Szafraniec, V. Khali-dov, P. Fernandez, D. Haziza, F. Massa, A. El-Nouby, et al. , “Dinov2: Learning robust visual features without supervision,” Transactions on Machine Learning Research Journal , 2024. [25] G. Zhou, H. Pan, Y. Lecun, and L. Pinto, “Dino-wm: World models on pre-trained visual features enable zero-shot planning,” in International Conference on Machine Learning . PMLR, 2025, pp. 79 115–79 135. [26] F. Baldassarre, M. Szafraniec, B. Terver, V. Khalidov, F. Massa, Y. LeCun, P. Labatut, M. Seitzer, and P. Bojanowski, “Back to the features: Dino as a foundation for video world models,” 2025. [Online]. Available: https://arxiv.org/abs/2507.19468 [27] E. Karypidis, I. Kakogeorgiou, S. Gidaris, and N. Komodakis, “Dino-foresight: Looking into the future with dino,” Advances in Neural Information Processing Systems , vol. 38, pp. 163 779–163 811, 2026. [28] G. Boduljak, Y. Lan, C. Rupprecht, and A. Vedaldi, “Vfmf: World modeling by forecasting vision foundation model features,” 2025. [Online]. Available: https://arxiv.org/abs/2512.11225 [29] Y. Lipman, R. T. Q. Chen, H. Ben-Hamu, M. Nickel, and M. Le, “Flow matching for generative modeling,” in The Eleventh International Conference on Learning Representations , 2023. [30] M. Moghani, N. Nelson, M. Ghanem, A. Diaz-Pinto, K. Hari, M. Az-izian, K. Goldberg, S. Huver, and A. Garg, “Sufia-bc: Generating high quality demonstration data for visuomotor policy learning in surgical subtasks,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 4534–4541. [31] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn, “Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware,” in Proceedings of Robotics: Science and Systems , Daegu, Republic of Korea, July 2023.

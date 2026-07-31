@@ -1,0 +1,412 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-31T21:07:29.486991+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 7,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 4,
+    "quick_skim_target": 11,
+    "quick_selected": 4
+  },
+  "deep_dive": [
+    {
+      "id": "2607.27511v1",
+      "source": "arxiv",
+      "title": "Failure Detection for Surgical Robot Imitation Policies via Flow-Matching World Modeling",
+      "abstract": "Imitation learning has shown increasing promise for autonomous robotic surgery, yet safe deployment remains challenging due to the safety-critical nature of surgical tasks and the complexity and variability of surgical environments. Failure detection is therefore an essential safeguard, but its development remains difficult due to the challenges of scarce failure data, highly variable manipulation dynamics, and the need to balance missed detections against disruptive false alarms. To address these challenges, we introduce FoMo-FD (Flow-Matching World Model for Failure Detection), a failure detection method that learns nominal short-horizon visual dynamics with an action-conditioned flow-matching world model. FoMo-FD scores the inverse-transport nonconformity of observed endpoint latents, enabling window-level detection of visual-action inconsistencies without requiring failure demonstrations. Detection thresholds are obtained by conformal calibration on successful executions, yielding task-specific alarms without assuming future failure types. We evaluate FoMo-FD on four surgically relevant manipulation tasks with twenty failure modes across simulation and real-world experiments using the da Vinci Research Kit (dVRK). Results show that FoMo-FD outperforms observation-level anomaly baselines and a prediction-error variant of the same world model, with the wrist-camera view achieving the strongest performance, including a 96.6% failure detection rate (FDR) at a 1.3% false alarm rate (FAR).",
+      "authors": [
+        "Zhefeng Huang",
+        "Yilin Cai",
+        "Ankit Patel",
+        "Mohammad Hajiha",
+        "Brendan Browne",
+        "Yue Chen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-29T22:55:54+00:00",
+      "link": "https://arxiv.org/pdf/2607.27511v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Failure detection for surgical robot imitation policies via flow-matching world model",
+      "llm_evidence_cn": "基于流匹配世界模型的外科手术机器人模仿策略失败检测",
+      "llm_evidence": "基于流匹配世界模型的外科手术机器人模仿策略失败检测",
+      "canonical_evidence": "基于流匹配世界模型的外科手术机器人模仿策略失败检测",
+      "llm_tldr_en": "FoMo-FD learns nominal short-horizon visual dynamics with an action-conditioned flow-matching world model, then scores inverse dynamics to detect failures of surgical robot imitation policies with scarce failure data.",
+      "llm_tldr_cn": "外科手术机器人模仿策略安全部署面临失败数据稀少和操作动态复杂的问题，论文提出FoMo-FD，利用动作条件流匹配世界模型学习标称短期视觉动力学，并基于逆动力学评分检测失败。方法在提升检测精度的同时有效平衡漏检和误报，为高风险手术场景中的模仿学习策略提供了安全保障。",
+      "llm_tldr": "外科手术机器人模仿策略安全部署面临失败数据稀少和操作动态复杂的问题，论文提出FoMo-FD，利用动作条件流匹配世界模型学习标称短期视觉动力学，并基于逆动力学评分检测失败。方法在提升检测精度的同时有效平衡漏检和误报，为高风险手术场景中的模仿学习策略提供了安全保障。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.27549v1",
+      "source": "arxiv",
+      "title": "Cross-Embodiment Transfer via Behavior-Aligned Representations",
+      "abstract": "Recent progress in large-scale imitation learning for robot manipulation has been driven by leveraging datasets across a wide range of robot embodiments. However, achieving significant cross-embodiment transfer is often still challenging. In this work, we study the role of using behavior-aligned representations (e.g., object bounding boxes, language motions, end-effector traces of robot motion) in vision-language-action (VLA) models to promote cross-embodiment transfer. We hypothesize that by possessing invariances across embodiments while being predictive of robot actions, these representations can help unify large-scale cross-embodiment data to enhance transfer. To assess our hypothesis, we develop a simulation-based benchmark designed to assess transfer with diverse cross-embodiment data to new embodiments. Using this benchmark, we compare different representations and ways of incorporating them. We identify that end-effector traces can be particularly beneficial for transfer, representations are generally more useful with larger prior datasets, and can be used to benefit from action-free data. We also demonstrate that they can enhance sim-to-real cross-embodiment transfer, improving task completion progress of real robot policies pre-trained on simulation data by 28%. We provide videos of our evaluations at our website: https://ajaysridhar.com/barx/.",
+      "authors": [
+        "Ajay Sridhar",
+        "Jensen Gao",
+        "Jonathan Yang",
+        "Jean Mercat",
+        "Suneel Belkhale",
+        "Dorsa Sadigh"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-07-30T00:49:53+00:00",
+      "link": "https://arxiv.org/pdf/2607.27549v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "imitation learning for robot manipulation with behavior-aligned representations",
+      "llm_evidence_cn": "面向机器人操作模仿学习的行为对齐表征",
+      "llm_evidence": "面向机器人操作模仿学习的行为对齐表征",
+      "canonical_evidence": "面向机器人操作模仿学习的行为对齐表征",
+      "llm_tldr_en": "Studies how behavior-aligned representations like object boxes and end-effector traces in VLA models improve cross-embodiment transfer in large-scale imitation learning.",
+      "llm_tldr_cn": "跨实体迁移是机器人大规模模仿学习中的关键难题，本文研究在VLA模型中使用行为对齐表征（如物体边界框、语言动作、末端轨迹）来促进不同机器人实体之间的迁移。作者假设这类表征具有跨实体不变性且能预测动作，从而帮助统一异构演示数据。为此构建了基于仿真的评测基准，验证了行为对齐表征能显著提升VLA模型在未见操作器上的表现。该工作为多实体模仿学习的数据表征设计提供了新方向。",
+      "llm_tldr": "跨实体迁移是机器人大规模模仿学习中的关键难题，本文研究在VLA模型中使用行为对齐表征（如物体边界框、语言动作、末端轨迹）来促进不同机器人实体之间的迁移。作者假设这类表征具有跨实体不变性且能预测动作，从而帮助统一异构演示数据。为此构建了基于仿真的评测基准，验证了行为对齐表征能显著提升VLA模型在未见操作器上的表现。该工作为多实体模仿学习的数据表征设计提供了新方向。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.28560v1",
+      "source": "arxiv",
+      "title": "X-NavDP: Generalizing Navigation Diffusion Policy to Novel Behavior and Embodiments with Group Q-score Reweighted Matching",
+      "abstract": "Pretraining navigation diffusion policies rely on large-scale expert demonstrations. These data are typically generated by a fully-informed oracle planner suited to a single nominal robot. This limits the policy's generalization to diverse embodiments and challenging scenarios (e.g., escaping dead ends or detouring long obstacles) that demand diverse local reactive behaviors with only onboard local observations. Post-training the policy with reinforcement learning (RL) offers a principled remedy. However, previous RL for diffusion approaches lead to only marginal improvements. This is because the intractable likelihood of diffusion policies renders policy gradients unstable in addition to inefficient policy exploration. To address these challenges, we propose a data-efficient diffusion RL post-training framework - GQRM (Group Q-score Reweighted Matching). Our framework introduces two complementary designs: (i) a self-bootstrapped exploration strategy with behavior perturbation that preserves the pretrained policy prior, and (ii) a group Q-score normalization mechanism that computes per-trajectory values on each state for efficient reweighted score matching. By conducting distributed online RL training across heterogeneous embodiments, the resulting fine-tuned policy, X-NavDP, achieves state-of-the-art cross-embodiment visual navigation performance, improving the overall success rate from 61.20% to 84.28% in simulation and 10% to 65% in real-world hard cases. The code and model are publicly available at https://yty-sky.github.io/x-navdp-project-page.",
+      "authors": [
+        "Tianyu Yang",
+        "Yiming Zeng",
+        "Wenzhe Cai",
+        "Yuqiang Yang",
+        "Jiaqi Peng",
+        "Hui Cheng",
+        "Jiangmiao Pang",
+        "Tai Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-30T17:26:12+00:00",
+      "link": "https://arxiv.org/pdf/2607.28560v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Navigation diffusion policy trained on demonstrations and refined with RL for robot control",
+      "llm_evidence_cn": "面向机器人控制的导航扩散策略，基于示范训练并强化学习优化",
+      "llm_evidence": "面向机器人控制的导航扩散策略，基于示范训练并强化学习优化",
+      "canonical_evidence": "面向机器人控制的导航扩散策略，基于示范训练并强化学习优化",
+      "llm_tldr_en": "X-NavDP improves navigation diffusion policy generalization to novel behaviors and embodiments by post-training with RL using group Q-score reweighted matching.",
+      "llm_tldr_cn": "导航扩散策略通常在单一机器人生成的专家示范上预训练，难以泛化到新本体和复杂场景。本文提出X-NavDP，利用强化学习对扩散策略进行后训练，并引入分组Q值重加权匹配来稳定策略梯度。实验表明该方法能泛化到多样行为与本体，改善死胡同逃脱和长障碍绕行等挑战。这为扩散策略在机器人导航中的学习与泛化提供了新思路。",
+      "llm_tldr": "导航扩散策略通常在单一机器人生成的专家示范上预训练，难以泛化到新本体和复杂场景。本文提出X-NavDP，利用强化学习对扩散策略进行后训练，并引入分组Q值重加权匹配来稳定策略梯度。实验表明该方法能泛化到多样行为与本体，改善死胡同逃脱和长障碍绕行等挑战。这为扩散策略在机器人导航中的学习与泛化提供了新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.28596v1",
+      "source": "arxiv",
+      "title": "FA-RDP: A Frequency-Adaptive Reactive Diffusion Policy for Contact-Rich Manipulation",
+      "abstract": "In contact-rich manipulation, action multimodality and reactivity dominate different stages of a single episode. Before contact, multiple trajectories might be equally valid, making it important to preserve diverse action modes. After contact, geometric constraints and force limits narrow the solution space, while successful execution demands rapid responses to force feedback. However, standard diffusion policies use a fixed inference frequency and sampling steps throughout the episode, forcing a fundamental compromise: low-frequency, multi-step sampling better preserves pre-contact multimodality but responds slowly to force feedback, whereas high-frequency sampling improves reactivity but tends to collapse distinct pre-contact modes. To resolve this tradeoff, we present FA-RDP, a frequency-adaptive reactive diffusion policy. A shared multi-frequency visual-force Transformer predicts action chunks at both low and high frequencies, while a learned multimodality indicator dynamically selects multi-step low-frequency sampling before contact and one-step high-frequency sampling as action ambiguity decreases. We further introduce Manifold Consistency Distillation (MCD), which reparameterizes the diffusion network to predict actions on the robot action manifold while retaining DDPM-based residual supervision. Experiments on three contact-rich manipulation tasks show that FA-RDP achieves the highest success rate while preserving diverse pre-contact trajectory modes. Code and videos are available at https://fa-rdp.github.io.",
+      "authors": [
+        "Lifeng Zhuo",
+        "Wendi Chen",
+        "Han Xue",
+        "Shirun Tang",
+        "Jun Lv",
+        "Cewu Lu",
+        "Chuan Wen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-30T17:47:49+00:00",
+      "link": "https://arxiv.org/pdf/2607.28596v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Reactive diffusion policy with frequency adaptation for contact-rich manipulation",
+      "llm_evidence_cn": "面向接触丰富操纵的自适应频率响应扩散策略",
+      "llm_evidence": "面向接触丰富操纵的自适应频率响应扩散策略",
+      "canonical_evidence": "面向接触丰富操纵的自适应频率响应扩散策略",
+      "llm_tldr_en": "FA-RDP adapts inference frequency and sampling steps of diffusion policies over an episode to balance pre-contact multimodality and post-contact reactivity in contact-rich manipulation.",
+      "llm_tldr_cn": "在接触丰富操纵中，动作多模态性和反应性在不同阶段占据主导，而标准扩散策略使用固定推理频率和采样步数，难以兼顾接触前的多模态保持与接触后的快速力反馈响应。FA-RDP 提出频率自适应的反应式扩散策略，根据阶段动态调整推理频率和采样步数，在保持多样动作模式的同时实现快速力反馈反应。实验表明该方法能更好地应对接触丰富场景中的多模态与反应性需求，提升了操纵成功率。",
+      "llm_tldr": "在接触丰富操纵中，动作多模态性和反应性在不同阶段占据主导，而标准扩散策略使用固定推理频率和采样步数，难以兼顾接触前的多模态保持与接触后的快速力反馈响应。FA-RDP 提出频率自适应的反应式扩散策略，根据阶段动态调整推理频率和采样步数，在保持多样动作模式的同时实现快速力反馈反应。实验表明该方法能更好地应对接触丰富场景中的多模态与反应性需求，提升了操纵成功率。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.23782v1",
+      "source": "arxiv",
+      "title": "$N_0$-VTLA: Scaling Vision-Tactile-Language-Action Model with Latent Tactile Tokens",
+      "abstract": "We present $N_0$-VTLA, a vision-tactile-language-action (VTLA) foundation model capable of (1) fine-grained contact-rich manipulation with tactile perception and tactile-feedback control, and (2) offline policy improvement from stored deployment data. Building on current vision-based backbones, we propose a training recipe for tactile integration consisting of visuo-tactile pre-training, staged tactile-pathway integration, and advantage-conditioned offline policy improvement. During pre-training, the policy learns broad contact priors from NeoData, our large-scale visuo-tactile robot dataset; to our knowledge, $N_0$-VTLA is the first VTLA model pretrained on tactile data at scale. During post-training, we augment the policy with a predictive tactile pathway that distills the contact patterns learned at scale into the fine motion adjustments required by downstream tactile-centric manipulation. For offline policy improvement, we introduce ALTER, an advantage-conditioned offline reinforcement learning method that converts relative progress and trajectory-event comparisons into binary advantage labels for policy training on a fixed deployment corpus, further improving task-specific learning on contact-rich skills such as deformable object manipulation. Across contact-rich benchmarks, $N_0$-VTLA outperforms strong baselines by wide margins: it wins all nine real-robot NeoReal tasks and reaches 63.8% mean success on a twenty-task simulation suite, against 44.0% for the strongest baseline. $N_0$-VTLA policies trained with ALTER reach 75-95% success on three long-horizon real-robot tasks. These results lay a foundation for versatile tactile-driven manipulation policies.",
+      "authors": [
+        "NeoteAI Team",
+        "Fudan TEAI Team"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-26T17:58:47+00:00",
+      "link": "https://arxiv.org/pdf/2607.23782v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "vision-tactile-language-action foundation model for contact-rich manipulation with offline policy improvement from stored data",
+      "llm_evidence_cn": "面向接触丰富操作的视觉-触觉-语言-动作基础模型，从存储数据中进行离线策略改进",
+      "llm_evidence": "面向接触丰富操作的视觉-触觉-语言-动作基础模型，从存储数据中进行离线策略改进",
+      "canonical_evidence": "面向接触丰富操作的视觉-触觉-语言-动作基础模型，从存储数据中进行离线策略改进",
+      "llm_tldr_en": "N0-VTLA is a vision-tactile-language-action foundation model with visuo-tactile pretraining, staged tactile integration, and advantage-conditioned offline policy improvement for contact-rich manipulation.",
+      "llm_tldr_cn": "针对接触丰富的精细操作缺乏大规模触觉训练数据的问题，论文提出VTLA基础模型N0-VTLA。通过在大规模触觉数据集NeoData上进行视觉-触觉预训练、分阶段触觉通路集成以及优势条件离线策略改进，该模型能够利用触觉感知进行反馈控制，并对历史部署数据离线改进策略。实验结果显示了触觉集成训练策略的有效性，为触觉-语言-动作模型的可扩展训练提供了新方法。",
+      "llm_tldr": "针对接触丰富的精细操作缺乏大规模触觉训练数据的问题，论文提出VTLA基础模型N0-VTLA。通过在大规模触觉数据集NeoData上进行视觉-触觉预训练、分阶段触觉通路集成以及优势条件离线策略改进，该模型能够利用触觉感知进行反馈控制，并对历史部署数据离线改进策略。实验结果显示了触觉集成训练策略的有效性，为触觉-语言-动作模型的可扩展训练提供了新方法。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.27261v1",
+      "source": "arxiv",
+      "title": "It's Not Just More Demos: Counterfactual Action Sensitivity Coverage for Data-Efficient Robust Robot Imitation",
+      "abstract": "Visuomotor imitation learning has demonstrated success for manipulation tasks. However, the trained policies remain brittle to visual `nuisances', with even minor task-preserving variations such as lighting, distractions or changes in colour result in heavy degradation of the trained policy's performance. While increasing data diversity can improve robustness, it is unclear which additional demonstrations are informative for a particular trained policy. We propose Counterfactual Nuisance Behaviour Cloning (CFNBC), an offline data-selection framework for targeted robustness repair. Starting from a nominal policy trained on `clean' demonstrations, CFNBC generates paired clean and nuisance observations that preserve the expert action, then measures \\emph{action drift}: the change in the policy's predicted action under a nuisance that should not alter the desired behaviour. This provides a policy-specific sensitivity signal for selecting a compact, response-diverse repair set from a larger candidate pool, without requiring rollout success labels or online policy execution. We show in MuJoCo bimanual cube transfer and SimplerEnv cube stacking that action drift correlates with nuisance-induced failure, and that response-guided repair with only $20$--$30$ selected candidates substantially outperforms matched-budget random selection while approaching the performance of much larger random repair budgets. These results support a data-centric view of robustness repair: the most useful data are not necessarily the most numerous, visually diverse, or obviously difficult, but the examples that cover fragile response modes of the current policy.",
+      "authors": [
+        "Giovanni D'urso",
+        "Kaushik Roy",
+        "Nicholas Lawrance",
+        "Brendan Tidd"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-29T05:55:57+00:00",
+      "link": "https://arxiv.org/pdf/2607.27261v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Offline data selection framework for robust robot imitation learning",
+      "llm_evidence_cn": "面向鲁棒机器人模仿学习的离线数据选择框架",
+      "llm_evidence": "面向鲁棒机器人模仿学习的离线数据选择框架",
+      "canonical_evidence": "面向鲁棒机器人模仿学习的离线数据选择框架",
+      "llm_tldr_en": "Proposes CFNBC, a counterfactual data-selection framework that repairs robustness of visuomotor imitation policies against visual nuisances by targeting the most informative additional demonstrations.",
+      "llm_tldr_cn": "视觉运动模仿学习策略对光照、干扰等视觉扰动十分脆弱，而简单增加数据多样性并不清楚哪些示教最有价值。本文提出反事实干扰行为克隆（CFNBC），以离线数据选择方式对策略进行针对性鲁棒修复。CFNBC 从干净示教训练的名义策略出发，生成成对的干净与干扰观测并评估策略的动作敏感性，从而选出最有信息量的补充示教。结果表明该框架能有效提升操纵策略对视觉扰动的鲁棒性，同时节省数据标注成本。",
+      "llm_tldr": "视觉运动模仿学习策略对光照、干扰等视觉扰动十分脆弱，而简单增加数据多样性并不清楚哪些示教最有价值。本文提出反事实干扰行为克隆（CFNBC），以离线数据选择方式对策略进行针对性鲁棒修复。CFNBC 从干净示教训练的名义策略出发，生成成对的干净与干扰观测并评估策略的动作敏感性，从而选出最有信息量的补充示教。结果表明该框架能有效提升操纵策略对视觉扰动的鲁棒性，同时节省数据标注成本。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.27784v1",
+      "source": "arxiv",
+      "title": "DexDirect: Direct Kinesthetic Arm Guidance for Efficient Dexterous Demonstration Collection",
+      "abstract": "Scalable collection of dexterous manipulation demonstrations remains a major bottleneck for robot learning. High-fidelity interfaces often require costly hardware and extensive setup, while low-setup, low cost alternatives tend to provide less precise control and impose greater cognitive workload on operators. We present DexDirect, a direct kinesthetic arm guidance for efficient dexterous demonstration collection. The operator drags a 6-DoF gravity-compensated robot arm directly by a handle, while a single webcam retargets operator's other hand onto a 16 joints 13-DoF dexterous robot hand. User studies suggest DexDirect collects 17.2x and 3.2x more successful demonstrations compared to purely vision (AnyTeleop) and pose-tracking (TeleDex) baselines. An adapted NASA-TLX shows DexDirect greatly reduces mental demand, effort, and frustration, despite raising physical demand. A diffusion policy trained on DexDirect demonstrations reaches a 90% success rate on a cube pick-and-place task. These results suggest that direct kinesthetic arm guidance combined with vision-based hand retargeting provides an efficient low-setup and scalable interface for collecting dexterous manipulation demonstrations",
+      "authors": [
+        "Beom Jun Kim",
+        "Shiu-Jen Wang",
+        "Jonathan Liu",
+        "Alvin Zhu",
+        "Quanyou Wang",
+        "Hanzhang Fang",
+        "Feng Xu",
+        "Mingzhang Zhu",
+        "Yuchen Cui",
+        "Dennis W. Hong"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-30T07:17:28+00:00",
+      "link": "https://arxiv.org/pdf/2607.27784v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Kinesthetic demonstration collection for dexterous robot manipulation",
+      "llm_evidence_cn": "用于灵巧机器人操纵的动觉示教采集",
+      "llm_evidence": "用于灵巧机器人操纵的动觉示教采集",
+      "canonical_evidence": "用于灵巧机器人操纵的动觉示教采集",
+      "llm_tldr_en": "DexDirect enables efficient dexterous demonstration collection via direct kinesthetic arm guidance and webcam hand retargeting, yielding substantially more successful demonstrations than vision or pose-tracking baselines.",
+      "llm_tldr_cn": "灵巧操作演示数据的高效采集是机器人学习的主要瓶颈。DexDirect 通过直接拖拽重力补偿机械臂并由网络摄像头重定向操作员另一只手，实现低成本高精度的示教采集。用户研究表明，DexDirect 相比纯视觉和姿态跟踪方案分别采集到 17.2 倍和 3.2 倍更多的成功演示，显著提升示教效率，为后续模仿学习提供了高质量数据支撑。",
+      "llm_tldr": "灵巧操作演示数据的高效采集是机器人学习的主要瓶颈。DexDirect 通过直接拖拽重力补偿机械臂并由网络摄像头重定向操作员另一只手，实现低成本高精度的示教采集。用户研究表明，DexDirect 相比纯视觉和姿态跟踪方案分别采集到 17.2 倍和 3.2 倍更多的成功演示，显著提升示教效率，为后续模仿学习提供了高质量数据支撑。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.28443v1",
+      "source": "arxiv",
+      "title": "One Future, Every Robot: Label-Efficient Collective-State Prediction with Decentralized JEPA",
+      "abstract": "Can every robot in a swarm predict the same future collective state from only local observations and bandwidth-limited messages? We formulate this as decentralized shared-state prediction and introduce Collective-State JEPA (CS-JEPA), a recurrent joint-embedding predictive architecture whose output at every robot represents one common future token field. At deployment, each robot uses a 16-frame local history and one 64-float recurrent message per directed edge; there is no global pooling, target encoder, episode clock, or recorded future action. After pretraining without downstream collective labels, frozen representations are evaluated with ridge probes fitted on 6, 12, or 24 globally labeled episodes. Against raw-future reconstruction with the same receiver anchor and deployment capacity but 9,607 additional training-only parameters, a prospectively registered five-seed follow-up improves prediction-error and inter-robot-agreement label-budget AUC on in-distribution, ring, mutual-kNN, and unseen-size families up to 108 robots. Every effect favors CS-JEPA in 5/5 outer seeds. In a separate sealed eight-seed follow-up, matched action-conditioned predictors receive each candidate four-step plan before producing receiver-local predictive representations. CS-JEPA reduces branch-value MSE by 45.5% and improves within-context candidate-score Pearson correlation by 0.1291, with both effects favorable in 8/8 seeds, including at unseen N=32. These results support common-future JEPA targets as a label-efficient primitive for decentralized swarm prediction under topology and size shift, with additional evidence of planning-relevant value estimation.",
+      "authors": [
+        "Alan-Barsag Gazzaev",
+        "Alexey Garvilov",
+        "Sergey Muravyov"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-30T16:16:08+00:00",
+      "link": "https://arxiv.org/pdf/2607.28443v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Decentralized JEPA for collective-state prediction in robot swarms",
+      "llm_evidence_cn": "面向机器人集群的联合嵌入预测架构",
+      "llm_evidence": "面向机器人集群的联合嵌入预测架构",
+      "canonical_evidence": "面向机器人集群的联合嵌入预测架构",
+      "llm_tldr_en": "Collective-State JEPA lets each robot in a swarm predict a shared future latent state from local observations and a small recurrent message, requiring only a few labeled episodes for probe evaluation.",
+      "llm_tldr_cn": "论文针对多机器人集群共同未来状态预测难且标注稀少的问题，提出Collective-State JEPA，利用循环联合嵌入预测架构，仅凭局部观测和每边一个64浮点消息即可预测统一未来状态。实验中只需6到24个全局标注片段，冻结表征通过岭回归探针评估，表明该方法能少标注地实现去中心化共享状态预测，为集群预测提供新思路。",
+      "llm_tldr": "论文针对多机器人集群共同未来状态预测难且标注稀少的问题，提出Collective-State JEPA，利用循环联合嵌入预测架构，仅凭局部观测和每边一个64浮点消息即可预测统一未来状态。实验中只需6到24个全局标注片段，冻结表征通过岭回归探针评估，表明该方法能少标注地实现去中心化共享状态预测，为集群预测提供新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.25798v1",
+      "source": "arxiv",
+      "title": "Transformer Transformer: A Unified Model for Motion-Conditioned Robot Co-design",
+      "abstract": "An often overlooked factor of robot manipulation performance is the embodiment of the robot itself. Motivated by this problem, we study motion-conditioned robot co-design, where the goal is to generate complete robot designs that track target end-effector trajectories (from human demonstrations) while optimizing user-defined rewards. We introduce Transformer Transformer, a diffusion transformer trained on RoboTokens, a unified tokenization of robot embodiments, states, and actions. The same architecture can be used across embodiment spaces (e.g., wheeled bimanual, quadrupeds, humanoids) and use cases (embodiment generation, cross embodiment controller). Rather than overfitting to one reward function, Transformer Transformer is a dynamics model, whose reward-agnostic state and action predictions can be converted into reward-specific value predictions. These value predictions are used to steer embodiment diffusion towards high value robot designs, through a procedure we call Dynamics Self-Guidance. Experiments across multiple design spaces show zero-shot optimization of unseen rewards and trajectories, improving performance and runtime over the evolutionary baseline. Finally, we fabricated an optimized ALOHA design, which reduced tracking error by over 70% compared to the original design.",
+      "authors": [
+        "Huy Ha",
+        "C. Karen Liu",
+        "Shuran Song"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-28T14:47:14+00:00",
+      "link": "https://arxiv.org/pdf/2607.25798v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "diffusion transformer trained on RoboTokens for motion-conditioned robot co-design from human demonstrations",
+      "llm_evidence_cn": "基于RoboTokens训练的扩散Transformer，利用人类演示进行运动条件机器人协同设计",
+      "llm_evidence": "基于RoboTokens训练的扩散Transformer，利用人类演示进行运动条件机器人协同设计",
+      "canonical_evidence": "基于RoboTokens训练的扩散Transformer，利用人类演示进行运动条件机器人协同设计",
+      "llm_tldr_en": "Transformer Transformer is a diffusion transformer trained on RoboTokens for motion-conditioned robot co-design, generating embodiments that track human-demonstrated trajectories across multiple robot morphologies.",
+      "llm_tldr_cn": "针对机器人自身形态常被忽视的问题，论文提出Transformer Transformer，一种在统一RoboTokens标记上训练的扩散Transformer，用于运动条件机器人协同设计。它可以处理多足、人形等不同形态，利用人类演示的末端轨迹约束来生成完整机器人设计，同时也支持跨形态控制。该方法将形态生成与动作预测统一起来，为扩散模型在机器人设计和学习中的迁移提供新思路。",
+      "llm_tldr": "针对机器人自身形态常被忽视的问题，论文提出Transformer Transformer，一种在统一RoboTokens标记上训练的扩散Transformer，用于运动条件机器人协同设计。它可以处理多足、人形等不同形态，利用人类演示的末端轨迹约束来生成完整机器人设计，同时也支持跨形态控制。该方法将形态生成与动作预测统一起来，为扩散模型在机器人设计和学习中的迁移提供新思路。",
+      "llm_tags": [
+        "query:imitation:composite"
+      ],
+      "matched_query_tag": "query:imitation:composite",
+      "matched_query_text": "Papers central to 搜索机器人模仿学习、JEPA、diffusion policy相关论文, especially work that connects or combines: imitation learning in robotics; robot imitation learning methods and algorithms; JEPA joint embedding predictive architecture; diffusion policy for robot control; recent advances in imitation learning for robotic manipulation; What are recent advances in robot imitation learning using JEPA?; How is diffusion policy applied to robot learning from demonstration?.",
+      "matched_requirement_id": "req-composite-imitation",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.25912v1",
+      "source": "arxiv",
+      "title": "SAM3D-Guided Object-Centric Representation Alignment for Vision-Language-Action Models",
+      "abstract": "Vision-Language-Action (VLA) models have shown strong potential for general robot manipulation, but most existing models rely on 2D visual-language backbones and lack fine-grained 3D understanding of target objects, especially under occlusion, pose variation, scale changes, and precise spatial interaction. We propose an object-centric 3D representation alignment framework built upon $π_0$, using SAM3D as a frozen 3D teacher to provide target-object 3D priors during training. Specifically, we localize task-relevant objects with object recognition models, generate corresponding object masks, and use SAM3D to extract dense object-level 3D representations, which are aligned with intermediate visual features of $π_0$. This enables the policy to internalize target-object 3D information while preserving the original RGB-language-to-action inference pipeline without requiring depth, point clouds, masks, SAM3D, or additional 3D modules at test time. Simulation experiments show consistent improvements, achieving 99.1\\% on LIBERO and an average length of 4.11 on CALVIN. Real-world experiments further demonstrate that our method is particularly effective in long-horizon manipulation scenarios where the robot must focus on different target objects across multiple subtasks.",
+      "authors": [
+        "Zonghe Liu",
+        "Shanyuan Jie",
+        "Xiaoquan Sun",
+        "Chen Cao",
+        "Zetian Xu",
+        "Zongsheng Liu",
+        "Jiayu Chen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-28T16:05:32+00:00",
+      "link": "https://arxiv.org/pdf/2607.25912v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "recent advance in robot manipulation via VLA; SAM3D 3D representation alignment for policy learning",
+      "llm_evidence_cn": "面向机器人操作策略的3D表征对齐，属于模仿/演示策略学习最新进展",
+      "llm_evidence": "面向机器人操作策略的3D表征对齐，属于模仿/演示策略学习最新进展",
+      "canonical_evidence": "面向机器人操作策略的3D表征对齐，属于模仿/演示策略学习最新进展",
+      "llm_tldr_en": "Improves VLA robot manipulation by aligning intermediate visual features with SAM3D object-level 3D representations, enhancing fine-grained 3D understanding for general tasks.",
+      "llm_tldr_cn": "针对视觉-语言-动作(VLA)模型缺乏细粒度3D物体理解的问题，本文提出基于SAM3D的目标中心表征对齐框架。该方法在训练时利用冻结的SAM3D教师提取目标物体的稠密3D表征，并与模型中间视觉特征对齐，从而提升在遮挡、姿态变化和尺度变化下的操作泛化能力。实验表明该框架能增强机器人操作策略的3D空间交互理解。",
+      "llm_tldr": "针对视觉-语言-动作(VLA)模型缺乏细粒度3D物体理解的问题，本文提出基于SAM3D的目标中心表征对齐框架。该方法在训练时利用冻结的SAM3D教师提取目标物体的稠密3D表征，并与模型中间视觉特征对齐，从而提升在遮挡、姿态变化和尺度变化下的操作泛化能力。实验表明该框架能增强机器人操作策略的3D空间交互理解。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
