@@ -6,50 +6,34 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-31
-- 运行时间：2026-07-31 21:14:37 UTC
+- 最新运行日期：2026-08-01
+- 运行时间：2026-08-01 20:01:44 UTC
 - 运行状态：成功
-- 本次总论文数：10
-- 精读区：6
-- 速读区：4
+- 本次总论文数：4
+- 精读区：2
+- 速读区：2
 
 ### 今日简报（AI）
-今日精读聚焦手术机器人故障检测与跨具身行为迁移，两篇均获9.0高分；速读覆盖灵巧操作数据采集、集体状态预测及运动条件机器人协同设计。最值得关注的是通过流匹配世界模型提升故障检测可靠性，以及行为对齐表征实现跨机器人迁移。下一步可优先精读9分论文，并试玩低分速读中的灵巧数据收集方案。
-- 详情：[/202607/31/README](/202607/31/README)
+今日精读4篇论文，聚焦具身智能与自监督学习，其中2篇深入解析。  
+最值得关注：流匹配VLA纠错机制（RedFlow）与第一人称世界-动作建模（EgoGenesis），均为8.0高分。  
+建议普通读者优先追踪具身智能中的动作级纠错与在线记忆技术，可搭配快速浏览自监督公平性方案。
+- 详情：[/202608/01/README](/202608/01/README)
 
 ### 精读区论文标签
-1. [Failure Detection for Surgical Robot Imitation Policies via Flow-Matching World Modeling](/202607/31/2607.27511v1-failure-detection-for-surgical-robot-imitation-policies-via-flow-matching-world-modeling)  
-   标签：评分：9.0/10、query:imitation
-   evidence：基于流匹配世界模型的外科手术机器人模仿策略失败检测
-2. [Cross-Embodiment Transfer via Behavior-Aligned Representations](/202607/31/2607.27549v1-cross-embodiment-transfer-via-behavior-aligned-representations)  
-   标签：评分：9.0/10、query:imitation
-   evidence：面向机器人操作模仿学习的行为对齐表征
-3. [X-NavDP: Generalizing Navigation Diffusion Policy to Novel Behavior and Embodiments with Group Q-score Reweighted Matching](/202607/31/2607.28560v1-x-navdp-generalizing-navigation-diffusion-policy-to-novel-behavior-and-embodiments-with-group-q-score-reweighted-matching)  
-   标签：评分：9.0/10、query:imitation
-   evidence：面向机器人控制的导航扩散策略，基于示范训练并强化学习优化
-4. [FA-RDP: A Frequency-Adaptive Reactive Diffusion Policy for Contact-Rich Manipulation](/202607/31/2607.28596v1-fa-rdp-a-frequency-adaptive-reactive-diffusion-policy-for-contact-rich-manipulation)  
-   标签：评分：9.0/10、query:imitation
-   evidence：面向接触丰富操纵的自适应频率响应扩散策略
-5. [$N_0$-VTLA: Scaling Vision-Tactile-Language-Action Model with Latent Tactile Tokens](/202607/31/2607.23782v1-n0-vtla-scaling-vision-tactile-language-action-model-with-latent-tactile-tokens)  
+1. [RedFlow: Redirect Failure into Action-Level Corrections for Flow-matching VLA Policy](/202608/01/2607.27782v1-redflow-redirect-failure-into-action-level-corrections-for-flow-matching-vla-policy)  
    标签：评分：8.0/10、query:imitation
-   evidence：面向接触丰富操作的视觉-触觉-语言-动作基础模型，从存储数据中进行离线策略改进
-6. [It's Not Just More Demos: Counterfactual Action Sensitivity Coverage for Data-Efficient Robust Robot Imitation](/202607/31/2607.27261v1-its-not-just-more-demos-counterfactual-action-sensitivity-coverage-for-data-efficient-robust-robot-imitation)  
+   evidence：流匹配VLA策略用于机器人操作，并通过离线RL提供纠正监督
+2. [EgoGenesis: Egocentric World-Action Modeling with Online Anchored Projective Memory and Action-3D RoPE](/202608/01/2607.28243v1-egogenesis-egocentric-world-action-modeling-with-online-anchored-projective-memory-and-action-3d-rope)  
    标签：评分：8.0/10、query:imitation
-   evidence：面向鲁棒机器人模仿学习的离线数据选择框架
+   evidence：合成第一视角操作视频以扩展模仿学习训练数据的仿真器
 
 ### 速读区论文标签
-1. [DexDirect: Direct Kinesthetic Arm Guidance for Efficient Dexterous Demonstration Collection](/202607/31/2607.27784v1-dexdirect-direct-kinesthetic-arm-guidance-for-efficient-dexterous-demonstration-collection)  
-   标签：评分：8.0/10、query:imitation
-   evidence：用于灵巧机器人操纵的动觉示教采集
-2. [One Future, Every Robot: Label-Efficient Collective-State Prediction with Decentralized JEPA](/202607/31/2607.28443v1-one-future-every-robot-label-efficient-collective-state-prediction-with-decentralized-jepa)  
-   标签：评分：7.0/10、query:imitation
-   evidence：面向机器人集群的联合嵌入预测架构
-3. [Transformer Transformer: A Unified Model for Motion-Conditioned Robot Co-design](/202607/31/2607.25798v1-transformer-transformer-a-unified-model-for-motion-conditioned-robot-co-design)  
+1. [Unbiased Open World Regularization for Fair Self-Supervised Learning](/202608/01/2607.22149v1-unbiased-open-world-regularization-for-fair-self-supervised-learning)  
    标签：评分：6.0/10、query:imitation
-   evidence：基于RoboTokens训练的扩散Transformer，利用人类演示进行运动条件机器人协同设计
-4. [SAM3D-Guided Object-Centric Representation Alignment for Vision-Language-Action Models](/202607/31/2607.25912v1-sam3d-guided-object-centric-representation-alignment-for-vision-language-action-models)  
+   evidence：针对JEPA和自监督学习的正则化问题，提出开放世界下的无偏去偏方法
+2. [FutureRTC: Real-Time Robot Execution with Anticipatory-Conditioned Action Chunking](/202608/01/2607.24008v1-futurertc-real-time-robot-execution-with-anticipatory-conditioned-action-chunking)  
    标签：评分：6.0/10、query:imitation
-   evidence：面向机器人操作策略的3D表征对齐，属于模仿/演示策略学习最新进展
+   evidence：处理视觉-语言-动作策略的实时执行与动作分块，与基于演示的机器人操作相关
 
 
 <div class="dpr-home-promo-card">

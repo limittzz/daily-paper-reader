@@ -1,0 +1,538 @@
+Title: Unbiased Open World Regularization for Fair Self-Supervised Learning
+
+URL Source: https://arxiv.org/pdf/2607.22149v1
+
+Published Time: Mon, 27 Jul 2026 00:35:58 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# Unbiased Open World Regularization for Fair Self-Supervised Learning 
+
+Léo Nicollier leo.nicollier@gmail.com Université Paris-Saclay, CNRS, ENS Paris-Saclay, Centre Borelli, France Advanced Track and Trace 
+
+Marc Pic 
+
+Advanced Track and Trace 
+
+Pablo Musé 
+
+IIE, Facultad de Ingeniería, Universidad de la República, Uruguay Université Paris-Saclay, CNRS, ENS Paris-Saclay, Centre Borelli, France 
+
+Enric Meinhardt-Llopis 
+
+Université Paris-Saclay, CNRS, ENS Paris-Saclay, Centre Borelli, France 
+
+Gabriele Facciolo 
+
+Université Paris-Saclay, CNRS, ENS Paris-Saclay, Centre Borelli, France Institut Universitaire de France 
+
+# Abstract 
+
+Despite recent advances, self-supervised learning (SSL) models and Joint-Embedding Pre-dictive Architectures (JEPAs) remain susceptible to learning spurious biases in the dataset. These techniques rely on regularization, which prevents representation collapse by enforcing a global target distribution such as a multivariate Gaussian or a uniform distribution on the sphere. However, these global constraints are insufficient to prevent bias entanglement, as task-irrelevant features can still segregate the latent space into distinct sub-regions. While recent approaches like Entangling and Disentangling (EnD) and Fair Supervised Contrastive Learning (FSCL) empirically debias the latent space, we show that they act as partial ap-proximations of conditional distribution matching. To enforce this matching explicitly, we propose Unbiased Open World Regularization (UOWReg), an encoder-only framework. We show that this shift from a global to a conditional objective guarantees statistical inde-pendence between the learned representations and the targeted attributes, regardless of the chosen target distribution. We empirically validate this framework across both Gaus-sian and spherical latent spaces, using statistical measures to enforce these target distri-butions. While conditional matching successfully mitigates bias with both distributions, we demonstrate that enforcing conditional uniformity on the sphere yields a lower linear-probing classification error. Empirically, UOWReg reduces Equalized Odds violations on the CelebA benchmark while maintaining competitive classification accuracy compared to ex-isting encoder-only baselines. Furthermore, we introduce the Synthetic Engraving Task—a novel setting in which a dominant macro-structure masks a fine-grained micro-signature. We show that UOWReg effectively prevents the subpopulation collapse observed in standard SSL, successfully isolating micro-signatures even when heavily entangled with the global structure. 1arXiv:2607.22149v1 [cs.LG] 24 Jul 2026 (a) (b) 
+
+> Bias Group 1
+> Bias Group 2
+> Target Class A
+> Target Class B
+
+Figure 1: Illustration of our distribution regularization framework instantiated on the sphere. (a) Global Regularization (Baseline): Enforcing a global target distribution prevents representation col-lapse but allows spurious shortcuts to dictate the latent structure . The bias segregates the latent space, clustering distinct bias groups (colors) into isolated sub-regions. (b) Unbiased Open World Regular-ization (UOWReg): Shifting the constraint to conditional distribution matching forces each bias group to independently match the target space (here, uniform on the sphere). Spurious features are blended, guar-anteeing statistical independence ( X ⊥⊥ B) while preserving the orthogonal separation of semantic targets (shapes). 
+
+# 1 Introduction 
+
+Self-supervised learning (SSL) has emerged as a dominant paradigm for extracting task-agnostic represen-tations from complex visual data without relying on human annotations (van den Oord et al., 2019). Afundamental challenge in SSL is preventing representation collapse , where the encoder maps all inputs to a trivial constant (Grill et al., 2020). To prevent this, standard regularization techniques enforce a predefined global target distribution on the latent space, such as a multivariate Gaussian in Euclidean space (Balestriero and LeCun, 2025) or a uniform distribution on the unit sphere (Nicollier et al., 2026a). Despite successfully preventing collapse, enforcing a global target distribution is insufficient when deep neural networks are applied to real-world data containing spurious correlations . Instead of capturing the underlying causal semantic features, the models exploit the easiest predictive shortcuts available in the training distri-bution, such as background colors, dominant textures, or sensitive demographic attributes. Consequently, even a perfectly regularized latent space will implicitly segregate representations according to these dominant biases as in Figure 1, compromising both the fairness and the out-of-distribution generalization of the learned features. Addressing this entanglement via traditional approaches, such as adversarial min-max optimiza-tion (Ganin et al., 2016) or reconstructive generative models (Louizos et al., 2015), introduces instability and hyperparameter sensitivity (Locatello et al., 2019; Arjovsky et al., 2017). Alternatively, recent encoder-only methods (Tartaglione et al., 2021; Park et al., 2022) successfully avoid generative modeling and minimax optimization by introducing dedicated debiasing regularizers. While empirically effective, these approaches are viewed as distinct mechanisms. In this work, we first reformulate these empirical mechanisms under a unified principle, showing that they act as partial approximations of conditional distribution matching. Building upon this formalization, we propose Unbiased Open World Regularization (UOWReg), an encoder-only, distribution-agnostic framework designed to filter out known spurious attributes during pre-training. We establish that shifting the regularization objective from a global constraint to a conditional distribution matching constraint guarantees statistical independence between the learned representations and the targeted attributes (see Figure 1). While our debiasing principle holds for any distribution, the specific target distribution dictates the utility of the representations for downstream tasks. Recent theoretical work shows that the uniform distribution 2on the hypersphere ( U(Sd−1)) minimizes the worst-case performance for tasks such as k-nearest neighbors (k-NN) and linear ridge regression (Nicollier et al., 2026a). Therefore, to maximize downstream performance, we instantiate UOWReg primarily as conditional uniformity on the unit sphere, using kernel-based statistical discrepancies that evaluate directly on the sphere, thereby bypassing the need for projections (Nicollier et al., 2026b). We empirically validate this theoretical framework across spherical and Gaussian latent spaces, demonstrating successful bias mitigation for both target distributions, and confirming that the spherical constraint yields superior downstream performance. To evaluate our framework, we first quantitatively validate this bias disentanglement on Colored MNIST (Ar-jovsky et al., 2020). Compared to the standard Open World baseline, UOWReg significantly reduces the k-nearest neighbors accuracy of the spurious attribute (from 100.0% to 74.0%) while fully preserving task utility. We then demonstrate its effectiveness on standard demographic fairness benchmarks using facial attributes (CelebA), achieving the lowest Equalized Odds violations among encoder-only methods. Finally, moving beyond standard benchmarks, we introduce the Synthetic Engraving Dataset , a task inspired by object biometrics (Nicollier et al., 2024), in which a dominant global structure (a DataMatrix) serves as a near-perfect predictive shortcut. In this strongly entangled regime, UOWReg prevents subpopulation collapse, isolates subtle micro-signatures, and yields a 13-point retrieval gain over the baseline. In summary, our main contributions are as follows: 
+
+• We unify prior empirical regularizers of EnD and FSCL by showing that they act as specific, partial approximations of our conditional regularizer. 
+
+• We introduce UOWReg, a distribution-agnostic regularizer that guarantees bias disentanglement. By leveraging statistical discrepancy measures, our approach translates this principle into a stable, encoder-only training objective. 
+
+• We show that, among non-generative encoder-only methods, UOWReg achieves the lowest Equalized Odds violations on the CelebA benchmark while maintaining competitive classification accuracy. 
+
+• We introduce the Synthetic Engraving Task, an adverse evaluation setting designed to test disen-tanglement under strong spurious correlations. 
+
+# 2 Notation and Setup 
+
+Following the formalization of Balestriero and LeCun (2025), we consider a dataset composed of N inde-pendent samples. Each sample xn is associated with a discrete bias attribute bn ∈ B (e.g., background color or a sensitive demographic trait), which we aim to disentangle from its semantic representation. Each sample is observed through V views, yielding data points xn,v ∈ RD for n = 1 , . . . , N and v = 1 , . . . , V ,where D denotes the input dimension (e.g., for an image of spatial resolution H × W with C channels, 
+
+D = C × H × W ). These views correspond to data augmentations of a given sample, such as geometric transformations or random crops. Following standard SSL practice (Caron et al., 2020; 2021), we distinguish between global and local views. Global views are larger crops that preserve most of the image content, while local views are smaller crops capturing limited spatial context. Among the total V views, we denote the number of global views by Vg and the number of local views by Vl (such that V = Vg + Vl). We index the views v = 1 , . . . , V such that the first 
+
+Vg indices correspond to the global views. We assume that the original samples {xn}Nn=1 are independent and identically distributed. 
+
+Encoder. Let fθ : RD → Rd denote a parametric encoder with parameters θ ∈ RP , mapping the input data to a latent space. The specific architecture (e.g., convolutional or self-attention based) is left unspecified to match the inductive biases of the data modality. For each sample and view, the encoder produces an embedding zn,v := fθ (xn,v ) ∈ Rd.To match the chosen target distribution, the embeddings zn,v are mapped to their final representations ˜zn,v .We define ˜zn,v := zn,v for a Gaussian target in Rd, whereas for a spherical target, we enforce an explicit 3ℓ2-normalization: 
+
+˜zn,v := zn,v 
+
+∥zn,v ∥ ∈ Sd−1. (1) 
+
+# 3 Related Work 
+
+Our approach bridges recent advances in self-supervised learning and fair representation learning. 
+
+Distribution Matching in Self-Supervised Learning. To prevent representation collapse, recent self-supervised frameworks enforce a predefined global target distribution on the latent space, such as a multivariate Gaussian (Balestriero and LeCun, 2025) or a uniform distribution on the unit hypersphere (U(Sd−1)) (Nicollier et al., 2026a). This spherical uniform distribution is optimal for worst-case downstream performance in linear regression and k-nearest neighbors ( k-NN) (Nicollier et al., 2026a). While initial meth-ods enforced these targets via sliced estimators using random one-dimensional projections (Balestriero and LeCun, 2025; Nicollier et al., 2026a), they exhibit marginally higher variance and slightly slower convergence. Consequently, subsequent works (Zimmermann et al., 2025; Nicollier et al., 2026b) introduced projection-free regularizers utilizing positive-definite kernels defined directly on the space. We leverage these statistical measures, extending the global regularization framework to a conditional setting to explicitly mitigate known spurious biases. 
+
+Bias Mitigation and Fair Representations. Learning representations that are invariant to sensitive attributes is a long-standing objective in representation learning, dating back to Learning Fair Represen-tations (Zemel et al., 2013) (LFR). A common formulation consists in reducing the Mutual Information (MI) between the learned representations and the sensitive attributes, for which various estimators have been proposed (Cheng et al., 2020). However, MI estimation remains challenging in high-dimensional set-tings (Ishmael Belghazi et al., 2018). Several approaches rely on adversarial objectives (Ganin et al., 2016) or reconstructive generative models (Louizos et al., 2015), which can introduce additional optimization complexity and hyperparameter sensitivity (Arjovsky et al., 2017; Locatello et al., 2019). More recently, generative models, including diffusion-based approaches, have been used to improve dataset balance through data augmentation. In contrast, our focus is on an encoder-only approach that operates directly in repre-sentation space, without requiring an additional data-generation stage. Finally, post-hoc interventions (e.g., nullspace projection (Ravfogel et al., 2020)) may be less effective when spurious correlations are already strongly embedded in the learned representations. 
+
+Supervised Debiasing Regularization. Several methods have explored the use of supervised regular-ization to mitigate spurious biases during representation learning. Among them, EnD (Tartaglione et al., 2021) and FSCL (Park et al., 2022) achieve empirical bias mitigation without relying on generative modeling. Conceptually, these approaches combine a task-specific objective based on target labels with an additional regularizer that leverages bias annotations to shape the representation space. EnD penalizes inner products to encourage orthogonal subspaces among samples sharing the same spurious attribute. Similarly, the re-pulsive component of FSCL’s modified InfoNCE (van den Oord et al., 2019) objective balances contrastive repulsion across different bias groups. While effective in practice, these methods primarily rely on local inter-actions between samples rather than explicitly enforcing a global distributional property of the latent space. In Section 4, we formalize the relationship between these empirical methods, showing that both function as specific approximations of conditional distribution matching. 
+
+# 4 Methodology 
+
+In this section, we formalize Unbiased Open World Regularization (UOWReg), an encoder-only framework designed to disentangle spurious attributes during pre-training. We first define our self-supervised baseline, which balances multi-view invariance with a global target distribution. We then demonstrate how shifting this geometric constraint to conditional uniformity guarantees statistical independence from the bias. Lastly, we show that this probabilistic framework unifies prior debiasing regularizers. 44.1 The Open World Baseline: Invariance and Global Uniformity 
+
+To extract semantic representations without human annotations, self-supervised learning requires two op-posing objectives: an alignment objective to capture task-agnostic features, and a regularization objective to prevent representation collapse (Bardes et al., 2021). 
+
+Invariant Prediction. To capture semantic information, we enforce an alignment objective across the 
+
+V augmented views of a sample as in Balestriero and LeCun (2025); Nicollier et al. (2026a). Given the embeddings ˜zn,v , we define the global prototype μn := 1
+
+> Vg
+
+∑Vg 
+
+> v=1
+
+˜zn,v as the average of its global views. The invariance loss minimizes the squared Euclidean distance between all views and this prototype: 
+
+Linv = 1
+
+V
+
+> V
+
+∑
+
+> v=1
+
+∥μn − ˜zn,v ∥22. (2) 
+
+Global Distribution Matching. Minimizing Linv alone leads to representation collapse. To address this, we explicitly enforce the representations to match a predefined target random variable Y . For a given view v ∈ { 1, . . . , V }, let X(v) denote the random variable corresponding to the empirical distribution of the dataset representations {˜zn,v }Nn=1 . To prevent collapse, we minimize a statistical discrepancy measure D
+
+between the laws of X(v) and Y . We refer to this objective as Open World Regularization (OWReg) :
+
+LOWReg = 1
+
+V
+
+> V
+
+∑
+
+> v=1
+
+D(X(v), Y ). (3) As shown by Nicollier et al. (2026b), the choice of the discrepancy measure D dictates the structural proper-ties of the representation space. Specifically, Maximum Mean Discrepancy (MMD) is well-suited for clustered spaces, whereas a Kernel Density Estimation (KDE)-based Kullback-Leibler (KL) divergence is more ap-propriate for continuous, unclustered data. This framework is agnostic to the probability law of the target random variable Y . In practice, we evaluate these discrepancies over mini-batches. Let ˆp denote the em-pirical distribution associated with either the full mini-batch sampled from X(v) or one of its conditional subpopulations. Although ˆp formally depends on the view index v, we omit this dependency when it is clear from the context. To enforce a multivariate Gaussian target ( Y ∼ N (0 , I ) in Rd), we compute the MMD using the kernel kN
+
+introduced in KerJEPA (Zimmermann et al., 2025). Because it avoids random projections, this formulation yields a lower-variance estimator that matches the objective of SiGReg (Balestriero and LeCun, 2025) in expectation. Following Theorems 7 and 8 from Zimmermann et al. (2025), the discrepancy over ˆp reduces to: 
+
+DMMD (ˆ p, N (0 , I )) = Ex,y ∼ ˆp [kN (x, y )] − 2 Ex∼ ˆp
+
+[∫ 1
+
+> −1
+
+h(∥x∥22, u )ρd(u)du 
+
+]
+
++ CN , (4) where h is a smooth scalar function derived from the kernel, ρd is a probability density function, and CN is a constant. Conversely, to enforce a uniform target on the hypersphere ( Y ∼ U (Sd−1)), we evaluate the discrepancies on 
+
+ˆp using the Heat Kernel φt(x⊤y) with temperature t > 0, yielding the following deterministic closed-form estimators (Nicollier et al., 2026b): 
+
+DMMD (ˆ p, U(Sd−1)) = 1
+
+Cnorm /MMD 
+
+(Ex,y ∼ ˆp
+
+[φt(x⊤y)] − Cbias /MMD 
+
+) , (5) 
+
+DKL (ˆ p, U(Sd−1)) = 1
+
+Cnorm /KL 
+
+(Ex∼ ˆp
+
+[log Ey∼ ˆp−x
+
+[φt(x⊤y)]] − Cbias /KL 
+
+) . (6) Here, ˆp−x denotes the leave-one-out empirical estimator and Cnorm and Cbias are constants such that 
+
+D(X, U(Sd−1)) = 1 when X is a almost surely constant, and 0 when X ∼ U (Sd−1).5Combining this distribution matching objective with the invariance loss defines our Open World (OW) 
+
+baseline: 
+
+LOW = (1 − λ)Linv + λLOWReg . (7) 
+
+4.2 Bias Mitigation via Conditional Distribution Matching (UOWReg) 
+
+While the OW baseline ensures global distribution matching, it does not prevent representations from re-maining entangled with the spurious attribute bn. Global matching alone permits distinct bias groups to occupy segregated sub-regions of the target space (see Figure 1). To explicitly filter out a known discrete attribute b ∈ B , LOWReg is therefore insufficient. Let Xb := X | B = b denote the conditional random vari-able for the subpopulation with bias b. To guarantee disentanglement, we enforce statistical independence (X ⊥⊥ B) via conditional distribution matching: 
+
+Proposition 1 (Independence via Conditional Matching) . If the conditional random variable Xb has the same distribution as the target random variable Y for all b ∈ B (i.e., Xb ∼ Y ), then X has the same distribution as the target ( X ∼ Y ) and X ⊥⊥ B.Derivation. Let A be any measurable set in the representation space, and let PY denote the probability measure of the target distribution Y . By the law of total probability, P (X ∈ A) = ∑ 
+
+> b∈B
+
+P (X ∈ A | B =
+
+b)P (B = b). Since Xb ∼ Y for all b, its conditional probability measure is exactly PY (A). Thus, P (X ∈
+
+A) = ∑ 
+
+> b∈B
+
+PY (A)P (B = b) = PY (A) ∑ 
+
+> b∈B
+
+P (B = b) = PY (A) · 1 = PY (A), meaning the distribution matches the target ( X ∼ Y ). Consequently, the joint probability is P (X ∈ A, B = b) = P (X ∈ A | B =
+
+b)P (B = b) = P (X ∈ A)P (B = b), establishing statistical independence. □
+
+Following Proposition 1, we define the Unbiased Open World Regularization (UOWReg) as a convex combination of conditional and global objectives: 
+
+LUOWReg = 1
+
+V
+
+> V
+
+∑
+
+> v=1
+
+(
+
+(1 − α)Eb
+
+[D(X(v) 
+
+> b
+
+, Y )] + αD(X(v), Y )
+
+)
+
+, (8) where D corresponds to the chosen statistical discrepancy evaluated on either the conditional empirical subpopulation X(v) 
+
+> b
+
+or the global batch X(v).While Proposition 1 implies that the global term is redundant (i.e., α = 0 is sufficient to ensure statistical independence), estimating statistical discrepancies from small conditional sub-batches can lead to high esti-mator variance and consequently noisy gradients. The global term ( α ∈ [0 , 1] ) acts as a variance-stabilizing anchor for the conditional discrepancy estimates. We investigate its impact in Section 6.4. Unless otherwise stated, the default value is α = 0 .5. Different values may be preferred depending on the representation structure and the discrepancy measure. For example, we use α = 0 .25 for the continuous representations regularized with KL divergence in Section 5. Empirically, we approximate Eb by averaging over bias groups with at least two samples per mini-batch; singleton samples are regularized solely by the global term. This intra-batch aggregation reduces variance and stabilizes convergence. The overall training objective is: 
+
+L = (1 − λ)Linv + λLUOWReg , (9) where λ ∈ (0 , 1) controls the trade-off between semantic alignment and geometric regularization. Follow-ing Nicollier et al. (2026a), we set λ = 0 .05 in all experiments. 
+
+4.3 Unifying Prior Bias Mitigation Methods 
+
+While EnD (Tartaglione et al., 2021) and FSCL (Park et al., 2022) are supervised methods that jointly learn target labels and mitigate bias, they both rely on explicit regularization mechanisms to disentangle spurious attributes. As detailed in Appendix A, their overall training objectives can be abstracted under our framework as L = Lsupervised + λLreg . When targeting a uniform spherical representation space ( Y =
+
+U(Sd−1)), these debiasing terms ( Lreg ) can be interpreted as implicit, restricted approximations of our conditional distribution matching objective D.6EnD as a Moment-Matching Approximation. In its formulation, the disentangling component of EnD (Tartaglione et al., 2021) penalizes the absolute inner products between pairs of ℓ2-normalized repre-sentations sharing the same spurious attribute. For a conditional distribution Xb, this amounts to minimizing the expected absolute inner product Ex,x ′∼Xb
+
+[|x⊤x′|]. Minimizing this objective forces the second moment of Xb to match that of the uniform distribution on the hypersphere, effectively driving the conditional un-centered covariance matrix toward a scaled identity. In our framework, this mechanism acts as an implicit regularizer: 
+
+DEnD (Xb, U(Sd−1)) := Ex,x ′∼Xb
+
+[|x⊤x′|]. (10) However, this is a necessary but insufficient condition to guarantee that Xb ∼ U (Sd−1), as the first and higher-order moments may still encode spurious correlations. 
+
+FSCL as a Conditional KL-KDE Divergence. Similarly, Fair Supervised Contrastive Learning (FSCL) (Park et al., 2022) employs a targeted regularizer to separate bias groups. In our framework, this term corresponds to the empirical estimator of the Kullback-Leibler (KL) divergence between the conditional distribution Xb and the uniform distribution U(Sd−1):
+
+DFSCL (Xb, U(Sd−1)) := Ex∼Xb
+
+[
+
+log Ex′∼Xb\{ x}
+
+[
+
+exp 
+
+( ∥x − x′∥2
+
+τ
+
+)]] 
+
+. (11) This formulation exactly matches a non-parametric KDE-based KL estimator paired with a Gaussian kernel with temperature τ .
+
+Generalizing Bias Mitigation. By framing prior methods through this geometric lens, UOWReg unifies them as specific approximations of conditional distribution matching. However, these implicit mechanisms exhibit distinct statistical limitations. As noted, matching only the first two moments (EnD) is insufficient to enforce target matching. While the KL divergence (FSCL) constitutes a valid statistical test, prior work by Nicollier et al. (2026b) show that KDE-based estimators are better suited for continuous data lacking discrete classes. For datasets with inherent class structures, discrepancy measures based on Maximum Mean Discrepancy (MMD) are more appropriate. UOWReg generalizes this debiasing framework by flexibly instantiating D with the statistically tool most suited to the dataset’s structure (MMD, or KL). This ensures stable convergence and guarantees X ⊥⊥ B without relying on target labels. 
+
+# 5 The Synthetic Engraving Task 
+
+To evaluate the ability of self-supervised representations to disentangle global structures from fine-grained signals, we introduce Synthetic Engraving , a synthetic dataset. While standard demographic bias bench-marks (e.g., CelebA) involve a limited number of attributes, this setting increases the complexity: a wide variety of structured macro-patterns acts as a spurious correlation that masks subtle, identity-defining fea-tures. 
+
+5.1 Industrial Motivation 
+
+In industrial applications such as physical authentication, manufactured components are often engraved with global tracking identifiers (Nicollier et al., 2024) (e.g., DataMatrix codes). While these codes provide trace-ability, physical authentication relies on extracting unique microscopic variations inherent to the material or the engraving process. However, the high-contrast macro-structure of the tracking code often acts as a predictive shortcut for standard neural networks. This leads the latent space to collapse around the macro-structure, causing the network to ignore the task-relevant micro-signatures. This phenomenon is analogous to demographic biases in human biometrics, providing a controlled proxy task to evaluate subpopulation collapse. 7c0                 
+
+> c1
+> rendered c0
+> rendered c1
+> s0c0s1c0
+> s0c1s1c1
+> ta(s0c0)ta(s1c0)
+> ta(s0c1)ta(s1c1)
+> zoom in s0c0zoom in s1c0
+> zoom in s0c1zoom in s1c1
+> Codes Clean renders Signed renderings sjciAugmented views ta(sjci)
+
+Figure 2: Overview of the Synthetic Engraving generation pipeline, which simulates a physical process where a binary data matrix is laser-etched onto a vibrating metal plate and photographed under lateral lighting. 
+
+Left to Right: The abstract binary code ci is rendered into pixel space, injected with a unique structural imprint sj (the micro-texture) to form the signed rendering sj ci, and finally subjected to severe acquisition transformations ta. Rows & Columns: The top row is generated using code c0 and the bottom row using 
+
+c1. Within the signed renderings block, columns share the same imprint ( s0 on the left, s1 on the right). 
+
+5.2 Dataset Construction 
+
+To control the generative factors, our dataset decouples the global reference structure, the local structural identity, and the acquisition transformations (Figure 2). Each sample is built upon a binary DataMatrix ci
+
+> i.i.d.
+
+∼ Unif( {0, 1}8×8). Unlike standard fairness benchmarks that feature a limited number of bias classes, our formulation introduces a large space of structured spurious correlations ( 264 possible macro-structures). This matrix dominates the image, creating a predictive shortcut analogous to a demographic attribute. To each code ci, we associate a random structural imprint sj . The imprint is obtained by sampling a smooth random vector field and applying the induced deformation to the rendered image and adding a small amount of uniform noise. This process creates a unique microscopic texture characterizing the instance while preserving its macroscopic binary structure, yielding the composed object sj ci.Finally, to simulate acquisition variability, we apply a set of transformations ta ∈ A (rotation, translation, Gaussian blur, and random masking), resulting in the observed image ta(sj ci).
+
+5.3 The Bias Dominance Challenge 
+
+To evaluate representation learning under varying degrees of bias dominance, we control the number of distinct structural imprints m associated with the same global reference code during training. 8For a fixed dataset size N , the training set Dm is defined as: 
+
+Dm = { ta(sjk ci) | i = 1 , . . . , N/m, k = 1 , . . . , m, a ∈ A } . (12) The parameter m influences the task difficulty. A large m provides sufficient intra-code variance for the network to identify ci as a static background and focus on sj . Conversely, a small m (e.g., m = 2 ) creates a setting where the global structure ci is strongly correlated with the local variations. 1
+
+Evaluation Metric. If a model is unconstrained, the code ci acts as a spurious shortcut, causing rep-resentations within this bias group to cluster together. Consequently, the network fails to distinguish the identities sj . To measure this, we evaluate representation quality via cosine-similarity retrieval within the same macro-structure. Given a query image x = ta(sj ci), we rank all other samples sharing the same code 
+
+ci and report the Bias-conditional mAP (mAP |c).
+
+# 6 Experiments 
+
+To evaluate the proposed Unbiased Open World Regularization (UOWReg), we consider three complementary scenarios: visual disentanglement on synthetic data, facial attribute debiasing, and a novel challenge focused on fine-grained local perturbations. Across these settings, we compare UOWReg to the standard Open World (OW) baseline and to FSCL †, a strong supervised debiasing approach, and assess its ability to mitigate spurious biases while preserving downstream performance. 
+
+Implementation Details. Across all experiments, we employ standard backbone architectures paired with non-linear projection heads to match established self-supervised learning practices. To maintain focus on our core analysis, we detail full architectural specifications, hyperparameter configurations, and extended dataset descriptions in Appendix B. 
+
+6.1 Visualizing Bias Disentanglement 
+
+To visually validate our conditional distribution matching framework (Proposition 1), we project Colored MNIST (Arjovsky et al., 2020) (CMNIST) latent representations into 2D using t-SNE (Figure 3). For this t-SNE visualization, we target a uniform spherical representation space ( Y ∼ U (Sd−1)) by instantiating D
+
+using the Maximum Mean Discrepancy (MMD) equipped with the Heat kernel. As a Gaussian target yields equivalent disentanglement, we visualize only the spherical case. While minimizing the standard LOWReg creates a well-distributed space, the unconstrained model encodes the dominant background color, forming color-segregated sub-clusters within each digit class. Conversely, 
+
+LUOWReg enforces conditional uniformity. As a result, the digit clusters remain separated (preserving task utility), while the background colors are uniformly mixed within each cluster. This confirms that, unlike the standard OW formulation, UOWReg filters targeted biases without compromising core semantic structures. To quantitatively validate this visual disentanglement, we evaluate the frozen representations using a k-NN classifier, summarizing the results in Table 1. As expected, the standard OW baseline yields a latent space where the spurious correlation is perfectly predictable ( 100 .0% bias accuracy). In contrast, UOWReg reduces bias predictability to 69 .9% —moving closer to the 50% random-chance baseline of this binary attribute— while improving the core semantic task performance (Target Accuracy: 94 .7% → 96 .4% ). Furthermore, as shown in Table 1, UOWReg achieves a favorable trade-off between bias mitigation and target utility compared to existing baselines such as FSCL. This confirms that UOWReg filters out the targeted bias without compromising the semantic representations.    
+
+> 1The theoretical extreme m= 1 yields a perfect one-to-one correlation between the global structure and local identity. Resolving this purely degenerate case without generative priors remains an open challenge and falls outside the scope of our encoder-only framework.
+
+9Table 1: Quantitative evaluation on Colored MNIST using a frozen k-NN classifier. We compare the standard Open World (OW) baseline and our Unbiased objective (UOWReg) across both Gaussian and Spherical target distributions. A lower bias accuracy indicates better disentanglement (optimal is 50% random chance for binary color), while a higher target accuracy indicates better semantic utility. 
+
+Method Target Distribution Target Acc. ( ↑) Bias Acc. ( ↓)
+
+OW Baseline Gaussian N (0 , I ) 94.8% 100.0% UOWReg (Ours) Gaussian N (0 , I ) 95.8% 74.0% OW Baseline Spherical U(Sd−1) 95.2% 100.0% FSCL (Park et al., 2022) Spherical U(Sd−1) 95.4% 84.4% UOWReg (Ours) Spherical U(Sd−1) 96.4% 75.2% 
+
+6.2 Fair Representation Learning on CelebA 
+
+We evaluate our framework on the CelebA (Liu et al., 2015) dataset to demonstrate UOWReg in a demo-graphic fairness setting. To provide a comparison, we benchmark our approach against the Fair Supervised Contrastive Learning (FSCL) framework (Park et al., 2022), which introduces three distinct variants: astandard supervised method (FSCL), an improved supervised version with proper scaling (FSCL +), and a fully self-supervised extension (FSCL †). To the best of our knowledge, FSCL † is the only existing baseline directly comparable to our problem setting: learning an unbiased, self-supervised representation space uti-lizing only known spurious attributes. We omit EnD (Tartaglione et al., 2021) from this comparison, as its regularization mechanism is highly sensitive to its two balancing hyperparameters, making stable and standardized evaluation difficult. To evaluate the distribution-agnostic nature of our framework, we instantiate UOWReg with two distinct target distributions. As CelebA exhibits a clustered semantic space, both variants employ the MMD esti-mator. The first, UOW (Spherical) , targets a uniform on a hypersphere ( Y ∼ U (Sd−1)) using the Heat kernel. The second, UOW (Gaussian) , targets a multivariate normal distribution ( Y ∼ N (0 , I )) using the Euclidean kernel from KerJEPA (Zimmermann et al., 2025). As shown in Table 2, both UOWReg variants successfully mitigate the targeted bias, achieving the lowest Equalized Odds (EO) among encoder-only methods on the evaluated CelebA benchmarks. While the Gaus-sian instantiation effectively disentangles the spurious attribute, it yields a lower downstream classification accuracy compared to the Spherical target. This aligns with observations in (Nicollier et al., 2026a). Overall, the Spherical UOWReg provides the most effective trade-off, significantly reducing EO while maintaining competitive task accuracy. 
+
+6.3 Sensitivity to Fine-Grained Local Perturbations 
+
+We now evaluate our framework on the Synthetic Engraving challenge defined in Section 5. Because these engraved images lack a clustered semantic structure, we target a continuous, uniform spherical representation space ( Y ∼ U (Sd−1)) and instantiate both the OW and UOW regularizers using the KL divergence approx-imated via the Heat kernel ( t = 2 /256 ), which, unlike the MMD estimator, is better suited for continuous, unstructured distributions (Nicollier et al., 2026b). To solve this task, we apply UOWReg by defining the DataMatrix code ci as the known spurious bias b. As shown in Table 3, the global Open World (OW) base-line achieves an mAP |c of 76.48% in the entangled, low-variance regime ( m = 2 ). This indicates that global KL-based regularization alone provides a strong inductive bias, preventing complete subpopulation collapse and capturing local perturbations despite the DataMatrix shortcut. However, because global regularization does not explicitly penalize bias entanglement, the DataMatrix partially dictates the latent geometry. By shifting to conditional distribution matching, UOWReg filters out the DataMatrix, boosting retrieval perfor-mance to 90.69% in this regime. As the number of signatures per code ( m) increases, the spurious correlation weakens, and the performance gap between OW and UOWReg narrows. At m = 128 , the UOWReg and OW objectives become equivalent, yielding identical near-perfect retrieval ( ∼98.85%). However, the performance 10   
+
+> 
+> 
+> 
+> (a) OW - Labels 
+>  (b) OW - Bias 
+> 
+> 
+> 
+> 
+> (c) UOW - Labels 
+>  (d) UOW - Bias
+
+Figure 3: t-SNE visualization of the CMNIST latent space. Top row (a, b): The Open World (OW) baseline clusters representations by both digit identity and the dominant background color. Bottom row (c, d): UOWReg enforces conditional distribution matching, separating semantic digit classes while mixing background colors within each cluster. Quantitatively (k-NN evaluation), UOWReg reduces the bias pre-dictability (Bias Acc: 100.0% → 69.9%) while improving task performance (Target Acc: 94.7% → 96.4%). gap between this unentangled upper bound and the highly entangled regime ( m = 2 ) shows that perfect disentanglement remains an open challenge for encoder-only frameworks. 
+
+6.4 Impact of the Global Anchor 
+
+To better understand the role of the global anchor parameter α, we evaluate its impact across two com-plementary settings. Throughout these experiments, we target a uniform distribution on the hypersphere (Y ∼ U (Sd−1)) to isolate the effect of α. We use the KL divergence for unclustered data and the Maximum Mean Discrepancy (MMD) for clustered data. 
+
+Unclustered Data ( D = DKL ). We evaluate the KL divergence on the Synthetic Engraving challenge in the low-variance regime ( m = 2 ). In this setting, the conditional discrepancy is estimated from small subpopulations, making the choice of α important. As shown in Table 4a, the global objective ( α = 1 ), 11 Table 2: Classification results on CelebA averaged over seeds 0, 1, and 2. Each column pair corresponds to a target attribute ( T ) and a spurious attribute ( S). We report classification accuracy (Acc., ↑) and Equalized Odds (EO, ↓). CE denotes standard cross-entropy training. Method T : Attractive / S: Male T : Big Nose / S: Male EO ( ↓) Acc. ( ↑) EO ( ↓) Acc. ( ↑)
+
+Supervised (Requires labels during training) 
+
+CE (30 epochs) 22.4 ± 2.7 82.2 ± 0.3 25.1 ± 2.2 84.3 ± 0.2 
+
+Supervised Debiasing (Requires labels during training) 
+
+FSCL + 17.4 ± 1.5 82.5 ± 0.2 13.4 ± 0.3 83.7 ± 0.3 
+
+Fully Unsupervised 
+
+Baseline OW (Gaussian) 32.3 ± 0.7 80.1 ± 0.1 27.6 ± 1.2 82.1 ± 0.1 Baseline OW (Spherical) 59.2 ± 4.3 75.5 ± 0.3 27.6 ± 1.7 79.7 ± 0.2 
+
+Self-Supervised Debiasing (Requires bias labels only) 
+
+FSCL † 17.2 ± 1.5 80.0 ± 0.1 14.1 ± 0.6 82.1 ± 0.0 UOW (Gaussian) 8.7 ± 1.6 59.6 ± 1.8 0.4 ± 0.1 78.8 ± 0.1 UOW (Spherical) 2.8 ± 0.5 75.6 ± 0.4 1.7 ± 1.3 81.5 ± 0.3 Table 3: Retrieval mAP |c on the Synthetic Engraving challenge averaged over seeds 0, 1, and 2. Signatures per code ( m) OW (mAP |c %) UOW (mAP |c %) 2 76.48 ± 0.63 90.69 ± 1.74 4 90.99 ± 2.25 97.15 ± 0.93 128 98.85 ± 1.06 98.86 ± 0.90 corresponding to the OW baseline, yields stable training but limited retrieval performance. Conversely, relying only on the conditional objective ( α = 0 ) leads to a degradation in retrieval performance. Intermediate values of α improve performance, with α = 0 .25 achieving the best results. These observations suggest that combining global and conditional regularization is beneficial in this setting. 
+
+Clustered Data ( D = DMMD ). We evaluate MMD on the CelebA benchmark ( T : Attractive / S: Male). As reported in Table 4b, the choice of α influences the fairness–accuracy trade-off. While the conditional objective ( α = 0 ) reduces Equalized Odds (EO) violations compared to the OW baseline, it results in lower accuracy. Increasing α improves both fairness and downstream performance, with α = 0 .5 achieving the best trade-off. Larger values progressively recover the behavior of the OW baseline, leading to higher EO. Overall, the results indicate that combining global and conditional regularization is beneficial across both clustered and non-clustered settings. The optimal balance depends on the structure of the representation space and the discrepancy measure employed, with intermediate values of α outperforming the cases α = 0 
+
+and α = 1 .
+
+# 7 Conclusion and Future Work 
+
+In this work, we introduced Unbiased Open World Regularization (UOWReg), a distribution-agnostic frame-work for fair self-supervised learning. By shifting the regularization objective from global to conditional distribution matching, UOWReg enforces statistical independence between learned representations and spu-rious attributes. Our approach achieves this disentanglement through a stable, encoder-only architecture, bypassing the optimization instabilities of adversarial methods and the computational overhead of generative data augmentation. 12 Table 4: Impact of the global anchor weight α across two data regimes, averaged over seeds 0, 1, and 2. The Synthetic Engraving challenge uses the KL divergence because the representation space is unclus-tered, whereas the CelebA benchmark uses Maximum Mean Discrepancy (MMD) to account for its clustered semantic structure. Intermediate values of α provide the best balance between global and conditional regu-larization.  
+
+> (a) Synthetic Engraving ( m= 2 ) with KL
+
+Configuration mAP |c (↑)
+
+α = 0 .0 (Purely Cond.) 6.0 ± 0.4 
+
+α = 0 .25 90.5 ± 1.2 
+
+α = 0 .5 84.1 ± 1.8 
+
+α = 0 .75 81.4 ± 0.7 
+
+α = 1 .0 (OW Baseline) 77.9 ± 0.5  
+
+> (b) CelebA (target attribute: Attractive; spurious at-tribute: Male). MMD is used to regularize the clustered representation space.
+
+Configuration EO ( ↓) Acc. ( ↑)
+
+α = 0 .0 (Purely Cond.) 6.5 ± 1.1 72.2 ± 0.8 
+
+α = 0 .25 4.1 ± 1.4 73.0 ± 0.2 
+
+α = 0 .5 3.7 ± 0.8 75.6 ± 0.5 
+
+α = 0 .75 19.5 ± 1.0 79.0 ± 0.1 
+
+α = 1 .0 (OW Baseline) 54.1 ± 3.0 75.9 ± 0.5 Empirically, UOWReg demonstrates strong bias mitigation capabilities across both Gaussian and spherical target distributions. On the CelebA benchmark, it achieves the lowest Equalized Odds violations among non-generative, encoder-only methods—reaching as low as 1.7% with a spherical target—while maintaining competitive downstream task accuracy. Furthermore, through our Synthetic Engraving Challenge, we showed that UOWReg prevents subpopulation collapse. It forces the network to isolate subtle, task-relevant micro-signatures even when they are entangled with the macro-structures. 
+
+Limitations and Future Work. Our formulation and empirical evaluations assume that the spurious attribute is categorical ( b ∈ B ). Extending this conditional distribution matching framework to contin-uous biases represents a direction for future research. Furthermore, while UOWReg improves robustness in low-variance regimes, achieving perfect disentanglement when semantic and spurious features are highly correlated (e.g., the remaining performance gap at m = 2 ) remains an ongoing challenge. The case of perfect one-to-one correlation ( m = 1 ) also stands as an open problem. Resolving these degenerate regimes without relying on generative priors represents also an open problem. 
+
+# References 
+
+M. Arjovsky, S. Chintala, and L. Bottou. Wasserstein generative adversarial networks. In International conference on machine learning , pages 214–223. Pmlr, 2017. M. Arjovsky, L. Bottou, I. Gulrajani, and D. Lopez-Paz. Invariant risk minimization, 2020. URL https: //arxiv.org/abs/1907.02893 .R. Balestriero and Y. LeCun. Lejepa: Provable and scalable self-supervised learning without the heuristics, 2025. URL https://arxiv.org/abs/2511.08544 .A. Bardes, J. Ponce, and Y. LeCun. Vicreg: Variance-invariance-covariance regularization for self-supervised learning. arXiv preprint arXiv:2105.04906 , 2021. M. Caron, I. Misra, J. Mairal, P. Goyal, P. Bojanowski, and A. Joulin. Unsupervised learning of visual features by contrasting cluster assignments. Advances in neural information processing systems , 33:9912– 9924, 2020. M. Caron, H. Touvron, I. Misra, H. Jégou, J. Mairal, P. Bojanowski, and A. Joulin. Emerging properties in self-supervised vision transformers. In Proceedings of the IEEE/CVF international conference on computer vision , pages 9650–9660, 2021. P. Cheng, W. Hao, S. Dai, J. Liu, Z. Gan, and L. Carin. Club: A contrastive log-ratio upper bound of mutual information. In International conference on machine learning , pages 1779–1788. PMLR, 2020. 13 Y. Ganin, E. Ustinova, H. Ajakan, P. Germain, H. Larochelle, F. Laviolette, M. March, and V. Lempitsky. Domain-adversarial training of neural networks. Journal of machine learning research , 17(59):1–35, 2016. J.-B. Grill, F. Strub, F. Altché, C. Tallec, P. Richemond, E. Buchatskaya, C. Doersch, B. Avila Pires, Z. Guo, M. Gheshlaghi Azar, et al. Bootstrap your own latent-a new approach to self-supervised learning. 
+
+Advances in neural information processing systems , 33:21271–21284, 2020. M. Ishmael Belghazi, A. Baratin, S. Rajeswar, S. Ozair, Y. Bengio, A. Courville, and R. Devon Hjelm. Mine: mutual information neural estimation. arXiv e-prints , pages arXiv–1801, 2018. P. Khosla, P. Teterwak, C. Wang, A. Sarna, Y. Tian, P. Isola, A. Maschinot, C. Liu, and D. Krishnan. Supervised contrastive learning. Advances in neural information processing systems , 33:18661–18673, 2020. Z. Liu, P. Luo, X. Wang, and X. Tang. Deep learning face attributes in the wild. In Proceedings of the IEEE international conference on computer vision , pages 3730–3738, 2015. F. Locatello, S. Bauer, M. Lucic, G. Raetsch, S. Gelly, B. Schölkopf, and O. Bachem. Challenging common assumptions in the unsupervised learning of disentangled representations. In international conference on machine learning , pages 4114–4124. PMLR, 2019. C. Louizos, K. Swersky, Y. Li, M. Welling, and R. Zemel. The variational fair autoencoder. arXiv preprint arXiv:1511.00830 , 2015. L. Nicollier, M. M. Pic, E. Meinhardt-Llopis, and G. Facciolo. A new fingerprinting technique for engraved binary matrix authentication. In 2024 IEEE International Conference on Image Processing (ICIP) , pages 3250–3256, 2024. doi: 10.1109/ICIP51287.2024.10647997. L. Nicollier, M. Dunitz, M. Pic, P. Musé, E. Meinhardt-Llopis, and G. Facciolo. Sphere-jepa: Spherical prediction with homogeneous embeddings, 2026a. URL https://arxiv.org/abs/2605.26900 .L. Nicollier, E. Meinhardt-Llopis, M. Dunitz, M. Pic, P. Musé, and G. Facciolo. Expanding sphere-jepa: A family of statistical regularizers for the hypersphere, 2026b. URL https://arxiv.org/abs/2606.17603 .S. Park, J. Lee, P. Lee, S. Hwang, D. Kim, and H. Byun. Fair contrastive learning for facial attribute classification. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,pages 10389–10398, 2022. S. Ravfogel, Y. Elazar, H. Gonen, M. Twiton, and Y. Goldberg. Null it out: Guarding protected attributes by iterative nullspace projection. In Proceedings of the 58th annual meeting of the association for compu-tational linguistics , pages 7237–7256, 2020. E. Tartaglione, C. A. Barbano, and M. Grangetto. End: Entangling and disentangling deep representations for bias correction. In 2021 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) ,page 13503–13512. IEEE, june 2021. doi: 10.1109/cvpr46437.2021.01330. URL http://dx.doi.org/10. 1109/CVPR46437.2021.01330 .A. van den Oord, Y. Li, and O. Vinyals. Representation learning with contrastive predictive coding, 2019. URL https://arxiv.org/abs/1807.03748 .R. Zemel, Y. Wu, K. Swersky, T. Pitassi, and C. Dwork. Learning fair representations. In S. Dasgupta and D. McAllester, editors, Proceedings of the 30th International Conference on Machine Learning , volume 28 of Proceedings of Machine Learning Research , pages 325–333, Atlanta, Georgia, USA, 17–19 Jun 2013. PMLR. URL https://proceedings.mlr.press/v28/zemel13.html .E. Zimmermann, H. Wiltzer, J. Szeto, D. Alvarez-Melis, and L. Mackey. Kerjepa: Kernel discrepancies for euclidean self-supervised learning, 2025. URL https://arxiv.org/abs/2512.19605 .14 A Formulations of Prior Bias Mitigation Methods 
+
+In Section 4.3, we abstract the objectives of existing supervised debiasing methods into a unified formulation: 
+
+L = Lsupervised + λLreg . This section details how the original formulations of EnD (Tartaglione et al., 2021) and FSCL (Park et al., 2022) map to our conditional regularizer D(Xb, U(Sd−1)) . Let Xb denote the conditional distribution of representations sharing a specific spurious attribute B = b.
+
+A.1 Entangling and Disentangling (EnD) 
+
+The EnD objective consists of a standard cross-entropy loss, an entangling term R∥ (correlating samples of the same target class), and a disentangling term R⊥ (decorrelating samples of the same bias class). Under our framework, the cross-entropy and R∥ act as Lsupervised , while R⊥ acts as Lreg .In its original formulation (Tartaglione et al., 2021), for a specific bias group b with M samples, the disen-tangling term is defined over the Gramian matrix Gb of the representations: 
+
+R⊥ = 1
+
+B
+
+> B
+
+∑
+
+> b=1
+
+1
+
+M 2
+
+∑
+
+> i,j
+
+|Gb,i,j | . (13) Since EnD operates on ℓ2-normalized representations, the Gramian elements correspond to the inner products 
+
+x⊤ 
+
+> i
+
+xj . Because Xb represents the conditional empirical distribution over the M samples in bias group b, the normalized double sum is equivalent to the expected absolute inner product over Xb. Thus, the EnD regularization term abstracts to: 
+
+DEnD (Xb, U(Sd−1)) = Ex,x ′∼Xb
+
+[|x⊤x′|]. (14) 
+
+A.2 Fair Supervised Contrastive Learning (FSCL) 
+
+FSCL modifies the standard Supervised Contrastive Loss (Khosla et al., 2020) (SupCon) by restricting the negative samples in the denominator. For an anchor zi, the original FSCL objective (Park et al., 2022) is: 
+
+LFSCL = − ∑
+
+> zi
+
+1
+
+|Zp(i)|
+
+∑
+
+> zp∈Zp(i)
+
+log exp( z⊤ 
+
+> i
+
+zp/τ )
+
+∑   
+
+> ztg ∈Ztg (i)
+
+exp( z⊤ 
+
+> i
+
+ztg /τ ) , (15) where Zp(i) are the positive samples (same target class), and Ztg (i) are the restricted negative samples sharing the same sensitive attribute (bias) as zi, but having a different target class. We can separate this objective into an attractive supervised term and a repulsive regularization term: 
+
+LFSCL = E [− log exp( z⊤ 
+
+> i
+
+zp/τ )]︸ ︷︷ ︸
+
+> Lsupervised
+
++ E
+
+log ∑
+
+> ztg
+
+exp( z⊤ 
+
+> i
+
+ztg /τ )
+
+︸ ︷︷ ︸
+
+> Lreg
+
+. (16) In our framework, drawing samples ztg that share the same bias corresponds to sampling from the conditional distribution Xb, excluding the anchor itself. Rewriting the expectation over Xb yields our abstract empirical estimator: 
+
+DFSCL (Xb, U(Sd−1)) = Ex∼Xb
+
+[
+
+log Ex′∼Xb\{ x}
+
+[
+
+exp 
+
+( ∥x − x′∥2
+
+τ
+
+)]] 
+
+. (17) 
+
+# B Implementation 
+
+All models were trained with AdamW, weight decay 5 × 10 −4, and a one-epoch linear warm-up followed by a constant learning rate. Unless stated otherwise, self-supervised training used two augmented views per image. 15 Colored MNIST. For CMNIST, images were resized to 32 × 32 and encoded with a small convolutional network composed of two convolutional blocks followed by a fully connected layer, producing 128-dimensional encoder features. The projection head was a two-layer MLP with hidden dimension 512 and output dimension 
+
+64 , using GELU activations and batch normalization. Models were trained for 100 epochs with batch size 
+
+256 and learning rate 0.25 . For the spherical target distribution, OW and UOW used MMD with the heat kernel, temperature 4/64 , and λ = 0 .05 . For UOW, we used α = 0 .5. For the Gaussian target distribution, we used the corresponding Gaussian regularizer under the same optimization setup. Frozen representations were evaluated with logistic regression and a 5-nearest-neighbor classifier. 
+
+CelebA. CelebA images were loaded from the flwrlabs/celeba dataset. Training used SimCLR-style augmentations: random resized crop to 128 × 128 , horizontal flip, color jitter, random grayscale conversion, tensor conversion, and ImageNet normalization. Validation and test images used deterministic resize, center crop, tensor conversion, and ImageNet normalization. The encoder was an ImageNet-pretrained ResNet-18 whose final fully connected layer was replaced by a 256-dimensional output layer. The projection head was a two-layer MLP with hidden dimension 1024 and output dimension 64 , using GELU activations and batch normalization. Models were trained for 30 epochs with batch size 256 , learning rate 5 × 10 −2, and λ = 0 .05 .For UOW, we used α = 0 .5. We evaluated the two settings T=a/S=m and T=b/S=m , corresponding to target attributes Attractive and Big Nose with Male as the sensitive attribute. Frozen evaluation used logistic regression with C = 0 .01 for T=a/S=m and C = 0 .001 for T=b/S=m . For spherical targets, OW and UOW used MMD with the heat kernel; for Gaussian targets, they used the Gaussian regularizer. 
+
+Synthetic Engraving. For Synthetic Engraving, samples were generated online from an 8 × 8 binary DataMatrix code and a local noise signature, then rendered as grayscale images resized to 64 × 64 . The known bias variable was the binary DataMatrix code, represented by its 64 binary entries. Training batches were structured to contain a fixed number m of signatures per code, with m ∈ { 2, 4, 128 } in the reported comparison. Each training batch contained 128 images. Augmentations included random affine transforma-tions, brightness and contrast perturbations, Gaussian blur, uniform noise, random erasing during training, and normalization to [−1, 1] .We used a grayscale-adapted DINOv3 ConvNeXt backbone followed by a projection head producing 256-dimensional normalized representations. Models were trained for up to 40 epochs with learning rate 10 −4 and weight decay 5×10 −4. OW and UOW used KL regularization with the heat kernel temperature t = 2 /256 and 
+
+λ = 1 /3. For UOW, we used α = 0 .25 . Early stopping and best-checkpoint selection monitored validation 
+
+mAP on the encoder representations. 16

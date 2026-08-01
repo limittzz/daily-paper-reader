@@ -1,0 +1,69 @@
+{
+  "label": "2026-08-01",
+  "date": "2026-08-01",
+  "generated_at": "2026-08-01T20:01:51",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202608/01/2607.27782v1-redflow-redirect-failure-into-action-level-corrections-for-flow-matching-vla-policy",
+      "section": "deep",
+      "title_en": "RedFlow: Redirect Failure into Action-Level Corrections for Flow-matching VLA Policy",
+      "authors": "Zhengyang Yan, Junhao Li, Fangqi Zhu, Zijun Wang, Quanxin Shou, Yikun Miao, Xiaoyi Pang, Zicong Hong, Song Guo",
+      "date": "2026-07-30",
+      "pdf": "https://arxiv.org/pdf/2607.27782v1",
+      "score": "8.0",
+      "evidence": "流匹配VLA策略用于机器人操作，并通过离线RL提供纠正监督",
+      "tldr": "Flow-matching VLA策略因部署分布偏移产生复合错误，现有离线RL常忽略失败数据或仅轨迹级利用，效率低。RedFlow将失败经验转化为动作级纠正监督，通过上下文感知纠正匹配获取替代目标，并利用自适应重定向目标强化成功动作、抑制不良行为。在LIBERO和真实操作任务上超过SOTA离线RL，真实成功率从56.7%升至74.7%，且仅需约十分之一样本即匹配在线方法。",
+      "tags": "query:imitation",
+      "abstract_en": "Flow-matching Vision-Language-Action (VLA) policies have shown strong potential for robotic manipulation but often suffer from compounding errors caused by distribution shifts during deployment. While offline reinforcement learning (RL) provides a practical way to improve deployed policies using rollout data, existing methods either ignore failure data or exploit it only at the trajectory level, resulting in low learning efficiency and persistent errors. We propose **RedFlow**, a fine-grained offline RL framework that redirects failure experiences into action-level corrective supervision for flow-matching VLA policies. RedFlow consists of two key components: (1) a **Context-Aware Corrective Matching** mechanism that identifies failure-inducing actions and retrieves successful alternatives from similar contexts as corrective targets, and (2) an **Adaptive Redirection Objective** that jointly reinforces successful actions, suppresses undesirable ones, and redirects recoverable failures toward corrective targets. By converting both successful and failed experiences into dense supervision, RedFlow enables robust recovery learning from mixed-quality data. Experiments on the LIBERO benchmark and three real-world manipulation tasks show that RedFlow consistently outperforms state-of-the-art offline RL baselines, improving the real-world success rate from 56.7% to 74.7%. It also matches strong on-policy methods (PPO, GRPO, and DDPO) while requiring roughly an order of magnitude fewer training samples.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/01/2607.28243v1-egogenesis-egocentric-world-action-modeling-with-online-anchored-projective-memory-and-action-3d-rope",
+      "section": "deep",
+      "title_en": "EgoGenesis: Egocentric World-Action Modeling with Online Anchored Projective Memory and Action-3D RoPE",
+      "authors": "Zexuan Yan, Yuzhou Wu, Yue Ma, Zonghang He, Kaibo Yin, Xiaobing Tu, Yinggui Wang, Jinkui Ren, Xiantao Zhang, Shijian Wang, Jinghong Liu, Linfeng Zhang",
+      "date": "2026-07-30",
+      "pdf": "https://arxiv.org/pdf/2607.28243v1",
+      "score": "8.0",
+      "evidence": "合成第一视角操作视频以扩展模仿学习训练数据的仿真器",
+      "tldr": "第一人称视频为具身智能提供丰富操作经验，但跨场景采集多样数据成本高昂。该方法构建世界动作模拟器，基于视频生成先验，通过在线锚定投影记忆保留首帧3D锚点并周期性刷新近期状态，利用动作3D旋转位置编码将末端运动注入交叉注意力，实现高质量长程视频合成。用400条生成轨迹增强真实数据，单臂成功率从77%升至84%，双臂从53%升至70%，显著提升下游泛化。",
+      "tags": "query:imitation",
+      "abstract_en": "Egocentric video offers rich manipulation experience for embodied AI, yet collecting diverse egocentric data across scenes, objects, motions, and embodiments remains costly. We present \\method, an egocentric world-action simulator that synthesizes controllable, high-quality manipulation videos to expand scarce real-world training data. \\method{} builds on a pretrained video generation prior and introduces two geometry-aware conditioning mechanisms. Online Anchored Projective Memory (OAPM) preserves a first-frame 3D scene anchor while periodically refreshing a recent state during autoregressive generation. Action-3D Rotary Position Embedding (A3D-RoPE) encodes end-effector motion with camera-aware 3D rotary coordinates, injecting action geometry into skeleton-to-video cross-attention for precise control. Together, these components improve visual fidelity, geometric stability, and action alignment in long egocentric rollouts. Moreover, augmenting 400 real trajectories with 400 \\method-generated trajectories improves out-of-distribution real-robot success from 77\\% to 84\\% on single-arm tasks and from 53\\% to 70\\% on dual-arm tasks, demonstrating that the synthesized data substantially improve downstream WAM generalization.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/01/2607.22149v1-unbiased-open-world-regularization-for-fair-self-supervised-learning",
+      "section": "quick",
+      "title_en": "Unbiased Open World Regularization for Fair Self-Supervised Learning",
+      "authors": "L{é}o Nicollier, Marc Pic, Pablo Mus{é}, Enric Meinhardt-Llopis, Gabriele Facciolo",
+      "date": "2026-07-24",
+      "pdf": "https://arxiv.org/pdf/2607.22149v1",
+      "score": "6.0",
+      "evidence": "针对JEPA和自监督学习的正则化问题，提出开放世界下的无偏去偏方法",
+      "tldr": "自监督学习模型易学习数据中的虚假偏差，现有全局正则化（如高斯或球面均匀）无法阻止任务无关特征分隔潜在空间。为此提出UOWReg，将全局约束转为条件分布匹配，显式保证表示与目标属性统计独立，适用于任意目标分布。在CelebA上显著降低Equalized Odds违规，同时保持竞争性分类准确率；在引入的合成雕刻任务中，UOWReg有效防止子群崩溃，成功隔离被宏观结构掩盖的微观特征。这项工作为公平自监督学习提供了通用且有效的正则化新思路。",
+      "tags": "query:imitation",
+      "abstract_en": "Despite recent advances, self-supervised learning (SSL) models and Joint-Embedding Predictive Architectures (JEPAs) remain susceptible to learning spurious biases in the dataset. These techniques rely on regularization, which prevents representation collapse by enforcing a global target distribution such as a multivariate Gaussian or a uniform distribution on the sphere. However, these global constraints are insufficient to prevent bias entanglement, as task-irrelevant features can still segregate the latent space into distinct sub-regions. While recent approaches like Entangling and Disentangling (EnD) and Fair Supervised Contrastive Learning (FSCL) empirically debias the latent space, we show that they act as partial approximations of conditional distribution matching. To enforce this matching explicitly, we propose Unbiased Open World Regularization (UOWReg), an encoder-only framework. We show that this shift from a global to a conditional objective guarantees statistical independence between the learned representations and the targeted attributes, regardless of the chosen target distribution. We empirically validate this framework across both Gaussian and spherical latent spaces, using statistical measures to enforce these target distributions. While conditional matching successfully mitigates bias with both distributions, we demonstrate that enforcing conditional uniformity on the sphere yields a lower linearprobing classification error. Empirically, UOWReg reduces Equalized Odds violations on the CelebA benchmark while maintaining competitive classification accuracy compared to existing encoder-only baselines. Furthermore, we introduce the Synthetic Engraving Task-a novel setting in which a dominant macro-structure masks a fine-grained micro-signature. We show that UOWReg effectively prevents the subpopulation collapse observed in standard SSL, successfully isolating micro-signatures even when heavily entangled with the global structure.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/01/2607.24008v1-futurertc-real-time-robot-execution-with-anticipatory-conditioned-action-chunking",
+      "section": "quick",
+      "title_en": "FutureRTC: Real-Time Robot Execution with Anticipatory-Conditioned Action Chunking",
+      "authors": "Hai Jiang, Yixian Zou, Binbin Liang, Boqian Liu, Fanman Meng, Shuaicheng Liu",
+      "date": "2026-07-27",
+      "pdf": "https://arxiv.org/pdf/2607.24008v1",
+      "score": "6.0",
+      "evidence": "处理视觉-语言-动作策略的实时执行与动作分块，与基于演示的机器人操作相关",
+      "tldr": "VLA策略的实时部署需要异步执行，即在执行当前动作块时同时计算后续块，这导致预测与执行错位，表现为块间不连续。现有方法要么简单平滑边界，要么需要昂贵的策略优化，要么仅前向预测本体感受状态而忽略关键视觉信息。为此，FutureRTC作为即插即用适应框架，在不修改底层策略的情况下预测执行时刻的观测与状态：状态校正模块补偿本体感受差异，观测预测模块利用机器人运动作为物理先验进行运动感知特征传输与重建，并引入策略一致性损失对齐动作。在仿真和真实环境的广泛实验中，FutureRTC对推理延迟表现出更强鲁棒性，产生更平滑轨迹、更快执行和更高任务成功率。",
+      "tags": "query:imitation",
+      "abstract_en": "Real-time deployment of Vision-Language-Action (VLA) policies necessitates asynchronous execution, wherein subsequent action chunks are computed concurrently with the execution of the current chunk, leading to prediction-execution misalignment and manifesting as inter-chunk discontinuities. Existing methods either superficially smooth chunk boundaries, require costly policy optimization, or exclusively forward-predict proprioceptive states yet neglect critical visual observations. In this paper, we propose \\textbf{FutureRTC}, a plug-and-play adaptation framework that predicts execution-time observations and states for asynchronous VLA control without modifying the underlying policy. Specifically, FutureRTC features a state correction module to compensate for the discrepancy between rolled-forward and actual execution-time proprioceptive states and an observation prediction module that forecasts execution-time visual representations by leveraging robot motion as an explicit physical prior through motion-aware feature transport and reconstruction. Furthermore, we introduce a policy consistency loss to align the action chunks generated from predicted contexts with those produced under the expected execution-time inputs of the VLA policy. Extensive experiments across simulated and real-world environments demonstrate that FutureRTC achieves superior robustness to inference delays, resulting in smoother trajectories, faster execution, and consistently higher task success rates.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
