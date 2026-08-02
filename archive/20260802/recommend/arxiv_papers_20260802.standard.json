@@ -1,0 +1,182 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-02T20:43:28.932323+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 3,
+    "deep_cap": 6,
+    "deep_selected": 3,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2607.23783v1",
+      "source": "arxiv",
+      "title": "$N_0$-TWAM: Scaling Tactile-Native World-Action Model for Contact-Rich Manipulation",
+      "abstract": "We present $N_0$-TWAM, a tactile-native world-action model for contact-rich manipulation that predicts both future vision and future contact. To our knowledge, it is the first tactile world-action model trained at large scale, and it shows strong capability on contact-rich tasks. We pre-train $N_0$-TWAM at large scale with visuo-tactile joint training over tactile-rich demonstrations spanning six embodiments and 450 tasks. We use NeoForce, a unified force-based tactile representation, to form a physically grounded contact signal that conditions action generation. To improve long-horizon and multi-stage manipulation, we introduce tactile contact events for task staging and advance through them during execution. For real-time efficiency, we adopt an asymmetric Mixture-of-Transformers architecture that pairs a full-width expert for video prediction with slim experts for downstream action and tactile prediction. Evaluations on both real and simulated benchmarks justify the capabilities of $N_0$-TWAM across a range of contact-rich tasks, and demonstrate the benefit of data scaling for precise tactile and action prediction. In summary, $N_0$-TWAM endows a world-action model with predictive capabilities to foresee vision, touch and action, building a solid foundation for fine-grained manipulation on open contact-rich tasks. The codebase and model checkpoints will be made publicly available to foster further research and development in tactile-enabled robotic manipulation.",
+      "authors": [
+        "NeoteAI Team",
+        "Fudan TEAI Team"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-26T17:58:53+00:00",
+      "link": "https://arxiv.org/pdf/2607.23783v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "robot manipulation world-action model trained on tactile demonstrations, predicting future vision and contact",
+      "llm_evidence_cn": "基于触觉演示训练的机器人操作世界-动作模型，预测未来视觉与接触",
+      "llm_evidence": "基于触觉演示训练的机器人操作世界-动作模型，预测未来视觉与接触",
+      "canonical_evidence": "基于触觉演示训练的机器人操作世界-动作模型，预测未来视觉与接触",
+      "llm_tldr_en": "Introduces N0-TWAM, a tactile-native world-action model for contact-rich manipulation that is pretrained on large-scale visuo-tactile demonstrations across embodiments, predicting future vision and contact to condition action generation.",
+      "llm_tldr_cn": "现有世界模型通常依赖视觉重建，难以应对接触丰富的操作任务。为此提出N0-TWAM，一种触觉原生的世界-动作模型，首次在大规模跨本体、跨任务视觉-触觉演示数据上进行预训练。该模型联合预测未来视觉与未来接触，并以统一力觉表示NeoForce作为物理接地信号来调节动作生成。实验表明，N0-TWAM在接触丰富操作上表现强劲，并引入触觉接触事件来改善长时程多阶段任务。该工作为触觉世界建模与操作学习提供了大规模预训练的基准。",
+      "llm_tldr": "现有世界模型通常依赖视觉重建，难以应对接触丰富的操作任务。为此提出N0-TWAM，一种触觉原生的世界-动作模型，首次在大规模跨本体、跨任务视觉-触觉演示数据上进行预训练。该模型联合预测未来视觉与未来接触，并以统一力觉表示NeoForce作为物理接地信号来调节动作生成。实验表明，N0-TWAM在接触丰富操作上表现强劲，并引入触觉接触事件来改善长时程多阶段任务。该工作为触觉世界建模与操作学习提供了大规模预训练的基准。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.24485v2",
+      "source": "arxiv",
+      "title": "τ: Learning Touch-Augmented Vision-Language-Action Models from Future Visual Supervision",
+      "abstract": "Incorporating tactile sensing into Vision-Language-Action (VLA) models holds promise for contact-rich manipulation, where visual observations alone often fail to capture critical cues about physical interactions. However, learning informative tactile representation while effectively adapting it to pretrained VLA models remains challenging under limited task-specific data. Existing methods either focus on instantaneous contact states or model temporal interaction dynamics using 6D wrench sequences, leaving high-dimensional tactile signals underexplored. To address these challenges, we present τ, a touch-augmented VLA framework that learns an action-conditioned spatiotemporal tactile representation from future visual supervision inspired by the Joint-Embedding Predictive Architecture (JEPA), and fuses it with vision-language features for action generation. This supervision operates in latent space and is used only during training, adding no deployment overhead. We also introduce TacAura, a dataset of synchronized vision, proprioception, and vision-based tactile signals across four representative contact-rich manipulation tasks. Experiments show that τ outperforms existing models and generalizes to unseen objects and scenes, delivering improved manipulation performance and robustness.",
+      "authors": [
+        "Ning Cheng",
+        "Jinan Xu",
+        "Wanlin Li",
+        "Yangzhi Chen",
+        "Jing Gao",
+        "Yiqun Wang",
+        "Kelan Peng",
+        "Wenjuan Han"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-27T14:25:15+00:00",
+      "link": "https://arxiv.org/pdf/2607.24485v2",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "touch-augmented VLA framework for contact-rich robotic manipulation",
+      "llm_evidence_cn": "面向接触丰富机器人操作的触觉增强VLA方法",
+      "llm_evidence": "面向接触丰富机器人操作的触觉增强VLA方法",
+      "canonical_evidence": "面向接触丰富机器人操作的触觉增强VLA方法",
+      "llm_tldr_en": "tau learns an action-conditioned spatiotemporal tactile representation from future visual supervision and adapts it to pretrained VLA models, enabling better use of high-dimensional touch for contact-rich manipulation.",
+      "llm_tldr_cn": "接触丰富的机器人操作中，仅靠视觉常难以捕捉物理交互细节，而触觉表示在学习数据有限时尤为困难。作者提出 τ 框架，从未来视觉监督中学习动作条件下的时空触觉表示，并将其适配到预训练 VLA 模型。相比仅关注瞬时接触状态或低维力/力矩序列的方法，该方法充分利用高维触觉信号，为接触丰富操作提供了新的表示学习途径。",
+      "llm_tldr": "接触丰富的机器人操作中，仅靠视觉常难以捕捉物理交互细节，而触觉表示在学习数据有限时尤为困难。作者提出 τ 框架，从未来视觉监督中学习动作条件下的时空触觉表示，并将其适配到预训练 VLA 模型。相比仅关注瞬时接触状态或低维力/力矩序列的方法，该方法充分利用高维触觉信号，为接触丰富操作提供了新的表示学习途径。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.27138v1",
+      "source": "arxiv",
+      "title": "DLAM: Distributional Latent Actions with Temporal Constraints",
+      "abstract": "Vision-language-action (VLA) models remain constrained by scarce action-labeled robot data, whereas action-free videos offer abundant observations of physical change. Latent action models can extract such priors, but reconstruction-trained codes may predict future observations without the structure required for joint generation with robot actions. Existing structured methods add temporal constraints but retain deterministic transition points, so residual errors in locally inferred transitions may propagate and compound under recursive composition. We introduce DLAM, a distributional latent-action model that represents each transition as a diagonal Gaussian. Reconstruction conditioned on the reference frame grounds the mean in observed visual change, while normalized composition and reversal over equal-gap triplets constrain both the mean and dimension-wise variance. Variance composition uses a lightweight shared-correlation coefficient to account for dependence between adjacent transitions that share an intermediate frame, whereas reversal negates the mean and preserves the variance. For downstream policy learning, we freeze the encoder and train a flow-matching policy to jointly generate mean transition sequences and robot actions. On held-out transitions, DLAM learns more temporally consistent latent dynamics than existing latent-action baselines and achieves stronger direct and cumulative reconstruction on held-out videos. Under the same controlled $π_0$ transfer protocol, it also improves policy performance on MetaWorld MT50, LIBERO, and real-world manipulation tasks. Controlled ablations show that normalized mean constraints account for most of the reconstruction gain, while learned variance and correlation-aware composition provide complementary improvements in downstream control.",
+      "authors": [
+        "Zuojin Tang",
+        "Feifan Luo",
+        "Haoyun Liu",
+        "Botai Yuan",
+        "Dekang Qi",
+        "Ronghan Chen",
+        "Yandan Yang",
+        "Tong Lin",
+        "Xinyuan Chang",
+        "Mu Xu",
+        "Bin Liu",
+        "De Ma",
+        "Zhiheng Ma"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-07-29T17:09:48+00:00",
+      "link": "https://arxiv.org/pdf/2607.27138v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "latent action model for robot learning from videos, extracting distributional latent actions with temporal constraints",
+      "llm_evidence_cn": "面向机器人视频学习的潜在动作模型，提取带时间约束的分布潜在动作",
+      "llm_evidence": "面向机器人视频学习的潜在动作模型，提取带时间约束的分布潜在动作",
+      "canonical_evidence": "面向机器人视频学习的潜在动作模型，提取带时间约束的分布潜在动作",
+      "llm_tldr_en": "DLAM models latent action transitions as diagonal Gaussians with temporal constraints, enabling extraction of structured latent actions from action-free videos for robot imitation learning.",
+      "llm_tldr_cn": "视觉-语言-动作模型受限于带动作标签的机器人数据，而动作自由视频蕴含丰富物理变化。现有潜在动作模型重建训练缺乏与机器人动作联合生成所需的结构。为此提出DLAM，一种分布潜在动作模型，将每个转移表示为对角高斯分布，并基于参考帧的重建来锚定均值，同时施加归一化约束以稳定推理。实验显示该模型能更可靠地从无动作视频中提取潜在动作，并泛化到机器人操作策略学习。该方法为从大规模视频中获取动作先验提供了新思路。",
+      "llm_tldr": "视觉-语言-动作模型受限于带动作标签的机器人数据，而动作自由视频蕴含丰富物理变化。现有潜在动作模型重建训练缺乏与机器人动作联合生成所需的结构。为此提出DLAM，一种分布潜在动作模型，将每个转移表示为对角高斯分布，并基于参考帧的重建来锚定均值，同时施加归一化约束以稳定推理。实验显示该模型能更可靠地从无动作视频中提取潜在动作，并泛化到机器人操作策略学习。该方法为从大规模视频中获取动作先验提供了新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.27881v1",
+      "source": "arxiv",
+      "title": "RoboBRIDGE: A Modular Framework for Bridging Policies to Robust Real-World Robotic Agents",
+      "abstract": "Vision-Language-Action (VLA) models have attracted growing interest as a scalable approach to robotic manipulation. While these models are effective action predictors, deploying them as robotic agents exposes critical gaps: no mechanism for failure recovery, inconsistent execution over long horizons, and limited robustness to shifts in observations, tasks, or embodiments. Existing solutions address these limitations individually through model retraining or environment-specific modules, yet what is needed is a general framework that systematically transforms a pretrained VLA into a robotic agent. We present RoboBRIDGE, a modular framework that provides an orchestration layer over five coordinated modules, namely Monitor, Perceptor, Planner, Controller, and Robot Interface, to compose robust robotic agents from off-the-shelf components, including pretrained VLAs. The Monitor pairs rapid failure detection with hierarchical recovery to correct errors before they cascade. When the environment diverges from the current plan, the Planner triggers replanning while the Perceptor updates scene understanding asynchronously, avoiding execution stalls. Within the Controller, primitive skill fine-tuning factors manipulation into domain-invariant primitives with dedicated LoRA adapters, reducing sensitivity to domain shifts when a VLA is used. Across LIBERO, RoboCasa, and real-world case studies spanning multiple robot platforms and VLA backbones, RoboBRIDGE consistently outperforms both standalone policies and prior augmented VLA deployments. These results suggest that reliable robotic agency does not arise from scaling action predictors alone, but from structured orchestration around them.",
+      "authors": [
+        "Sihyung Yoon",
+        "Minjong Yoo",
+        "Sanghyun Ahn",
+        "Seojeong Choi",
+        "Honguk Woo"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-30T08:55:45+00:00",
+      "link": "https://arxiv.org/pdf/2607.27881v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "modular framework for robust deployment of VLA robot manipulation policies",
+      "llm_evidence_cn": "面向VLA机器人操作策略的鲁棒部署框架",
+      "llm_evidence": "面向VLA机器人操作策略的鲁棒部署框架",
+      "canonical_evidence": "面向VLA机器人操作策略的鲁棒部署框架",
+      "llm_tldr_en": "RoboBRIDGE is a modular framework with five coordinated modules that transforms pretrained Vision-Language-Action policies into robust real-world robotic agents, addressing failure recovery, long-horizon execution, and robustness.",
+      "llm_tldr_cn": "视觉-语言-动作（VLA）模型虽能预测机器人操作动作，但直接部署时缺少失败恢复、长程执行一致性以及对观测和任务变化的鲁棒性。RoboBRIDGE 提出一个包含监控、感知、规划等协调模块的模块化框架，通过编排层将预训练 VLA 策略系统性地转变为真实世界机器人智能体。该方法避免了逐模块重训练或环境专用方案，为基于 VLA 的机器人策略部署提供了通用范式。",
+      "llm_tldr": "视觉-语言-动作（VLA）模型虽能预测机器人操作动作，但直接部署时缺少失败恢复、长程执行一致性以及对观测和任务变化的鲁棒性。RoboBRIDGE 提出一个包含监控、感知、规划等协调模块的模块化框架，通过编排层将预训练 VLA 策略系统性地转变为真实世界机器人智能体。该方法避免了逐模块重训练或环境专用方案，为基于 VLA 的机器人策略部署提供了通用范式。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
