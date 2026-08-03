@@ -1,0 +1,332 @@
+Title: RayViT: Ray-Conditioned Visual Representations for Viewpoint-Robust Imitation Learning
+
+URL Source: https://arxiv.org/pdf/2607.29622v1
+
+Published Time: Mon, 03 Aug 2026 01:13:53 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# RayViT: Ray-Conditioned Visual Representations for Viewpoint-Robust Imitation Learning 
+
+Qian Wang 1 ∗ Longrui Chen 2 Peiran Sun 1 Aleksandar Taranovic 1
+
+Niklas Freymuth 1 Ge Li 1 Weiran Liao 1 C. F. Maximilian Nagy 1
+
+Yucheng Tang 1 Tao Chen 1 Gerhard Neumann 1
+
+> 1
+
+Karlsruhe Institute of Technology, Germany 
+
+> 2
+
+University of Leeds, United Kingdom 
+
+Abstract: Visual imitation learning enables robots to acquire visuomotor skills directly from images, yet RGB observations lack explicit geometric cues, making learned policies brittle to camera perturbations. To address this, we propose Ray-conditioned Vision Transformer Encoder (RayViT) , a lightweight architecture that injects camera geometry into pretrained ViT backbones. RayViT represents camera geometry as a Pl¨ ucker ray map, patchifies it into ray features, and uses gated cross-attention to produce a ray-conditioned class token. These ray features are added as dense positional embeddings, while the ray class token replaces the original ViT class token to provide a geometry-aware summary representation. We combine this approach with an auxiliary cosine similarity loss to consistently improve the performance and robustness for geometry-aware tokens. Experiments on sim- and real-robot tasks demonstrate that RayViT improves robustness by ap-proximately 13 percentage points under camera perturbations in multi-task Robo-Casa benchmark and by 1.78 average completed stages in real-world multi-task success rate compared to baselines. 
+
+Keywords: Imitation Learning, Representation Learning, Ray map 
+
+1 Introduction 
+
+Imitation learning enables robot policies to be trained from demonstrations of desired behaviors, usually recorded by human experts. These recordings come in different modalities, with RGB im-ages being the most popular choice due to their semantic richness and low acquisition cost. Benefit-ing from rich pretrained visual priors, powerful vision foundation models such as DINOv3 [1] con-sume these images and extract semantically meaningful information from demonstrations, making them a natural choice of visual encoder for downstream policies. However, the resulting RGB-based policies are often brittle to camera movements and perturbations. Such movements arise because the camera must be moved when an obstacle obstructs its view, or because it is mounted to, e.g., a moving robot. Changes in the camera parameters can significantly degrade policy performance at test time, since pretrained visual representations encode scene appear-ance but remain agnostic to the geometric relationship between camera and world. Consequently, policies built on these embeddings tend to learn viewpoint-specific appearance-to-action mappings rather than view-invariant task representations. Robustness to camera perturbations requires visual representations that are both camera-aware and consistent across viewpoints. Existing approaches rely on data diversity, collecting demonstrations from many cameras or viewpoints [2, 3, 4, 5]. While effective, they are expensive and hard to scale in real-world settings. Alternative methods introduce explicit 3D representations such as point clouds or point maps to reduce viewpoint ambiguity [6, 7, 8, 9, 10], which provides useful geometric 
+
+> ∗
+
+Email: uxquy@student.kit.edu arXiv:2607.29622v1 [cs.RO] 31 Jul 2026 grounding but require additional sensors or reconstruction. Here, the density, noise and physical scale of 3D points are difficult to be unified. More critically, such 3D representations are not easily compatible with modern vision foundation models with pure-image priors. In this work, we instead draw on recent progress in novel view synthesis and dynamic scene re-construction [11, 12, 13], where camera intrinsics and extrinsics are encoded as Pl¨ ucker ray em-beddings [14]. This encoding yields a ray map in which each pixel is associated with its unique 3D viewing ray, represented by the ray’s direction and spatial moment. Since the ray map is spa-tially aligned with the RGB image, it establishes a natural pixel-to-pixel correspondence between appearance and geometry. Crucially, ray maps are computed from only intrinsic and extrinsic cam-era parameters and require no additional sensors, making them a lightweight geometric cue. The intrinsics are typically readily available through camera internal APIs, while camera extrinsics re-quire world-frame calibration. The overhead for this calibration is aided by many readily available tools, and calibration is already required by many competing methods. Having obtained a ray map, we find that injecting it into a pretrained ViT backbone is non-trivial. Naively concatenating geometric features with image patch tokens risks disrupting the pretrained representation distribution and degrading the rich semantic features acquired during pretraining. We therefore propose the Ray-conditioned Vision Transformer Encoder (RayViT), which injects camera geometry into a fully fine-tuned ViT encoder while preserving its pretrained structure. RayViT intro-duces two complementary geometry injection mechanisms. First, we propose a ray-map-conditioned class token. Instead of directly using DINOv3’s original CLS token, we condition a learnable token on the ray map through two gated cross-attention blocks[15], producing a geometry-aware summary token while minimally perturbing the pretrained representation distribution. Figure 1 provides a schematic overview. Second, we inject patch-aligned ray features as additional positional embed-dings, providing explicit absolute 3D grounding for each patch token. Beyond camera awareness, we apply an auxiliary cosine similarity loss to geometry-conditioned class tokens at an intermediate layer, encouraging representations of the same scene from different viewpoints to converge. This objective consistently improves both performance under the default setting and robustness to camera perturbations, but only when the tokens already carry geometric information. We evaluate RayViT in simulation and the real world. Across 16 simulated and 4 real-world ma-nipulation tasks, our approach achieves competitive performance when considering fixed cameras. When the cameras are moved and thus change their parameters, we find that baseline methods drasti-cally degrade, while RayViT exhibits only a minor performance drop and converges to significantly better performance than the baselines. In summary, our contributions are as follows: 1) We demonstrate that injecting camera geometry into pretrained ViT backbones substantially improves robustness to camera perturbations in imita-tion learning, without multi-view augmentation or additional sensors. 2) We propose RayViT, a lightweight architecture with a gated cross-attention module that injects Pl”ucker ray embeddings through a ray-conditioned class token and patch-level geometric positional embeddings. 3) We show that view-consistency objective further yields consistent gains in both nominal performance and camera robustness, but only when applied to geometry-aware token representations. 
+
+2 Related Work 
+
+View-Invariant Representations from RGB. Pre-trained vision encoders have become standard backbones for imitation learning policies [16, 17, 18], inheriting the broad capabilities of general-purpose vision foundation models [19, 20, 1]. Recent work pretrains backbones for 3D under-standing [21], and integrates them into manipulation policies [22, 23]. However, neither family grounds its representations in the camera’s pose relative to the workspace. The resulting policies tend to be brittle under visual distribution shifts and camera viewpoint changes [24, 25, 5]. While some methods are explicitly designed to be invariant to the viewpoint [26, 27, 28], they typically rely on point-cloud inputs and are thus not easily compatible with such pre-trained vision models. Another line of work instead considers data augmentation via domain randomization [29], image 2augmentation [30, 31], additional simulated cameras [2] and novel views synthesized from existing demonstrations [3, 4]. Closely related to our work, Jiang et al. [5] also conditions the policy on Pl¨ ucker ray maps, but still relies on instantiating many such cameras as a form of dataset augmenta-tion. Such augmentation is costly to scale, particularly outside simulation. A different approach is taken by CLASS [32], which in some settings operates on a fixed camera set like ours but follows a two-stage recipe in which an encoder is first pretrained with action-sequence contrastive learning and then frozen for policy training. RayViT instead injects camera geometry at the representation level in a single end-to-end training, using only the cameras already present in the workspace. Our explicit ray-map conditioning and a cosine objective on the resulting tokens yield geometry-aware representations that remain robust under viewpoint changes. 
+
+3D Representations and Viewpoint Robustness. A complementary line of work introduces ex-plicit 3D structure into the policy. The RVT family [6, 7] reconstructs point clouds and re-renders the scene from fixed virtual cameras around the workspace. Several other methods skip re-rendering and feed 3D observations directly to the policy, including raw point clouds [33, 34], lifted RGB-D features [8, 9], dense point maps [10], and Fourier-projected point coordinates [35]. While these representations encode scene geometry, the resulting policies still depend on the extrinsics of the depth cameras used to construct the point cloud, and generalize only modestly to novel camera viewpoints [36]. Adapt3R [36] mitigates this issue by localizing 2D backbone features in 3D rel-ative to the end-effector, but requires calibrated depth as an additional modality. RayViT instead represents per-pixel camera geometry, providing the pose-to-pixel correspondence these methods lack while requiring no depth sensor and no point-cloud reconstruction. 
+
+Ray Maps as a Geometric Cue. Pl¨ ucker ray maps [14, 37, 38] map each pixel to a six-dimensional vector encoding its ray’s origin and direction in world coordinates, providing a dense pose-to-pixel correspondence directly from camera intrinsics and extrinsics. They have recently emerged as a compact way to encode camera geometry across computer vision, including depth estimation [39], novel view synthesis [11, 12], dynamic 3D reconstruction [13], and world modeling [40]. In imita-tion learning, ray-map conditioning has so far been used only by Jiang et al. [5], who use multi-view data augmentation and concatenate Pl¨ ucker rays to image inputs or latent features. This concate-nation forces the encoder to learn the patch-to-ray alignment from scratch. RayViT instead injects ray geometry into the pretrained ViT token stream itself, with patch-aligned ray features providing dense geometric positional context and a gated cross-attention module producing a ray-conditioned class token. 
+
+3 Method 
+
+Problem Formulation. Imitation learning aims to learn a policy from a dataset of expert demonstra-tions Dτ = {τi}Ni=1 . Each demonstration is represented as a sequence of observation-action pairs, 
+
+τi = {(o1, a 1), (o2, a 2), . . . , (oT , a T )}, where ot and at denote the observation and expert action at time step t, respectively. Besides conventional observations such as images It, we incorporate ray maps rt as additional observations, i.e., It, r t ∈ ot and learn a ray map conditioned visual represen-tation vt = E(It|rt), where E denotes the encoder network. Following common visuomotor policy learning settings, the policy π is trained to predict an action or an action chunk at:t+H conditioned on the current observation ot.
+
+Ray Map Modelling. We model camera geometry as ray map using Pl¨ ucker coordinate repre-sentation, associating each image pixel with its corresponding 3D viewing ray determined by the camera intrinsics and extrinsics [14, 37, 38]. Let K ∈ R3×3 denote the camera intrinsic matrix, and let (R, t) denote the world-to-camera extrinsic, where R ∈ SO(3) and t ∈ R3. For a pixel 
+
+p = ( u, v, 1) ⊤, the camera center and viewing direction in the world frame are computed as 
+
+ow = −R⊤t, ˜dw(u, v ) = R⊤K−1p, dw(u, v ) = ˜dw(u, v )
+
+∥˜dw(u, v )∥2
+
+. (1) Following the Pl¨ ucker line representation, each ray is encoded by its direction and moment, 
+
+mw(u, v ) = ow × dw(u, v ), r(u, v ) = [ dw(u, v ), mw(u, v )] ∈ R6. (2) 3Figure 1: Overview of RayViT . Camera geometry is injected through a ray-map–conditioned class token and patch-aligned ray embeddings. An intermediate cross-view consistency loss regularizes the visual representation. Visual tokens, frozen CLIP [19] language tokens, and noisy action tokens are processed by a decoder-only xLSTM policy [41, 42]. Stacking r(u, v ) over all pixels yields a ray map spatially aligned with the input image, providing a dense per-pixel geometric representation of the camera viewpoint. 
+
+Ray Map conditioned Class Token. In standard ViTs, the class token [CLS] is a learnable token prepended to the patch sequence to aggregate global visual information through self-attention. The resulting [CLS] is typically passed to the policy network as a global visual descriptor for action prediction. Since [CLS] is initialized as a free parameter, its representation is built solely from interactions with image patches. Under camera shifts, small pose changes can significantly alter image appearance and spatial layout, while [CLS] lacks direct access to the underlying camera geometry that explains these changes. To address this, we first propose the ray-map-conditioned class token .
+
+Patch-aligned Ray Features . We downsample the ray map to the encoder patch resolution using av-erage pooling with kernel size equal to the patch size. Unlike learned convolutions, average pooling is non-parametric and better preserves the geometric semantics of Pl¨ ucker coordinates. The result-ing ray grid is spatially aligned with the encoder patch tokens in a one-to-one manner, providing a natural mechanism for injecting geometry-aware positional embeddings into the image patch to-kens.We then project the 6-dimensional ray-patch features to the encoder’s latent dimension through a two-layer MLP with GELU activation. 
+
+Gated Cross-attention Module. The ray-map initializer consists of two lightweight gated cross-attention blocks matching the hidden dimension of the pretrained ViT backbone. A learnable query token cross-attends to the patch-aligned ray features, progressively summarizing camera geometry into a single token. Following Qwen [15], we apply a learnable element-wise sigmoid gate after attention to regulate geometric conditioning. This control is important because the ray map should adaptively condition the global token without overwhelming the pretrained representational signal that subsequent transformer blocks expect. The final query token is used as the ray-conditioned class token, replacing the original [CLS] token in the ViT forward pass. 
+
+Ray Map Positional Embedding. While RGB images capture scene appearance, ray maps encode the camera geometry underlying each observation. To build a camera-aware visual representation, we also inject ray features into the ViT patch-token stream. 
+
+Additive injection alongside RoPE. We add the patch-aligned ray features to the image patch to-kens at the encoder input, before the first transformer block. We retain the original rotary positional 4embedding (RoPE) [1] in backbone unchanged, as it is complementary to our design. RoPE supports local spatial reasoning in the image plane, whereas our ray-based signal provides absolute ground-ing for each patch. Because RoPE is camera-agnostic, it cannot capture viewpoint-dependent 3D structure under varying camera poses. Our additive ray injection fills this gap while preserving the pretrained attention dynamics, since RoPE remains untouched inside the attention mechanism. 
+
+Cross-view Alignment Objective. To encourage viewpoint-robust representations, we align the class tokens across views such that they capture shared manipulation-relevant content despite differ-ing camera geometries. We use the in-hand class token as the alignment anchor, since the gripper view is closest to the manipulation target and contains less irrelevant background than third-person views. Concretely, we apply a cosine-similarity loss to the class tokens extracted from an inter-mediate layer of the visual backbone. For N camera views, let g denote a reference view, and let 
+
+V = {v1, . . . , v N −1} denote the remaining non-reference views. We use g as the anchor and define 
+
+Lcos = 1 − 1
+
+N − 1
+
+X
+
+> v∈V
+
+cos ( cv , c g ) , L = LIL + λ Lcos . (3) Here, cos( ·, ·) denotes cosine similarity, cg denotes the reference class token, cv denotes the class to-ken of another camera view, and λ is a scalar weight, default value in Table 9. The cosine alignment term is used only as an auxiliary regularizer and is added to the primary policy learning loss. 
+
+4 Simulated Experiments 
+
+Following a multi-task setting, we conduct simulation experiments on the RoboCasa benchmark using 16 tasks that cover diverse manipulation skills. 
+
+Robocasa[43] . It is a large-scale benchmark for robotic manipulation in realistic kitchen environ-ments. It provides diverse scenes, layouts, object assets, and manipulation tasks ranging from simple actions to long-horizon, multi-step behaviors. Given large-scale demonstrations, RoboCasa serves as a challenging testbed for developing and evaluating imitation learning policies. 
+
+Experimental Setup . To ensure a fair comparison across different visual representations, all meth-ods use the same score-based diffusion policy with a decoder-only xLSTM action head. Experiments are conducted in a multi-task setting, where a single policy is trained and evaluated across 16 tasks. Unless otherwise specified, the visual encoder is fully fine-tuned end-to-end jointly with the policy. Each model is trained for 50 epochs with 3 random seeds, and we evaluate checkpoints at 30th, 40th, and 50th epoch, reporting the best result. To evaluate robustness under camera perturbations, we test methods both on the training camera setup and the perturbed camera configurations. We construct a variant simulation environment in which the two static cameras are randomly rotated within bounded azimuth and elevation ranges, corresponding to horizontal and vertical viewing-angle changes, and also randomly shifted in dis-tance relative to the reference fixture. 
+
+Baselines and Variants . We provide two variants of our method with different levels of camera geometry injection. RayViT-cls injects camera geometry only through a ray-map–conditioned class token, whereas RayViT further incorporates patch-aligned ray features as positional embeddings. We always use the gripper camera view as the anchor g for the cross-view alignment objective. We compare both RayViT variants against four representative baselines, namely Adapt3R [36], PMP-xyz [10], CamPose [5] and our image-only variant without any ray-map conditioning. Detailed descriptions of the baselines are provided in Appendix B.1. 
+
+Results We present the empirical results in Table 1, comparing all methods under both default and variant camera settings. Under the default setting, RayViT-cls and RayViT achieve perfor-mance comparable to the strongest baselines, including the RGB-only variant, with RayViT-cls even slightly outperforming all baselines. These results indicate that our geometry-conditioned visual rep-resentation effectively benefits policy learning, despite minor modifications to the pretrained visual backbone, which may disrupt the pretrained feature distribution. 5Task Adapt3R PMP-xyz CamPose RGB RayVit-cls RayVit 
+
+Default Variant Default Variant Default Variant Default Variant Default Variant Default Variant PnPCounterToMicrowave 9.3±0.9 0.7±0.9 2.0±0.0 0.0±0.0 0.0±0.0 0.0±0.0 2.0±1.6 0.0±0.0 1.3±0.9 0.0±0.0 2.0±1.6 2.0±1.6
+
+PnPCounterToSink 2.7±1.9 0.0±0.0 2.0±2.0 2.0±0.0 0.0±0.0 0.0±0.0 0.7±0.9 0.7±0.9 0.7±0.9 1.3±1.9 2.7±0.9 1.3±1.9
+
+PnPMicrowaveToCounter 6.0±1.6 3.3±1.9 10 .0±2.0 2.7±3.1 1.3±1.2 0.7±1.2 14 .0±1.6 0.7±0.9 13 .3±0.9 8.7±3.4 6.7±2.5 6.7±3.4
+
+PnPSinkToCounter 3.3±0.9 4.7±0.9 4.7±1.2 2.0±2.0 3.3±1.2 2.0±2.0 18 .0±1.6 6.0±2.8 13 .3±5.2 12 .0±4.3 9.3±5.0 6.0±3.3
+
+OpenDrawer 47 .3±3.4 30 .0±7.5 49 .3±1.2 18 .0±7.2 31 .3±4.2 35 .3±3.1 44 .7±5.2 14 .0±3.3 44 .7±6.2 40 .7±5.0 34 .7±6.8 29 .3±5.0
+
+CloseDrawer 82 .0±1.6 67 .3±9.3 99 .3±1.2 55 .3±23 .0 82 .7±5.8 84 .7±5.8 86 .7±1.9 42 .0±7.1 87 .3±2.5 81 .3±4.1 81 .3±9.4 84 .7±4.1
+
+TurnOnStove 37 .3±1.9 20 .7±7.4 34 .7±6.4 8.7±1.2 17 .3±3.1 13 .3±1.2 24 .7±2.5 14 .0±4.3 28 .0±0.0 24 .0±5.9 28 .7±1.9 30 .7±2.5
+
+TurnOffStove 18 .0±1.6 12 .0±4.3 16 .0±2.0 7.3±9.2 8.7±2.3 10 .0±0 11 .3±1.9 9.3±2.5 14 .7±2.5 13 .3±2.5 14 .0±1.6 17 .3±0.9
+
+TurnOnSinkFaucet 68 .0±4.3 46 .0±9.9 68 .7±2.3 33 .3±10 .1 22 .0±2.0 20 .0±5.3 52 .7±7.7 42 .7±9.0 70 .0±3.3 68 .0±9.9 65 .3±2.5 66 .0±4.9
+
+TurnOffSinkFaucet 69 .3±5.0 42 .0±11 .8 76 .0±6.9 36 .7±1.2 36 .0±7.2 34 .7±5.0 60 .7±6.8 30 .0±4.3 52 .7±5.2 48 .7±5.2 56 .7±4.1 51 .3±9.0
+
+TurnSinkSpout 65 .3±0.9 52 .7±4.1 72 .0±2.0 48 .0±6.9 10 .7±1.2 7.3±1.2 40 .7±3.4 40 .7±4.1 40 .7±7.4 43 .3±3.4 42 .7±3.8 43 .3±10 .5
+
+CoffeePressButton 73 .3±3.8 58 .0±5.7 75 .3±8.1 53 .3±8.1 46 .7±1.2 40 .7±1.2 90 .7±1.9 80 .7±4.1 92 .0±4.3 85 .3±5.0 84 .7±4.7 84 .7±2.5
+
+TurnOnMicrowave 64 .7±1.9 40 .0±7.1 46 .0±8.7 10 .7±5.0 29 .3±1.2 26 .7±10 .3 80 .0±0.0 40 .0±10 .2 72 .0±5.7 48 .0±7.1 64 .0±4.3 54 .0±2.8
+
+TurnOffMicrowave 69 .3±4.7 44 .7±2.5 50 .7±9.0 7.3±4.6 32 .0±7.2 36 .7±2.3 88 .7±5.0 40 .7±9.8 91 .3±2.5 62 .7±12 .0 85 .3±2.5 61 .3±10 .9
+
+CoffeeServeMug 38 .7±2.5 26 .0±8.5 52 .7±8.1 33 .3±6.4 16 .7±3.1 18 .0±5.3 51 .3±3.4 16 .7±5.0 52 .0±3.3 42 .0±9.9 50 .7±2.5 46 .7±4.7
+
+CoffeeSetupMug 12 .7±0.9 8.0±3.3 14 .7±1.2 14 .0±2.0 10 .0±5.3 12 .7±3.1 16 .7±4.7 6.0±3.3 16 .7±4.7 12 .7±1.9 7.3±3.4 10 .7±1.9
+
+Average Success Rate ↑ 41 .7 28 .5 42 .1 20 .8 21 .8 21 .4 42 .5 24 .0 43 .2 37 .0 39 .8 37 .3
+
+Performance Drop ↓ − 13 .2 − 21 .3 − 0.4 − 18 .5 − 6.2 − 2.5
+
+Table 1: Success rate (%) for each task in RoboCasa [43]. The models were evaluated over 50 episodes per task. Best results in the Default and Variant settings are highlighted in blue and 
+
+green , respectively. ↑ indicates that a higher average success rate is better, while ↓ indicates that a lower performance drop between the default and variant settings is better. Under random perturbations, our methods outperform the 2D RGB baseline by at least 13 percentage points in average success rate and consistently surpass explicit 3D representations, indicating that dense geometry alone is insufficient for viewpoint robustness without explicitly modeling camera-induced transformations. Compared with Adapt3R, direct ray-map conditioning provides a stronger inductive bias without requiring additional sensing modalities. Although CamPose shows only a modest performance drop under perturbation, its lower performance in both settings suggests that late-fused ray-map conditioning is less effective than directly integrating camera geometry into the visual representation, particularly in the multi-task setting without multi-view data augmentation. 
+
+4.1 Parameter Study and Analysis 
+
+Method Default Variant Drop ↓
+
+RGB 42 .5±0.8 24 .0±0.5 18.5 RayViT-cls w/o. 38 .4±1.7 30 .6±8.7 7.8 RayViT-cls 43 .2±1.7 37 .0±3.5 6.2 RayViT w/o. 39 .5±4.4 35 .6±9.1 3.9 RayViT 39 .8±1.9 37 .3±1.2 2.5 
+
+Table 2: Effect of ray-map condition-ing. W/o. denotes without the cosine similarity loss. 
+
+Effect of Ray-Map Conditioning . Table 2 reports the average success rate across 16 tasks for models trained with and without the auxiliary cosine similarity loss. Compared with the RGB variant, geometry injection alone already improves robustness to camera perturba-tions. However, its slightly lower performance under the default setting suggests that ray-map conditioning may perturb the pretrained feature distribution and introduce a small optimization disadvantage. 
+
+Role of the View-Consistency Objective . The results in Table 2 further show that RayViT-cls is more sensitive to the removal of the cross-view objective, while also benefiting more strongly from it than RayViT. This may be because RayViT already incorporates richer geometric information by injecting ray features as additional positional embeddings for image patches. Interestingly, the auxiliary objective consistently improves performance under both default and variant settings. How-ever, as shown on the left of Figure 2, applying the same cosine similarity loss to the RGB-vanilla baseline does not yield stable performance gains, suggesting that the effectiveness of the cross-view objective depends on geometry-aware representations. 
+
+Layer-wise Application of the Auxiliary Loss . We further study the effect of the layer at which the view-consistency constraint is applied to the global class tokens of the pretrained ViT backbone. As shown on the right side of Figure 2, applying the auxiliary loss at deeper layers leads to the strongest gains in both default performance and robustness under camera perturbations, whereas applying it 6− 8 10 12 
+
+20 
+
+30 
+
+40 
+
+RGB-variant intermediate Layer 
+
+> Success Rate (%)
+
+6 8 10 12 
+
+RayViT-cls intermediate layer 
+
+Default Variant 
+
+Figure 2: RGB-variant and RayViT-cls success rates when applying the auxiliary cosine-similarity loss at different intermediate layers. Colored lines report mean success rate, with background bands indicating standard deviation. Left: Effect of auxiliary loss on the RGB variant. - denotes no auxiliary loss applied at an intermediate layer. Right: Influence of the auxiliary loss when injected into RayViT-cls layers 6−12 .at earlier layers yields only marginal improvements over the variant without the view-consistency objective.              
+
+> Method Default Variant Drop ↓
+> RGB scr 29 .2±0.410 .0±2.219.2 RayViT-cls scr 33 .2±1.628 .2±1.45.0 RayViT scr 32 .1±1.029 .2±0.92.9
+
+Table 3: Ablation on training visual backbone without pretrained weights; scr denotes ”trained from scratch” 
+
+Without pretrained Weights . Although our methods are designed on top of a pretrained ViT backbone, we further examine whether the advantages of our methods remain when training without pretrained weights. The Table 3 shows that our geometry-aware representation continues to outperform pure image representations, indicating that its benefits are not solely dependent on pretrained distri-bution.              
+
+> Method Default Variant Drop ↓
+> RGB 44 .1±0.218 .9±2.525.2 RayViT-cls 44 .2±2.226 .6±4.217.6 RayViT 44 .3±0.633 .3±5.611.0
+
+Table 4: Ablation on different pre-trained ViT backbone(EUPE). The re-sults are still average success rate from 16 tasks in RoboCasa with 3 seeds. 
+
+Transferability across pretrained ViT Backbones . Our experiments primarily use pretrained DINOv3 [1] as the visual backbone. To evaluate the generality of our ap-proach, we further evaluate our methods on the Efficient Universal Perception Encoder (EUPE) [44], a ViT-based model distilled from multiple domain-expert foundation vision models. As shown in Table 4, our methods remain effective across different pretrained backbones, improv-ing performance under both default and variant settings. Interestingly, RayViT outperforms RayViT-cls with EUPE, unlike the DINOv3 setting, suggesting that richer geometric conditioning is more beneficial under diverse pretrained feature distributions. 
+
+5 Real Robot Experiments 
+
+Setup . We evaluate our methods on four challenging real-world manipulation tasks: Drawer, Inser-tion, Pick Place and Cup Stack. An overview of the setup is shown in Figure 5. Similar to simulation, our vision system uses three cameras: left-, right-, and gripper-views. To evaluate robustness to cam-era perturbations, we additionally introduce a right-side camera with a substantially different pose. The default environment uses the left camera, default right camera, and gripper camera, while the variant environment replaces the default right camera with the perturbed one. 
+
+Dataset . For collecting demonstrations, we use teleoperation system consisting of a leader robot and a follower robot. For Drawer, Pick Place and Cup Stack three tasks, we collected 50 demonstrations per task with language instruction. For Insertion task, we have collected 100 language-conditioned trajectories. The details of our tasks are in the Appendix C.3. 7Figure 3: Real-robot experimental setup. Vi-sion system uses three cameras: left-, right-, and gripper-views and adapts a variant right-side view                                                  
+
+> Task Max RGB RayViT-cls RayViT
+> Default Variant Default Variant Default Variant Drawer 42.95 0.45 1.80 1.45 3.45 2.80
+> Insertion 31.55 1.25 2.20 0.60 1.70 1.50
+> Pick Place 41.85 0.90 1.60 1.50 2.60 3.10
+> Cup Stack 43.40 1.05 3.45 3.25 3.50 3.35
+> Completed Stages ↑2.44 0.91 2.26 1.72.81 2.69
+> Drop ↓−1.53 −0.56 −0.12
+
+Table 5: Average completed stages in default and variant environments. Max denotes total stages per task. Best results in the Default 
+
+and Variant settings are highlighted in blue and 
+
+green , respectively. 
+
+Metrics . Given the long-horizon nature of the tasks and the presence of camera perturbations, we adopt a structured scoring metric for fair and fine-grained evaluation. Each task is decomposed into multiple stages, with each completed stage contributing one point. The final score is the average sum of completed intermediate stages. Additional details are provided in Appendix C.2. 
+
+Results . We compare RayViT and RayViT-cls against the RGB variant on four challenging real-world tasks, evaluating each model with 20 rollouts per task. As shown in Table 5, our approaches maintain strong performance in real-world settings. Under the default camera configuration, both methods achieve performance comparable to the RGB baseline. Under the variant setting, however, our methods exhibit clear robustness advantages, improving the accumulated score by at least 0.8 points and demonstrating substantially improved resilience to camera perturbations. Interestingly, RayViT achieves the strongest performance under both default and variant camera settings, surpassing RayViT-cls. One possible explanation is that the real-world images are collected at twice the resolution of the simulation data, resulting in longer image patch sequences. In this setting, injecting richer geometric information may provide greater benefits. 
+
+6 Limitations and Future Work 
+
+Our current work has three main limitations. First, we focus on injecting camera geometry into pretrained ViT-based visual encoders, while powerful convolution-based visual models are not con-sidered. Second, our method is developed in a multi-view setting and relies on a task-relevant anchor view for the cross-view consistency objective. Several directions may address these limitations. A natural extension is to develop geometry-conditioning mechanisms for pretrained convolutional visual backbones. We also plan to investi-gate the behavior of our method under varying numbers of viewpoints, including both sparse-view and dense-view settings. More broadly, we believe a promising direction is to pretrain geometry-conditioned visual encoders from the outset, enabling stronger alignment between geometric priors and learned visual representations for robust robotic policy learning. 
+
+7 Conclusion 
+
+We presented RayViT, a lightweight framework for injecting camera geometry into pretrained ViT-based visual encoders to improve the robustness of imitation learning policies under camera view-point perturbations. Our approach adopts two geometry injection schemes: a ray-map–conditioned class token that replaces the standard CLS token with a geometry-aware scene descriptor, and ray-based positional embeddings added alongside RoPE to provide explicit 3D grounding cues. We further introduce a cross-view consistency objective, finding that geometric grounding may serve as a prerequisite for effective auxiliary representation learning in multi-view settings. Extensive experiments on RoboCasa and real-world manipulation tasks demonstrate that RayViT significantly improves robustness to camera perturbations. Ablation studies show that both ray-map conditioning and the consistency objective contribute independently, with benefits persisting across pretrained and randomly initialized backbones, as well as different pretrained ViT encoders. 8Acknowledgments 
+
+If a paper is accepted, the final camera-ready version will (and probably should) include acknowl-edgments. All acknowledgments go at the end of the paper, including thanks to reviewers who gave useful comments, to colleagues who contributed to the ideas, and to funding agencies and corporate sponsors that provided financial support. 
+
+References 
+
+[1] O. Sim´ eoni, H. V. Vo, M. Seitzer, F. Baldassarre, M. Oquab, C. Jose, V. Khalidov, M. Szafraniec, S. Yi, M. Ramamonjisoa, F. Massa, D. Haziza, L. Wehrstedt, J. Wang, T. Darcet, T. Moutakanni, L. Sentana, C. Roberts, A. Vedaldi, J. Tolan, J. Brandt, C. Couprie, J. Mairal, H. J´ egou, P. Labatut, and P. Bojanowski. DINOv3. arXiv preprint arXiv:2508.10104 , 2025. URL https://arxiv.org/abs/2508.10104 .[2] J. Pang, N. Tang, K. Li, Y. Tang, X.-Q. Cai, Z.-Y. Zhang, G. Niu, M. Sugiyama, and Y. Yu. Learning view-invariant world models for visual robotic manipulation. In Interna-tional Conference on Learning Representations (ICLR) , 2025. URL https://openreview. net/forum?id=vJwjWyt4Ed .[3] L. Y. Chen, C. Xu, K. Dharmarajan, M. Z. Irshad, R. Cheng, K. Keutzer, M. Tomizuka, Q. Vuong, and K. Goldberg. RoVi-Aug: Robot and viewpoint augmentation for cross-embodiment robot learning. In Conference on Robot Learning (CoRL) , 2024. Oral. [4] S. Tian, B. Wulfe, K. Sargent, K. Liu, S. Zakharov, V. Guizilini, and J. Wu. View-invariant policy learning via zero-shot novel view synthesis. In Conference on Robot Learning (CoRL) ,2024. [5] T. Jiang, J. Ji, X. Tan, J. Fang, A. Bhattad, V. Guizilini, and M. R. Walter. Do you know where your camera is? view-invariant policy learning with camera conditioning, 2025. URL 
+
+https://arxiv.org/abs/2510.02268 .[6] A. Goyal, J. Xu, Y. Guo, V. Blukis, Y.-W. Chao, and D. Fox. RVT: Robotic view transformer for 3D object manipulation. In Conference on Robot Learning (CoRL) , 2023. Oral. [7] A. Goyal, V. Blukis, J. Xu, Y. Guo, Y.-W. Chao, and D. Fox. RVT-2: Learning precise manip-ulation from few demonstrations. In Robotics: Science and Systems (RSS) , 2024. [8] T.-W. Ke, N. Gkanatsios, and K. Fragkiadaki. 3D diffuser actor: Policy diffusion with 3D scene representations. In Conference on Robot Learning (CoRL) , 2024. [9] M. Shridhar, L. Manuelli, and D. Fox. Perceiver-actor: A multi-task transformer for robotic manipulation. In Conference on Robot Learning , pages 785–799. PMLR, 2023. [10] X. Jia, Q. Wang, A. Wang, H. A. Wang, B. Gyenes, E. Gospodinov, X. Jiang, G. Li, H. Zhou, W. Liao, X. Huang, M. Beck, M. Reuss, R. Lioutikov, and G. Neumann. PointMapPol-icy: Structured point cloud processing for multi-modal imitation learning. arXiv preprint arXiv:2510.20406 , 2025. URL https://arxiv.org/abs/2510.20406 .[11] H. Wang, K. Ye, Y. Li, W. Chen, and B. Chen. The less you depend, the more you learn: Synthesizing novel views from sparse, unposed images without any 3D knowledge. arXiv preprint arXiv:2506.09885 , 2025. URL https://arxiv.org/abs/2506.09885 .[12] S. Szymanowicz, M. Chen, J. Wang, C. Rupprecht, and A. Vedaldi. LagerNVS: Latent geom-etry for fully neural real-time novel view synthesis. arXiv preprint arXiv:2603.20176 , 2026. URL https://arxiv.org/abs/2603.20176 . To appear in CVPR 2026. [13] F. Wang, Z. Shang, G. Liu, and Y. Yan. RayMap3R: Inference-time RayMap for dynamic 3D reconstruction. arXiv preprint arXiv:2603.20588 , 2026. URL https://arxiv.org/abs/ 2603.20588 .9[14] Z. Cheng, X. Zhang, D. Di, C. Wei, H. Li, and X. Yang. Moca: Modeling object consistency for 3d camera control in video generation. In The Fourteenth International Conference on Learn-ing Representations , 2026. URL https://openreview.net/forum?id=DZcpnudp7f .[15] Z. Qiu, Z. Wang, B. Zheng, Z. Huang, K. Wen, S. Yang, R. Men, L. Yu, F. Huang, S. Huang, D. Liu, J. Zhou, and J. Lin. Gated attention for large language models: Non-linearity, sparsity, and attention-sink-free. In Advances in Neural Information Processing Systems (NeurIPS) ,2025. Best Paper Award. [16] S. Nair, A. Rajeswaran, V. Kumar, C. Finn, and A. Gupta. R3m: A universal visual repre-sentation for robot manipulation. In Conference on Robot Learning , pages 892–909. PMLR, 2023. [17] T. Xiao, I. Radosavovic, T. Darrell, and J. Malik. Masked visual pre-training for motor control. 
+
+arXiv preprint arXiv:2203.06173 , 2022. [18] A. Majumdar, K. Yadav, S. Arnaud, J. Ma, C. Chen, S. Silwal, A. Jain, V.-P. Berges, T. Wu, J. Vakil, et al. Where are we in the search for an artificial visual cortex for embodied intelli-gence? Advances in Neural Information Processing Systems , 36:655–677, 2023. [19] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry, A. Askell, P. Mishkin, J. Clark, et al. Learning transferable visual models from natural language supervi-sion. In International conference on machine learning , pages 8748–8763. PmLR, 2021. [20] A. Kirillov, E. Mintun, N. Ravi, H. Mao, C. Rolland, L. Gustafson, T. Xiao, S. Whitehead, A. C. Berg, W.-Y. Lo, et al. Segment anything. In Proceedings of the IEEE/CVF international conference on computer vision , pages 4015–4026, 2023. [21] J. Wang, M. Chen, N. Karaev, A. Vedaldi, C. Rupprecht, and D. Novotny. VGGT: Visual geometry grounded transformer. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2025. Best Paper Award. [22] A. Abouzeid, M. Mansour, Q. Sun, Z. Sun, and D. Song. GeoAware-VLA: Implicit geometry aware vision-language-action model. arXiv preprint arXiv:2509.14117 , 2025. URL https: //arxiv.org/abs/2509.14117 .[23] A. D. Vuong, M. N. Vu, and I. Reid. Improving robotic manipulation with efficient geometry-aware vision encoder. arXiv preprint arXiv:2509.15880 , 2025. URL https://arxiv.org/ abs/2509.15880 .[24] Y. Zhu, Z. Jiang, P. Stone, and Y. Zhu. Learning generalizable manipulation policies with object-centric 3d representations. In Conference on Robot Learning , pages 3418–3433. PMLR, 2023. [25] S. Fei, S. Wang, Z. Shi, lee2025classai, J. Cai, P. Qian, L. Ji, X. He, S. Zhang, Z. Fei, et al. Libero-plus: In-depth robustness analysis of vision-language-action models. arXiv preprint arXiv:2510.13626 , 2025. [26] A. Simeonov, Y. Du, Y.-C. Lin, A. R. Garcia, L. P. Kaelbling, T. Lozano-P´ erez, and P. Agrawal. Se (3)-equivariant relational rearrangement with neural descriptor fields. In Conference on Robot Learning , pages 835–846. PMLR, 2023. [27] Z. Zhang, Z. Xu, J. N. Lakamsani, and Y. She. Canonical policy: Learning canonical 3d representation for se (3)-equivariant policy. arXiv preprint arXiv:2505.18474 , 2025. [28] X. Zhu, Y. Qi, Y. Zhu, R. Walters, and R. Platt. Equact: An se (3)-equivariant multi-task transformer for open-loop robotic manipulation. arXiv preprint arXiv:2505.21351 , 2025. 10 [29] J. Tobin, R. Fong, A. Ray, J. Schneider, W. Zaremba, and P. Abbeel. Domain randomization for transferring deep neural networks from simulation to the real world. In 2017 IEEE/RSJ international conference on intelligent robots and systems (IROS) , pages 23–30. IEEE, 2017. [30] M. Laskin, K. Lee, A. Stooke, L. Pinto, P. Abbeel, and A. Srinivas. Reinforcement learning with augmented data. Advances in neural information processing systems , 33:19884–19895, 2020. [31] D. Yarats, I. Kostrikov, and R. Fergus. Image augmentation is all you need: Regularizing deep reinforcement learning from pixels. In International conference on learning representations ,2020. [32] S.-W. Lee, X. Kang, B. Yang, and Y.-L. Kuo. CLASS: Contrastive learning via action sequence supervision for robot manipulation. In Conference on Robot Learning (CoRL) , volume 305 of 
+
+Proceedings of Machine Learning Research , pages 4743–4766. PMLR, 2025. [33] Y. Ze, G. Zhang, K. Zhang, C. Hu, M. Wang, and H. Xu. 3D diffusion policy: Generalizable visuomotor policy learning via simple 3D representations. In Robotics: Science and Systems (RSS) , 2024. [34] T. Gervet, Z. Xian, N. Gkanatsios, and K. Fragkiadaki. Act3d: 3d feature field transformers for multi-task robotic manipulation. In Conference on Robot Learning , pages 3949–3965. PMLR, 2023. [35] B. Gyenes, E. Gospodinov, J. Frieling, E. Krohmer, X. Jia, N. Schreiber, N. Freymuth, and G. Neumann. Fourier features let agents learn high precision policies with imitation learn-ing. In Forty-third International Conference on Machine Learning , 2026. URL https: //openreview.net/forum?id=y03xxeUkgN .[36] A. Wilcox, M. Ghanem, M. Moghani, P. Barroso, B. Joffe, and A. Garg. Adapt3r: Adaptive 3d scene representation for domain transfer in imitation learning. In Conference on Robot Learning , pages 1486–1514. PMLR, 2025. [37] V. Sitzmann, S. Rezchikov, B. Freeman, J. Tenenbaum, and F. Durand. Light field networks: Neural scene representations with single-evaluation rendering. Advances in Neural Informa-tion Processing Systems , 34:19313–19325, 2021. [38] Y.-B. Jia. Pl¨ ucker coordinates for lines in the space. Problem Solver Techniques for Applied Computer Science, Com-S-477/577 Course Handout , 3:3, 2020. [39] H. Lin, S. Chen, J. H. Liew, D. Y. Chen, Z. Li, G. Shi, J. Feng, and B. Kang. Depth anything 3: Recovering the visual space from any views. arXiv preprint arXiv:2511.10647 , 2025. URL 
+
+https://arxiv.org/abs/2511.10647 .[40] Aether Team, H. Zhu, Y. Wang, J. Zhou, W. Chang, Y. Zhou, Z. Li, J. Chen, C. Shen, J. Pang, and T. He. Aether: Geometric-aware unified world modeling. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , 2025. [41] M. Beck, K. P¨ oppel, M. Spanring, A. Auer, O. Prudnikova, M. Kopp, G. Klambauer, J. Brand-stetter, and S. Hochreiter. xlstm: Extended long short-term memory, 2024. URL https: //arxiv.org/abs/2405.04517 .[42] X. Jia, A. Donat, X. Huang, X. Zhao, D. Blessing, H. Zhou, H. A. Wang, H. Zhang, Q. Wang, R. Lioutikov, and G. Neumann. X-il: Exploring the design space of imitation learning policies, 2025. URL https://arxiv.org/abs/2502.12330 .[43] S. Nasiriany, A. Maddukuri, L. Zhang, A. Parikh, A. Lo, A. Joshi, A. Mandlekar, and Y. Zhu. Robocasa: Large-scale simulation of everyday tasks for generalist robots. In Robotics: Science and Systems (RSS) , 2024. 11 [44] C. Zhu, S. Suri, C. Jose, M. Oquab, M. Szafraniec, W. Wen, Y. Xiong, P. Labatut, P. Bo-janowski, R. Krishnamoorthi, and V. Chandra. Efficient universal perception encoder. arXiv preprint arXiv:2603.22387 , 2026. URL https://arxiv.org/abs/2603.22387 .12 A Score-based Diffusion Policy 
+
+Diffusion models are generative models that learn to generate new samples through learning to reverse a Gaussian Perturbation process. In this work, we apply a score-based diffusion model to formulate the policy representation πθ (¯ a | s). This perturbation and its inverse process can be expressed through a Stochastic Differential Equation (SDE): 
+
+d¯a = ( βtσt − ˙σt) σt∇a log pt(¯ a | s) dt + p2βtσt dω t, (4) where βt determines the noise injection rate, dω t represents infinitesimal Gaussian noise, and 
+
+pt(¯ a | s) denotes the score function of the diffusion process. 
+
+B Simulation Experiment Details 
+
+B.1 Baseline Introduction 
+
+We mainly selected four representative baselines: 1) Adapt3R combines pretrained 2D semantic features with 3D geometric information, using 3D points primarily to localize semantic cues rather than to directly encode full scene structure. 2) PMP-xyz and PMP use explicit 3D point-map representations, treating point maps as image-like inputs that preserve dense geometric information. PMP-xyz uses only 3D point-map features, while PMP concatenates 3D tokens with 2D semantic tokens extracted from RGB images. 3) CamPose also incorporates ray maps for imitation learning, but treats them as an additional input modality and fuses them with semantic tokens through late concatenation. 4) RGB is our image-only variant, which removes ray-map conditioning and passes RGB observations directly through DINOv3. 
+
+B.2 PMP Result 
+
+In the main results reported in Table 1, we include PMP-xyz, which uses only 3D point-map features. The original PMP paper also introduces a variant, referred to as PMP, that combines point-map tokens with image tokens. Table 6 provides the corresponding comparison with this PMP variant. 
+
+Task PMP PMP-xyz RayVit-cls RayVit 
+
+Default Variant Default Variant Default Variant Default Variant PnPCounterToMicrowave 2.7±1.2 0.0±0.0 2.0±0.0 0.0±0.0 1.3±0.9 0.0±0.0 2.0±1.6 2.0±1.6
+
+PnPCounterToSink 0.0±0.0 0.0±0.0 2.0±2.0 2.0±0.0 0.7±0.9 1.3±1.9 2.7±0.9 1.3±1.9
+
+PnPMicrowaveToCounter 16 .0±6.0 1.3±2.3 10 .0±2.0 2.7±3.1 13 .3±0.9 8.7±3.4 6.7±2.5 6.7±3.4
+
+PnPSinkToCounter 9.3±3.1 2.7±3.1 4.7±1.2 2.0±2.0 13 .3±5.2 12 .0±4.3 9.3±5.0 6.0±3.3
+
+OpenDrawer 44 .0±5.3 18 .0±24 .6 49 .3±1.2 18 .0±7.2 44 .7±6.2 40 .7±5.0 34 .7±6.8 29 .3±5.0
+
+CloseDrawer 85 .3±3.1 34 .7±47 .9 99 .3±1.2 55 .3±23 .0 87 .3±2.5 81 .3±4.1 81 .3±9.4 84 .7±4.1
+
+TurnOnStove 18 .7±3.1 10 .7±15 .0 34 .7±6.4 8.7±1.2 28 .0±0.0 24 .0±5.9 28 .7±1.9 30 .7±2.5
+
+TurnOffStove 12 .0±4.0 3.3±4.2 16 .0±2.0 7.3±9.2 14 .7±2.5 13 .3±2.5 14 .0±1.6 17 .3±0.9
+
+TurnOnSinkFaucet 50 .7±5.0 31 .3±23 .2 68 .7±2.3 33 .3±10 .1 70 .0±3.3 68 .0±9.9 65 .3±2.5 66 .0±4.9
+
+TurnOffSinkFaucet 48 .7±1.2 23 .3±20 .0 76 .0±6.9 36 .7±1.2 52 .7±5.2 48 .7±5.2 56 .7±4.1 51 .3±9.0
+
+TurnSinkSpout 30 .7±3.1 28 .7±6.1 72 .0±2.0 48 .0±6.9 40 .7±7.4 43 .3±3.4 42 .7±3.8 43 .3±10 .5
+
+CoffeePressButton 74 .0±15 .9 36 .0±45 .1 75 .3±8.1 53 .3±8.1 92 .0±4.3 85 .3±5.0 84 .7±4.7 84 .7±2.5
+
+TurnOnMicrowave 55 .3±6.4 23 .3±40 .4 46 .0±8.7 10 .7±5.0 72 .0±5.7 48 .0±7.1 64 .0±4.3 54 .0±2.8
+
+TurnOffMicrowave 70 .7±1.2 34 .0±42 .0 50 .7±9.0 7.3±4.6 91 .3±2.5 62 .7±12 .0 85 .3±2.5 61 .3±10 .9
+
+CoffeeServeMug 39 .3±2.3 16 .7±22 .0 52 .7±8.1 33 .3±6.4 52 .0±3.3 42 .0±9.9 50 .7±2.5 46 .7±4.7
+
+CoffeeSetupMug 12 .7±1.2 7.3±9.2 14 .7±1.2 14 .0±2.0 16 .7±4.7 12 .7±1.9 7.3±3.4 10 .7±1.9
+
+Average Success Rate 35 .6 17 .0 42 .1 20 .8 43 .2 37 .0 39 .8 37 .3
+
+Performance Drop − 18 .6 − 21 .3 − 6.2 − 2.5
+
+Table 6: Comparison of our methods with PMP [10] on RoboCasa [43]. All models were trained for 50 epochs using 50 human demonstrations per task and evaluated over 50 episodes per task. 13 C Real Robot Experiment Details 
+
+We conduct four real-world experiments on a Franka Panda Robot: Cup Stack, Pick Place, Drawer and Insertion. Table 4 shows an overview of our real-world tasks. 
+
+C.1 Setup 
+
+The external viewpoints in our real world experiments are captured using ZED Mini stereo cameras, and the gripper view uses an Intel RealSense D405. We use the left-eye image from each stereo camera and resize all observations to 256×256. Experiments are conducted on a 7-DOF Franka Panda robot with an 8-dimensional action space comprising joint positions and gripper state. 
+
+C.2 Task Metric 
+
+Given the long-horizon nature of the tasks and the presence of camera perturbations, we decompose each task into several discrete stages. The final score is computed as the total number of successfully completed stages. Details of the scoring metric design are provided in Table 7. 
+
+Cup Stack Pick Place Score 
+
+pick up the orange cup pick up the pear or sponge 1stack the orange cup onto the red cup place it onto the tray 2pick up the stacked two cups pick up the rest object on the table 3stack them onto the blue cup place it onto the tray 4
+
+Drawer Insertion Score 
+
+open the upper drawer pick up the cylinder 1pick up the green prism release the cylinder above the matching hole 2place the prism inside the drawer insert the cylinder successfully 3close the drawer - 4Table 7: Task score metric details of real robot and evaluation standards. 
+
+C.3 Task Description Cup Stack . In the cup stacking task, the robot is presented with three cups of different colors and sizes that must be stacked according to size. The large blue cup is positioned on the left, the medium red cup in the center, and the small orange cup on the right. The robot must first pick up the orange cup and place it onto the red cup, then lift the resulting orange–red stack and place it onto the blue cup. The horizontal positions of the cups are fixed, while their vertical positions vary. 
+
+Pick Place . In the pick-and-place task, a wooden tray containing five unrelated toys is placed on the table. A toy pear and a sponge are positioned to the left of the tray. The robot’s objective is to pick up the pear and the sponge and place them into the tray. The positions of the pear, sponge, and toys inside the tray may vary, while the position and orientation of the tray remain fixed. During data collection, the order in which the pear and sponge are manipulated is randomized. 
+
+Drawer . In the drawer task, a two-layer white drawer is placed on the left side of the workspace, and a green prism is positioned on the right. The robot must open the upper drawer, pick up the green prism and place it inside the drawer, and then close the drawer. The position and orientation of the drawer are fixed, whereas the position of the prism vary. 
+
+Insertion . In the insertion task, a wooden cube-shaped box with differently shaped holes on its faces is placed on the left side of the workspace. The top face contains circular, triangular, and hexagonal 14 holes. A blue cylinder is positioned on the right side. The robot’s objective is to pick up the cylinder and insert it through the circular hole such that it falls vertically into the box. The position and orientation of the box are fixed, while the position of the cylinder vary. 
+
+Figure 4: Overview of real robot tasks 15 D Hyper Parameters 
+
+D.1 Policy Hyper Parameters 
+
+Hyperparameter decoder-only x-LSTM Number of x-Blocks 8Attention Heads 8Action Chunk Size 10 Embedding Dimension 768 Goal Lang Encoder CLIP ViT-B/32 Optimizer AdamW Betas [0.9, 0.95] Learning Rate 1e-4 Weight Decay 0.05 Batch Size 256 
+
+σmax 80 
+
+σmin 0.001 
+
+σt 0.5 EMA True Time steps Exponential Sampler DDIM Sampling Step 4
+
+Table 8: Hyperparameters Summary of Policy. Where, σmax is the starting noise level, σmin is the floor of the noise schedule and σt is standard deviation of the target data. 
+
+D.2 RayViT Hyper Parameters 
+
+E Compute Resources 
+
+In both simulation and real-world experiments, RayViT uses DINOv3 ViT-Small as the primary visual backbone. For simulation tasks, models are trained for 50 epochs on a single NVIDIA A100-SXM4-40GB GPU with a batch size of 256, finishing within 8 hours. For real-world experiments, models are trained for 60 epochs on a single GeForce RTX 5090 32GB GPU with a batch size of 64 and 4 gradient accumulation steps, finishing within 7 hours. 16 Hyperparameter RayViT Number of Attention Blocks 2Number of Attention Heads 4Mlp Ratio 4Embedding Dimension 384 qkv bias True proj bias True ffn bias True Cosine Similarity Layer 10th Weight of Cosine Similarity Loss 0.01 Number of Ray patch projection 0.15M Number of Gated Attention Module 3.85M Number of DINOv3 ViT small 21.6M
