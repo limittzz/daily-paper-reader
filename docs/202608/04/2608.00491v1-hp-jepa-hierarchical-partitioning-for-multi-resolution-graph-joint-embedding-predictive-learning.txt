@@ -1,0 +1,2027 @@
+Title: HP-JEPA: Hierarchical Partitioning for Multi-Resolution Graph Joint-Embedding Predictive Learning
+
+URL Source: https://arxiv.org/pdf/2608.00491v1
+
+Published Time: Tue, 04 Aug 2026 00:35:48 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# HP-JEPA: Hierarchical Partitioning for Multi-Resolution Graph Joint-Embedding Predictive Learning 
+
+# Ruichen Xu 
+
+Department of Applied Mathematics and Statistics Stony Brook University Stony Brook, NY, USA 
+
+# Jingxiang Qu 
+
+Department of Computer Science Stony Brook University Stony Brook, NY, USA 
+
+# Wenhan Gao 
+
+Department of Applied Mathematics and Statistics Stony Brook University Stony Brook, NY, USA 
+
+# Jiaxing Zhang ∗† 
+
+TikTok Bellevue, WA, USA 
+
+# Linsey Pang 
+
+PayPal San Jose, CA, USA 
+
+# Ravid Shwartz-Ziv 
+
+Center for Data Science New York University New York, NY, USA 
+
+# Yann LeCun 
+
+Center for Data Science New York University New York, NY, USA 
+
+# Yuefan Deng †
+
+Department of Applied Mathematics and Statistics Stony Brook University Stony Brook, NY, USA 
+
+## Abstract 
+
+Graph self-supervised learning aims to learn transferable represen-tations from large-scale unlabeled graph data. Joint-embedding pre-dictive architectures (JEPAs) avoid explicit negative-pair construc-tion and raw-input reconstruction by predicting masked targets directly in latent space. However, existing graph JEPAs typically rely on a single predefined graph partition, biasing the learned rep-resentations toward one structural granularity and limiting their ability to capture complementary patterns at different graph scales. To address this limitation, we propose HP-JEPA, a hierarchical par-titioning framework for multi-resolution graph joint-embedding prediction. HP-JEPA organizes each graph into an ordered bank of coarse-to-fine partition resolutions and performs context–target latent prediction separately at each resolution using an online en-coder, an exponential-moving-average target encoder, and a latent predictor. The resulting resolution-specific graph representations are subsequently integrated through concatenation or task-specific resolution weighting, allowing downstream models to combine complementary local, regional, and global structural information. Experiments on seven graph classification benchmarks and one graph regression benchmark show that HP-JEPA outperforms the fixed-resolution Graph-JEPA baseline on 6 of 8 tasks, improving upon Graph-JEPA on most evaluated benchmarks. Size-stratified analyses further show that HP-JEPA achieves higher accuracy than Graph-JEPA in most evaluated graph-size quartiles on three rep-resentative datasets. These results highlight the effectiveness of hierarchical multi-resolution partitioning for transferable graph representation learning. 
+
+## Keywords 
+
+Graph representation learning, self-supervised learning, joint-embedding predictive architecture, graph neural networks 
+
+## 1 Introduction 
+
+Graph representation learning aims to encode graph-structured data into transferable representations that support downstream 
+
+> ∗The contributions of Jiaxing Zhang were made independently and do not represent the views of the employer, TikTok.
+> †Co-corresponding authors: Jiaxing Zhang ( tabzhangjx@gmail.com ) and Yuefan Deng ( yuefan.deng@stonybrook.edu ).
+
+classification and regression tasks [ 5, 21 , 23 ]. Because task-specific annotations are often limited or expensive to obtain, self-supervised learning has become an important paradigm for learning from large collections of unlabeled graphs. Existing graph self-supervised methods primarily construct their training signals through con-trastive learning [ 6 , 15 , 16 , 24 ], generative architectures [ 7, 17 ], self-predictive [ 18 , 22 ] or joint-embedding predictive architectures (JEPAs) [ 1, 14 ]. Contrastive methods depend heavily on graph aug-mentations and, in many cases, negative-pair construction [ 8, 13 ,19 , 25 ], while generative architectures optimize the reconstruction of raw node attributes or graph structures. Self-predictive meth-ods try to predict the unobserved components of the graph, and supervise this process on original data space. JEPAs instead predict held-out targets directly in representation space, avoiding both explicit negative pairs and raw-input reconstruction [ 2, 10 ]. This formulation offers a promising route toward learning high-level structural and semantic dependencies in graphs. Graph-JEPA [ 14 ] extends joint-embedding prediction to graph-level representation learning by partitioning each graph into a collection of regions or patches. During pretraining, visible context regions are encoded by an online encoder, while held-out target regions are represented by an exponential-moving-average tar-get encoder. A predictor then estimates the latent target repre-sentations from the visible context and target-specific structural queries. This formulation successfully transfers JEPA-style learning to graph-structured data without reconstructing raw node or edge information. However, the graph is tokenized using a single pre-defined partition resolution throughout pretraining. Consequently, the predictive objective is restricted to dependencies expressed at one structural granularity, and the resulting representation may become specialized to the particular resolution induced by that partition. The fixed-resolution assumption is restrictive because graph semantics are inherently multi-granular [ 12 , 20 , 26 ]. Fine-grained partitions preserve localized motifs and short-range interactions, but may fragment regional organization and long-range structural dependencies. Conversely, coarse partitions capture broader graph topology and regional context, but can blur discriminative local patterns. The most informative granularity may also vary across 
+
+> 1arXiv:2608.00491v1 [cs.LG] 1 Aug 2026 Xu et al. (R eginal Context )
+
+Real Graphs Are Multi -Resolution 
+
+Information in multiple resolutions 
+
+Fixed Subgraph Partitioning Fails 
+
+> Case A: Too Fine -grained
+> Missing global semantics
+> Case B: Too Coarse -grained
+> Blurred local details
+
+Not capturing multi -resolution features 
+
+HP -JEPA: Multi -Resolution Graph Tokens   
+
+> Regional Context
+> Fine -grained
+> Local Motif
+> Global Topology
+> Hierarchical Subgraph Partitioning
+> Resolutio n1
+> Resolution 2
+> Resolution 4
+> Resolution 3
+> (Global Topology)
+> (Motifs)
+> (Atomic Geometry)
+> Joint Embedding
+> Feature
+> Task -Specific Weighted Selection for Downstream ML
+> 𝑍 !
+> 𝑍 "
+> 𝑍 #
+> 𝑍 $
+> w!
+> 𝑤 "
+> 𝑤 #
+> 𝑤 $
+> Low High
+
+Adaptive -resolution representation learning 
+
+> Selects task -relevant scales
+
+Figure 1: Motivation and overview of HP-JEPA. Real-world graphs contain complementary structural information at multiple resolutions, including fine-resolution local motifs, intermediate-resolution regional context, and coarse-resolution global topology. A single fixed resolution can be overly fine, fragmenting global context, or overly coarse, obscuring local structure. HP-JEPA constructs graph-region tokens at multiple resolutions and integrates their resolution-specific representations. Task-specific resolution weighting allows downstream models to emphasize the most informative resolutions. 
+
+graphs of different sizes and across downstream tasks: a resolu-tion suitable for identifying local biochemical motifs, for example, may not be optimal for characterizing global interaction patterns in social graphs. Therefore, no single partition resolution can be expected to preserve all task-relevant information or generalize uni-formly across heterogeneous graph resolutions. These observations motivate graph representation learning over an ordered hierarchy of partition resolutions rather than a single fixed partition, as shown in Fig. 1. To address this limitation, we propose HP-JEPA , a hierarchical partitioning framework for multi-resolution graph joint-embedding prediction. HP-JEPA represents each graph using an ordered bank of coarse-to-fine partition resolutions. Here, hierarchical refers to the ordering of structural granularities: partitions at different resolu-tions are constructed from the full graph. At each active resolution, graph regions are encoded as patch-content tokens together with structural queries that describe their positions and contexts in the original graph. HP-JEPA then performs resolution-wise context– target prediction using a shared online encoder, an exponential-moving-average target encoder, and a latent predictor. By applying the predictive objective separately across resolutions, HP-JEPA ex-poses the representation learner to structural dependencies ranging from fine local patterns to coarse graph-level organization, while re-taining the JEPA advantages of label-free latent prediction without negative pairs or raw graph reconstruction. After self-supervised pretraining, HP-JEPA pools the valid region-token representations within each resolution to obtain a set of resolution-specific graph embeddings. These embeddings can be concatenated to preserve information from all configured reso-lutions or combined through a smoothed, task-specific weighting mechanism that learns the relative importance of each resolution while keeping the pretrained encoder frozen. This design separates label-free multi-resolution representation learning from light-weight task-specific resolution selection. The PROTEINS case study further shows that HP-JEPA produces a visually more organized embedding with clearer separation across graph-size quartiles and class labels. Together, these results indicate that learning and integrating representations across partition resolutions provides a more flexible alternative to fixed-resolution graph joint-embedding prediction. Our main contributions are summarized as follows: 
+
+• We identify the fixed-resolution bias in existing graph joint-embedding predictive architectures and formulate multi-resolution graph tokenization as a key requirement for learning representations across heterogeneous graph gran-ularities. 
+
+• We propose HP-JEPA, which combines an ordered hierar-chy of graph partition resolutions, resolution-wise latent context–target prediction, and multi-resolution readout with optional task-specific resolution weighting. 
+
+• We evaluate HP-JEPA through downstream graph classifi-cation and regression, a size-stratified representation case study, and sensitivity analyses over graph-size quartiles and resolution-bank configurations. HP-JEPA improves over Graph-JEPA on six of eight tasks and maintains its advan-tage in most evaluated graph-size quartiles and resolution-bank configurations. 
+
+## 2 Related Work 
+
+Graph neural networks provide the standard encoder backbone for graph representation learning by aggregating information over graph neighborhoods. Representative message-passing models 
+
+> 2HP-JEPA: Hierarchical Partitioning for Multi-Resolution Graph Joint-Embedding Predictive Learning
+
+Table 1: Design-level comparison of graph representation learning methods. The check marks ( ✓) and cross marks ( ✗) indicate that the property is explicitly satisfied/unsatisfied by design, and a triangle ( △) indicates a partial match.                     
+
+> Method Main training signal Label-Free No Neg. No Raw Recon. Latent Pred. Region Tokens Multi-Resolution Tokens F-GIN [23] Supervised labels ✗✓✓✗✗✗
+> InfoGraph [15] Local–global mutual information ✓✗✓✗
+
+△ ✗                                                
+
+> GraphCL [24] Augmented-view contrast ✓✗✓✗✗✗
+> MVGRL [6] Multi-view contrast ✓✗✓✗✗✗
+> AD-GCL-FIX/OPT [16] Adversarial graph contrast ✓✗✓✗✗✗
+> GraphMAE [7] Masked feature reconstruction ✓✓✗✗✗✗
+> S2GAE [17] Masked structure reconstruction ✓✓✗✗✗✗
+> BGRL [18] Bootstrap latent prediction ✓✓✓✓✗✗
+> LaGraph [22] Latent graph prediction ✓✓✓✓
+
+△ ✗               
+
+> Graph-JEPA [14] Single-resolution patch prediction ✓✓✓✓✓✗
+> HP-JEPA Multi-resolution patch prediction ✓✓✓✓✓✓
+> Notes. (1) “No Neg.” means the objective does not require explicit negative pairs. (2) “No Raw Recon.” means the method does not reconstruct raw node attributes, edges, or graph structure. (3) “Latent Pred.” means the target is a representation-space target. (4) “Region Tokens” means graph regions, subgraphs, or patches are explicit learning units. (5) “Multi-Resolution Tokens” means that graph-region tokens are explicitly constructed at multiple partition resolutions. (6) For F-GIN, check marks under “No Neg.” and “No Raw Recon.” only indicate that these mechanisms are absent; F-GIN is still supervised. AD-GCL-FIX and AD-GCL-OPT are merged because they share the same method design.
+
+include GCN, GraphSAGE, MPNN, and GIN [ 3 , 4, 9, 23 ]. Based on these encoders, contrastive and mutual-information-based graph self-supervised methods learn representations by comparing graph views or local–global summaries. InfoGraph maximizes mutual information between graph-level and substructure repre-sentations [ 15 ], GraphCL contrasts augmented graph views [ 24 ], MVGRL contrasts first-order and diffusion views [ 6], and AD-GCL learns adversarial graph augmentations [ 16 ]. These methods improve graph-level representation learning, but their supervision is mainly defined by view agreement or augmentation design rather than latent prediction over graph-region structures. HP-JEPA 
+
+addresses this gap by learning from context–target prediction in graph-region latent space instead of relying on a fixed contrastive view construction. Masked graph autoencoding provides another line of graph self-supervised learning. GraphMAE masks node attributes and recon-structs masked features [ 7], while S2GAE masks graph structure and reconstructs missing edges [ 17 ]. These methods avoid explicit negative pairs, but their objectives are still tied to reconstructing raw graph observations. Non-contrastive methods move closer to representation-space learning: BGRL predicts target representa-tions from another augmented view without negative samples [ 18 ], and LaGraph formulates self-supervised learning as latent graph prediction [ 22 ]. However, these methods do not explicitly organize graph-region targets across a hierarchy of structural granularities. 
+
+HP-JEPA addresses this limitation by predicting latent targets with-out reconstructing node attributes or edges, while using graph regions at multiple partition resolutions as the learning units. Graph-JEPA [ 14 ] is the closest prior method to our work because it applies JEPA-style context–target prediction to graph patches. It partitions a graph into subgraphs and predicts latent target-patch representations from context-patch representations, avoiding raw reconstruction. However, Graph-JEPA exposes only a single patch-token resolution to the predictive objective. This fixed-resolution design can miss dependencies that appear across local, mesoscopic, and coarse graph structures. HP-JEPA extends Graph-JEPA by con-structing graph tokens over an ordered bank of partition resolutions, performing latent prediction independently within each resolution, and integrating the resulting resolution-specific representations during downstream readout. Here, the coarse-to-fine resolution hi-erarchy refers to the ordering of structural granularities rather than nested or parent–child partitions. The difference between HP-JEPA 
+
+and existing methods is summarized in Table 1. 
+
+## 3 Preliminaries 
+
+This section establishes the notation and background used by HP-JEPA. We first formulate graph representation learning for an at-tributed graph 𝐺 = (𝑉 , 𝐸, X) and then review a single-resolution graph JEPA formulation. In this formulation, the graph is decom-posed into a collection of regions, one context region and a set of target regions are sampled, and the target latent states are predicted using an online token encoder 𝑓 𝜃 , an exponential-moving-average (EMA) target token encoder 𝑓 ¯𝜃 , and a predictor 𝑞 𝜓 . Section 4 ex-tends this formulation to 𝐿 = 𝐿 D independently constructed graph resolutions, performs prediction separately within each resolution, maps each target-token state to a two-coordinate latent target, and combines the resulting resolution-specific graph representations 
+
+{ℎ(ℓ ) 
+
+> 𝐺
+
+}𝐿 ℓ=1.
+
+## 3.1 Graph Representation Learning 
+
+Let 𝐺 = (𝑉 , 𝐸, X) denote an attributed graph, where 𝑉 and 𝐸 are the node and edge sets, X ∈ R𝑛 ×𝑑 𝑥 is the node-feature matrix, and 
+
+𝑛 = |𝑉 |. Edge attributes, when available, are treated as part of the graph input but omitted from the notation for simplicity. We consider a graph dataset D = {𝐺 𝑖 }𝑁 D 
+
+> 𝑖 =1
+
+sampled from an underlying graph distribution 𝑝 G .Graph representation learning aims to map each graph 𝐺 to a fixed-dimensional representation ℎ𝐺 ∈ R𝑑 that summarizes its structural and semantic information. A typical graph encoder E𝜗 
+
+first produces node representations {𝑟 𝑣 ∈ R𝑑 : 𝑣 ∈ 𝑉 } and then applies a permutation-invariant readout according to {𝑟 𝑣 }𝑣 ∈𝑉 :=
+
+E𝜗 (𝐺 ) and ℎ𝐺 := Readout ({ 𝑟 𝑣 : 𝑣 ∈ 𝑉 }) ∈ R𝑑 . The readout may be instantiated using mean pooling, sum pooling, or another permutation-invariant aggregation operator, ensuring that ℎ𝐺 is 
+
+> 3Xu et al.
+
+unaffected by node ordering and has a fixed dimensionality across graphs of different sizes. For a downstream graph-level task with label 𝑦 𝐺 , a task-specific predictor 𝜋 𝜙 produces b𝑦 𝐺 := 𝜋 𝜙 (ℎ𝐺 ). Given a labeled downstream dataset Dtask = {( 𝐺 𝑖 , 𝑦 𝑖 )} 𝑁 task  
+
+> 𝑖 =1
+
+, the predictor is trained by mini-mizing Ltask := 𝑁 −1task 
+
+Í𝑁 task  
+
+> 𝑖 =1
+
+ℓtask (𝜋 𝜙 (ℎ𝐺 𝑖 ), 𝑦 𝑖 ), where ℓtask denotes a classification or regression loss. In self-supervised graph represen-tation learning, the representation encoder is pretrained without downstream labels, after which the learned graph representations are evaluated using a lightweight task-specific predictor with the pretrained encoder either frozen or fine-tuned. 
+
+## 3.2 JEPA for Graphs 
+
+Joint-embedding predictive architectures learn representations by predicting a target in latent space from a partially observed context rather than reconstructing the target in the original input space. Given a context input 𝑥 ctx and a target input 𝑥 tgt , the online token encoder produces 𝑠 ctx := 𝑓 𝜃 (𝑥 ctx ) ∈ R𝑑 , while the EMA target token encoder produces 𝑢 tgt := 𝑓 ¯𝜃 (sg (𝑥 tgt )) ∈ R𝑑 , where sg (·) denotes stop-gradient. A structural query 𝑝 tgt ∈ R𝑑 identifies the target whose representation should be predicted, and the predictor pro-duces b𝑢 tgt := 𝑞 𝜓 (𝑠 ctx +𝑝 tgt ). A generic JEPA objective is then written as LJEPA := ℓpred (b𝑢 tgt , sg (𝑢 tgt )) , where ℓpred measures discrepancy in latent space. By defining supervision in the representation space, JEPA avoids explicit reconstruction of low-level input details and does not require negative samples. To specialize this formulation to graph regions using the notation adopted in Section 4, consider a single predefined graph partition 
+
+P ( 𝐺 ) := {𝑃 𝑖 }𝑘 (𝐺 ) 
+
+> 𝑖 =1
+
+, where every 𝑃 𝑖 is nonempty, Ð𝑘 (𝐺 ) 
+
+> 𝑖 =1
+
+𝑃 𝑖 = 𝑉 ,and 𝑃 𝑖 ∩ 𝑃 𝑗 = ∅ for 𝑖 ≠ 𝑗 . Here, 𝑘 (𝐺 ) denotes the number of valid regions in the partition. For each core region 𝑃 𝑖 , let e𝑃 𝑖 ⊇ 𝑃 𝑖 
+
+denote the support of its associated graph patch, and let 𝜌 𝑖 denote a structural descriptor characterizing the position and structural context of that patch in the original graph. A patch-token encoder 𝑔 𝜂 maps the graph patch to a content to-ken 𝑧 𝑖 := 𝑔 𝜂 (𝐺 [e𝑃 𝑖 ]) ∈ R𝑑 , while a structural-query encoder 𝑒 𝜉 maps its descriptor to 𝑝 𝑖 := 𝑒 𝜉 (𝜌 𝑖 ) ∈ R𝑑 . The context and downstream readout paths retain both patch content and structural information through 𝑥 ctx  
+
+> 𝑖
+
+= 𝑥 full  
+
+> 𝑖
+
+:= 𝑧 𝑖 + 𝑝 𝑖 , whereas the target path receives only the patch-content input 𝑥 tgt  
+
+> 𝑖
+
+:= 𝑧 𝑖 . Consequently, the target token encoder does not directly observe the target structural query supplied to the predictor. Let I ( 𝐺 ) := {1, . . . , 𝑘 (𝐺 )} denote the valid region-index set. A context index 𝑐 (𝐺 ) is sampled from I ( 𝐺 ), and a nonempty target-index set T ( 𝐺 ) ⊆ I ( 𝐺 ) \ { 𝑐 (𝐺 )} is sampled from the remaining regions; we write 𝑀 (𝐺 ) := |T ( 𝐺 )| . Suppressing the graph argument when it is clear from context, the online token encoder produces 𝑠 𝑐 := 𝑓 𝜃 (𝑥 ctx  
+
+> 𝑐
+
+), while the EMA target token encoder produces [𝑢 𝑡 ]𝑡 ∈ T ( 𝐺 ) := 𝑓 ¯𝜃 (sg ([ 𝑥 tgt  
+
+> 𝑡
+
+]𝑡 ∈ T ( 𝐺 ) )) .For each target index 𝑡 ∈ T ( 𝐺 ), the predictor estimates 
+
+b𝑢 𝑡 := 𝑞 𝜓 (𝑠 𝑐 + 𝑝 𝑡 ), and the single-resolution graph JEPA objective is 
+
+LGraph -JEPA (𝐺 ) := 𝑀 (𝐺 )−1 Í𝑡 ∈ T ( 𝐺 ) ℓpred (b𝑢 𝑡 , sg (𝑢 𝑡 )) .Through this latent prediction objective, the single-resolution formulation learns statistical dependencies between a visible graph context and held-out target regions without reconstructing node attributes or edges. However, it represents the graph using only one predefined partition P ( 𝐺 ) and therefore exposes the model to one structural granularity. HP-JEPA generalizes this formulation to 𝐿 in-dependently constructed resolutions {P (ℓ ) (𝐺 )} 𝐿 ℓ=1 with configured capacities 𝐾 ℓ = 2ℓ and graph-dependent valid-region counts 𝑘 ℓ (𝐺 ).It replaces 𝑐 (𝐺 ), T ( 𝐺 ), and 𝑀 (𝐺 ) with the resolution-specific quan-tities 𝑐 ℓ (𝐺 ), Tℓ (𝐺 ), and 𝑀 ℓ (𝐺 ), and performs prediction indepen-dently within each eligible resolution. Unlike the generic full-vector objective above, HP-JEPA derives a two-coordinate target from each EMA target-token state. Specif-ically, for 𝑢 (ℓ ) 
+
+> 𝑡
+
+∈ R𝑑 , it defines 𝑚 (𝑢 (ℓ ) 
+
+> 𝑡
+
+) := 𝑑 −11⊤ 
+
+> 𝑑
+
+𝑢 (ℓ ) 
+
+> 𝑡
+
+and 𝑦 (ℓ ) 
+
+> 𝑡, tgt
+
+:=
+
+Φ(𝑢 (ℓ ) 
+
+> 𝑡
+
+) = [cosh (𝑚 (𝑢 (ℓ ) 
+
+> 𝑡
+
+)) , sinh (𝑚 (𝑢 (ℓ ) 
+
+> 𝑡
+
+))] ⊤ ∈ R2, while the pre-dictor produces b𝑦 (ℓ ) 
+
+> 𝑡
+
+:= 𝑞 𝜓 (𝑠 (ℓ ) 
+
+> 𝑐 ℓ
+
++ 𝑝 (ℓ ) 
+
+> 𝑡
+
+). After self-supervised pre-training, valid token representations are pooled separately within each resolution to obtain {ℎ(ℓ ) 
+
+> 𝐺
+
+}𝐿 ℓ=1, which are combined through concatenation or task-specific resolution weighting as described in Section 4. 
+
+## 4 Method 
+
+We consider an attributed graph 𝐺 = (𝑉 , 𝐸, X), where 𝑉 and 𝐸 
+
+are the node and edge sets, X ∈ R𝑛 ×𝑑 𝑥 is the node-feature matrix, and 𝑛 = |𝑉 |. Let 𝐿 := 𝐿 D denote the number of resolutions config-ured for dataset D. Resolution ℓ ∈ { 1, . . . , 𝐿 } has region capacity 
+
+𝐾 ℓ = 2ℓ and, when active for 𝐺 , contains 𝑘 ℓ (𝐺 ) valid graph re-gions. HP-JEPA represents each valid region using a patch-content token and a structural query, and performs latent prediction in-dependently at each resolution using an online token encoder, an exponential-moving-average (EMA) target token encoder, and a predictor. After pretraining, the frozen target branch produces one graph representation per resolution, and these representations are combined through concatenation or task-specific resolution weight-ing. Accordingly, HP-JEPA consists of three components: i) multi-resolution graph tokenization; ii) resolution-wise joint-embedding prediction; and iii) multi-resolution readout with task-specific reso-lution weighting. 
+
+## 4.1 Multi-Resolution Graph Tokenization 
+
+As illustrated in Figure 2(a), HP-JEPA constructs graph tokens at 
+
+𝐿 configured resolutions. A resolution is active for graph 𝐺 when 
+
+𝐾 ℓ ≤ 2𝑛 ; once 𝐾 ℓ > 2𝑛 , that resolution and all finer resolutions are inactive. At an active resolution ℓ, we set 𝑘 ℓ (𝐺 ) := min {𝐾 ℓ , 𝑛 } and partition 𝑉 into the nonempty core regions P (ℓ ) (𝐺 ) := {𝑃 (ℓ ) 
+
+> 𝑖
+
+}𝑘 ℓ (𝐺 ) 
+
+> 𝑖 =1
+
+.These regions satisfy Ð𝑘 ℓ (𝐺 ) 
+
+> 𝑖 =1
+
+𝑃 (ℓ ) 
+
+> 𝑖
+
+= 𝑉 and 𝑃 (ℓ ) 
+
+> 𝑖
+
+∩ 𝑃 (ℓ ) 
+
+> 𝑗
+
+= ∅ for 
+
+𝑖 ≠ 𝑗 . For an inactive resolution, we set 𝑘 ℓ (𝐺 ) = 0. When 𝐾 ℓ > 𝑛 
+
+at an active resolution, the remaining configured token slots are padded and excluded by a padding mask. Each active resolution is constructed independently from the full input graph, and no nesting or parent–child relation is assumed between P (ℓ ) (𝐺 ) and P (𝑟 ) (𝐺 )
+
+for ℓ ≠ 𝑟 . The resolution capacities and partitioning procedure used in our experiments are specified in Appendix A. For each core region 𝑃 (ℓ ) 
+
+> 𝑖
+
+, let e𝑃 (ℓ ) 
+
+> 𝑖
+
+⊇ 𝑃 (ℓ ) 
+
+> 𝑖
+
+denote the node sup-port of its associated graph patch, and let 𝜌 (ℓ ) 
+
+> 𝑖
+
+denote a structural descriptor of the patch in the original graph. A patch-token encoder 
+
+𝑔 𝜂 produces the content token 𝑧 (ℓ ) 
+
+> 𝑖
+
+:= 𝑔 𝜂 (𝐺 [e𝑃 (ℓ ) 
+
+> 𝑖
+
+]) ∈ R𝑑 , while a structural-query encoder 𝑒 𝜉 produces 𝑝 (ℓ ) 
+
+> 𝑖
+
+:= 𝑒 𝜉 (𝜌 (ℓ ) 
+
+> 𝑖
+
+) ∈ R𝑑 . The 
+
+> 4
+
+HP-JEPA: Hierarchical Partitioning for Multi-Resolution Graph Joint-Embedding Predictive Learning (a) Independent Multi -Resolution Construction  (b ) Resolution -Wise JEPA Prediction  (c) Multi -Resolution Readout 
+
+> Input Protein Graph
+> Resolution 1
+> Resolution 2
+> Resolution L
+
+Context branch 
+
+queries 
+
+Target/EMA 
+
+branch queries  Structural queries  Final graph 
+
+representation 
+
+Core regions 
+
+(disjoint subgraphs) 
+
+## • Each resolution is partitioned independently. 
+
+## • Expanded regions (one -hop halos) may overlap. 
+
+## • Padded feature slots are masked and ignored.               
+
+> Arbitrary hierarchy: Resolutions 𝟏 ,𝟐 ,…,𝑳
+> For each eligible resolution : optimizer step +
+> EMA updates; repeat for each resolution.
+> On shared JEPA objective across ℓ=𝟏 ,…,𝑳 Readout remains valid for an arbitrary number of Resolutions
+> Optional: Weighted selection / learned scalar mixture
+> ℎ𝐺
+> (1)
+> ℎ𝐺
+> (2)
+> ℎ𝐺
+> (𝐿 )
+> 𝛼 1
+> 𝛼 2
+> 𝛼 𝐿
+
+Σ                        
+
+> Learnable scalars, 𝛼 𝑖 >0
+> 𝑠 .𝑡 .Σ𝑖 =1
+> 𝐿 𝛼 𝑖 =1
+> Gray padded slots are ignored throughout readout.
+> Classifier/
+> Regressor
+> ℎ𝐺 =ℎ𝐺
+> (1)||ℎ𝐺
+> 2…||ℎ𝐺
+> (𝐿 )
+> Final Graph Representation
+> ℎ𝐺
+> (1)
+> ℎ𝐺
+> (2)
+> ℎ𝐺
+> (𝐿 )
+> Concatenate
+> EMA
+> Target
+> Encoder
+> (stop -
+> gradient)
+> Valid token embedding
+> (from each resolution)
+> Masked token embedding
+> (from each resolution)
+> Select Resolution ℓ, with ℓ∈{1,…,𝐿 }
+> Context
+> Encoder
+> ℎ𝑐
+> (ℓ)
+> Predictor
+> Structural
+> query vectors
+> Context Token Target Token
+> EMA Target
+> Encoder
+> (stop -gradient)
+> Smooth L1
+> prediction loss
+> Predicted coordinates
+> Target latent
+> coordinates
+
+Figure 2: Overview of HP-JEPA. (a) The input graph is partitioned independently at 𝐿 configured resolutions. At resolution ℓ,each core region 𝑃 (ℓ )
+
+𝑖 defines a graph-patch support e𝑃 (ℓ )
+
+𝑖 , while padded and inactive token slots are masked and ignored. (b) At each eligible resolution, the sampled context index 𝑐 ℓ (𝐺 ) and target-index set Tℓ (𝐺 ) determine the context and target-content inputs processed by the online token encoder 𝑓 𝜃 and EMA target token encoder 𝑓 ¯𝜃 , respectively. For each 𝑡 ∈ T ℓ (𝐺 ), the predictor 
+
+𝑞 𝜓 estimates b𝑦 (ℓ )
+
+𝑡 from the context state 𝑠 (ℓ )
+
+𝑐 ℓ and target structural query 𝑝 (ℓ )
+
+𝑡 , supervised by the two-coordinate target 𝑦 (ℓ )
+
+𝑡, tgt 
+
+using a coordinate-wise Smooth 𝐿 1 loss. (c) During downstream readout, the frozen EMA target token encoder processes each active resolution independently, and its valid token representations 𝑟 (ℓ )
+
+𝐺,𝑖 are mean-pooled to obtain ℎ(ℓ )
+
+𝐺 . The resolution-specific representations are subsequently combined through concatenation ℎconcat 
+
+𝐺 or uniformly smoothed task-specific resolution weighting ℎtask 
+
+𝐺 for graph classification or regression. 
+
+content token summarizes the attributes and internal structure of the patch, whereas the structural query identifies its structural context. Both encoders are shared across all configured resolutions. The context and downstream readout paths retain both patch content and structural information through 𝑥 ctx ,(ℓ )
+
+𝑖 = 𝑥 full ,(ℓ )
+
+𝑖 :=
+
+𝑧 (ℓ )
+
+𝑖 + 𝑝 (ℓ )
+
+𝑖 , whereas the target path receives only the patch-content input 𝑥 tgt ,(ℓ )
+
+𝑖 := 𝑧 (ℓ )
+
+𝑖 . Consequently, the EMA target token encoder cannot directly observe the target structural query supplied to the predictor. At each resolution, the token encoder operates only on the corresponding valid token inputs, and padded slots are excluded by the appropriate mask. Tokens from different resolutions are not placed in a common sequence during either joint-embedding pretraining or downstream readout. Further implementation details of patch construction, structural descriptors, token encoders, and masking are provided in Appendix A. 
+
+## 4.2 Resolution-Wise Joint-Embedding Prediction 
+
+As illustrated in Figure 2(b), HP-JEPA performs joint-embedding prediction separately at every eligible resolution. For graph 𝐺 and resolution ℓ satisfying 𝑘 ℓ (𝐺 ) ≥ 2, let Iℓ (𝐺 ) := {1, . . . , 𝑘 ℓ (𝐺 )} de-note the valid region-index set. One context index 𝑐 ℓ (𝐺 ) is sampled uniformly from Iℓ (𝐺 ), and a nonempty target-index set Tℓ (𝐺 ) ⊆ Iℓ (𝐺 ) \ { 𝑐 ℓ (𝐺 )} is sampled without replacement. We denote the number of selected target tokens by 𝑀 ℓ (𝐺 ) := |T ℓ (𝐺 )| . The target-set size and sampling rule are specified in Appendix A. For read-ability, we subsequently write 𝑐 ℓ = 𝑐 ℓ (𝐺 ) and Tℓ = Tℓ (𝐺 ) when the graph is clear from context. The online token encoder produces the context state 𝑠 (ℓ )
+
+𝑐 ℓ :=
+
+𝑓 𝜃 (𝑥 ctx ,(ℓ )
+
+𝑐 ℓ ) ∈ R𝑑 . For the target branch, define the target-input sequence 𝑋 (ℓ )T := [𝑥 tgt ,(ℓ )
+
+𝑡 ]𝑡 ∈ T ℓ and its encoded sequence 𝑈 (ℓ )T :=
+
+𝑓 ¯𝜃 (sg (𝑋 (ℓ )T )) , where sg (·) denotes stop-gradient. We use 𝑢 (ℓ )
+
+𝑡 ∈ R𝑑 
+
+to denote the output in 𝑈 (ℓ )T associated with target index 𝑡 . Only 
+
+𝑓 ¯𝜃 is maintained as an EMA copy of 𝑓 𝜃 . The target patch-content inputs are detached before entering 𝑓 ¯𝜃 , whereas the target structural queries are supplied only to the online predictor and never enter the EMA target token encoder. For each 𝑡 ∈ Tℓ , the predictor combines the context state with the corresponding target structural query and produces 
+
+5Xu et al. 
+
+b𝑦 (ℓ ) 
+
+> 𝑡
+
+:= 𝑞 𝜓 (𝑠 (ℓ ) 
+
+> 𝑐 ℓ
+
++ 𝑝 (ℓ ) 
+
+> 𝑡
+
+) ∈ R2. Let 1𝑑 ∈ R𝑑 denote the all-ones vector, define 𝑚 (𝑢 ) := 𝑑 −11⊤ 
+
+> 𝑑
+
+𝑢 , and define the coordinate map 
+
+Φ(𝑢 ) := [cosh (𝑚 (𝑢 )) , sinh (𝑚 (𝑢 ))] ⊤. The scalar target statistic is therefore 𝑚 (ℓ ) 
+
+> 𝑡
+
+:= 𝑚 (𝑢 (ℓ ) 
+
+> 𝑡
+
+), and the corresponding target coordinate is 𝑦 (ℓ ) 
+
+> 𝑡, tgt
+
+:= Φ(𝑢 (ℓ ) 
+
+> 𝑡
+
+) ∈ R2. With 𝐽 L := diag (− 1, 1), the target satisfies 
+
+(𝑦 (ℓ )
+
+> 𝑡, tgt
+
+)⊤ 𝐽 L𝑦 (ℓ ) 
+
+> 𝑡, tgt
+
+= −1 and (𝑦 (ℓ )
+
+> 𝑡, tgt
+
+)1 > 0, and therefore lies on the positive branch of the one-dimensional Lorentz hyperboloid. The predictor output is trained to approximate this target in ambient coordinates but is not itself explicitly constrained to lie on the hyperboloid. Let ℓ𝐺,ℓ,𝑡 denote the coordinate-wise SmoothL1 𝛽 penalty between b𝑦 (ℓ ) 
+
+> 𝑡
+
+and sg (𝑦 (ℓ )
+
+> 𝑡, tgt
+
+), averaged over the two output coordinates. The resolution-specific graph loss is Lℓ (𝐺 ) :=
+
+𝑀 ℓ (𝐺 )−1 Í𝑡 ∈ T ℓ (𝐺 ) ℓ𝐺,ℓ,𝑡 . Thus, the objective predicts a two-coordinate function of the feature mean of each EMA target-token state rather than reconstructing its complete 𝑑 -dimensional representation. The value of 𝛽 is reported in Appendix A. For a minibatch B, let Bℓ := {𝐺 ∈ B : 𝑘 ℓ (𝐺 ) ≥ 2} denote the graphs eligible at resolution ℓ. When Bℓ ≠ ∅, define the target-count normalizer 𝑍 ℓ (B) := Í𝐺 ∈ B ℓ 𝑀 ℓ (𝐺 ) and the graph weight 𝑤 𝐺,ℓ := 𝑀 ℓ (𝐺 )/ 𝑍 ℓ (B) . The minibatch objective is then 
+
+Lℓ (B) := Í𝐺 ∈ B ℓ 𝑤 𝐺,ℓ Lℓ (𝐺 ). This reduction averages uniformly over all selected target tokens in the minibatch, so a graph with more selected targets contributes proportionally more to the update. Although the context index is excluded from Tℓ (𝐺 ), context and target patches may share nodes when the patch-construction oper-ator expands core regions into overlapping supports. The held-out prediction unit is therefore the target token rather than a strictly node-disjoint subgraph. HP-JEPA processes the configured resolutions sequentially. For each minibatch, the model visits ℓ = 1, . . . , 𝐿 , applies one optimizer update using Lℓ (B) whenever Bℓ ≠ ∅, and then updates the EMA target token encoder as ¯𝜃 [𝜈 +1] := 𝜇 𝜈 ¯𝜃 [𝜈 ] + ( 1 − 𝜇 𝜈 )𝜃 [𝜈 +1] , where 𝜈 is the global optimizer-step index and 𝜇 𝜈 ∈ [ 0, 1) is the corresponding EMA momentum. Resolution-specific losses are not summed before a common optimizer update, and no cross-resolution, adjacent-resolution, or parent–child consistency term is included in the pre-training objective. The optimizer and EMA schedules are specified in Appendix A. Appendix B shows that, with respect to Lorentz geodesic dis-tance, Φ is an isometric encoding of the feature-mean projection 
+
+𝑚 (𝑢 ) = 𝑑 −11⊤ 
+
+> 𝑑
+
+𝑢 . It therefore preserves differences in the supervised feature-mean component while remaining invariant to components in 1⊥ 
+
+> 𝑑
+
+:= {𝑣 ∈ R𝑑 : 1⊤ 
+
+> 𝑑
+
+𝑣 = 0}. The same analysis shows that the population optimum of coordinate-wise Smooth L1 is a conditional Huber location of the target coordinates given the context state and target structural query, rather than necessarily their conditional mean. 
+
+## 4.3 Multi-Resolution Readout and Task-Specific Resolution Weighting 
+
+As illustrated in Figure 2(c), after self-supervised pretraining, the context–target sampling procedure and predictor 𝑞 𝜓 are discarded, while 𝑔 𝜂 , 𝑒 𝜉 , and 𝑓 ¯𝜃 are retained and frozen. For each active resolu-tion ℓ, define the full-token sequence 𝑋 full ,(ℓ ) 
+
+> 𝐺
+
+:= [𝑥 full ,(ℓ ) 
+
+> 𝑖
+
+]𝑘 ℓ (𝐺 ) 
+
+> 𝑖 =1
+
+and encode it independently as 𝑅 (ℓ ) 
+
+> 𝐺
+
+:= 𝑓 ¯𝜃 (𝑋 full ,(ℓ ) 
+
+> 𝐺
+
+). We use 𝑟 (ℓ ) 
+
+> 𝐺,𝑖
+
+∈ R𝑑 to denote the output in 𝑅 (ℓ ) 
+
+> 𝐺
+
+associated with region 𝑖 . Padded positions are masked and excluded. Because each resolution is processed separately, no cross-resolution token interaction is introduced by the frozen encoder; different resolutions are combined only after resolution-wise pooling. For an active resolution, the valid token representations are mean-pooled as ℎ(ℓ ) 
+
+> 𝐺
+
+:= 𝑘 ℓ (𝐺 )−1 Í𝑘 ℓ (𝐺 ) 
+
+> 𝑖 =1
+
+𝑟 (ℓ ) 
+
+> 𝐺,𝑖
+
+∈ R𝑑 . For an inactive resolution with 𝑘 ℓ (𝐺 ) = 0, we set ℎ(ℓ ) 
+
+> 𝐺
+
+:= 0𝑑 , where 0𝑑 ∈ R𝑑 is the zero vector. One downstream representation concatenates all con-figured resolution slots as ℎconcat  
+
+> 𝐺
+
+:= ℎ(1) 
+
+> 𝐺
+
+∥ · · · ∥ ℎ(𝐿 ) 
+
+> 𝐺
+
+∈ R𝐿𝑑 , where ∥
+
+denotes vector concatenation. This representation preserves the output associated with every active resolution while maintaining a fixed dimension. Alternatively, HP-JEPA learns a task-specific mixture of the reso-lution representations. Let 𝑏 task ∈ R𝐿 be the resolution-logit vector and define the raw weights by e𝜔 task := softmax (𝑏 task ). The uni-formly smoothed weight for resolution ℓ is 𝜔 task  
+
+> ℓ
+
+:= (1−𝜆 unif )e𝜔 task  
+
+> ℓ
+
++
+
+𝜆 unif /𝐿 , where 𝜆 unif ∈ [0, 1]. These weights satisfy 𝜔 task  
+
+> ℓ
+
+> 0
+
+and Í𝐿 ℓ=1 𝜔 task  
+
+> ℓ
+
+= 1. The resulting task-specific representation is 
+
+ℎtask  
+
+> 𝐺
+
+:= Í𝐿 ℓ=1 𝜔 task  
+
+> ℓ
+
+ℎ(ℓ ) 
+
+> 𝐺
+
+∈ R𝑑 .The weight vector 𝜔 task is shared by all graphs within the same downstream task and experimental split, so the weighting is task-specific rather than graph-specific. The weights are defined over all 𝐿 configured resolution slots and are not renormalized over the graph-specific active subset. Consequently, 𝜆 unif = 1 gives the uniform representation ℎtask  
+
+> 𝐺
+
+:= 𝐿 −1 Í𝐿 ℓ=1 ℎ(ℓ ) 
+
+> 𝐺
+
+, where inactive slots contribute 0𝑑 , whereas 𝜆 unif = 0 gives the unsmoothed learned mixture. The concatenated representation ℎconcat  
+
+> 𝐺
+
+is obtained without downstream labels. For 𝜆 unif < 1, the task-specific representation uses downstream labels to estimate the relative contribution of each resolution after self-supervised pretraining, whereas 𝜆 unif = 1
+
+yields label-independent uniform averaging. The patch modules and EMA target token encoder remain frozen throughout down-stream training. The procedure used to optimize 𝑏 task , select its checkpoint, apply uniform smoothing, and fit the final downstream predictor is specified in Table 5. Conditioned on the frozen resolution-specific representations, Appendix C shows that the closure of the unsmoothed softmax-parameterized weighting family contains every fixed-resolution linear predictor. Under the stated boundedness assumptions, em-pirical risk minimization over this family competes with the best fixed resolution selected in hindsight, with an additional estimation term of order 𝑂 (√︁ log 𝐿 /𝑁 ) for 𝑁 labeled downstream examples. Uniform smoothing adds an approximation term that is at most linear in 𝜆 unif .
+
+## 5 Experiments 
+
+In this section, we conduct experiments to substantiate our claims and demonstrate the effectiveness of HP-JEPA. Specifically, Sec. 5.1 evaluates downstream classification and regression performance, Sec. 5.2 presents a representation case study on PROTEINS, and Sec. 5.3 analyzes graph-size and resolution-bank sensitivity. 
+
+> 6HP-JEPA: Hierarchical Partitioning for Multi-Resolution Graph Joint-Embedding Predictive Learning
+
+Table 2: Results on graph classification and regression benchmarks. For reference only, we include the results of F-GIN, a pioneering end-to-end supervised GNN. SSL methods are grouped by pretraining paradigm in the following order: contrastive, generative, self-predictive, and JEPA. Baseline results are taken directly from prior work [ 6 , 14 , 16 , 17 ] and "-" indicates that the corresponding results are not reported. The best SSL result is underlined , and the second best is :::: 
+
+wavy :::::::::: 
+
+underlined . For a more direct comparison, HP-JEPA results that outperform the Graph-JEPA baseline are highlighted with a red cell background . 
+
+Model PROTEINS ↑ MUTAG ↑ DD ↑ REDDIT-B ↑ REDDIT-M5 ↑ IMDB-B ↑ IMDB-M ↑ ZINC-12K ↓
+
+F-GIN (Supervised) 72 .39 ± 2.76 90 .41 ± 4.61 74 .87 ± 3.56 86 .79 ± 2.04 53 .28 ± 3.17 71 .83 ± 1.93 48 .46 ± 2.31 0.254 ± 0.005 
+
+InfoGraph 72 .57 ± 0.65 87 .71 ± 1.77 75 .23 ± 0.39 78 .79 ± 2.14 51 .11 ± 0.55 71 .11 ± 0.88 48 .66 ± 0.67 0.890 ± 0.017 
+
+GraphCL 72 .86 ± 1.01 88 .29 ± 1.31 74 .70 ± 0.70 82 .63 ± 0.99 53 .05 ± 0.40 70 .80 ± 0.77 48 .49 ± 0.63 0.627 ± 0.013 
+
+MVGRL – – – 84 .5 ± 0.6 – 74 .2 ± 0.7 51 .2 ± 0.5 –AD-GCL-FIX 73 .59 ± 0.65 89 .25 ± 1.45 74 .49 ± 0.52 85 .52 ± 0.79 53 .00 ± 0.82 71 .57 ± 1.01 49 .04 ± 0.53 0.578 ± 0.012 
+
+AD-GCL-OPT 73 .81 ± 0.46 89 .70 ± 1.03 75 .10 ± 0.39 85 .52 ± 0.79 54 .93 ± 0.43 72 .33 ± 0.56 49 .89 ± 0.66 0.544 ± 0.004 
+
+GraphMAE 75 .30 ± 0.39 88 .19 ± 1.26 74 .27 ± 1.07 88 .01 ± 0.19 46 .06 ± 3.44 :::::::: 
+
+75 .52 ± 0.66 :::::::: 
+
+51 .63 ± 0.52 0.935 ± 0.034 
+
+S2GAE :::::::: 
+
+76 .37 ± 0.43 88 .26 ± 0.76 – 87 .83 ± 0.27 – 75 .76 ± 0.62 51 .79 ± 0.36 –BGRL 70 .99 ± 3.86 74 .99 ± 8.83 71 .52 ± 2.97 50 ± 0 20 ± 0.1 0.5 ± 0 0.33 ± 0 1.2 ± 0.011 
+
+LaGraph 75 .2 ± 0.4 90 .2 ± 1.1 78 .1 ± 0.4 90 .4 ± 0.8 56 .4 ± 0.4 73 .7 ± 0.9 – –Graph-JEPA 75 .67 ± 3.78 :::::::: 
+
+91 .25 ± 5.75 :::::::: 
+
+78 .64 ± 2.35 :::::::: 
+
+91 .99 ± 1.59 ::::::: 
+
+56 .73 ± 1.96 73 .68 ± 3.24 50 .69 ± 2.91 0.434 ± 0.014 
+
+HP-JEPA 76 .97 ± 0.50 91 .70 ± 5.31 79 .20 ± 0.38 92 .19 ± 1.56 57 .58 ± 1.63 74 .08 ± 0.40 50 .51 ± 1.81 :::::::: 
+
+0.472 ± 0.010 
+
+## 5.1 Downstream Task Evaluation 
+
+5.1.1 Setup. Following established graph self-supervised learn-ing evaluation protocols [ 14 , 16 , 17 ], we evaluate HP-JEPA on seven graph-classification benchmarks from TUDataset [ 11 ]: PRO-TEINS, MUTAG, DD, REDDIT-BINARY, REDDIT-MULTI-5K, IMDB-BINARY, and IMDB-MULTI. We additionally consider the ZINC-12K molecular graph-regression benchmark following Graph-JEPA [ 14 ]. Additional dataset statistics, preprocessing details, and dataset-specific configurations are provided in Appendix A. We compare HP-JEPA with the graph SSL baselines Info-Graph [ 15 ], GraphCL [ 24 ], MVGRL [ 6 ], AD-GCL-FIX/OPT [ 16 ], GraphMAE [ 7 ], S2GAE [ 17 ], BGRL [ 18 ], LaGraph [ 22 ], and Graph-JEPA [ 14 ]. For graph classification, we perform stratified 10-fold cross-validation under five random seeds; accuracy is first averaged across the ten folds for each seed, after which the final mean and standard deviation are computed across the five seed-level results. For ZINC-12K, we use the standard 10,000/1,000/1,000 train/validation/test split and report the test mean absolute error (MAE) averaged over ten random seeds. To construct the graph-level representation, all valid tokens at each resolution are passed through the trained EMA target encoder and aggregated via mean pooling, yielding 𝐿 resolution-specific feature vectors {ℎ(ℓ ) 
+
+> 𝐺
+
+}𝐿 ℓ=1, where ℎ(ℓ ) 
+
+> 𝐺
+
+∈ R𝑑 . As a key innovation of HP-JEPA, these 𝐿 feature vectors represent information from differ-ent resolutions by construction. These representations are subse-quently fused through a learnable resolution-logit vector 𝑏 task ∈ R𝐿 ,whose softmax-normalized entries 𝜔 task  
+
+> ℓ
+
+learn the relative impor-tance of each resolution for the downstream task. The resulting weighted representation ℎtask  
+
+> 𝐺
+
+= Í𝐿 ℓ=1 𝜔 task  
+
+> ℓ
+
+ℎ(ℓ ) 
+
+> 𝐺
+
+is evaluated using a linear model: 𝐿 2-regularized logistic regression for the classification tasks and ridge regression for the ZINC dataset. 
+
+5.1.2 Results and Discussion. The results are presented in Table 2. 
+
+HP-JEPA outperforms the Graph-JEPA baseline across 6 out of 8 tasks, highlighting the importance of hierarchical parti-tioning in JEPA-style self-supervised learning for capturing multi-resolution graph structures. In addition, HP-JEPA is the best-performing model overall, achieving the best performance on 5 out of 8 tasks and the second best on 1 task, while Graph-JEPA achieves the second-best performance on 4 out of 8 tasks and the best performance on 1 task. Both Graph-JEPA and HP-JEPA un-derperform generative methods (GraphMAE and S2GAE) on the two IMDB datasets. This is potentially because the IMDB datasets are relatively small (e.g. only 13 nodes on average for IMDB-M), with node features consisting only of one-hot degree encodings rather than rich semantic attributes. Under such settings, raw signal reconstruction objectives may provide a stronger training signal by directly modeling the graph structure, whereas predictive ob-jectives such as JEPA have less informative contextual signals to exploit. Nevertheless, HP-JEPA still consistently outperforms the Graph-JEPA baseline on these datasets, demonstrating the benefit of hierarchical partitioning even in this challenging setting. Overall, these results indicate that JEPA-style training is effective at learning useful graph representations and that our proposed hierarchical partitioning further enhances representation quality by capturing graph structures across multiple resolu-tions. 
+
+## 5.2 Case Study: Learning Multi-Resolution Graph Features 
+
+In this section, we examine whether HP-JEPA embeddings retain graph-size-related structural variation and how this variation aligns with downstream class labels. For the graph classification task on the PROTEINS dataset, both local structural patterns (e.g., func-tional motifs) and higher-level protein organization (e.g. protein 
+
+> 7Xu et al.
+
+Figure 3: 3D t-SNE visualization of graph-level embeddings on the PROTEINS dataset. Each point represents one pro-tein graph. Columns compare Graph-JEPA and HP-JEPA; the top row colors embeddings by graph-size quartile (Q1–Q4), while the bottom row colors the same embeddings by protein class (C0/C1). Compared with fixed-resolution Graph-JEPA, HP-JEPA produces a more structured representation space, distinctly separating proteins. This alignment indicates that HP-JEPA captures graph-size-dependent structural and func-tional patterns without using class labels during pretraining. 
+
+size/graph size and overall topologies) contribute to the predic-tion, making it a representative benchmark for evaluating multi-resolution representations. Specifically, the downstream task on the PROTEINS dataset is binary graph classification: determining whether a protein acts as an enzyme (a biochemical catalyst) or a non-enzyme (e.g., struc-tural scaffold, signaling hormone, or toxin). Biologically, enzymatic catalysis necessitates deep 3D active site clefts, buried hydropho-bic cores, and domain-level conformational flexibility, structural prerequisites that inherently require larger molecular scaffolds. In contrast, small micro-proteins lack the volumetric capacity to bury a hydrophobic core, operating instead through solvent-exposed, surface-dominated binding interfaces and localized structural con-straints. Consequently, small proteins occupy a fundamentally dis-tinct thermodynamic and functional regime. To evaluate whether learned embeddings capture this biophysi-cal transition, we partition protein graphs into node-count quar-tiles ( 𝑄 1 − 𝑄 4). As shown in Fig. 3, standard Graph-JEPA exhibits scale-blindness, collapsing these distinct structural regimes into a single overlapping manifold. In contrast, HP-JEPA achieves topo-logical disentanglement, isolating 𝑄 1 micro-proteins into a distinct, structured subspace. Critically, Fig. 3 confirms that these 𝑄 1 em-beddings correspond overwhelmingly to non-enzymatic proteins. This demonstrates that HP-JEPA naturally aligns its self-supervised representations with multi-resolution biological function without relying on class labels during pretraining. 
+
+## 5.3 Sensitivity Analysis 
+
+Figure 4 evaluates the sensitivity of HP-JEPA to graph size and resolution-bank configuration on IMDB-BINARY, IMDB-MULTI, and PROTEINS. Across the graph-size analysis, HP-JEPA achieves 
+
+Figure 4: Sensitivity analysis on IMDB-BINARY, IMDB-MULTI, and PROTEINS. Panels (a), (c), and (e) report Graph-JEPA and HP-JEPA accuracy across node-count quartiles 𝑄 1–
+
+𝑄 4. Panels (b), (d), and (f) compare HP-JEPA using resolution banks {2, 4, 8}, {2, 4, 8, 16 }, and the full bank, with Graph-JEPA shown as a dashed reference. Results are the mean and stan-dard deviation over ten cross-validation folds from one pre-trained seed. 
+
+higher mean accuracy than Graph-JEPA in most of quartiles. Sim-ilarly, HP-JEPA outperforms Graph-JEPA under all nine tested resolution-bank configurations. Although performance varies mod-erately across resolution banks, the improvement over the fixed-resolution Graph-JEPA remains consistent. By representing each graph at multiple structural granularities, HP-JEPA is less depen-dent on a single partition resolution that may be overly coarse for large graphs or overly fine for small graphs. Moreover, combin-ing resolution-specific embeddings allows complementary local, regional, and global information to compensate when an individual resolution is suboptimal. In contrast, Graph-JEPA relies on one fixed partition resolution and is therefore more susceptible to mismatches between its predefined granularity and the graph-size distribution. Overall, within these datasets and the evaluated configurations, HP-JEPA retains an advantage over Graph-JEPA in most graph-size quartiles and under all tested resolution banks. 
+
+## 6 Conclusion 
+
+JEPAs provide a latent predictive approach to graph self-supervised learning without explicit negative pairs or raw-input reconstruction. However, existing graph JEPAs rely on a single partition resolution, 
+
+> 8
+
+HP-JEPA: Hierarchical Partitioning for Multi-Resolution Graph Joint-Embedding Predictive Learning 
+
+restricting the predictive objective to one structural granularity. We proposed HP-JEPA, which constructs an ordered bank of coarse-to-fine partition resolutions, performs context–target prediction independently within each resolution, and integrates the result-ing resolution-specific representations during downstream read-out. HP-JEPA improves over Graph-JEPA on six of the eight evalu-ated tasks, including six of seven graph-classification benchmarks. Size-stratified and resolution-bank analyses further show that HP-JEPA retains its advantage in most evaluated graph-size quartiles and across the tested partition banks. These results support multi-resolution partitioning as a flexible extension of fixed-resolution graph joint-embedding prediction. 
+
+## References 
+
+[1] Mahmoud Assran, Quentin Duval, Ishan Misra, Piotr Bojanowski, Pascal Vincent, Michael Rabbat, Yann LeCun, and Nicolas Ballas. 2023. Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 15619– 15629. https://openaccess.thecvf.com/content/CVPR2023/html/Assran_Self-Supervised_Learning_From_Images_With_a_Joint-Embedding_Predictive_ Architecture_CVPR_2023_paper.html [2] Adrien Bardes, Quentin Garrido, Jean Ponce, Xinlei Chen, Michael Rabbat, Yann LeCun, Mahmoud Assran, and Nicolas Ballas. 2024. Revisiting Feature Prediction for Learning Visual Representations from Video. arXiv preprint arXiv:2404.08471 
+
+(2024). arXiv:2404.08471 https://arxiv.org/abs/2404.08471 [3] Justin Gilmer, Samuel S. Schoenholz, Patrick F. Riley, Oriol Vinyals, and George E. Dahl. 2017. Neural Message Passing for Quantum Chemistry. In Proceedings of the 34th International Conference on Machine Learning (Proceedings of Machine Learning Research, Vol. 70) . PMLR, 1263–1272. https://proceedings.mlr.press/ v70/gilmer17a.html [4] William L. Hamilton, Rex Ying, and Jure Leskovec. 2017. Inductive Represen-tation Learning on Large Graphs. In Advances in Neural Information Processing Systems , Vol. 30. 1024–1034. https://proceedings.neurips.cc/paper/2017/hash/ 5dd9db5e033da9c6fb5ba83c7a7ebea9-Abstract.html [5] William L. Hamilton, Rex Ying, and Jure Leskovec. 2017. Representation Learning on Graphs: Methods and Applications. IEEE Data Engineering Bulletin 40, 3 (2017), 52–74. arXiv:1709.05584 https://arxiv.org/abs/1709.05584 [6] Kaveh Hassani and Amir Hosein Khasahmadi. 2020. Contrastive Multi-View Representation Learning on Graphs. In Proceedings of the 37th International Con-ference on Machine Learning (Proceedings of Machine Learning Research, Vol. 119) .PMLR, 4116–4126. https://proceedings.mlr.press/v119/hassani20a.html [7] Zhenyu Hou, Xiao Liu, Yukuo Cen, Yuxiao Dong, Hongxia Yang, Chunjie Wang, and Jie Tang. 2022. GraphMAE: Self-Supervised Masked Graph Autoencoders. In Proceedings of the 28th ACM SIGKDD Conference on Knowledge Discovery and Data Mining . Association for Computing Machinery, 594–604. doi:10.1145/ 3534678.3539321 [8] Yongqi Huang, Jitao Zhao, Dongxiao He, Di Jin, Yuxiao Huang, and Zhen Wang. 2025. Does GCL Need a Large Number of Negative Samples? Enhancing Graph Contrastive Learning with Effective and Efficient Negative Sampling. In Pro-ceedings of the AAAI Conference on Artificial Intelligence , Vol. 39. 17511–17518. doi:10.1609/aaai.v39i16.33925 [9] Thomas N. Kipf and Max Welling. 2017. Semi-Supervised Classification with Graph Convolutional Networks. In International Conference on Learning Repre-sentations . arXiv:1609.02907 https://openreview.net/forum?id=SJU4ayYgl [10] Hongyang Lei, Xiaolong Cheng, Qi Qin, Dan Wang, Huazhen Huang, Qingqing Gu, Yetao Wu, and Luo Ji. 2025. M3-JEPA: Multimodal Alignment via Multi-gate MoE Based on the Joint-Embedding Predictive Architecture. In Proceedings of the 42nd International Conference on Machine Learning (Proceedings of Machine Learning Research, Vol. 267) . PMLR, 33902–33917. [11] Christopher Morris, Nils M. Kriege, Franka Bause, Kristian Kersting, Petra Mutzel, and Marion Neumann. 2020. TUDataset: A Collection of Benchmark Datasets for Learning with Graphs. Computing Research Repository (2020). arXiv:2007.08663 https://arxiv.org/abs/2007.08663 [12] Bryan Perozzi, Vivek Kulkarni, Haochen Chen, and Steven Skiena. 2017. Don’t walk, skip! online learning of multi-scale network embeddings. In Proceedings of the 2017 IEEE/ACM International Conference on Advances in Social Networks Analysis and Mining 2017 . 258–265. [13] Jiezhong Qiu, Qibin Chen, Yuxiao Dong, Jing Zhang, Hongxia Yang, Ming Ding, Kuansan Wang, and Jie Tang. 2020. GCC: Graph Contrastive Coding for Graph Neural Network Pre-Training. In Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining . 1150–1160. doi:10.1145/3394486.3403168 [14] Geri Skenderi, Hang Li, Jiliang Tang, and Marco Cristani. 2025. Graph-Level Representation Learning with Joint-Embedding Predictive Architectures. Trans-actions on Machine Learning Research (2025). https://openreview.net/forum?id= v47f4DwYZb [15] Fan-Yun Sun, Jordan Hoffmann, Vikas Verma, and Jian Tang. 2020. InfoGraph: Unsupervised and Semi-Supervised Graph-Level Representation Learning via Mutual Information Maximization. In International Conference on Learning Rep-resentations . https://openreview.net/forum?id=r1lfF2NYvH [16] Susheel Suresh, Pan Li, Cong Hao, and Jennifer Neville. 2021. Adversarial Graph Augmentation to Improve Graph Contrastive Learning. In Advances in Neural Information Processing Systems , Vol. 34. Curran Associates, Inc., 15920–15933. https://proceedings.neurips.cc/paper_files/paper/2021/hash/ 854f1fb6f65734d9e49f708d6cd84ad6-Abstract.html [17] Qiaoyu Tan, Ninghao Liu, Xiao Huang, Soo-Hyun Choi, Li Li, Rui Chen, and Xia Hu. 2023. S2GAE: Self-Supervised Graph Autoencoders Are Generalizable Learners with Graph Masking. In Proceedings of the Sixteenth ACM Interna-tional Conference on Web Search and Data Mining . Association for Computing Machinery, 787–795. doi:10.1145/3539597.3570404 [18] Shantanu Thakoor, Corentin Tallec, Mohammad Gheshlaghi Azar, Mehdi Az-abou, Eva L. Dyer, Rémi Munos, Petar Veličković, and Michal Valko. 2022. Large-Scale Representation Learning on Graphs via Bootstrapping. In Inter-national Conference on Learning Representations . https://openreview.net/forum? id=0UXT6PpRpW [19] Petar Veličković, William Fedus, William L. Hamilton, Pietro Liò, Yoshua Bengio, and R. Devon Hjelm. 2019. Deep Graph Infomax. In International Conference on Learning Representations . arXiv:1809.10341 https://iclr.cc/virtual/2019/poster/782 [20] Qianlong Wen, Mingxuan Ju, Zhongyu Ouyang, Chuxu Zhang, and Yanfang Ye. 2024. From coarse to fine: enable comprehensive graph self-supervised learning with multi-granular semantic ensemble. In Forty-first International Conference on Machine Learning .[21] Zonghan Wu, Shirui Pan, Fengwen Chen, Guodong Long, Chengqi Zhang, and Philip S. Yu. 2021. A Comprehensive Survey on Graph Neural Networks. IEEE Transactions on Neural Networks and Learning Systems 32, 1 (2021), 4–24. doi:10. 1109/TNNLS.2020.2978386 [22] Yaochen Xie, Zhao Xu, and Shuiwang Ji. 2022. Self-Supervised Representation Learning via Latent Graph Prediction. In Proceedings of the 39th International Con-ference on Machine Learning (Proceedings of Machine Learning Research, Vol. 162) .PMLR, 24460–24477. https://proceedings.mlr.press/v162/xie22e.html [23] Keyulu Xu, Weihua Hu, Jure Leskovec, and Stefanie Jegelka. 2019. How Powerful Are Graph Neural Networks?. In International Conference on Learning Represen-tations . arXiv:1810.00826 https://openreview.net/forum?id=ryGs6iA5Km [24] Yuning You, Tianlong Chen, Yongduo Sui, Ting Chen, Zhangyang Wang, and Yang Shen. 2020. Graph Contrastive Learning with Augmentations. In Advances in Neural Information Processing Systems , Vol. 33. Curran As-sociates, Inc., 5812–5823. https://proceedings.neurips.cc/paper/2020/hash/ 3fe230348e9a12c13120749e3f9fa4cd-Abstract.html [25] Hengrui Zhang, Qitian Wu, Junchi Yan, David P. Wipf, and Philip S. Yu. 2021. From Canonical Correlation Analysis to Self-Supervised Graph Neural Networks. In Advances in Neural Information Processing Systems , Vol. 34. 76–89. https://proceedings.neurips.cc/paper/2021/hash/ 00ac8ed3b4327bdd4ebbebcb2ba10a00-Abstract.html [26] Songwei Zhao, Yuan Jiang, Zijing Zhang, Yang Yu, and Hechang Chen. 2025. Grain: Multi-granular and implicit information aggregation graph neural net-work for heterophilous graphs. In Proceedings of the AAAI Conference on Artificial Intelligence , Vol. 39. 13383–13391. 9Xu et al. 
+
+## A Dataset and Training Details 
+
+We evaluate HP-JEPA on seven graph-classification benchmarks from TUDataset [ 11 ], including PROTEINS, MUTAG, DD, REDDIT-BINARY, REDDIT-MULTI-5K, IMDB-BINARY, and IMDB-MULTI, together with the ZINC-12K molecular graph-regression bench-mark. These benchmarks cover biological, molecular, and social-network domains and exhibit substantial variation in graph size, structural complexity, and label cardinality. Their principal sta-tistics are summarized in Table 3, following the dataset statistics reported by Graph-JEPA [14]. For PROTEINS, MUTAG, and DD, we use the node attributes or discrete node labels provided by the corresponding datasets. MUTAG additionally contains categorical edge labels representing chemical bond types. For ZINC-12K, categorical atom types and bond types are used as node and edge inputs, respectively. Graph-level labels are used only for downstream evaluation and are never provided to HP-JEPA during self-supervised pretraining. For each graph-classification dataset, we perform stratified 10-fold cross-validation under five random seeds. Under each seed, the dataset is divided into 10 approximately class-balanced folds. For each fold, one fold is reserved exclusively for testing, while the remaining folds are used for self-supervised pretraining and downstream classifier fitting. HP-JEPA is pretrained independently for every fold without access to any graph in the corresponding test fold. After pretraining, graph representations are extracted using the frozen EMA target token encoder, and a linear classifier is fitted using only the labeled training representations. The classification accuracy is first averaged across the 10 folds for each seed, after which the mean and standard deviation are calculated across the five seed-level results. For ZINC-12K, we use the standard fixed split containing 10,000 training graphs, 1,000 validation graphs, and 1,000 test graphs. The training set is used for self-supervised pretraining and downstream regressor fitting, the validation set is used for model and regular-ization selection, and the test set is reserved for final evaluation. We report the test mean absolute error (MAE) averaged over 10 random seeds, where a lower value indicates better performance. 
+
+## A.1 Pretraining Configuration 
+
+Table 4 reports the selected dataset-specific pretraining configu-rations. The configured region capacities follow the notation 𝐾 ℓ
+
+introduced in Section 4.1, while 𝑀 ℓ denotes the number of target regions sampled at the corresponding resolution. All configura-tions use a latent dimension of 512 and four Transformer blocks. The remaining architectural and optimization settings are selected separately for each benchmark. Following self-supervised pretraining, graph representations are extracted using the frozen patch-token encoder, structural-query encoder, and EMA target token encoder. At each active resolu-tion ℓ, valid token representations are mean-pooled to obtain ℎ(ℓ ) 
+
+> 𝐺
+
+.The resolution-specific representations are then combined using the dataset-specific readout reported in Table 5. For a uniformly smoothed task-specific readout, the coefficient 𝜆 unif follows the def-inition in Section 4.3: 𝜆 unif = 1 gives uniform averaging, whereas 
+
+𝜆 unif = 0.75 gives a mixture containing 0.75 uniform weight and 
+
+0.25 learned weight. A linear classifier or regressor is fitted using only the labeled training representations, and its regularization coefficient is selected without using the corresponding test data. 
+
+Reproducibility and leakage prevention. Dataset labels are used only when constructing stratified classification splits, estimating task-specific resolution weights, and fitting the downstream linear probe. They are not provided to HP-JEPA during self-supervised pretraining. For every classification fold, the held-out fold is excluded from self-supervised optimization, early stopping, resolution-weight estimation, and downstream probe fitting. For ZINC-12K, the test set is likewise excluded from pretraining, early stopping, readout selection, and probe-regularization selection. 
+
+## B Geometry and Population Characterization of the Latent Target 
+
+This section characterizes the geometric information retained by the latent-coordinate target and the population quantity recovered by the coordinate-wise Smooth L1 objective. The results concern the target construction itself and do not imply that the unconstrained predictor output necessarily lies on the Lorentz hyperboloid. For 𝑢 ∈ R𝑑 , define 
+
+𝑚 (𝑢 ) := 1
+
+𝑑 1⊤ 
+
+> 𝑑
+
+𝑢, Φ(𝑢 ) :=
+
+cosh (𝑚 (𝑢 )) 
+
+sinh (𝑚 (𝑢 )) 
+
+
+
+, (1) where 1𝑑 ∈ R𝑑 denotes the all-ones vector. Let 
+
+𝐽 L :=
+
+−1 00 1
+
+
+
+(2) and define the positive branch of the one-dimensional Lorentz hyperboloid as 
+
+H1 
+
+> +
+
+:= 𝑦 ∈ R2 : 𝑦 ⊤ 𝐽 L𝑦 = −1, 𝑦 1 > 0 . (3) For 𝑦, 𝑦 ′ ∈ H1
+
+> +
+
+, their Lorentz geodesic distance is 
+
+𝑑 H (𝑦, 𝑦 ′) := arcosh  −𝑦 ⊤ 𝐽 L𝑦 ′  . (4) 
+
+Proposition 1 (Geometry and information content of the latent-coordinate map). For every 𝑢, 𝑣 ∈ R𝑑 , the coordinate map in Equation (1) satisfies 
+
+Φ(𝑢 ) ∈ H1
+
+> +
+
+. (5) 
+
+Moreover, 
+
+𝑑 H (Φ(𝑢 ), Φ(𝑣 )) = |𝑚 (𝑢 ) − 𝑚 (𝑣 )| = 1
+
+𝑑 1⊤ 
+
+> 𝑑
+
+(𝑢 − 𝑣 ) . (6) 
+
+Consequently, 
+
+𝑑 H (Φ(𝑢 ), Φ(𝑣 )) ≤ 1
+
+√𝑑 ∥𝑢 − 𝑣 ∥2. (7) 
+
+Finally, 
+
+Φ(𝑢 ) = Φ(𝑣 ) ⇐⇒ 𝑢 − 𝑣 ∈ 1⊥ 
+
+> 𝑑
+
+, (8) 
+
+where 
+
+1⊥ 
+
+> 𝑑
+
+:= 𝑎 ∈ R𝑑 : 1⊤ 
+
+> 𝑑
+
+𝑎 = 0 . (9) 
+
+Therefore, Φ preserves exactly the feature-mean projection of the target-token state and is invariant to all latent components orthogonal to 1𝑑 .
+
+> 10 HP-JEPA: Hierarchical Partitioning for Multi-Resolution Graph Joint-Embedding Predictive Learning
+
+Table 3: Descriptive statistics of the datasets used in the main experiments. The statistics are adapted from Graph-JEPA [ 14 ]. The symbol “–” indicates that ZINC-12K is a graph-regression benchmark and therefore has no discrete class labels. 
+
+Dataset Num. Graphs Num. Classes Avg. Nodes Avg. Edges PROTEINS 1,113 2 39.06 72.82 MUTAG 188 2 17.93 19.79 DD 1,178 2 284.32 715.66 REDDIT-BINARY 2,000 2 429.63 497.75 REDDIT-MULTI-5K 4,999 5 508.52 594.87 IMDB-BINARY 1,000 2 19.77 96.53 IMDB-MULTI 1,500 3 13.00 65.94 ZINC-12K 12,000 – 23.20 49.80 
+
+Table 4: Dataset-specific HP-JEPA pretraining configurations. 𝐾 ℓ lists the configured region capacities across resolutions, 𝑀 ℓ
+
+lists the corresponding numbers of selected target regions, 𝑑 RW is the random-walk positional-encoding dimension, Drop is module dropout, Tok. is token dropout, and Clip is the maximum gradient norm. All configurations use latent dimension 512 and four Transformer blocks. 
+
+Dataset 𝐾 ℓ 𝑀 ℓ GNN Layers Heads 𝑑 RW LR WD BS Epochs Scheduler Drop. Tok. Clip PROTEINS 2, 4, 8, 16 1, 2, 3, 4 2 8 15 2.5×10 −4 1×10 −5 128 20 cosine 0 0.10 2.0 MUTAG 2, 4, 8, 16 , 32 1, 2, 3, 4, 4 2 4 15 1.5×10 −4 0 64 30 cosine 0 0.05 1.0 DD 2, 4, 8, 16 , 32 1, 2, 3, 4, 4 3 8 30 2×10 −4 0 32 30 cosine 0 0.05 1.0 REDDIT-BINARY 2, 4, 8, 16 , 32 , 64 , 128 1, 2, 3, 4, 4, 4, 4 2 8 40 2×10 −5 0 32 40 cosine 0 0 0.5 REDDIT-MULTI-5K 2, 4, 8, 16 , 32 , 64 , 128 1, 2, 3, 4, 4, 4, 4 2 8 40 2×10 −5 0 32 40 cosine 0 0 0.5 IMDB-BINARY 2, 4, 8 1, 2, 3 2 8 15 1×10 −5 1×10 −5 16 12 constant 0.05 0 2.0 IMDB-MULTI 2, 4, 8, 16 , 32 1, 2, 3, 4, 4 2 8 15 1×10 −5 1×10 −5 16 12 cosine 0 0 1.0 ZINC-12K 2, 4, 8, 16 , 32 1, 2, 3, 4, 4 2 8 20 2×10 −5 0 32 40 cosine 0 0 0.5 
+
+Table 5: Dataset-specific downstream readout and linear-probe settings. The readout column reports the mixture of uniform and learned resolution weights, and 𝛼 probe denotes the recorded regularization parameter of the downstream linear probe.                                                                  
+
+> Dataset Resolution Readout 𝛼 probe Evaluation PROTEINS 0.75 uniform +0.25 learned 10 −25×10 -fold accuracy MUTAG Uniform mean 10 −15×10 -fold accuracy DD 0.75 uniform +0.25 learned 10 −25×10 -fold accuracy REDDIT-BINARY 0.75 uniform +0.25 learned 10 −25×10 -fold accuracy REDDIT-MULTI-5K 0.75 uniform +0.25 learned 10 −25×10 -fold accuracy IMDB-BINARY 0.75 uniform +0.25 learned 10 −25×10 -fold accuracy IMDB-MULTI Uniform mean 10 −35×10 -fold accuracy ZINC-12K 0.75 uniform +0.25 learned 10 −210-seed MAE
+
+Proof. Let 
+
+𝑎 := 𝑚 (𝑢 ), 𝑏 := 𝑚 (𝑣 ). (10) Using the identity cosh 2 (𝑎 ) − sinh 2 (𝑎 ) = 1, we obtain 
+
+Φ(𝑢 )⊤ 𝐽 LΦ(𝑢 ) = − cosh 2 (𝑎 ) + sinh 2 (𝑎 )
+
+= −1. (11) The first coordinate of Φ(𝑢 ) is cosh (𝑎 ) > 0. Hence, Φ(𝑢 ) ∈ H1
+
+> +
+
+.Next, the Lorentz inner product between Φ(𝑢 ) and Φ(𝑣 ) satisfies 
+
+−Φ(𝑢 )⊤ 𝐽 LΦ(𝑣 ) = cosh (𝑎 ) cosh (𝑏 ) − sinh (𝑎 ) sinh (𝑏 )
+
+= cosh (𝑎 − 𝑏 ), (12) where the second equality follows from the hyperbolic difference identity. Therefore, 
+
+𝑑 H (Φ(𝑢 ), Φ(𝑣 )) = arcosh (cosh (𝑎 − 𝑏 )) 
+
+= |𝑎 − 𝑏 |. (13) The last equality follows from arcosh (cosh 𝑟 ) = |𝑟 | for every 𝑟 ∈ R.Substituting the definition of 𝑚 yields 
+
+𝑑 H (Φ(𝑢 ), Φ(𝑣 )) = 1
+
+𝑑 1⊤ 
+
+> 𝑑
+
+𝑢 − 1
+
+𝑑 1⊤ 
+
+> 𝑑
+
+𝑣 
+
+= 1
+
+𝑑 1⊤ 
+
+> 𝑑
+
+(𝑢 − 𝑣 ) . (14) By the Cauchy–Schwarz inequality, 
+
+1
+
+𝑑 1⊤ 
+
+> 𝑑
+
+(𝑢 − 𝑣 ) ≤ 1
+
+𝑑 ∥1𝑑 ∥2 ∥𝑢 − 𝑣 ∥2
+
+= 1
+
+√𝑑 ∥𝑢 − 𝑣 ∥2, (15) because ∥1𝑑 ∥2 = √𝑑 . This proves Equation (7). It remains to characterize when two target-token states have the same coordinate representation. If Φ(𝑢 ) = Φ(𝑣 ), then their Lorentz distance is zero. Equation (6) therefore gives 
+
+|𝑚 (𝑢 ) − 𝑚 (𝑣 )| = 0, (16) 
+
+> 11 Xu et al.
+
+which is equivalent to 
+
+1⊤ 
+
+> 𝑑
+
+(𝑢 − 𝑣 ) = 0. (17) Hence, 𝑢 − 𝑣 ∈ 1⊥ 
+
+> 𝑑
+
+. Conversely, if 𝑢 − 𝑣 ∈ 1⊥ 
+
+> 𝑑
+
+, then 𝑚 (𝑢 ) = 𝑚 (𝑣 ),and the definition of Φ directly gives Φ(𝑢 ) = Φ(𝑣 ). This proves Equation (8). □
+
+We next characterize the population target of coordinate-wise Smooth L1 prediction. For a scalar residual 𝑟 ∈ R and threshold 
+
+𝛽 > 0, define 
+
+𝜑 𝛽 (𝑟 ) :=
+
+
+
+𝑟 2
+
+2𝛽 , |𝑟 | ≤ 𝛽, 
+
+|𝑟 | − 𝛽 
+
+2 , |𝑟 | > 𝛽. 
+
+(18) Let 
+
+X := 𝑠 (ℓ ) 
+
+> 𝑐 ℓ
+
++ 𝑝 (ℓ ) 
+
+> 𝑡
+
+(19) denote the predictor input and let 
+
+Y := Φ
+
+
+
+𝑢 (ℓ )
+
+> 𝑡
+
+
+
+∈ R2 (20) denote the corresponding target coordinate. For coordinate 𝑗 ∈{1, 2} and a fixed input value 𝑥 , define the conditional risk 
+
+𝑄 𝑗,𝑥 (𝑎 ) := E 𝜑 𝛽 
+
+ 𝑎 − Y𝑗 
+
+ X = 𝑥  . (21) 
+
+Proposition 2 (Population target of coordinate-wise Smooth L1). For PX-almost every 𝑥 , suppose that 
+
+E |Y𝑗 | X = 𝑥  < ∞. (22) 
+
+Then 𝑄 𝑗,𝑥 is convex, coercive, and admits at least one minimizer. A scalar 𝑎 ★ 
+
+> 𝑗,𝑥
+
+minimizes 𝑄 𝑗,𝑥 if and only if 
+
+E
+
+h
+
+clip 
+
+
+
+𝑎 ★ 
+
+> 𝑗,𝑥
+
+− Y𝑗 , −𝛽, 𝛽 
+
+
+
+X = 𝑥 
+
+i
+
+= 0. (23) 
+
+Thus, the population-optimal coordinate-wise Smooth L1 predictor re-turns a conditional Huber location functional of the target coordinate. In particular, let 
+
+𝜇 𝑗 (𝑥 ) := E Y𝑗 X = 𝑥  . (24) 
+
+If 
+
+Pr  |Y𝑗 − 𝜇 𝑗 (𝑥 )| ≤ 𝛽 X = 𝑥  = 1, (25) 
+
+then 𝜇 𝑗 (𝑥 ) is a minimizer of 𝑄 𝑗,𝑥 .
+
+Proof. The scalar Smooth L1 function is convex and continu-ously differentiable. Its derivative is 
+
+𝜑 ′ 
+
+> 𝛽
+
+(𝑟 ) = 1
+
+𝛽 clip (𝑟, −𝛽, 𝛽 ) . (26) In particular, 
+
+|𝜑 ′ 
+
+> 𝛽
+
+(𝑟 )| ≤ 1 (27) for every 𝑟 ∈ R. The bounded derivative permits differentiation under the conditional expectation, yielding 
+
+𝑄 ′ 
+
+> 𝑗,𝑥
+
+(𝑎 ) = E
+
+h
+
+𝜑 ′
+
+> 𝛽
+
+ 𝑎 − Y𝑗 
+
+ X = 𝑥 
+
+i
+
+= 1
+
+𝛽 E clip  𝑎 − Y𝑗 , −𝛽, 𝛽  X = 𝑥  . (28) Because 𝜑 𝛽 is convex, its conditional expectation 𝑄 𝑗,𝑥 is also convex. Moreover, for every 𝑟 ∈ R,
+
+𝜑 𝛽 (𝑟 ) ≥ | 𝑟 | − 𝛽 
+
+2 . (29) Therefore, 
+
+𝑄 𝑗,𝑥 (𝑎 ) ≥ E |𝑎 − Y𝑗 | X = 𝑥  − 𝛽 
+
+2
+
+≥ | 𝑎 | − E |Y𝑗 | X = 𝑥  − 𝛽 
+
+2 . (30) Under Equation (22) , the right-hand side approaches infinity as 
+
+|𝑎 | → ∞ . Hence, 𝑄 𝑗,𝑥 is coercive and admits at least one minimizer. Since 𝑄 𝑗,𝑥 is convex and differentiable, a scalar 𝑎 ★ 
+
+> 𝑗,𝑥
+
+is a minimizer if and only if 
+
+𝑄 ′ 
+
+> 𝑗,𝑥
+
+(𝑎 ★ 
+
+> 𝑗,𝑥
+
+) = 0. (31) Substituting Equation (28) proves Equation (23). Now suppose that Equation (25) holds. At 𝑎 = 𝜇 𝑗 (𝑥 ), clipping is inactive almost surely conditional on X = 𝑥 , and therefore 
+
+clip  𝜇 𝑗 (𝑥 ) − Y𝑗 , −𝛽, 𝛽  = 𝜇 𝑗 (𝑥 ) − Y𝑗 . (32) It follows that 
+
+E clip  𝜇 𝑗 (𝑥 ) − Y𝑗 , −𝛽, 𝛽  X = 𝑥  = 𝜇 𝑗 (𝑥 ) − E Y𝑗 X = 𝑥 
+
+= 0. (33) Equation (23) then shows that 𝜇 𝑗 (𝑥 ) is a minimizer. Since the vector-valued Smooth L1 loss used by HP-JEPA averages the two scalar coordinate losses, its population minimization separates coordinate-wise. □
+
+## C Generalization of Task-Specific Resolution Weighting 
+
+This section analyzes the task-specific resolution-weighting family after self-supervised pretraining. We condition on the pretrained encoder and treat the resolution-specific representations as fixed feature maps. The analysis concerns the downstream hypothesis class and does not establish convergence of the nonlinear pretrain-ing procedure or of a particular nonconvex optimization algorithm. Let 
+
+𝑆 = {( 𝐺 𝑖 , 𝑌 𝑖 )} 𝑁 𝑖 =1 (34) be 𝑁 independent labeled downstream examples drawn from a distribution P. For each resolution ℓ ∈ { 1, . . . , 𝐿 }, define the fixed-resolution linear predictor class 
+
+Fℓ :=
+
+n
+
+𝑓 ℓ,𝑤 (𝐺 ) =
+
+D
+
+𝑤, ℎ (ℓ )
+
+> 𝐺
+
+E
+
+: ∥𝑤 ∥2 ≤ 𝐵 
+
+o
+
+. (35) Let 
+
+Δ𝐿 :=
+
+(
+
+𝛼 ∈ R𝐿  
+
+> +
+
+:
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+𝛼 ℓ = 1
+
+)
+
+(36) denote the closed probability simplex. The resolution-weighted class is 
+
+Fmix :=
+
+(
+
+𝑓 𝑤,𝛼 (𝐺 ) =
+
+*
+
+𝑤, 
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+𝛼 ℓℎ(ℓ )
+
+> 𝐺
+
++
+
+: ∥𝑤 ∥2 ≤ 𝐵, 𝛼 ∈ Δ𝐿 
+
+)
+
+. (37) 
+
+Assumption 1 (Bounded downstream hypothesis class). 
+
+There exist constants 𝑅 ℎ, 𝐵, 𝜅, 𝑀 > 0 such that the following conditions hold: 
+
+∥ℎ(ℓ ) 
+
+> 𝐺
+
+∥2 ≤ 𝑅 ℎ for every 𝐺 and ℓ, (38) 
+
+∥𝑤 ∥2 ≤ 𝐵, (39) 
+
+0 ≤ ℓds (b𝑦, 𝑦 ) ≤ 𝑀, (40) 
+
+|ℓds (𝑎, 𝑦 ) − ℓds (𝑏, 𝑦 )| ≤ 𝜅 |𝑎 − 𝑏 | for every 𝑎, 𝑏, 𝑦. (41) 
+
+> 12 HP-JEPA: Hierarchical Partitioning for Multi-Resolution Graph Joint-Embedding Predictive Learning
+
+For a predictor 𝑓 , define its population and empirical risks by 
+
+R ( 𝑓 ) := E(𝐺,𝑌 )∼ P [ℓds (𝑓 (𝐺 ), 𝑌 )] (42) and 
+
+bR𝑆 (𝑓 ) := 1
+
+𝑁 
+
+> 𝑁
+
+∑︁ 
+
+> 𝑖 =1
+
+ℓds (𝑓 (𝐺 𝑖 ), 𝑌 𝑖 ) . (43) Let b𝑓 mix ∈ F mix be an 𝜀 opt -approximate empirical-risk minimizer satisfying 
+
+bR𝑆 
+
+ b𝑓 mix 
+
+
+
+≤ inf  
+
+> 𝑓 ∈ F mix
+
+bR𝑆 (𝑓 ) + 𝜀 opt . (44) 
+
+Theorem 1 (Resolution-adaptive oracle bound). Under As-sumption 1, there exist universal constants 𝐶 1, 𝐶 2 > 0 such that, for every 𝛿 ∈ ( 0, 1), with probability at least 1 − 𝛿 ,
+
+R
+
+ b𝑓 mix 
+
+
+
+≤ min   
+
+> ℓ∈ { 1,...,𝐿 }
+
+inf  
+
+> 𝑓 ∈ F ℓ
+
+R ( 𝑓 )+ 𝐶 1𝜅𝐵𝑅 ℎ√︂ 1 + log 𝐿 𝑁 + 𝐶 2𝑀 √︂ log (2/𝛿 )
+
+𝑁 + 𝜀 opt . (45) 
+
+Thus, the closed resolution-weighting family competes with the best fixed-resolution linear predictor selected in hindsight, while its addi-tional dependence on the number of configured resolutions is logarith-mic in 𝐿 .
+
+Proof. For a scalar function class F , define its empirical Rademacher complexity on the graph inputs in 𝑆 as 
+
+bℜ𝑆 (F ) := E𝜎 
+
+"
+
+sup  
+
+> 𝑓 ∈ F
+
+1
+
+𝑁 
+
+> 𝑁
+
+∑︁ 
+
+> 𝑖 =1
+
+𝜎 𝑖 𝑓 (𝐺 𝑖 )
+
+#
+
+, (46) where 𝜎 1, . . . , 𝜎 𝑁 are independent Rademacher random variables. For a fixed resolution ℓ, Euclidean norm duality gives 
+
+bℜ𝑆 (F ℓ ) = E𝜎 
+
+"
+
+sup   
+
+> ∥𝑤 ∥2≤𝐵
+
+1
+
+𝑁 
+
+> 𝑁
+
+∑︁ 
+
+> 𝑖 =1
+
+𝜎 𝑖 
+
+D
+
+𝑤, ℎ (ℓ )
+
+> 𝐺 𝑖
+
+E#
+
+= 𝐵 𝑁 E𝜎 
+
+> 𝑁
+
+∑︁ 
+
+> 𝑖 =1
+
+𝜎 𝑖 ℎ(ℓ )
+
+> 𝐺 𝑖
+> 2
+
+. (47) By Jensen’s inequality, 
+
+E𝜎 
+
+> 𝑁
+
+∑︁ 
+
+> 𝑖 =1
+
+𝜎 𝑖 ℎ(ℓ )
+
+> 𝐺 𝑖
+> 2
+
+≤ ©«
+
+E𝜎 
+
+> 𝑁
+
+∑︁ 
+
+> 𝑖 =1
+
+𝜎 𝑖 ℎ(ℓ )
+
+> 𝐺 𝑖
+> 22
+
+ª®¬
+
+> 1/2
+
+. (48) Expanding the squared norm and using independence and zero mean of the Rademacher variables eliminates the cross terms, so 
+
+E𝜎 
+
+> 𝑁
+
+∑︁ 
+
+> 𝑖 =1
+
+𝜎 𝑖 ℎ(ℓ )
+
+> 𝐺 𝑖
+> 22
+
+=
+
+> 𝑁
+
+∑︁ 
+
+> 𝑖 =1
+
+ℎ(ℓ )
+
+> 𝐺 𝑖
+> 22
+
+≤ 𝑁 𝑅 2 
+
+> ℎ
+
+. (49) Consequently, 
+
+bℜ𝑆 (F ℓ ) ≤ 𝐵𝑅 ℎ
+
+√𝑁 . (50) We next consider the union of the 𝐿 fixed-resolution classes. Define 
+
+𝑍 ℓ (𝜎 ) := sup  
+
+> 𝑓 ∈ F ℓ
+
+1
+
+𝑁 
+
+> 𝑁
+
+∑︁ 
+
+> 𝑖 =1
+
+𝜎 𝑖 𝑓 (𝐺 𝑖 ). (51) For every 𝑓 ∈ F ℓ , Assumption 1 gives 
+
+|𝑓 (𝐺 𝑖 )| ≤ ∥ 𝑤 ∥2 ∥ℎ(ℓ ) 
+
+> 𝐺 𝑖
+
+∥2 ≤ 𝐵𝑅 ℎ . (52) Changing one Rademacher sign changes 𝑍 ℓ by at most 2𝐵𝑅 ℎ /𝑁 .The bounded-difference exponential-moment inequality therefore yields 
+
+E𝜎 [exp (𝜆 [𝑍 ℓ (𝜎 ) − E𝜎 𝑍 ℓ (𝜎 )])] ≤ exp 𝜆 2𝐵 2𝑅 2
+
+> ℎ
+
+2𝑁 
+
+!
+
+(53) for every 𝜆 > 0. Applying the log-sum-exp inequality gives 
+
+E𝜎 
+
+
+
+max   
+
+> ℓ∈ { 1,...,𝐿 }
+
+𝑍 ℓ (𝜎 )
+
+
+
+≤ max  
+
+> ℓ
+
+E𝜎 [𝑍 ℓ (𝜎 )] + log 𝐿 𝜆 + 𝜆𝐵 2𝑅 2
+
+> ℎ
+
+2𝑁 . (54) Optimizing the right-hand side over 𝜆 gives 
+
+bℜ𝑆 
+
+> 𝐿
+
+Ø
+
+> ℓ=1
+
+Fℓ
+
+!
+
+≤ max 
+
+> ℓ
+
+bℜ𝑆 (F ℓ ) + 𝐵𝑅 ℎ√︂ 2 log 𝐿 𝑁 
+
+≤ 𝐵𝑅 ℎ
+
+1
+
+√𝑁 +√︂ 2 log 𝐿 𝑁 
+
+!
+
+. (55) For every 𝑤 and 𝛼 ∈ Δ𝐿 ,
+
+𝑓 𝑤,𝛼 (𝐺 ) =
+
+*
+
+𝑤, 
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+𝛼 ℓℎ(ℓ )
+
+> 𝐺
+
++
+
+=
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+𝛼 ℓ
+
+D
+
+𝑤, ℎ (ℓ )
+
+> 𝐺
+
+E
+
+. (56) Thus, 
+
+Fmix ⊆ conv 
+
+> 𝐿
+
+Ø
+
+> ℓ=1
+
+Fℓ
+
+!
+
+. (57) The supremum of a linear functional over a convex hull equals its supremum over the original set. It follows that 
+
+bℜ𝑆 (F mix ) ≤ bℜ𝑆 conv 
+
+> 𝐿
+
+Ø
+
+> ℓ=1
+
+Fℓ
+
+!! 
+
+= bℜ𝑆 
+
+> 𝐿
+
+Ø
+
+> ℓ=1
+
+Fℓ
+
+!
+
+. (58) Combining Equations (55) and (58) , and taking expectation over the sample, gives 
+
+ℜ𝑁 (F mix ) ≤ 𝐵𝑅 ℎ
+
+1
+
+√𝑁 +√︂ 2 log 𝐿 𝑁 
+
+!
+
+, (59) where ℜ𝑁 denotes the expected Rademacher complexity. By the contraction principle and the 𝜅 -Lipschitz property of ℓds ,the complexity of the induced loss class is bounded by 𝜅 ℜ𝑁 (F mix ).A standard Rademacher uniform-convergence bound for bounded losses therefore implies that there exists a universal constant 𝐶 0 > 0
+
+such that, with probability at least 1 − 𝛿 ,
+
+sup  
+
+> 𝑓 ∈ F mix
+
+R ( 𝑓 ) − bR𝑆 (𝑓 ) ≤ 𝐶 0𝜅𝐵𝑅 ℎ
+
+1
+
+√𝑁 +√︂ 2 log 𝐿 𝑁 
+
+!
+
++ 𝐶 0𝑀 √︂ log (2/𝛿 )
+
+𝑁 . (60) 
+
+> 13 Xu et al.
+
+Denote the right-hand side by Γ𝑁 (𝛿 ). On the event in Equation (60) ,
+
+R
+
+ b𝑓 mix 
+
+
+
+≤ bR𝑆 
+
+ b𝑓 mix 
+
+
+
++ Γ𝑁 (𝛿 )≤ inf  
+
+> 𝑓 ∈ F mix
+
+bR𝑆 (𝑓 ) + 𝜀 opt + Γ𝑁 (𝛿 )≤ inf  
+
+> 𝑓 ∈ F mix
+
+R ( 𝑓 ) + 𝜀 opt + 2Γ𝑁 (𝛿 ). (61) For every resolution ℓ, the standard basis vector 𝑒 ℓ belongs to the closed simplex Δ𝐿 . Choosing 𝛼 = 𝑒 ℓ gives 
+
+𝑓 𝑤,𝑒 ℓ (𝐺 ) =
+
+D
+
+𝑤, ℎ (ℓ )
+
+> 𝐺
+
+E
+
+. (62) Therefore, 
+
+> 𝐿
+
+Ø
+
+> ℓ=1
+
+Fℓ ⊆ F mix , (63) and hence 
+
+inf  
+
+> 𝑓 ∈ F mix
+
+R ( 𝑓 ) ≤ min   
+
+> ℓ∈ { 1,...,𝐿 }
+
+inf  
+
+> 𝑓 ∈ F ℓ
+
+R ( 𝑓 ). (64) Substituting Equations (60) and (64) into Equation (61) , and absorb-ing numerical factors into universal constants 𝐶 1 and 𝐶 2, proves Equation (45). □
+
+Relation to the softmax parameterization. A finite softmax logit vector produces a weight vector in the interior of Δ𝐿 , whereas a fixed-resolution predictor corresponds to a simplex vertex. There-fore, the exact class-containment statement in Theorem 1 applies to the closure of the softmax-parameterized family. Every simplex vertex can be approached arbitrarily closely by increasing one res-olution logit relative to the remaining logits. We next quantify the effect of the uniform smoothing used in the task-specific readout. Let 
+
+𝑢 𝐿 := 1
+
+𝐿 1𝐿 (65) and, for 𝛼 ∈ Δ𝐿 , define 
+
+𝛼 (𝜆 ) := (1 − 𝜆 unif )𝛼 + 𝜆 unif 𝑢 𝐿 , 𝜆 unif ∈ [ 0, 1]. (66) 
+
+Lemma 1 (Stability under uniform resolution smoothing). 
+
+For 𝛼 ∈ Δ𝐿 , define 
+
+ℎ𝛼 𝐺 :=
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+𝛼 ℓℎ(ℓ ) 
+
+> 𝐺
+
+(67) 
+
+and 
+
+ℎ𝛼 (𝜆 ) 
+
+> 𝐺
+
+:=
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+𝛼 (𝜆 ) 
+
+> ℓ
+
+ℎ(ℓ ) 
+
+> 𝐺
+
+. (68) 
+
+Under Assumption 1, 
+
+ℎ𝛼 (𝜆 ) 
+
+> 𝐺
+
+− ℎ𝛼 𝐺 2 ≤ 2𝜆 unif 𝑅 ℎ . (69) 
+
+Consequently, for every ∥𝑤 ∥2 ≤ 𝐵 ,
+
+D
+
+𝑤, ℎ 𝛼 (𝜆 )
+
+> 𝐺
+
+E
+
+− 𝑤, ℎ 𝛼 𝐺 ≤ 2𝜆 unif 𝐵𝑅 ℎ . (70) 
+
+The corresponding population risks satisfy 
+
+R
+
+
+
+𝑓 𝑤,𝛼 (𝜆 )
+
+
+
+≤ R  𝑓 𝑤,𝛼 
+
+ + 2𝜅𝜆 unif 𝐵𝑅 ℎ . (71) 
+
+Proof. Using Equation (66), 
+
+ℎ𝛼 (𝜆 ) 
+
+> 𝐺
+
+− ℎ𝛼 𝐺 = 𝜆 unif 
+
+1
+
+𝐿 
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+ℎ(ℓ ) 
+
+> 𝐺
+
+−
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+𝛼 ℓℎ(ℓ )
+
+> 𝐺
+
+!
+
+. (72) The triangle inequality and Assumption 1 give 
+
+ℎ𝛼 (𝜆 ) 
+
+> 𝐺
+
+− ℎ𝛼 𝐺 2 ≤ 𝜆 unif 
+
+1
+
+𝐿 
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+ℎ(ℓ )
+
+> 𝐺
+> 2
+
++ 𝜆 unif 
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+𝛼 ℓℎ(ℓ )
+
+> 𝐺
+> 2
+
+≤ 𝜆 unif 
+
+1
+
+𝐿 
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+ℎ(ℓ )  
+
+> 𝐺 2
+
++ 𝜆 unif 
+
+> 𝐿
+
+∑︁ 
+
+> ℓ=1
+
+𝛼 ℓ ℎ(ℓ ) 
+
+> 𝐺 2
+
+≤ 2𝜆 unif 𝑅 ℎ . (73) This proves Equation (69). By the Cauchy–Schwarz inequality, 
+
+D
+
+𝑤, ℎ 𝛼 (𝜆 ) 
+
+> 𝐺
+
+− ℎ𝛼 𝐺 
+
+E
+
+≤ ∥ 𝑤 ∥2 ℎ𝛼 (𝜆 ) 
+
+> 𝐺
+
+− ℎ𝛼 𝐺 2
+
+≤ 2𝜆 unif 𝐵𝑅 ℎ, (74) which proves Equation (70). Finally, the 𝜅 -Lipschitz property of the downstream loss implies 
+
+ℓds 
+
+
+
+𝑓 𝑤,𝛼 (𝜆 ) (𝐺 ), 𝑌 
+
+
+
+− ℓds 
+
+ 𝑓 𝑤,𝛼 (𝐺 ), 𝑌 
+
+≤ 𝜅 𝑓 𝑤,𝛼 (𝜆 ) (𝐺 ) − 𝑓 𝑤,𝛼 (𝐺 )
+
+≤ 2𝜅𝜆 unif 𝐵𝑅 ℎ . (75) Taking expectation over (𝐺, 𝑌 ) ∼ P proves Equation (71). □
+
+Define the uniformly smoothed hypothesis class as 
+
+F (𝜆 ) 
+
+> mix
+
+:= 𝑓 𝑤,𝛼 (𝜆 ) : ∥𝑤 ∥2 ≤ 𝐵, 𝛼 ∈ Δ𝐿 . (76) Let b𝑓 (𝜆 ) 
+
+> mix
+
+be an 𝜀 opt -approximate empirical-risk minimizer over F (𝜆 ) 
+
+> mix
+
+.
+
+Corollary 2 (Oracle bound under uniform smoothing). 
+
+Under Assumption 1, there exist universal constants 𝐶 1, 𝐶 2 > 0 such that, for every 𝛿 ∈ ( 0, 1), with probability at least 1 − 𝛿 ,
+
+R
+
+ b𝑓 (𝜆 )
+
+> mix
+
+
+
+≤ min   
+
+> ℓ∈ { 1,...,𝐿 }
+
+inf  
+
+> 𝑓 ∈ F ℓ
+
+R ( 𝑓 ) + 2𝜅𝜆 unif 𝐵𝑅 ℎ
+
++ 𝐶 1𝜅𝐵𝑅 ℎ√︂ 1 + log 𝐿 𝑁 + 𝐶 2𝑀 √︂ log (2/𝛿 )
+
+𝑁 + 𝜀 opt . (77) 
+
+Therefore, uniform smoothing introduces an additional approximation term that is at most linear in 𝜆 unif .
+
+Proof. Since 𝛼 (𝜆 ) ∈ Δ𝐿 whenever 𝛼 ∈ Δ𝐿 ,
+
+F (𝜆 ) 
+
+> mix
+
+⊆ F mix . (78) Consequently, the Rademacher-complexity and uniform-convergence bounds derived in the proof of Theorem 1 also apply to F (𝜆 ) 
+
+> mix
+
+.Fix a resolution ℓ and a vector 𝑤 satisfying ∥𝑤 ∥2 ≤ 𝐵 . Let 𝑒 ℓ
+
+denote the ℓ-th standard basis vector in R𝐿 . The corresponding unsmoothed representation is 
+
+ℎ𝑒 ℓ 
+
+> 𝐺
+
+= ℎ(ℓ ) 
+
+> 𝐺
+
+. (79) Applying Lemma 1 with 𝛼 = 𝑒 ℓ gives 
+
+R
+
+
+
+𝑓 𝑤,𝑒 (𝜆 )
+
+> ℓ
+
+
+
+≤ R  𝑓 ℓ,𝑤 
+
+ + 2𝜅𝜆 unif 𝐵𝑅 ℎ . (80) 
+
+> 14 HP-JEPA: Hierarchical Partitioning for Multi-Resolution Graph Joint-Embedding Predictive Learning
+
+Taking the infimum over ∥𝑤 ∥2 ≤ 𝐵 and then the minimum over ℓ
+
+yields 
+
+inf   
+
+> 𝑓 ∈ F (𝜆 )
+> mix
+
+R ( 𝑓 ) ≤ min   
+
+> ℓ∈ { 1,...,𝐿 }
+
+inf  
+
+> 𝑓 ∈ F ℓ
+
+R ( 𝑓 ) + 2𝜅𝜆 unif 𝐵𝑅 ℎ . (81) Applying the same approximate empirical-risk-minimization and uniform-convergence argument as in Equation (61) , together with Equation (81), proves Equation (77). □

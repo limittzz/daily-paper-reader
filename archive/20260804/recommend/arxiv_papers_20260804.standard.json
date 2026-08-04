@@ -1,0 +1,721 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-04T21:26:37.065563+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 9,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 11,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2608.00491v1",
+      "source": "arxiv",
+      "title": "HP-JEPA: Hierarchical Partitioning for Multi-Resolution Graph Joint-Embedding Predictive Learning",
+      "abstract": "Graph self-supervised learning aims to learn transferable representations from large-scale unlabeled graph data. Joint-embedding predictive architectures (JEPAs) avoid explicit negative-pair construction and raw-input reconstruction by predicting masked targets directly in latent space. However, existing graph JEPAs typically rely on a single predefined graph partition, biasing the learned representations toward one structural granularity and limiting their ability to capture complementary patterns at different graph scales. To address this limitation, we propose HP-JEPA, a hierarchical partitioning framework for multi-resolution graph joint-embedding prediction. HP-JEPA organizes each graph into an ordered bank of coarse-to-fine partition resolutions and performs context-target latent prediction separately at each resolution using an online encoder, an exponential-moving-average target encoder, and a latent predictor. The resulting resolution-specific graph representations are subsequently integrated through concatenation or task-specific resolution weighting, allowing downstream models to combine complementary local, regional, and global structural information. Experiments on seven graph classification benchmarks and one graph regression benchmark show that HP-JEPA outperforms the fixed-resolution Graph-JEPA baseline on 6 of 8 tasks, improving upon Graph-JEPA on most evaluated benchmarks. Size-stratified analyses further show that HP-JEPA achieves higher accuracy than Graph-JEPA in most evaluated graph-size quartiles on three representative datasets. These results highlight the effectiveness of hierarchical multi-resolution partitioning for transferable graph representation learning.",
+      "authors": [
+        "Ruichen Xu",
+        "Jingxiang Qu",
+        "Wenhan Gao",
+        "Jiaxing Zhang",
+        "Linsey Pang",
+        "Ravid Shwartz-Ziv",
+        "Yann LeCun",
+        "Yuefan Deng"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-01T07:28:39+00:00",
+      "link": "https://arxiv.org/pdf/2608.00491v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Joint-embedding predictive architecture (JEPA) for graph self-supervised learning.",
+      "llm_evidence_cn": "图自监督学习中的联合嵌入预测架构（JEPA），直接涉及JEPA方法。",
+      "llm_evidence": "图自监督学习中的联合嵌入预测架构（JEPA），直接涉及JEPA方法。",
+      "canonical_evidence": "图自监督学习中的联合嵌入预测架构（JEPA），直接涉及JEPA方法。",
+      "llm_tldr_en": "HP-JEPA extends joint-embedding predictive architectures to graphs by organizing each graph into an ordered bank of coarse-to-fine partitions and performing multi-resolution predictive learning, capturing patterns across structural granularities.",
+      "llm_tldr_cn": "图联合嵌入预测架构（JEPA）避免了显式负样本和原始输入重建，在潜在空间直接预测掩蔽目标，但现有方法通常只采用单一预定图划分，导致表示偏向一种结构粒度。为此提出HP-JEPA，将图组织成从粗到细的有序划分库，实现多分辨率联合嵌入预测，从而捕获不同尺度的互补模式。该研究为图自监督学习提供了一种分层多分辨率的JEPA方案，扩展了JEPA在非欧几里得数据上的适用性。",
+      "llm_tldr": "图联合嵌入预测架构（JEPA）避免了显式负样本和原始输入重建，在潜在空间直接预测掩蔽目标，但现有方法通常只采用单一预定图划分，导致表示偏向一种结构粒度。为此提出HP-JEPA，将图组织成从粗到细的有序划分库，实现多分辨率联合嵌入预测，从而捕获不同尺度的互补模式。该研究为图自监督学习提供了一种分层多分辨率的JEPA方案，扩展了JEPA在非欧几里得数据上的适用性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.01049v1",
+      "source": "arxiv",
+      "title": "FactorJEPA: Factorizing Monolithic Futures into Layout-Agent-Interaction Channels for Crowded and Chaotic Global South Urban Worlds",
+      "abstract": "World models have attracted significant attention for their ability to capture and predict the structure and dynamics of the physical world. In this emerging landscape, Joint Embedding Predictive Architectures (JEPA) offer a particularly compelling direction.   We study a largely unexplored regime: populous, crowded, and chaotic Global South urban environments, which we call DENSEWORLD. Unlike the lower-density, lane-structured settings that dominate existing evaluations, these scenes exhibit soft spatial boundaries, extreme agent heterogeneity, persistent occlusion, and rapid social negotiation under mixed traffic. We introduce the first large-scale dataset for this regime: 1,000 hours of drive-through, walk-through, and aerial video across 22 cities. Existing JEPA formulations struggle to preserve dense interaction dynamics under heterogeneity and partial observability.   We introduce FactorJEPA, which makes world structure a first-class predictive primitive. Rather than encoding the future in a monolithic latent, it composes layout, entities, and interactions, using a visibility gate and separated subspaces to preserve partially observed agents and discourage cross-factor shortcuts. FactorJEPA improves (i) future-latent accuracy (Future-frame L1), (ii) intervention-sensitive prediction (Causal L1), and (iii) robustness to reduced visual evidence (Mask-ratio slope), while exposing (iv) a reproducible motion-information trade-off (Motion cosine). Method rankings replicate across 2B and 1B V-JEPA 2.1 backbones, with rho = 0.895 to 0.978.   We publicly release the DENSEWORLD-115k dataset (https://huggingface.co/datasets/anonymousML123/denseworld-115k) and the surgery-trained FactorJEPA checkpoints (https://huggingface.co/datasets/anonymousML123/factorjepa-outputs/tree/main/outputs/full/vjepa_2_1_vitg_1B/train/m09c_surgery_3stage_DI_diheavy_encoder).",
+      "authors": [
+        "Kapil Wanaskar",
+        "Gaytri Jena",
+        "Aman Chadha",
+        "Vinija Jain",
+        "Vasu Sharma",
+        "Amitava Das"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-08-02T07:32:46+00:00",
+      "link": "https://arxiv.org/pdf/2608.01049v1",
+      "tags": [
+        "keyword:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Joint Embedding Predictive Architectures (JEPA) for world modeling in dense urban scenes",
+      "llm_evidence_cn": "面向密集城市场景的联合嵌入预测架构（JEPA）世界模型",
+      "llm_evidence": "面向密集城市场景的联合嵌入预测架构（JEPA）世界模型",
+      "canonical_evidence": "面向密集城市场景的联合嵌入预测架构（JEPA）世界模型",
+      "llm_tldr_en": "FactorJEPA extends JEPA world models to crowded Global South urban environments, factorizing monolithic future predictions into layout-agent-interaction channels and introducing a 1000-hour dense world dataset.",
+      "llm_tldr_cn": "现有世界模型评估多集中于低密度、车道结构清晰的场景，忽略了拥挤、异质性强且遮挡严重的城市环境。本文提出FactorJEPA，将整体未来预测分解为布局、智能体与交互通道，并引入DENSEWORLD数据集，包含1000小时全球南方城市驾驶数据。实验表明该架构在拥挤混乱场景中能更有效地捕获环境动态。该工作为JEPA在复杂城市世界建模中的应用提供了新基准与方向。",
+      "llm_tldr": "现有世界模型评估多集中于低密度、车道结构清晰的场景，忽略了拥挤、异质性强且遮挡严重的城市环境。本文提出FactorJEPA，将整体未来预测分解为布局、智能体与交互通道，并引入DENSEWORLD数据集，包含1000小时全球南方城市驾驶数据。实验表明该架构在拥挤混乱场景中能更有效地捕获环境动态。该工作为JEPA在复杂城市世界建模中的应用提供了新基准与方向。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.01603v1",
+      "source": "arxiv",
+      "title": "AffordTrajDP: Dynamic Affordance-Guided Visuomotor Policy Learning for Robotic Manipulation",
+      "abstract": "Affordance-guided imitation learning has shown impressive performance in robotic manipulation tasks by compressing visual perception into task-specific geometric constraints (e.g., fixed contact points). However, the commonly used static affordances can become inconsistent in precision-critical tasks or under object location perturbations, leading to post-contact trajectory drift. To address this issue, we propose AffordTrajDP, a dynamic framework that constructs affordance trajectories via object-centric temporal propagation to guide the progressive manipulation process. Specifically, given an RGB-D observation, our core insight is that a retrieved anchor affordance, which captures the desired contact point between the end-effector and the target object, can be propagated forward via affordance propagation, using the object's SE(3) pose as a natural propagation medium, to yield an affordance trajectory that provides temporally consistent, state-aware guidance throughout execution. AffordTrajDP achieves 70.0% average success rate on ManiSkill3, outperforming strong baselines by up to 17.8%. Real-world experiments on Galaxea A1 and UR7e robotic arms, covering StackCube, PickCup, AdapterInsertion, Ring-on-Peg, Put-in-Bowl, and USB Insertion, further validate robustness under object placement variations and appearance changes, with seen and unseen object instances evaluated on Galaxea A1, and ablations confirm the contribution of each proposed component.",
+      "authors": [
+        "Gaoyuan Wu",
+        "Ziyu Shan",
+        "Haoyang Du",
+        "Yuyao Jiang",
+        "Ziwei Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-03T02:19:37+00:00",
+      "link": "https://arxiv.org/pdf/2608.01603v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Affordance-guided imitation learning for robotic manipulation with dynamic affordance trajectories",
+      "llm_evidence_cn": "基于动态可操作性轨迹的机器人操作模仿学习",
+      "llm_evidence": "基于动态可操作性轨迹的机器人操作模仿学习",
+      "canonical_evidence": "基于动态可操作性轨迹的机器人操作模仿学习",
+      "llm_tldr_en": "AffordTrajDP addresses static affordance inconsistency by building dynamic affordance trajectories via object-centric temporal propagation, improving visuomotor policy learning for precise robotic manipulation.",
+      "llm_tldr_cn": "针对静态可操作性在精确任务和物体扰动下产生轨迹漂移的问题，本文提出动态可操作性轨迹框架AffordTrajDP，以物体为中心进行时间传播，利用锚定可操作性引导渐进式操作。该方法将视觉感知压缩为任务相关的几何约束，提升机器人操作策略学习。动态轨迹显著降低接触后漂移，为基于可操作性的模仿学习提供更稳健的方案。",
+      "llm_tldr": "针对静态可操作性在精确任务和物体扰动下产生轨迹漂移的问题，本文提出动态可操作性轨迹框架AffordTrajDP，以物体为中心进行时间传播，利用锚定可操作性引导渐进式操作。该方法将视觉感知压缩为任务相关的几何约束，提升机器人操作策略学习。动态轨迹显著降低接触后漂移，为基于可操作性的模仿学习提供更稳健的方案。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.02547v1",
+      "source": "arxiv",
+      "title": "Why Does Action Chunking Improve Behavioral Cloning Performance in Robotic Control?",
+      "abstract": "Action chunking---predicting and executing multiple actions instead of a single action---has proven to be a critical component for learning effective robotic control policies. However, our precise understanding of why action chunking improves performance has remained limited. In this work we seek to close this gap. Through rigorous experimental evaluations in both simulated and real-world settings, we show that existing hypotheses for the success of action chunking---temporal consistency, horizon reduction, and representation learning---fail to explain the success of action chunking. Instead, we find that action chunking benefits from greater non-Markovian expressivity and reduced compounding error compared to Markovian policies, but, in many settings of interest, these effects can be fully captured by delayed policies, which at each step predict a single action based on the observation $k$ steps in the past. We then show that there exists an additional benefit of action chunking that we refer to as implicit ensembling. In particular, by learning a diversity of temporal relationships (that is, $a_t | o_t, a_t | o_{t-1}, \\ldots$), action-chunked policies exhibit behavior matching that of a model ensemble, increasing their robustness and generalization ability over policies that only learn a single temporal relationship. Building on these insights, we show that in simulated and real-world robotic control settings, we can match the performance of action chunking without action chunking---by deploying an action chunking policy as an ensemble of policies with randomized delays. Furthermore, we propose a policy class that amplifies the benefits of action chunking by explicitly instantiating an ensemble, and which we show significantly improves over the performance of action chunking in many domains.",
+      "authors": [
+        "Filippo Lazzati",
+        "Kyle Stachowicz",
+        "William Chen",
+        "Alberto Maria Metelli",
+        "Andrew Wagenmaker",
+        "Sergey Levine"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-03T17:32:45+00:00",
+      "link": "https://arxiv.org/pdf/2608.02547v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Directly studies behavior cloning in robotic control and explains why action chunking helps, key imitation learning algorithm question.",
+      "llm_evidence_cn": "直接研究机器人控制中的行为克隆，并解释动作分块提升性能的原因。",
+      "llm_evidence": "直接研究机器人控制中的行为克隆，并解释动作分块提升性能的原因。",
+      "canonical_evidence": "直接研究机器人控制中的行为克隆，并解释动作分块提升性能的原因。",
+      "llm_tldr_en": "Systematically tests existing hypotheses and shows action chunking helps behavior cloning via non-Markovian expressivity and reduced compounding error.",
+      "llm_tldr_cn": "动作分块是行为克隆中广泛使用的技巧，但其成功原因此前缺乏严格解释。该工作通过仿真与真实实验排除了时间一致性、视野缩减和表示学习等既有假说，发现动作分块的主要优势来自更强的非马尔可夫表达能力和更低的复合误差，同时也要付出一定的计算代价。这项工作为设计更有效的机器人模仿学习策略提供了理论依据和实证指导。",
+      "llm_tldr": "动作分块是行为克隆中广泛使用的技巧，但其成功原因此前缺乏严格解释。该工作通过仿真与真实实验排除了时间一致性、视野缩减和表示学习等既有假说，发现动作分块的主要优势来自更强的非马尔可夫表达能力和更低的复合误差，同时也要付出一定的计算代价。这项工作为设计更有效的机器人模仿学习策略提供了理论依据和实证指导。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.00554v1",
+      "source": "arxiv",
+      "title": "DexMani: Human-Derived Manipulability Guidance for Dexterous Rotation",
+      "abstract": "Dexterous object rotation is a sequential contact problem: each support, release, and re-contact decision must both produce the desired object motion, and prepare the hand configuration for continued rotation. Existing reinforcement learning methods discover such movement patterns through trial and error on specific robotic hand embodiments, without explicitly accounting for how each contact transition affects the hand's ability to sustain object rotation in subsequent steps. We introduce DexMani, a framework that transfers human demonstrations as contact-conditioned manipulability evolution. This prior captures how successful human contact transitions reshape the object-rotation directions available to the hand. DexMani then learns this manipulability evolution and uses it to guide downstream reinforcement learning, enabling rotation skills to be acquired across robot embodiments with distinct kinematics and active-contact configurations. Across the Shadow Hand, Allegro Hand, and XHand, DexMani achieves the highest success rates in every evaluated setting for both seen and unseen objects. DexMani reaches an average success rate of 57.5% on LEAP Hand, outperforming other baselines and producing smoother rotatory motions. Project site: https://dexmani.github.io",
+      "authors": [
+        "Xiaoyang Chen",
+        "Shengcheng Luo",
+        "Haoran Guo",
+        "Jiaming Jiang",
+        "Wanlin Li",
+        "Ziyuan Jiao",
+        "Chenxi Xiao"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-08-01T09:17:30+00:00",
+      "link": "https://arxiv.org/pdf/2608.00554v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Transfers human demonstrations as manipulability guidance for dexterous manipulation; learning from demonstration.",
+      "llm_evidence_cn": "将人类示教作为可操作性引导迁移到灵巧操作，属于示教学习范畴。",
+      "llm_evidence": "将人类示教作为可操作性引导迁移到灵巧操作，属于示教学习范畴。",
+      "canonical_evidence": "将人类示教作为可操作性引导迁移到灵巧操作，属于示教学习范畴。",
+      "llm_tldr_en": "DexMani transfers human demonstrations as contact-conditioned manipulability evolution to guide learning dexterous object rotation, enabling policies to account for how contact transitions reshape available rotation directions.",
+      "llm_tldr_cn": "灵巧物体旋转是一类顺序接触问题，每一步的支撑、释放和再接触不仅决定当前运动，还影响后续旋转能力。现有强化学习方法通过试错发现运动模式，但未显式建模接触转移对手部可操作性的影响。DexMani提出从人类示教中提取接触条件化的可操作性演化先验，使策略学习能预见每个接触转移带来的可操作性变化，从而更有效地完成连续旋转操作，展示了人类示教与强化学习结合的潜力。",
+      "llm_tldr": "灵巧物体旋转是一类顺序接触问题，每一步的支撑、释放和再接触不仅决定当前运动，还影响后续旋转能力。现有强化学习方法通过试错发现运动模式，但未显式建模接触转移对手部可操作性的影响。DexMani提出从人类示教中提取接触条件化的可操作性演化先验，使策略学习能预见每个接触转移带来的可操作性变化，从而更有效地完成连续旋转操作，展示了人类示教与强化学习结合的潜力。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.00730v1",
+      "source": "arxiv",
+      "title": "Push-Wiper: Toward General-Purpose Robotic Cleaning across Varied Stains and Surfaces with Segmented Pushing Trajectories",
+      "abstract": "Viscous stains, characterized by high viscosity and complex rheological properties, remain a major challenge for robotic surface cleaning. Conventional wiping often spreads the stain, while scrubbing provides stronger friction but risks damaging the surface. In this paper, we propose Push-Wiper, a framework that reformulates viscous stain cleaning as an aggregation problem. Push-Wiper employs a sponge to progressively gather stains through segmented pushing trajectories, followed by a post-processing phase that detaches the aggregated material and enables sponge self-cleaning. We adopt a stepwise strategy for stain gathering and leverage Diffusion Policy to generate adaptive pushing action sequences. These sequences are executed through our Arbitrary Surface Pose Interpolator (ASPI) and a hybrid force-position controller, allowing the method to generalize to stains with diverse spatial distributions. Push-Wiper achieves a cleaning score (CS), defined as the percentage of stain area removed, up to 130% higher than baseline methods. Without additional training, Push-Wiper also transfers in a zero-shot manner to solid residues, liquid spills, unseen viscous stains, and curved surfaces with varying geometries. Our experiments demonstrate the cleaning effectiveness of Push-Wiper and its strong generalization ability. The project website is available at https://push-wiper.github.io/.",
+      "authors": [
+        "Renhao Lu",
+        "Mingxin Wang",
+        "Chenyang Cao",
+        "Yang Yang",
+        "Guoping Pan",
+        "Kangkang Dong",
+        "Yi Cheng",
+        "Houde Liu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-01T15:58:02+00:00",
+      "link": "https://arxiv.org/pdf/2608.00730v1",
+      "tags": [
+        "keyword:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "leverages Diffusion Policy to generate adaptive pushing action sequences for robotic cleaning",
+      "llm_evidence_cn": "利用Diffusion Policy生成自适应推扫动作序列用于机器人清洁",
+      "llm_evidence": "利用Diffusion Policy生成自适应推扫动作序列用于机器人清洁",
+      "canonical_evidence": "利用Diffusion Policy生成自适应推扫动作序列用于机器人清洁",
+      "llm_tldr_en": "Push-Wiper reformulates viscous stain cleaning as an aggregation problem and uses segmented pushing trajectories with Diffusion Policy to generate adaptive actions, improving general-purpose robotic cleaning across varied stains and surfaces.",
+      "llm_tldr_cn": "针对粘性污渍高粘度、流变复杂导致清洁困难的问题，论文提出Push-Wiper框架，将清洁重定义为污渍聚集问题，用海绵分段推扫轨迹逐步收集污渍，并借助Diffusion Policy生成自适应动作序列，实现跨污渍与表面的通用清洁，同时支持海绵自清洁。",
+      "llm_tldr": "针对粘性污渍高粘度、流变复杂导致清洁困难的问题，论文提出Push-Wiper框架，将清洁重定义为污渍聚集问题，用海绵分段推扫轨迹逐步收集污渍，并借助Diffusion Policy生成自适应动作序列，实现跨污渍与表面的通用清洁，同时支持海绵自清洁。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.01265v1",
+      "source": "arxiv",
+      "title": "Hermite Curves as Trajectory Priors for Vision-Language-Action Models",
+      "abstract": "Despite recent progress in Vision-Language-Action (VLA) models for robotic manipulation, the action chunk remains a weakly structured interface. Existing work typically flatten each chunk into per-timestep controls, relying on implicit data learning that manifests as jagged motion and boundary discontinuities during physical execution. To address these limitations, we introduce Hermite trajectory priors, parameterizing the chunk trajectory as a piecewise cubic Hermite curve defined by endpoint positions and velocities to explicitly enforce smoothness and continuity. We instantiate this fixed operator across discrete autoregressive and continuous generative paradigms via three variants: (1) Hermite Tokens, which predict quantized boundary variables autoregressively; (2) Hermite Scaffold, which decomposes clean actions into a base scaffold and residuals; and (3) Hermite Regularization, which applies the prior strictly as an auxiliary training objective. Across simulation benchmarks and real-robot platforms, Hermite Regularization achieves superior performance among these three variants, improving π0.5 baseline success rates from 95.9% to 98.7% on LIBERO, 85.7% to 90.9% on LIBERO-plus, and 63.4% to 90.0% across four real-robot tasks without additional inference overhead. Trajectory analyses reveal that explicitly structuring trajectory priors serves most effectively as a learning inductive bias rather than a runtime constraint.",
+      "authors": [
+        "Qi Lv",
+        "Jianming Xing",
+        "Zhao Yang",
+        "Mingyuan Yao",
+        "Yinan Shi",
+        "Yawei Jueluo",
+        "Mike Zheng Shou",
+        "Xiang Deng"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-08-02T14:18:17+00:00",
+      "link": "https://arxiv.org/pdf/2608.01265v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Trajectory priors improve VLA robot manipulation policies learned from demonstrations",
+      "llm_evidence_cn": "通过轨迹先验改进基于示范的VLA机器人操作策略",
+      "llm_evidence": "通过轨迹先验改进基于示范的VLA机器人操作策略",
+      "canonical_evidence": "通过轨迹先验改进基于示范的VLA机器人操作策略",
+      "llm_tldr_en": "Proposes Hermite trajectory priors to parameterize VLA action chunks as piecewise cubic Hermite curves, enforcing smoothness and addressing boundary discontinuities in robotic manipulation.",
+      "llm_tldr_cn": "针对视觉-语言-动作模型动作块缺乏结构、导致执行中出现抖动和边界不连续的问题，提出Hermite轨迹先验。该方法将动作块参数化为由端点位置和速度定义的分段三次Hermite曲线，显式保证轨迹平滑与连续。在自回归和连续生成范式下实现三种变体，并对边界变量进行预测。实验表明该方法能提高机器人操作轨迹的平滑性和执行质量。",
+      "llm_tldr": "针对视觉-语言-动作模型动作块缺乏结构、导致执行中出现抖动和边界不连续的问题，提出Hermite轨迹先验。该方法将动作块参数化为由端点位置和速度定义的分段三次Hermite曲线，显式保证轨迹平滑与连续。在自回归和连续生成范式下实现三种变体，并对边界变量进行预测。实验表明该方法能提高机器人操作轨迹的平滑性和执行质量。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.27599v1",
+      "source": "arxiv",
+      "title": "World Action Planner: Generalizable Decision-Making with Action-Conditioned World Models",
+      "abstract": "Building generalizable agents for diverse applications remains a fundamental challenge. While imitation learning-based policies succeed in specific training environments, they often fail to generalize to novel scenes and tasks. In this work, we propose World Action Planner, a robot planning system that leverages the reasoning capabilities of Vision-Language Models (VLMs) and the physical grounding of a multi-task pose-image conditioned world model. Our system enables an agent to propose initial action plans and iteratively refine them via optimization and search, reasoning over imagined world model rollouts. We demonstrate that our approach achieves superior performance across compositional tasks, new layouts, and zero-shot generalization scenarios, significantly outperforming state-of-the-art end-to-end policy models such as VLAs and WAMs. Project website at worldactionplanner.github.io",
+      "authors": [
+        "Xiangcheng Zhang",
+        "Yilun Du"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.RO"
+      ],
+      "published": "2026-07-30T02:41:52+00:00",
+      "link": "https://arxiv.org/pdf/2607.27599v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Improving generalization of imitation learning-based policies with world models",
+      "llm_evidence_cn": "利用世界模型提升模仿学习策略的泛化能力",
+      "llm_evidence": "利用世界模型提升模仿学习策略的泛化能力",
+      "canonical_evidence": "利用世界模型提升模仿学习策略的泛化能力",
+      "llm_tldr_en": "World Action Planner uses a VLM with an action-conditioned world model to iteratively refine plans, improving generalization over imitation learning policies.",
+      "llm_tldr_cn": "模仿学习策略在特定环境中表现良好，但面对新场景和新任务时泛化不足。World Action Planner结合视觉语言模型与多任务位姿图像条件世界模型，使智能体能够提出初始动作计划并通过想象世界模型滚动优化和搜索进行迭代精炼。实验表明该方法在组合任务、新布局和零样本泛化上优于传统模仿学习策略。该工作为解决模仿学习泛化瓶颈提供了一种规划与模型结合的思路。",
+      "llm_tldr": "模仿学习策略在特定环境中表现良好，但面对新场景和新任务时泛化不足。World Action Planner结合视觉语言模型与多任务位姿图像条件世界模型，使智能体能够提出初始动作计划并通过想象世界模型滚动优化和搜索进行迭代精炼。实验表明该方法在组合任务、新布局和零样本泛化上优于传统模仿学习策略。该工作为解决模仿学习泛化瓶颈提供了一种规划与模型结合的思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.28382v1",
+      "source": "arxiv",
+      "title": "SemAnCorr: Semantic Anchored Correspondence for Zero-Shot Manipulation Skill Transfer",
+      "abstract": "Transferring manipulation skills across object instances that share functionality but differ in geometry remains a fundamental challenge in robot learning. While recent correspondence methods leverage dense visual descriptors and 3D feature fields, nearest-neighbor feature matching often produces spatially incoherent correspondences that fail to recover the local geometric frames required for reliable skill transfer. We introduce SemAnCorr, a training-free framework that establishes dense correspondence by selecting semantically consistent anchor regions through joint pose-correspondence optimization and propagating these constraints over the object surface using functional maps. The resulting correspondences preserve both semantic consistency and geometric coherence, enabling object-centric manipulation skills to transfer across geometrically diverse instances. We evaluate SemAnCorr on a dense correspondence benchmark built on PartNet-Mobility, achieving 90.8% semantic accuracy in our benchmark evaluation while improving geometric coherence over recent state-of-the-art baselines. Finally, we show that these improvements translate directly into real-world manipulation performance: using a single demonstration, SemAnCorr enables substantially more reliable zero-shot manipulation skill transfer to previously unseen objects than existing correspondence methods. Videos and additional visualizations are available at [https://semancorr.github.io](https://semancorr.github.io) .",
+      "authors": [
+        "Xiaoxiang Dong",
+        "William Baron",
+        "Hongyi Chen",
+        "Uksang Yoo",
+        "Jeffrey Ichnowski",
+        "Weiming Zhi"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-30T15:41:39+00:00",
+      "link": "https://arxiv.org/pdf/2607.28382v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Zero-shot manipulation skill transfer via semantic anchored correspondences",
+      "llm_evidence_cn": "基于语义锚定对应关系的操作技能零样本迁移",
+      "llm_evidence": "基于语义锚定对应关系的操作技能零样本迁移",
+      "canonical_evidence": "基于语义锚定对应关系的操作技能零样本迁移",
+      "llm_tldr_en": "SemAnCorr establishes spatially coherent dense correspondences between functionally similar objects via anchor selection and functional maps, enabling zero-shot transfer of manipulation skills.",
+      "llm_tldr_cn": "将操作技能迁移到几何不同但功能相同的物体是机器人学习的挑战。现有稠密特征匹配方法常产生空间不一致的对应关系。本文提出SemAnCorr，通过联合位姿-对应优化选择语义一致的锚定区域，并利用函数映射传播约束，构建稠密对应关系。该方法无需训练即可保留语义一致性，为零样本操作技能迁移提供了可靠基础。",
+      "llm_tldr": "将操作技能迁移到几何不同但功能相同的物体是机器人学习的挑战。现有稠密特征匹配方法常产生空间不一致的对应关系。本文提出SemAnCorr，通过联合位姿-对应优化选择语义一致的锚定区域，并利用函数映射传播约束，构建稠密对应关系。该方法无需训练即可保留语义一致性，为零样本操作技能迁移提供了可靠基础。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.01452v1",
+      "source": "arxiv",
+      "title": "DynamicManip: Enabling Dynamic Manipulation from a Single Static Demonstration",
+      "abstract": "Dynamic manipulation is a critical capability for robots operating in complex and dynamic environments, where robots must interact with objects that are moving or require rapid adjustments. However, learning models for dynamic manipulation tasks face two major challenges: (1) the combinatorial complexity of dynamic scenarios leads to substantial data requirements, and (2) rapid variations in dynamics require real-time and accurate policy execution. In this paper, we propose DynamicManip to address these challenges through an efficient data augmentation pipeline and a low-latency imitation policy. We first propose a static-to-dynamic augmentation pipeline that synthesizes diverse dynamic manipulation demonstrations from a single static demonstration. Second, we introduce a dynamic-aware adaptive policy that adjusts its inference frequency according to task dynamics, enabling responsive and effective dynamic manipulation. Third, we build a dynamic manipulation benchmark, which includes diverse dynamic tasks with an automatic evaluation system for scalable and consistent assessment. Extensive experiments in both simulation and the real world demonstrate that DynamicManip not only provides significant improvements in data efficiency but also achieves better performance in dynamic manipulation tasks, with a mean success rate 18.4 percentage points higher and policy-query latency 32.9% lower.",
+      "authors": [
+        "Haoran Liao",
+        "Pengyue Wang",
+        "Shuoyu Chen",
+        "Kehan Cheng",
+        "Xuhang Chen",
+        "Yuhao Lin",
+        "Mu Lin",
+        "Zhizhao Liang",
+        "Xiaoyi Fan",
+        "Chengyi Xing",
+        "Dan Niu",
+        "Yi-Lin Wei",
+        "Wei-Shi Zheng"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-08-02T19:23:54+00:00",
+      "link": "https://arxiv.org/pdf/2608.01452v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "data augmentation and low-latency imitation policy for dynamic manipulation from static demonstration",
+      "llm_evidence_cn": "从静态演示合成动态演示并训练低延迟模仿策略，属于模仿学习算法研究",
+      "llm_evidence": "从静态演示合成动态演示并训练低延迟模仿策略，属于模仿学习算法研究",
+      "canonical_evidence": "从静态演示合成动态演示并训练低延迟模仿策略，属于模仿学习算法研究",
+      "llm_tldr_en": "DynamicManip addresses data scarcity and latency in dynamic manipulation by a static-to-dynamic augmentation pipeline that synthesizes diverse dynamic demonstrations from a single static demonstration and a low-latency imitation policy for real-time execution.",
+      "llm_tldr_cn": "动态操作任务要求机器人应对运动物体并快速调整，但动态场景组合复杂、数据需求大，且策略执行需要实时准确。DynamicManip提出静态到动态的数据增强流水线，仅从单个静态演示即可合成多种动态操作演示，并配合低延迟模仿策略实现实时执行。该方法降低了动态操作任务的演示收集成本，同时提高了策略对动态变化的响应能力。它证明了数据增强与轻量策略结合可以扩大模仿学习在动态场景中的适用性。",
+      "llm_tldr": "动态操作任务要求机器人应对运动物体并快速调整，但动态场景组合复杂、数据需求大，且策略执行需要实时准确。DynamicManip提出静态到动态的数据增强流水线，仅从单个静态演示即可合成多种动态操作演示，并配合低延迟模仿策略实现实时执行。该方法降低了动态操作任务的演示收集成本，同时提高了策略对动态变化的响应能力。它证明了数据增强与轻量策略结合可以扩大模仿学习在动态场景中的适用性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.00725v1",
+      "source": "arxiv",
+      "title": "SelfWAM: A Self-Grounded Unified World Action Model for Fast Robot Control",
+      "abstract": "World Action Models (WAMs) improve robot policy learning by jointly modeling actions and future observations. However, conditioning future prediction only on the task prompt and observation context risks capturing generic task progression rather than the action-specific consequences of the executed action. We introduce SelfWAM, a unified self-grounded WAM built on a modality-specialized Mixture-of-Transformers (MoT) architecture that jointly predicts actions, action-conditioned future RGB frames, and robot self-masks, thereby grounding future prediction in the robot's visible body and its action-induced motion. During joint training, SelfWAM allows future visual queries to attend to a clean copy of the demonstrated action, turning the video branch into an action-specific consequence model while leaving the fast action-only inference path unchanged. To focus video learning on action-relevant visual changes, we use prompt-specific objectives for future robot self-mask prediction, which removes appearance details and provides a target whose temporal evolution is tightly coupled with the conditioning action. Together, clean-action conditioning and future self-mask supervision make future predictions more directly reflect how the executed action changes the robot's visible motion and the surrounding scene. Experiments on RoboTwin 2.0 and real-world manipulation tasks show that SelfWAM produces more action-sensitive futures and preserves fast policy inference, while improving policy performance.",
+      "authors": [
+        "Bikang Pan",
+        "Fan Liu",
+        "Haotao Lu",
+        "Jingya Wang",
+        "Ye Shi"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-01T15:47:29+00:00",
+      "link": "https://arxiv.org/pdf/2608.00725v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "World-action model for robot policy learning from demonstrations with self-grounding",
+      "llm_evidence_cn": "用于示范学习的自根基世界动作模型",
+      "llm_evidence": "用于示范学习的自根基世界动作模型",
+      "canonical_evidence": "用于示范学习的自根基世界动作模型",
+      "llm_tldr_en": "Introduces SelfWAM, a self-grounded world-action model that jointly predicts actions, future RGB frames, and self-masks, grounding future prediction in the robot's visible body for fast control.",
+      "llm_tldr_cn": "世界动作模型在联合建模动作与未来观测时，若只依赖任务提示和观测上下文，容易学到通用任务演化而非动作的具体后果。SelfWAM通过模态专用的混合Transformer架构，统一预测动作、动作条件下的未来RGB帧和机器人自掩膜，将未来预测锚定在机器人可见本体与动作引发的运动上。联合训练中未来视觉查询可关注干净的演示动作副本，增强动作与视觉的耦合。实验证明该方法能提升机器人控制的速度和动作关联准确性。",
+      "llm_tldr": "世界动作模型在联合建模动作与未来观测时，若只依赖任务提示和观测上下文，容易学到通用任务演化而非动作的具体后果。SelfWAM通过模态专用的混合Transformer架构，统一预测动作、动作条件下的未来RGB帧和机器人自掩膜，将未来预测锚定在机器人可见本体与动作引发的运动上。联合训练中未来视觉查询可关注干净的演示动作副本，增强动作与视觉的耦合。实验证明该方法能提升机器人控制的速度和动作关联准确性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.01066v1",
+      "source": "arxiv",
+      "title": "OC-VLA++: Monocular Geometry-Guided Cross-View Consistency for Viewpoint-Robust Robotic Manipulation",
+      "abstract": "We propose OC-VLA++, an extension of OC-VLA for viewpoint generalization under limited camera coverage. While OC-VLA grounds robot actions in the camera coordinate system to align action supervision with visual observations, camera-space grounding alone can still overfit to the few viewpoints observed during training. OC-VLA++ addresses this limitation by introducing geometry-guided paired-view supervision and an explicit cross-view action-equivariance objective. Given paired observations of the same manipulation scene from geometrically related viewpoints, the model is trained such that their camera-space predictions correspond to the same robot-frame action. This objective explicitly supervises how action predictions should transform across viewpoints, rather than relying solely on image-level augmentation. Experiments demonstrate substantial improvements in unseen-view generalization under limited camera coverage, with performance degrading more gracefully under increasing camera displacement. These results establish cross-view action equivariance as an effective complement to observation-centric action grounding for robust real-world deployment.",
+      "authors": [
+        "Tianyi Zhang",
+        "Ziyang Gong",
+        "Zhenjie Yang",
+        "Zhe Qian",
+        "Haonan Duan"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-02T08:06:20+00:00",
+      "link": "https://arxiv.org/pdf/2608.01066v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Presents a geometry-guided cross-view consistency method for VLA manipulation policies trained from demonstration data; relevant to recent imitation-learning advances for manipulation.",
+      "llm_evidence_cn": "提出面向VLA操作策略的几何引导跨视角一致性训练，属于基于演示学习的机器人操作最新进展。",
+      "llm_evidence": "提出面向VLA操作策略的几何引导跨视角一致性训练，属于基于演示学习的机器人操作最新进展。",
+      "canonical_evidence": "提出面向VLA操作策略的几何引导跨视角一致性训练，属于基于演示学习的机器人操作最新进展。",
+      "llm_tldr_en": "OC-VLA++ adds geometry-guided paired-view supervision and cross-view action-equivariance to VLA manipulation policies, improving viewpoint robustness under limited camera coverage.",
+      "llm_tldr_cn": "针对VLA操作模型在有限相机视角下容易过拟合的问题，OC-VLA++提出几何引导的成对视角监督与跨视角动作等变性目标。该目标要求几何相关的两个视角预测出同一机器人坐标系下的动作，从而显式约束动作预测的视角不变性。实验表明在相机覆盖有限的情况下，它相比原方法显著提升视角泛化能力。这项工作为基于演示学习的机器人操作策略提供了一种重要的训练增强思路。",
+      "llm_tldr": "针对VLA操作模型在有限相机视角下容易过拟合的问题，OC-VLA++提出几何引导的成对视角监督与跨视角动作等变性目标。该目标要求几何相关的两个视角预测出同一机器人坐标系下的动作，从而显式约束动作预测的视角不变性。实验表明在相机覆盖有限的情况下，它相比原方法显著提升视角泛化能力。这项工作为基于演示学习的机器人操作策略提供了一种重要的训练增强思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.02580v1",
+      "source": "arxiv",
+      "title": "Ego2Robot: Scalable Robot Data Synthesis from Egocentric Human Data",
+      "abstract": "Learning generalizable robot manipulation policies requires large-scale and diverse demonstration data. Egocentric human manipulation videos offer rich scene and task diversity, and prior work has shown that retargeting and rendering such videos into robot-format data can yield effective per-task policies at small scale. However, whether this approach can provide pretraining benefits for vision-language-action models at scale remains unexplored. We present \\textbf{Ego2Robot}, a scalable pipeline that converts egocentric human manipulation videos into robot training data through action retargeting, robot-arm visual synthesis, and multi-level quality curation. Ego2Robot supports both curated datasets and in-the-wild videos, producing 18,561 hours of robot training data spanning 15 robot morphologies, making it the largest ego-to-robot dataset to date. To evaluate generalization, we extend RoboTwin2.0 with disentangled perturbation axes covering visual appearance, scene layout, embodiment morphology, and task semantics. Experiments show that joint pretraining on Ego2Robot-synthesized and robot data consistently improves out-of-distribution generalization across multiple perturbation types, with benefits validated on real-robot deployment. Project page: https://www-ye.github.io/ego2robot_blog/",
+      "authors": [
+        "Ye Wang",
+        "Pei Lin",
+        "Xiong-Hui Chen",
+        "Haoqi Yuan",
+        "Zhixuan Liang",
+        "Yiyang Huang",
+        "Anzhe Chen",
+        "Zixing Lei",
+        "Jie Zhang",
+        "Tao Zhang",
+        "Haoyang Li",
+        "Tong Zhang",
+        "Chenxi Xiao",
+        "Ziyuan Jiao",
+        "Qin Jin"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-03T17:52:26+00:00",
+      "link": "https://arxiv.org/pdf/2608.02580v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Scalable synthesis of robot demonstration data from egocentric human videos for vision-language-action models",
+      "llm_evidence_cn": "从人类第一视角视频大规模合成机器人示教数据以训练视觉-语言-动作模型",
+      "llm_evidence": "从人类第一视角视频大规模合成机器人示教数据以训练视觉-语言-动作模型",
+      "canonical_evidence": "从人类第一视角视频大规模合成机器人示教数据以训练视觉-语言-动作模型",
+      "llm_tldr_en": "Ego2Robot scalably converts egocentric human manipulation videos into robot training data via action retargeting, visual synthesis, and quality curation, producing 18,561 hours of robot data.",
+      "llm_tldr_cn": "学习泛化的机器人操作策略需要大规模多样的示教数据，而人类第一视角视频提供了丰富场景。本文提出Ego2Robot流程，通过动作重定向、机械臂视觉合成和多级质量筛选，将人类操作视频转化为机器人训练数据。该方法支持精选数据集和野外视频，生成了18561小时的机器人数据。这使得在规模上为视觉语言动作模型提供预训练数据成为可能，推动机器人操作模仿学习的数据规模扩展。",
+      "llm_tldr": "学习泛化的机器人操作策略需要大规模多样的示教数据，而人类第一视角视频提供了丰富场景。本文提出Ego2Robot流程，通过动作重定向、机械臂视觉合成和多级质量筛选，将人类操作视频转化为机器人训练数据。该方法支持精选数据集和野外视频，生成了18561小时的机器人数据。这使得在规模上为视觉语言动作模型提供预训练数据成为可能，推动机器人操作模仿学习的数据规模扩展。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.00793v1",
+      "source": "arxiv",
+      "title": "DynamicWAM: Dual-Path Motion Conditioning for World-Action Models in Dynamic Manipulation",
+      "abstract": "Dynamic manipulation requires robots to infer target motion and respond promptly, yet existing World-Action Models (WAMs) typically condition only on the current frame and execute large backbones synchronously, limiting motion awareness and responsive control in dynamic scenes. We propose DynamicWAM, a compact WAM for dynamic object manipulation with dual-path motion conditioning. DynamicWAM introduces history-flow conditioning, encoding temporally aligned optical-flow frames alongside the current observation through a frozen pretrained video VAE to preserve spatial motion structure, while injecting kinematic descriptors of displacement, duration, velocity, and acceleration into the action expert to provide motion magnitude and timing. The two complementary paths are fused through joint world-action attention. A distilled compact backbone and real-time chunking (RTC)-based asynchronous execution further enable responsive control. On DOMINO, DynamicWAM achieves a 38.2% success rate and a 53.2 manipulation score, outperforming all evaluated baselines. Across 12 real-world tasks spanning linear, circular, and compound target motion, it achieves a 46.7% average success rate, exceeding the strongest baseline by 22.9 percentage points.",
+      "authors": [
+        "Yunfan Lou",
+        "Hewen Gao",
+        "Xiyu Zhu",
+        "Zhuoran Qiao",
+        "Xuan Han",
+        "Yifan Yang",
+        "Yifan Ye",
+        "Boxian Yao",
+        "Zhibo Pang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-01T17:49:39+00:00",
+      "link": "https://arxiv.org/pdf/2608.00793v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Dynamic manipulation policy with motion-conditioned world-action model",
+      "llm_evidence_cn": "面向动态操作策略的世界动作模型运动条件化方法",
+      "llm_evidence": "面向动态操作策略的世界动作模型运动条件化方法",
+      "canonical_evidence": "面向动态操作策略的世界动作模型运动条件化方法",
+      "llm_tldr_en": "Presents DynamicWAM, a compact world-action model for dynamic object manipulation using dual-path motion conditioning from optical flow and kinematic descriptors to enable responsive control.",
+      "llm_tldr_cn": "动态操作要求机器人快速推断目标运动并作出响应，而现有关注动作模型只利用当前帧且骨干网络庞大，难以满足实时性。DynamicWAM引入历史光流条件和位移、速度等运动学描述子，在双路径中分别处理空间运动结构和运动幅度与时序。该紧凑模型在保持运动感知的同时实现更快速的响应控制。实验证明其在动态物体操作任务上的有效性。",
+      "llm_tldr": "动态操作要求机器人快速推断目标运动并作出响应，而现有关注动作模型只利用当前帧且骨干网络庞大，难以满足实时性。DynamicWAM引入历史光流条件和位移、速度等运动学描述子，在双路径中分别处理空间运动结构和运动幅度与时序。该紧凑模型在保持运动感知的同时实现更快速的响应控制。实验证明其在动态物体操作任务上的有效性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.01851v1",
+      "source": "arxiv",
+      "title": "Weights or Skills? A Survey of Robot-Learning Techniques: from Action-Predicting Weights to Robots that Write their Own Skills",
+      "abstract": "Robot learning is splitting into two bets: policies that bake competence into frozen weights (vision-language-action, or VLA, models), and agents that write and refine their own executable skills as code. This survey organises the field around that axis of weights versus skills. Its central analytical contribution is a deep-dive that arranges code-as-policy methods by their degree of self-improvement, from zero-shot program synthesis, through closed-loop self-repair and persistent skill memory, to the sparsely populated cell in which execution feedback, skill memory, and evolutionary search combine into one open-ended loop; only a few very recent systems (for example ASPIRE, ENPIRE, and RoboClaw) occupy that cell. We map the complementary \"skills\" pole, from unsupervised reinforcement-learning skill discovery to large-language-model skill libraries, and show that the word \"skill\" is used in at least five distinct senses, of which only the code sense self-improves without gradient updates. We then connect the taxonomy to the emerging skill economy: commercial robot-skill marketplaces now distribute one-tap skills across robots but ship only static playback, which surfaces open problems of adaptation, cross-embodiment portability, provenance, safety verification, composition, and standardisation. This is a deliberately focused survey. Rather than cataloguing the field exhaustively, it examines 77 representative systems across six technique families through one taxonomy and a set of contrast tables, and it supplies operational definitions of the self-improvement mechanisms together with a statement of what each family cannot do.",
+      "authors": [
+        "Gaytri Jena",
+        "Kapil Wanaskar",
+        "Vinija Jain",
+        "Aman Chadha",
+        "Vasu Sharma",
+        "Amitava Das"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-08-03T07:58:35+00:00",
+      "link": "https://arxiv.org/pdf/2608.01851v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Survey of robot-learning techniques covering VLA action-predicting policies and code-as-policy skills, broadly relevant to imitation-based robot learning.",
+      "llm_evidence_cn": "综述机器人学习技术，涵盖行为克隆类视觉-语言-动作模型与技能生成方法，与机器人模仿学习相关。",
+      "llm_evidence": "综述机器人学习技术，涵盖行为克隆类视觉-语言-动作模型与技能生成方法，与机器人模仿学习相关。",
+      "canonical_evidence": "综述机器人学习技术，涵盖行为克隆类视觉-语言-动作模型与技能生成方法，与机器人模仿学习相关。",
+      "llm_tldr_en": "Surveys robot-learning around action-predicting weights (VLA models) versus self-written skills, organising code-as-policy methods by self-improvement level.",
+      "llm_tldr_cn": "这篇综述围绕两条路线梳理机器人学习技术：将行为编码进网络权重的视觉-语言-动作模型，以及让机器人自行编写和优化技能代码的智能体。文章以技能代码方法的自我改进程度为主线，从零样本程序合成到闭环自修复、持久技能记忆，再到开放式的进化搜索组合。该工作为理解当前模仿学习与机器人策略学习方法的谱系提供了系统的分析框架。",
+      "llm_tldr": "这篇综述围绕两条路线梳理机器人学习技术：将行为编码进网络权重的视觉-语言-动作模型，以及让机器人自行编写和优化技能代码的智能体。文章以技能代码方法的自我改进程度为主线，从零样本程序合成到闭环自修复、持久技能记忆，再到开放式的进化搜索组合。该工作为理解当前模仿学习与机器人策略学习方法的谱系提供了系统的分析框架。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.02257v1",
+      "source": "arxiv",
+      "title": "Learning Panorama-Aware VLA for Mobile Manipulation with Whole-Body Teleoperation",
+      "abstract": "Mobile manipulation is a key capability for embodied intelligence, enabling robots to accomplish complex multi-stage tasks in open-world environments. However, mobile manipulation poses two key challenges for vision-language-action (VLA) policies: At the data level, the efficient collection of high-quality whole-body demonstrations demands the coordinated control of both the mobile base and the robotic arms; at the model level, existing VLA models predominantly rely on local camera observations, whose limited field of view hinders global spatial understanding. To address these challenges, we develop a whole-body teleoperation system and a panoramic-aware VLA policy. The system enables coordinated control of a wheeled bimanual robot through a single VR interface and supports the acquisition of a real-world mobile manipulation dataset comprising 5.5 hours of multimodal demonstrations. Building upon this dataset, we propose PanoVLA, a panorama-aware vision-language-action policy for mobile bimanual manipulation. Built upon a Mixture-of-Transformers architecture, PanoVLA introduces global spatial context through dedicated panorama encoding and fusion modules, enabling effective integration of panoramic observations with language instructions and robot states for action generation. Evaluation on four real-world mobile manipulation tasks demonstrates that PanoVLA achieves an average stage completion rate of 91.3\\% and an end-to-end success rate of 73.4\\%, substantially outperforming local-view baselines. These results demonstrate that incorporating panoramic spatial context improves spatial understanding and closed-loop manipulation performance in mobile robots.",
+      "authors": [
+        "Donglin Yang",
+        "Haoran Chen",
+        "Xingyu Chen",
+        "Lixing Liu",
+        "Manyi Li",
+        "Changhe Tu",
+        "Ke Xu",
+        "Xiaojian Ma",
+        "Si Liu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-03T14:03:26+00:00",
+      "link": "https://arxiv.org/pdf/2608.02257v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "whole-body teleoperation and panoramic VLA policy for mobile manipulation",
+      "llm_evidence_cn": "全身遥操作与全景感知VLA策略，用于移动操作学习",
+      "llm_evidence": "全身遥操作与全景感知VLA策略，用于移动操作学习",
+      "canonical_evidence": "全身遥操作与全景感知VLA策略，用于移动操作学习",
+      "llm_tldr_en": "This paper introduces a whole-body teleoperation system for collecting coordinated mobile-base and arm demonstrations, and a panorama-aware VLA policy that uses panoramic observations for better global spatial understanding in mobile manipulation.",
+      "llm_tldr_cn": "移动操作需要同时协调移动底盘和机械臂，但现有VLA策略多依赖视野受限的局部相机观察，难以获得全局空间理解。该文开发全身遥操作系统，可高效采集移动双机械臂机器人的全身演示数据；同时提出全景感知VLA策略，利用全景观察增强对全局空间的理解。通过整机数据与模型设计，提升了移动操作策略在多阶段开放世界任务中的表现。该工作为移动操作模仿学习提供了数据采集和模型架构的配套方案。",
+      "llm_tldr": "移动操作需要同时协调移动底盘和机械臂，但现有VLA策略多依赖视野受限的局部相机观察，难以获得全局空间理解。该文开发全身遥操作系统，可高效采集移动双机械臂机器人的全身演示数据；同时提出全景感知VLA策略，利用全景观察增强对全局空间的理解。通过整机数据与模型设计，提升了移动操作策略在多阶段开放世界任务中的表现。该工作为移动操作模仿学习提供了数据采集和模型架构的配套方案。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.02385v1",
+      "source": "arxiv",
+      "title": "StableMimic: Smooth Human-Like Recovery for Humanoid Motion Tracking - Learning Beyond the Tracking Distribution for Structured Post-Fall Behavior",
+      "abstract": "Humanoid motion trackers perform reliably within learned tracking distributions, but falls can move the robot into low-height, contact-rich states from which an advancing command is temporarily unreachable. Tracking-only policies may chase infeasible references, producing rapid, large-amplitude limb corrections that increase risk to the robot and its surroundings. We present StableMimic, a unified tracker trained beyond the nominal tracking distribution. Perturbed resets around multiple human get-up references expose prone, supine, off-balance, and intermediate ground-contact states, shaping structured recovery that returns the robot to the trackable region. Because tracking and recovery occupy markedly different state--action distributions, StableMimic uses dedicated experts for each regime and a proprioceptive gate that continuously blends their actions. A hidden successor-state objective teaches human-reference-shaped recovery without exposing reference identity or phase to the deployed Actor; deployment requires no get-up reference, recovery command, trajectory retrieval, or external policy switch. On the complete retargeted LAFAN1 dance subset, StableMimic achieves the lowest errors on all four tracking metrics among five methods. Across 100 matched push-to-fall trials per method, it recovers in 100/100 and attains the lowest values on six of seven post-fall motion and load measures, supporting improved interaction safety under this protocol. Real Unitree G1 dance and standing-reference deployments qualitatively demonstrate bounded limb motion, autonomous recovery, and command resumption.",
+      "authors": [
+        "Weihao Wu",
+        "Ming Huang",
+        "Ruofei Liu",
+        "Jinglei Nie",
+        "Shuxiang Guo",
+        "Chunying Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-03T15:27:53+00:00",
+      "link": "https://arxiv.org/pdf/2608.02385v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "humanoid motion tracking with human get-up references, imitation-like policy learning for robotics",
+      "llm_evidence_cn": "基于人类起身参考的人形运动跟踪，类似模仿学习的策略训练",
+      "llm_evidence": "基于人类起身参考的人形运动跟踪，类似模仿学习的策略训练",
+      "canonical_evidence": "基于人类起身参考的人形运动跟踪，类似模仿学习的策略训练",
+      "llm_tldr_en": "StableMimic trains a unified humanoid tracker beyond the nominal tracking distribution, using perturbed resets and multiple human get-up references to learn structured post-fall recovery that smoothly returns the robot to the trackable region.",
+      "llm_tldr_cn": "人形运动跟踪器在跌倒后的低高度接触状态可能无法执行前进指令，并产生危险的大幅肢体修正。StableMimic通过在标称跟踪分布之外添加扰动复位，并参考多个人类起身动作，学习结构化恢复行为，使机器人能安全返回可跟踪区域，提升了跟踪策略的鲁棒性和安全性。",
+      "llm_tldr": "人形运动跟踪器在跌倒后的低高度接触状态可能无法执行前进指令，并产生危险的大幅肢体修正。StableMimic通过在标称跟踪分布之外添加扰动复位，并参考多个人类起身动作，学习结构化恢复行为，使机器人能安全返回可跟踪区域，提升了跟踪策略的鲁棒性和安全性。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

@@ -1,0 +1,494 @@
+Title: StableMimic: Smooth Human-Like Recovery for Humanoid Motion Tracking - Learning Beyond the Tracking Distribution for Structured Post-Fall Behavior
+
+URL Source: https://arxiv.org/pdf/2608.02385v1
+
+Published Time: Tue, 04 Aug 2026 02:36:20 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# StableMimic: Smooth Human-Like Recovery for Humanoid Motion Tracking 
+
+Learning Beyond the Tracking Distribution for Structured Post-Fall Behavior 
+
+Weihao Wu, Ming Huang, Ruofei Liu, Jinglei Nie, Shuxiang Guo ∗, and Chunying Li ∗
+
+Fig. 1. StableMimic overview. One policy tracks a continuously advancing whole-body command, routes fall-induced proprioceptive states toward recovery, and resumes tracking after command reacquisition. No external recovery trigger or runtime get-up reference is used. 
+
+Abstract —Humanoid motion trackers perform reliably within learned tracking distributions, but falls can move the robot into low-height, contact-rich states from which an advancing command is temporarily unreachable. Tracking-only policies may chase infeasible references, producing rapid, large-amplitude limb corrections that increase risk to the robot and its surround-ings. We present StableMimic, a unified tracker trained beyond the nominal tracking distribution. Perturbed resets around mul-tiple human get-up references expose prone, supine, off-balance, and intermediate ground-contact states, shaping structured re-covery that returns the robot to the trackable region. Because tracking and recovery occupy markedly different state–action distributions, StableMimic uses dedicated experts for each regime and a proprioceptive gate that continuously blends their actions. A hidden successor-state objective teaches human-reference-shaped recovery without exposing reference identity or phase to the deployed Actor; deployment requires no get-up reference, recovery command, trajectory retrieval, or external policy switch. On the complete retargeted LAFAN1 dance subset, StableMimic 
+
+All authors are with the Southern University of Science and Technology (SUSTech), Shenzhen, China. 
+
+> ∗
+
+Corresponding authors: Shuxiang Guo and Chunying Li. 
+
+achieves the lowest errors on all four tracking metrics among five methods. Across 100 matched push-to-fall trials per method, it recovers in 100/100 and attains the lowest values on six of seven post-fall motion and load measures, supporting improved interaction safety under this protocol. Real Unitree G1 dance and standing-reference deployments qualitatively demonstrate bounded limb motion, autonomous recovery, and command resumption. 
+
+I. I NTRODUCTION 
+
+Humanoid motion trackers support animation, motion cap-ture, and teleoperation, but unexpected contacts and modeling errors can drive them outside the command’s trackable distri-bution, where chasing an infeasible reference produces rapid, large-workspace post-fall motion that increases risk to the robot and its surroundings. Existing pipelines often separate tracking from stand-up recovery [1]–[3], whereas tracking-centric objectives such as BeyondMimic and SONIC do not prescribe a human-shaped response outside their learned track-ing corridor [4], [5]. arXiv:2608.02385v1 [cs.RO] 3 Aug 2026 TABLE I COMPARISON OF REPRESENTATIVE HUMANOID TRACKING AND RECOVERY SYSTEMS . H UMAN GET -U P REF .: “T RAINING REQUIRED ” MEANS TRAINING ONLY ; N O GET -U P CMD .: NO SEPARATE COMMAND OR RECOVERY CONTROLLER ; T RAINING COMPUTE : QUALITATIVE DEMAND OF THE COMPLETE PIPELINE . C HECKMARKS DENOTE EXPLICIT SUPPORT AND “–” NOT APPLICABLE .                                          
+
+> System Motion Tracking Autonomous Recovery Human Get-Up Ref. No Get-Up Cmd. Resume Command Training Compute
+> BeyondMimic [4] ✓××–×Moderate SONIC [5] ✓××–×High KungFuAthlete [6] ✓✓×✓✓Moderate BFM-Zero [7] ✓✓Training required ✓✓High HoST [2] ×✓×××Moderate HumanUP [3] ×✓×××Moderate
+> StableMimic (Ours) ✓✓Training required ✓✓Moderate
+
+StableMimic addresses this gap with one deployable policy for command tracking and human-reference-shaped recovery. Perturbed get-up resets expand training beyond the command distribution, while hidden successor-state rewards guide re-covery and command resumption without exposing reference identity, phase, or a recovery command. Because tracking and recovery occupy markedly different distributions, a proprioception-gated dual-expert MoE dedi-cates one expert to each regime and continuously blends their actions without a privileged recovery flag or hard runtime switch. Fig. 1 summarizes the tracking–disturbance–recovery– reacquisition lifecycle. Our contributions are:  
+
+> •
+
+A proprioception-gated dual-expert MoE that blends tracking and recovery within one deployable policy.  
+
+> •
+
+A lightweight behavioral foundation for humanoid track-ing and recovery that augments nominal tracking with perturbed get-up references and a hidden successor-state objective, without requiring recovery-specific references or commands at deployment.  
+
+> •
+
+Matched G1 experiments covering complete tracking, 100-trial recovery, post-fall motion and load, MoE dy-namics, and hardware deployment. II. R ELATED WORK 
+
+Table I provides an overview of the task-level distinctions developed in the following discussion. 
+
+A. Motion Tracking and Recovery-Enabled Control 
+
+DeepMimic established physics-based reference track-ing [8]; AMP broadened skill learning through adversarial motion priors [9]; and BeyondMimic and SONIC scaled humanoid tracking to diverse motions [4], [5]. KungFuAth-lete additionally learns fall-resilient tracking [6], Embrace Collisions targets intentionally contact-rich commands [10], and BFM-Zero learns broad prompt-conditioned behaviors [7]. StableMimic instead studies an unplanned fall during tracking, reference-shaped recovery without a runtime get-up command, and resumption of the uninterrupted command; quantitative comparisons therefore use only the matched protocol in Sec. IV. 
+
+B. Stand-Up and Fall-Safety Policies 
+
+FRASA studies end-to-end fall recovery [1], HoST learns stand-up control across postures and terrains [2], and Hu-manUP separates get-up discovery from deployment-oriented motion refinement [3]. Complementary fall-safety work pre-dicts unavoidable falls and learns protective control (Safe-Fall) [11], optimizes soft terminal poses (Robot Crash Course) [12], or unifies prevention, impact mitigation, and recovery from sparse demonstrations (FIRM) [13]. These methods primarily formulate stand-up or fall safety as a task distinct from continuous command tracking. Our focus is human-reference-shaped recovery embedded in one always-online motion tracker that subsequently resumes its command. 
+
+C. Modular Reinforcement Learning and Asymmetric Training 
+
+Mixture-of-experts routing combines specialized subnet-works [14], while soft modularization reduces destructive sharing in multi-task RL [15]. Actor–critic mixtures have specialized locomotion over terrain [16]; later robotic multi-expert policies compose locomotion and recovery skills [17], and curricula encourage context-dependent specialization [18]. CMoE uses terrain-conditioned contrastive routing for multi-terrain humanoid locomotion [19]; StableMimic instead uses training-only regime supervision to route between tracking and post-fall recovery. Unlike a hierarchy invoking separate controllers [20], StableMimic evaluates both experts continu-ously and blends their means. Asymmetric actor–critic training supplies hidden references and simulator state only to value learning and auxiliary supervision [21]; PPO jointly optimizes the deployable experts and gate [22]. III. M ETHOD 
+
+A. Problem Formulation and Information Boundary 
+
+StableMimic is one deployable policy with two specialized experts: a commanded-motion expert and a recovery expert, continuously blended by a proprioceptive soft gate (Fig. 2). Both experts receive the live command and deployable obser-vation history, whereas the gate receives proprioception only. Training-only recovery references construct resets, rewards, and Critic inputs; deployment retains only the jointly trained Fig. 2. StableMimic method overview. Both experts receive the live command and deployable observation history, while the gate uses proprioceptive history only. The get-up library supplies training-only resets, rewards, and privileged Critic inputs and is removed at deployment. The inset qualitatively illustrates soft recovery routing rather than a measured trace. 
+
+Actor. Fig. 3 details the recovery objective and gate supervi-sion. 
+
+a) Actor-visible and training-only information: The de-ployable observation is 
+
+oπt = H4
+
+ ocmd  
+
+> t
+
+, 0get , o prop  
+
+> t
+
+, a t−1
+
+ , (1) where H4 concatenates four consecutive samples. The live command remains visible throughout falling, recovery, and re-sumption; oprop  
+
+> t
+
+contains IMU-compatible signals, joint states, and recent actions. Fixed-size get-up slots are permanently masked, hence 0get is zero in every Actor sample. Training-only get-up features and uncorrupted state enter the Critic; reference ID/frame remain in reset/reward logic, while re-covery/transition targets supervise only the Gate loss. None enters the deployed Actor or serves as a behavior-cloning label (Table II). 
+
+TABLE II TRAINING AND DEPLOYMENT INFORMATION BOUNDARY . T RAINING ONLY : A DAGGER (†) MARKS QUANTITIES REMOVED AFTER OPTIMIZATION ; G ATE SUPERVISION : THE AUXILIARY ROUTING TARGET IS NEVER PROVIDED AS A GATE INPUT .Information Experts Gate Critic Reset/reward Deployment Live motion command Yes No Yes Yes Yes Proprioceptive history Yes Input Yes State only Yes Get-up reference features Always zero No Active ref. † Active ref. † Always zero Reference ID/frame index No No No Yes † No Recovery/transition target No Loss only † No Yes † No Privileged simulator state No No Yes † Yes † No 
+
+B. Recovery Support Beyond the Tracking Tube 
+
+Let Tϵ denote a local tube around the commanded state curve and Rδ the union of sampled, perturbed neighborhoods around the get-up references (Fig. 4). These are empirical supports, not formal reachability sets. Training alternates equally between commanded-motion and recovery resets. For recovery, a trajectory j and frame k are sampled, the corresponding state is perturbed, and the same hidden reference advances for that episode: 
+
+(j, k ) ∼ preset , st = P(sget ,j k ; ϵ),at ∼ πθ (ot), st+1 ∼ p(· | st, a t),rmimic  
+
+> t
+
+= K(st+1 , s get ,j k+1 ).
+
+(2) Thus PPO learns actions whose physical successor approaches the next hidden reference state. Because j, k, and the reference are masked, this is neither action cloning nor online trajectory retrieval; the policy must infer recovery from its current physical history. Recovery resets perturb root pose, velocity, and joints around prone, supine, and intermediate reference frames (ranges in Appendix Table V). A failure-adaptive sampler mixes hard-frame sampling equally with uniform sampling. Together, these mechanisms thicken discrete demonstrations into local low-height, contact, and off-balance neighborhoods; states beyond this sampled support are outside our claim. During recovery, termination and reward are evaluated against the active get-up target, not the still-visible command. Target error persisting for 2.0 s terminates the episode, while terminal similarity initiates a 1.5-s transition back to the advancing command. Failed phase bins receive greater future sampling probability. Fig. 4 summarizes the relationship between the local command-tracking tube and the sampled recovery support. 
+
+C. Proprioception-Gated Dual-Expert Actor 
+
+The Single-MLP baseline routes tracking and recovery advantages through one parameter set, allowing updates from Fig. 3. Recovery-reference learning and gate supervision. (A) Perturbed get-up states and a permanently masked reference define the successor-state reward and transition back to command tracking. (B) Rollout labels and the relative-height safeguard form a training-only soft target; deployment retains only proprioceptive routing and continuous expert-mean fusion. Dashed supervision paths are removed from the exported Actor.       
+
+> Fig. 4. Conceptual state–time view of the learned support. The blue curve and
+> Tϵdenote the command and its locally trackable neighborhood; Rδdenotes sampled neighborhoods around perturbed get-up references. A state leaving
+> Tϵbut remaining in Rδis routed toward recovery until tracking becomes feasible again.
+
+either regime to perturb features needed by the other. Sta-bleMimic instead applies soft modularization [15] while re-taining a shared observation/action interface. Each expert maps the same command-conditioned deploy-able history to a joint-target mean, while the gate uses only the proprioceptive part of that history: base angular velocity, projected gravity, joint position, joint velocity, and previous action. It contains neither command/reference features nor a recovery-stage variable. Routing and action blending are 
+
+μmt = fm(oπt ), μrt = fr (oπt ),
+
+[wmt , w rt ] = softmax( fg (oprop  
+
+> t
+
+)/τ ),μt = wmt μmt + wrt μrt .
+
+(3) The policy samples a Gaussian with shared learned variance around μt; soft blending avoids a discrete action switch. 
+
+a) Auxiliary gate supervision: During training only, the rollout regime defines the gate target yt: tracking favors (1 , 0) ,recovery favors (0 , 1) , and the 1.5-s transition interpolates smoothly. A recovered-like reset retains the tracking target when hreset base ≥ 0.8hcmd . Cross-entropy promotes specializa-tion, within-regime temporal consistency regularizes routing, and transition samples align expert outputs. These labels and the relative-height safeguard are privileged supervision, never policy inputs or runtime switches (Fig. 3(B)). Command-near states, including low or ground-contact poses, always retain tracking targets; consequently, the four-frame Gate learns recovery-specific temporal proprioceptive patterns rather than treating any commanded pose as a recov-ery cue. 
+
+b) Recovery objective: Whole-body imitation shapes re-covery toward the demonstrated human motion, while action-rate, joint-limit, self-collision, and power penalties discourage aggressive corrections; these choices are load-aware but do not certify safety. Command and get-up targets use the same Gaussian-kernel form and the same six error families: root position/orientation and body position/orientation/linear-velocity/angular-velocity. Command tracking uses the full aligned root-position error, whereas recovery uses root height so that a translated get-up remains valid. Let Kcmd and Kget denote the two unscaled similarity kernels, and let λcmd , λget , and λtrans denote the regime coefficients. The reference-tracking part of the reward is selected by the training regime: 
+
+Kct (s, ¯s) = 
+
+> 6
+
+X
+
+> i=1
+
+wi exp  −∥ ect 
+
+> i
+
+(s, ¯s)∥2/σ 2
+
+> i
+
+ ,rref  
+
+> t
+
+=
+
+
+
+λget Kget (st+1 , s get ,j k+1 ), recovery ,αtλtrans Kcmd (st+1 , s cmd  
+
+> t+1
+
+), transition ,λcmd Kcmd (st+1 , s cmd  
+
+> t+1
+
+), tracking ,rt = rref  
+
+> t
+
++ rreg  
+
+> t
+
++ rsuccess  
+
+> t
+
+.
+
+(4) During recovery, the live command remains observable but its tracking reward is zero; only the hidden get-up target supplies the reference term. Its coefficient is 2.5 times the nominal command coefficient, which strengthens this phase without implying a 2.5× realized return. Regularization remains active, and the transition removes the get-up term while introducing command tracking smoothly. The demonstrated style therefore shapes behavior only within the sampled perturbation support. 
+
+D. Optimization and Get-Up-Reference-Free Deployment 
+
+We optimize the Actor and privileged Critic with standard clipped PPO [22]. The loss additionally contains gate-target cross-entropy, within-regime routing consistency, and transi-tion expert-alignment terms; gradients through Eq. (3) route most tracking and recovery updates toward their corresponding experts. Failed recovery truncates return, whereas successful recovery retains subsequent command-tracking return. The Single-MLP ablation shares the observation, action, Critic, and PPO settings but uses a widened 1024–512–256 backbone, with twice the hidden width of each expert at every layer. Its 1.57-M-parameter Actor is larger than the 1.30-M-parameter MoE Actor, so increased total Actor capacity alone cannot explain an MoE advantage. Dimensions and optimization settings appear in Appendix Table V. 
+
+a) Get-up-reference-free deployment and tracking re-sumption: At deployment, the library, phase labels, rewards, and Critic are absent; there is no get-up-reference lookup, recovery command, or hard switch. The gate infers routing from proprioceptive history and returns authority to tracking after command reacquisition. 
+
+b) Reference alignment: Horizontal translation is re-aligned to the recovered pose while command yaw and local motion continuity are retained, avoiding pursuit of an unreach-able pre-fall position. 
+
+c) Training setup: Training uses equal tracking/recovery episode probability, observation corruption, and dynamics ran-domization; Appendix Table V collects numerical settings. IV. E XPERIMENTS 
+
+A. Experimental Setup a) Tasks and protocols: Experiments use the Unitree G1 and retargeted LAFAN1 motions [23]. The training-only get-up library is constructed from the retargeted LAFAN1 get-up subset; tracking commands use its dance subset, and the two are sequence-disjoint. We evaluate two coupled capabili-ties: complete-sequence tracking over all LAFAN1 dance se-quences, and post-fall recovery followed by command resump-tion. All policies run in one nominal MuJoCo G1 environment with common actuator limits and metrics, a 0.005 s simulation step, and deterministic actions at 50 Hz . Tracking runs to sequence completion, whereas recovery uses a 20 s horizon. Test randomization, observation corruption, delay, and early termination are disabled. The recovery protocol uses the same 100 pre-generated disturbances for every method: 25 per direction in 
+
+{+x, −x, +y, −y}, each a 0.2 s horizontal torso force strat-ified from 525 to 575 N . Pose-conditioned policies receive a held command, KungFuAthlete an advancing command, and BFM-Zero its native goal interface. StableMimic retains its live command and proprioception but receives no get-up reference, phase, motion ID, recovery flag, or target action. 
+
+b) Comparison methods: We compare StableMimic with its Single-MLP ablation, a BeyondMimic-style tracker [4], KungFuAthlete [6], and BFM-Zero [7]. The Single-MLP policy shares the observation, action, Critic, reward, and PPO settings of StableMimic but replaces the gated experts with one widened 1024–512–256 backbone whose parameter count exceeds that of the complete MoE Actor. BeyondMimic provides a tracking-only comparison, while KungFuAthlete and BFM-Zero provide recovery-capable comparisons through their supported command interfaces. All baselines retain their original training procedures. 
+
+c) Evaluation metrics: For tracking, we exclude world translation and heading drift. For each of the B = 14 
+
+common key bodies, measured and reference positions are expressed relative to their respective pelvis and rotated into their respective pelvis-yaw frames, yielding ¯pt,b and ¯pref  
+
+> t,b
+
+. Our primary metric is 
+
+EMPBPE = 10 3
+
+T B 
+
+X
+
+> t,b
+
+∥¯pt,b − ¯pref  
+
+> t,b
+
+∥2. (5) We additionally report mean absolute joint-angle error (MJAE), joint-velocity error (MJAVE), and the Cartesian second-difference error of the same pelvis-relative bodies. A fall begins when pelvis height drops below 0.50 m or pelvis tilt exceeds 60 ◦. Recovery requires a structured get-up and tracking resumption without resetting the policy or command, and all 100 trials remain in the success denomi-nator. Motion, control-output, and load metrics are computed over the fixed three seconds after the first fallen frame across all trials. Instantaneous motion, target-rate, and simulated actuator-torque signals use the within-trial 95th percentile, whereas limb path and positive energy are window integrals. Here qtar is the physical PD joint-position target after action scaling, and τ is the executed simulated actuator torque after controller and effort limiting. Pelvis displacement spans fall to detected recovery, or rollout end if unsuccessful. 
+
+B. Main Simulation Results 1) Complete-Sequence Motion Tracking: All methods tra-verse the complete LAFAN1 dance stream from beginning to end. A common initialization interval is executed but excluded from aggregation.                            
+
+> TABLE III COMPLETE -SEQUENCE TRACKING OVER ALL RETARGETED LAFAN1
+> DANCE SEQUENCES . P ROTOCOL :ALL METHODS USE THE SAME DETERMINISTIC EVALUATION ; A LIGNMENT :BODY -POSITION ERRORS ARE ROOT -YAW ALIGNED ; R ANKING :LOWER IS BETTER ,AND BOLDFACE MARKS THE BEST RESULT .
+> Method MPBPE (mm) MJAE (10 −3rad) MJAVE (10 −3rad/s) Rel. acc. (mm/frame 2)BeyondMimic 32.37 104.50 893.41 2.29 KungFuAthlete 56.04 162.23 1156.36 2.65 BFM-Zero 249.40 444.28 2309.79 9.44 StableMimic (Single MLP) 32.66 113.56 846.54 2.09 StableMimic (MoE) 28.53 88.83 798.22 2.08
+
+a) Overall tracking performance: Table III and Fig. 7(a)–(d) show that StableMimic attains the lowest error in all four reported tracking metrics. It achieves an MPBPE of 
+
+28 .53 mm and an MJAE of 88 .83 × 10 −3 rad while retaining the same recovery-capable policy interface. The result demonstrates that extending the state support beyond nominal tracking does not require sacrificing complete-sequence tracking accuracy. 
+
+b) Effect of expert specialization: Relative to the Single-MLP policy, StableMimic reduces MPBPE from 32 .66 to 
+
+28 .53 mm and MJAE from 113 .56 to 88 .83 × 10 −3 rad ; it also lowers MJAVE and relative body-acceleration error. This consistent improvement despite the wider, higher-capacity Single-MLP is compatible with the intended separation of tracking and recovery updates and cannot be attributed simply to a larger MoE parameter count. 
+
+2) Post-Fall Recovery: Figure 5 shows representative prone and supine recovery sequences under the unchanged deploy-ment interface. The live command remains active throughout the fall, recovery, and command-reacquisition phases.                                
+
+> Fig. 5. Representative tracking–fall–recovery rollouts in MuJoCo. Top: prone fall and command reacquisition. Bottom: supine fall and command reacquisition. The live command remains active, while no get-up command, reference phase, or motion identifier is provided. 010 20 30
+> 0
+> 500
+> 1000 (a) Episode length
+> 010 20 30
+> 0
+> 75
+> 150
+> (b) Mean reward
+> 010 20 30
+> 0.3
+> 0.6
+> 0.9
+> (c) Policy std.
+> Training iterations ( 10 3)
+> Single MLP StableMimic
+> Fig. 6. Training dynamics over 30 ,000 iterations. StableMimic stabilizes episode length and reward earlier and reaches alower policy standard deviation than Single-MLP.
+
+a) Overall post-fall performance: As reported in Ta-ble IV and Fig. 7(e)–(l), StableMimic recovers in 100 /100 
+
+disturbances and obtains the lowest limb-speed P95, limb travel, joint-speed P95, recovery displacement, actuator-torque P95, and positive energy among the evaluated methods. These complementary measurements characterize bounded post-fall motion without collapsing smoothness into one composite score. Lower limb speed and swept distance reduce potential impact and intrusion into nearby space; together with lower joint motion and actuator load, these results provide direct empirical evidence of improved post-fall interaction safety. 
+
+b) Comparison with tracking-only control: Beyond-Mimic does not recover under this protocol and exhibits the largest limb motion, joint speed, target rate, recovery dis-placement, actuator torque, and positive energy. This behavior is consistent with the structural difficulty of continuing to minimize tracking error when the live command is temporarily unreachable. StableMimic instead routes such states through human-reference-shaped recovery before reacquiring that com-mand. 
+
+c) Comparison with recovery-capable policies: Kung-FuAthlete also recovers in all 100 trials, but StableMimic requires less limb travel, joint motion, recovery workspace, actuator torque, and positive energy. BFM-Zero attains the lowest target rate, yet StableMimic achieves a higher recovery rate and lower values for the remaining reported motion and load measures. 
+
+d) Effect of expert specialization: The Single-MLP and StableMimic policies recover in 98 /100 and 100 /100 trials, respectively. StableMimic reduces limb-speed P95, limb travel, joint-speed P95, actuator-torque P95, and positive energy from 
+
+6.06 , 16 .04 , 6.34 , 27 .94 , and 1.10 to 4.91 m /s, 13 .80 m ,
+
+5.26 rad /s, 19 .64 N m , and 0.61 kJ , respectively. 
+
+C. Analysis of the MoE Design 
+
+Figure 6 provides descriptive optimization evidence com-plementary to the final-policy metrics. Compared with Single-MLP, StableMimic stabilizes episode length and reward earlier and reaches a lower policy standard deviation. Because both policies use the same entropy coefficient, this behavior is consistent with reduced interference under expert routing, although the curves alone remain descriptive rather than causal evidence of expert independence. 
+
+D. Main Hardware Results 
+
+Each Actor is exported as one ONNX policy that handles tracking, fall, recovery, and command resumption, and runs on the G1 at 50 Hz with the training observation order, four-frame history, joint mapping, action scale, and position-control interface. Only the live command and onboard proprioception are supplied; hardware joint, velocity, torque, timeout, and emergency-stop safeguards remain active. We deploy a dance tracker and, as a lightweight extension, a separately trained instance whose command is a constant standing joint-angle reference. Figure 8 summarizes the two qualitative deploy-ments. 
+
+a) Dance tracking: After a human-induced fall, the dance policy follows a structured recovery path and resumes its uninterrupted command without an external trigger or policy restart. 
+
+b) Static-standing extension: Replacing the dance trajec-tory with a constant standing joint-angle reference yields an 0 100 200 
+
+Time (s) 
+
+> 0
+> 100
+> 200
+> 300
+> 400
+> 500
+> MPBPE (mm)
+
+(a) Tracking MPBPE   
+
+> 0100 200
+
+Time (s) 
+
+> 100
+> 200
+> 300
+> 400
+> 500
+> 600
+> MJAE ( 10 −3  rad)
+
+(b) Joint-angle error   
+
+> 0100 200
+
+Time (s) 
+
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> Error (mm/frame)
+
+(c) Relative velocity error 
+
+> 10 2
+
+MPBPE (mm, log) 
+
+> 10 2
+> MJAE ( 10 −3  rad, log)
+
+(d) Per-frame error map  
+
+> 540 560
+
+Push force (N) 
+
+> 4
+> 6
+> 8
+> 10
+> Limb-speed P95 (m/s)
+
+(e) Push–limb response    
+
+> 0246
+
+Pelvis XY displacement (m) 
+
+> 10
+> 20
+> 30
+> 40
+> 50
+> Four-limb path (m)
+
+(f) Recovery workspace   
+
+> 5.0 7.5 10.0
+
+Limb-speed P95 (m/s) 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Empirical CDF
+
+(g) Limb-speed distribution   
+
+> 20 40 60
+
+Joint-target-rate P95 (rad/s) 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Empirical CDF
+
+(h) Joint-target-rate CDF    
+
+> 2510 20
+
+Peak power (kW, log) 
+
+> 0.2
+> 0.5
+> 1
+> 2
+> 5
+> Positive energy  E + (kJ, log)
+
+(i) Actuator load 
+
+> BeyondMimic
+> KungFu
+> BFM-Zero
+> Single MLP
+> StableMimic
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Success (%)
+
+(j) Recovery success    
+
+> 0123
+
+Time after fall (s) 
+
+> 0
+> 2
+> 4
+> 6
+> Mean limb speed (m/s)
+
+(k) Fall-aligned limb speed 
+
+> L foot
+> R foot
+> L hand
+> R hand
+> 4
+> 5
+> 6
+> 7
+> 8
+> 9
+> 10
+> Mean limb-speed P95 (m/s)
+
+(l) Limb-wise P95 speed 
+
+BeyondMimic KungFu BFM-Zero Single MLP StableMimic Fig. 7. Tracking and post-fall evaluation on the complete dance subset of LAFAN1. (a)–(c) Temporal tracking errors; (d) per-sample body-position versus joint-angle error; (e)–(f) disturbance response and recovery workspace; (g)–(i) post-fall motion and actuator-load distributions; and (j)–(l) recovery success, fall-aligned limb speed, and limb-wise P95 speed. All recovery panels use the same 100 disturbances per method; points denote individual trials or temporal samples. 
+
+RL-stand tracker that recovers and restabilizes after perturba-tion, illustrating a possible extension toward more bounded post-disturbance behavior that is more benign to the robot and its surroundings. 
+
+c) Scope: In both sequences, the fallen robot exhibits bounded limb motion and returns to a feasible task region rather than persistently chasing the unavailable target. This is qualitative evidence of physical-robot transfer, not a safety 
+
+TABLE IV POST -FALL BEHAVIOR OVER 100 DISTURBANCES . W INDOW : MOTION , CONTROL -OUTPUT , AND LOAD ENTRIES AVERAGE PER -TRIAL STATISTICS OVER THREE SECONDS ; P ERCENTILES : SUPERSCRIPT 95 DENOTES A WITHIN -TRIAL PERCENTILE ; I NTEGRALS : Llimb AND E+ ACCUMULATE OVER THE SAME WINDOW ; W ORKSPACE : ∆pxy SPANS FALL TO RECOVERY , OR ROLLOUT END IF UNSUCCESSFUL . L OWER IS BETTER EXCEPT FOR SUCCESS ; BOLDFACE MARKS THE BEST RESULT .
+
+Outcome Bounded post-fall motion Control output Workspace Actuator load Method Succ. 
+
+↑
+
+v95 limb 
+
+(m/s) ↓
+
+Llimb 
+
+(m) ↓| ˙q|95 
+
+(rad/s) ↓|∆qtar /∆t|95 
+
+(rad/s) ↓
+
+∆pxy 
+
+(m) ↓|τ |95 
+
+(N m) ↓
+
+E+
+
+(kJ) ↓
+
+BeyondMimic 0/100 8.62 38.96 14.38 52.08 2.48 63.74 4.10 KungFuAthlete 100/100 5.51 16.18 6.49 16.47 1.44 37.42 0.90 BFM-Zero 94/100 5.51 18.42 6.22 14.60 1.90 31.87 0.89 StableMimic (Single MLP) 98/100 6.06 16.04 6.34 22.80 1.78 27.94 1.10 StableMimic (MoE) 100/100 4.91 13.80 5.26 17.35 1.32 19.64 0.61 (a) Dance-tracking policy: recover and resume the uninterrupted command Time      
+
+> Track Perturb Bounded Fall Recover Rise Resume
+
+(b) RL stand policy: recover and return to the standing objective Time      
+
+> Stand Perturb Bounded Fall Recover Rise Stabilize
+
+Fig. 8. Real-G1 deployment of dance (top) and standing-reference (bottom) policies, showing recovery and task resumption with bounded limb motion. 
+
+certification or a matched hardware architecture comparison. V. C ONCLUSION 
+
+StableMimic integrates whole-body command tracking and human-reference-shaped post-fall recovery in a sin-gle proprioception-gated dual-expert policy. Perturbed resets around multiple get-up references enlarge the training support beyond the nominal tracking tube, while a hidden successor-state objective teaches recovery without exposing the Actor to trajectory identity, recovery phase, or a runtime get-up command. The soft gate separates tracking- and recovery-dominant updates, routes fallen states toward structured recov-ery behavior, and returns authority to tracking after command reacquisition. Across the matched G1 evaluation, the MoE preserves complete-sequence tracking while reducing several post-fall motion and actuator-load measures relative to Single-MLP. Real-robot dance and constant-standing-reference poli-cies further demonstrate bounded limb motion, autonomous recovery, and task resumption under the same deployment in-terface. By defining structured behavior outside the command distribution, the proposed recovery-support curriculum im-proves post-fall interaction safety under the evaluated protocol and can augment teleoperation-oriented and other RL trackers with compatible observation and action spaces, although it is not a universal safety guarantee. APPENDIX AIMPLEMENTATION DETAILS TABLE V STABLE MIMIC AND SINGLE -MLP IMPLEMENTATION DETAILS .                                                  
+
+> Net Inputs (Actor/gate/Critic): 4×221 = 884 /372/1428; experts 512–256–128, Single MLP 1024–512–256, ELU, 29-D mean; shared scalar standard deviation; Actor/Critic normalization; parameters (MoE/Single/Critic): 1,298,301/1,569,850/896,001. PPO γ=0.99 ; GAE λ=0.95 ; clip 0.2; adaptive learning rate 0.001; 24 steps, 5 epochs, 4 mini-batches; gradient norm ≤1.0; gate weights: CE 0.1, transition 4.0, consistency 0.01, alignment 0.01; entropy 0.05 for both Actors. Train 4096 environments; 50-Hz control; 20-s horizon; equal tracking/recovery sampling with failure-adaptive frames; 1.5-s transition; 2.0-s error tolerance; recovery coeffi-cient 2.5×nominal. Reset Position: x, y ∈[−0.05 ,0.05] m, z∈[−0.01 ,0.01] m; roll/pitch ∈
+> [−0.1,0.1] rad; yaw ∈[−0.2,0.2] rad. Velocity: linear x, y ∈[−0.5,0.5]
+> m/s, z∈[−0.2,0.2] m/s; angular roll/pitch ∈[−0.52 ,0.52] rad/s, yaw
+> ∈[−0.78 ,0.78] rad/s. Joint noise [−0.1,0.1] rad where enabled.
+
+REFERENCES 
+
+[1] C. Gaspard, M. Duclusaud, G. Passault, M. Daniel, and O. Ly, “FRASA: An End-to-End Reinforcement Learning Agent for Fall Recovery and Stand Up of Humanoid Robots,” in Proc. IEEE Int. Conf. Robotics and Automation (ICRA) ,pp. 15994–16000, 2025. [2] T. Huang, J. Ren, H. Wang, Z. Wang, Q. Ben, M. Wen, X. Chen, J. Li, and J. Pang, “Learning Humanoid Standing-up Control across Diverse Postures,” in 
+
+Proc. Robotics: Science and Systems (RSS) , 2025. [3] X. He, R. Dong, Z. Chen, and S. Gupta, “Learning Getting-Up Policies for Real-World Humanoid Robots,” in Proc. Robotics: Science and Systems (RSS) ,2025. [4] Q. Liao, T. E. Truong, X. Huang, Y. Gao, G. Tevet, K. Sreenath, and C. K. Liu, “BeyondMimic: From Motion Tracking to Versatile Humanoid Control via Guided Diffusion,” arXiv :2508.08241, 2025. [5] Z. Luo et al., “SONIC: Supersizing Motion Tracking for Natural Humanoid Whole-Body Control,” arXiv :2511.07820, 2025. [6] Z. Lei, L. Cao, X. Wang, T. Qian, J. Liu, and X. Li, “A Kung Fu Athlete Bot That Can Do It All Day: Highly Dynamic, Balance-Challenging Motion Dataset and Autonomous Fall-Resilient Tracking,” arXiv :2602.13656, 2026. [7] Y. Li et al., “BFM-Zero: A Promptable Behavioral Foundation Model for Humanoid Control Using Unsupervised Reinforcement Learning,” in Proc. Int. Conf. Learning Representations (ICLR) , 2026. [8] X. B. Peng, P. Abbeel, S. Levine, and M. van de Panne, “DeepMimic: Example-Guided Deep Reinforcement Learning of Physics-Based Character Skills,” 
+
+ACM Transactions on Graphics , vol. 37, no. 4, Art. 143, 2018. [9] X. B. Peng, Z. Ma, P. Abbeel, S. Levine, and A. Kanazawa, “AMP: Adversarial Motion Priors for Stylized Physics-Based Character Control,” ACM Transac-tions on Graphics , vol. 40, no. 4, Art. 144, 2021. [10] Z. Zhuang and H. Zhao, “Embrace Collisions: Humanoid Shadowing for De-ployable Contact-Agnostics Motions,” in Proc. Conf. Robot Learning (CoRL) ,2025. [11] Z. Meng et al., “SafeFall: Learning Protective Control for Humanoid Robots,” 
+
+arXiv :2511.18509, 2025. [12] P. Strauch et al., “Robot Crash Course: Learning Soft and Stylized Falling,” in 
+
+Proc. IEEE Int. Conf. Robotics and Automation (ICRA) , 2026. [13] Z. Xu, Y. Li, K.-Y. Lin, and S. X. Yu, “Unified Humanoid Fall-Safety Policy from a Few Demonstrations,” in Proc. IEEE Int. Conf. Robotics and Automation (ICRA) , 2026. [14] N. Shazeer, A. Mirhoseini, K. Maziarz, A. Davis, Q. Le, G. Hinton, and J. Dean, “Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer,” in Proc. Int. Conf. Learning Representations (ICLR) , 2017. [15] R. Yang, H. Xu, Y. Wu, and X. Wang, “Multi-Task Reinforcement Learning with Soft Modularization,” in Advances in Neural Information Processing Systems , vol. 33, pp. 4767–4777, 2020. [16] X. B. Peng, G. Berseth, and M. van de Panne, “Terrain-Adaptive Locomotion Skills Using Deep Reinforcement Learning,” ACM Transactions on Graphics ,vol. 35, no. 4, Art. 81, 2016. [17] C. Yang, K. Yuan, Q. Zhu, W. Yu, and Z. Li, “Multi-Expert Learning of Adaptive Legged Locomotion,” Science Robotics , vol. 5, no. 49, Art. eabb2174, 2020. [18] O. Celik, A. Taranovic, and G. Neumann, “Acquiring Diverse Skills Using Curriculum Reinforcement Learning with Mixture of Experts,” in Proc. 41st Int. Conf. Machine Learning , PMLR, vol. 235, pp. 5907–5933, 2024. [19] S. Ma, H. Chen, Z. Xu, Y. Zhao, K. Wu, R. Yang, L. Zou, Z. Gan, and W. Ding, “CMoE: Contrastive Mixture of Experts for Motion Control and Terrain Adaptation of Humanoid Robots,” in Proc. IEEE Int. Conf. Robotics and Automation (ICRA) , 2026. [20] R. S. Sutton, D. Precup, and S. Singh, “Between MDPs and Semi-MDPs: A Framework for Temporal Abstraction in Reinforcement Learning,” Artificial Intelligence , vol. 112, no. 1–2, pp. 181–211, 1999. [21] L. Pinto, M. Andrychowicz, P. Welinder, W. Zaremba, and P. Abbeel, “Asym-metric Actor Critic for Image-Based Robot Learning,” in Proc. Robotics: Science and Systems (RSS) , 2018. [22] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, “Proximal Policy Optimization Algorithms,” arXiv :1707.06347, 2017. [23] F. G. Harvey, M. Yurick, D. Nowrouzezahrai, and C. Pal, “Robust Motion In-Betweening,” ACM Transactions on Graphics , vol. 39, no. 4, Art. 60, 2020.
