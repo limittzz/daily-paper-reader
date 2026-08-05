@@ -1,0 +1,260 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-05T21:51:40.442879+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 2,
+    "deep_cap": 6,
+    "deep_selected": 2,
+    "quick_candidates": 4,
+    "quick_skim_target": 11,
+    "quick_selected": 4
+  },
+  "deep_dive": [
+    {
+      "id": "2608.03103v1",
+      "source": "arxiv",
+      "title": "A Hierarchical Approach to Imitation Learning for Manipulation Tasks Requiring Time Varying Forces",
+      "abstract": "Diffusion policies have shown strong performance in learning complex, multi-modal behaviors for robotic manipulation. However, their application to contact-rich disassembly tasks remains limited by a key trade-off: the iterative denoising process introduces inference latencies that makes high frequency control difficult, which is essential for realizing dynamic interactions such as chiseling and prying. Recent action-chunking techniques mitigate latency but use an open-loop execution window, rendering the system blind to rapid force transients caused by fracture events. To bridge this gap, we introduce the Diffusion Policy Augmented by Fast Trajectory Generation (DPA-FTG). Compared to recent visual-tactile approaches that focus on positional correction, DPA-FTG decouples low-frequency planning from high-frequency force regulation. At the high level ($5$ Hz), a conditional diffusion model predicts a sequence of latent parameters for selecting a strategy from a learned vocabulary of task primitives. At the low level ($60$ Hz), a lightweight, force-conditioned policy acts as a neural impedance controller, modulating execution in real-time to maintain contact stability. We validate our approach on a bimanual battery disassembly task involving the separation of a compliant sheet. Experimental evaluation demonstrates that DPA-FTG outperforms state-of-the-art baselines, including Reactive Diffusion Policy (RDP).",
+      "authors": [
+        "Rishabh Shukla",
+        "Adithya Santhosh",
+        "Shaili Gandhi",
+        "Samrudh Moode",
+        "Satyandra K. Gupta"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-08-04T04:21:00+00:00",
+      "link": "https://arxiv.org/pdf/2608.03103v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Diffusion policy based hierarchical imitation learning for contact-rich manipulation",
+      "llm_evidence_cn": "基于扩散策略的分层模仿学习用于接触丰富的操控任务",
+      "llm_evidence": "基于扩散策略的分层模仿学习用于接触丰富的操控任务",
+      "canonical_evidence": "基于扩散策略的分层模仿学习用于接触丰富的操控任务",
+      "llm_tldr_en": "Proposes DPA-FTG, a diffusion policy augmented by fast trajectory generation, to overcome the latency-throughput trade-off in contact-rich disassembly tasks, enabling high-frequency control while retaining multimodal imitation learning.",
+      "llm_tldr_cn": "该文针对扩散策略在接触丰富拆卸任务中因迭代去噪导致推理延迟、难以实现高频控制的问题，提出DPA-FTG。它引入快速轨迹生成来增强扩散策略，同时结合动作分块技术缓解延迟并保留对快速力瞬变的感知。实验表明该方法在需要时变力的操控任务上优于现有视觉-触觉方法，为机器人拆装等动态交互提供了可行方案。",
+      "llm_tldr": "该文针对扩散策略在接触丰富拆卸任务中因迭代去噪导致推理延迟、难以实现高频控制的问题，提出DPA-FTG。它引入快速轨迹生成来增强扩散策略，同时结合动作分块技术缓解延迟并保留对快速力瞬变的感知。实验表明该方法在需要时变力的操控任务上优于现有视觉-触觉方法，为机器人拆装等动态交互提供了可行方案。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "How is diffusion policy applied to robot learning from demonstration?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.03387v1",
+      "source": "arxiv",
+      "title": "RoboReact: Agentic Skill Distillation from Generated Egocentric Videos for Generalizable Whole-Body Manipulation",
+      "abstract": "Humanoid robots have the potential to perform dexterous manipulation in human environments, yet acquiring diverse and generalizable skills remains costly due to expensive hardware data collection and labor-intensive annotation. Recent advances in video generative models provide a promising opportunity to synthesize rich manipulation experiences from visual observations, but transferring such imagined behaviors into executable whole-body humanoid skills remains largely unexplored. In this work, we present RoboReact, a framework that automatically synthesizes whole-body humanoid manipulation skills from a single egocentric RGB-D observation. RoboReact generates human manipulation videos, extracts geometry-preserving interaction keyframes through depth-aware 3D reconstruction, and retargets them to high-DoF humanoid platforms while preserving hand-object interaction geometry. To bridge the gap between imagined plans and physical execution, RoboReact performs online object-centric re-grounding and leverages a vision-language model-guided refinement loop to adapt skills under geometric mismatch and execution deviations. The refined skills are executed through a whole-body controller, enabling coordinated whole-body manipulation and dexterous interaction. Experiments on real humanoid robots demonstrate that RoboReact generalizes across diverse object configurations and robustly recovers from execution disturbances without requiring teleoperation or human demonstrations. These results highlight the potential of combining generative models, vision-language reasoning, and closed-loop control for scalable humanoid skill acquisition.",
+      "authors": [
+        "Shuliang He",
+        "Shuai Wang",
+        "Bo Yue",
+        "Junchi Teng",
+        "Changyu Wang",
+        "Guiliang Liu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-04T09:37:06+00:00",
+      "link": "https://arxiv.org/pdf/2608.03387v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Synthesizes whole-body humanoid manipulation skills from generated egocentric videos, a recent advance in imitation-style manipulation learning.",
+      "llm_evidence_cn": "从生成的自我中心视频合成全身人形操控技能，是模仿式操控学习的最新进展。",
+      "llm_evidence": "从生成的自我中心视频合成全身人形操控技能，是模仿式操控学习的最新进展。",
+      "canonical_evidence": "从生成的自我中心视频合成全身人形操控技能，是模仿式操控学习的最新进展。",
+      "llm_tldr_en": "Proposes RoboReact, which uses video generative models to synthesize whole-body humanoid manipulation skills from a single egocentric RGB-D observation, addressing costly data collection and enabling generalizable manipulation.",
+      "llm_tldr_cn": "针对人形机器人技能采集成本高、标注繁琐的问题，RoboReact利用视频生成模型合成人类操控视频，并从中蒸馏出几何保持的全身操控技能。只需要单个自我中心RGB-D观测即可生成可执行技能，避免昂贵的硬件数据采集。该方法在生成与执行之间建立桥梁，为低成本获取可泛化的人形操控技能提供了新思路。",
+      "llm_tldr": "针对人形机器人技能采集成本高、标注繁琐的问题，RoboReact利用视频生成模型合成人类操控视频，并从中蒸馏出几何保持的全身操控技能。只需要单个自我中心RGB-D观测即可生成可执行技能，避免昂贵的硬件数据采集。该方法在生成与执行之间建立桥梁，为低成本获取可泛化的人形操控技能提供了新思路。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.01035v1",
+      "source": "arxiv",
+      "title": "WAM-Diff2: Hierarchical AR-to-Diffusion Distillation for Highly Efficient Autonomous Driving VLA",
+      "abstract": "Vision-Language-Action (VLA) models have emerged as a prominent paradigm for end-to-end autonomous driving; however, their efficient deployment is severely constrained by high computational latency and exposure bias arising from sequential autoregressive decoding. Conversely, while specialized diffusion policies enable low-latency, parallel execution, training them from scratch typically yields narrow, single-task architectures that lack holistic visual-linguistic reasoning. Successfully transforming pre-trained autoregressive generalists into parallel diffusion models could combine multi-task cognitive intelligence with execution efficiency, yet this transition presents a formidable architectural challenge due to mismatched attention patterns (causal versus bidirectional) and divergent optimization objectives. To bridge this divide, we introduce WAM-Diff2, a multi-task discrete diffusion VLA framework powered by a three-stage hierarchical distillation strategy. By structuring the architectural shift through progressive block-wise adaptation, block-wise distillation, and model-wise cross-scale distillation, WAM-Diff2 preserves the underlying semantic foundations of the base model while accelerating inference. Extensive evaluations across driving understanding, perception, and planning benchmarks demonstrate that WAM-Diff2 effectively mitigates exposure bias and achieves performance parity with autoregressive baselines. Crucially, the autoregressive-to-diffusion transition yields a 2.8x decoding speedup, which scales to an ultimate 15.1x acceleration when combined with system-level optimizations including FlashInfer and CUDA Graphs.",
+      "authors": [
+        "Zhihao Zhu",
+        "Hanlin Shang",
+        "Mingwang Xu",
+        "Feipeng Cai",
+        "Zhuolin He",
+        "Yaoyi Li",
+        "Jianhua Han",
+        "Hang Xu",
+        "Siyu Zhu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-08-02T06:45:16+00:00",
+      "link": "https://arxiv.org/pdf/2608.01035v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Distilling autoregressive VLA into diffusion policies for efficient autonomous driving control",
+      "llm_evidence_cn": "将自回归VLA蒸馏为扩散策略以实现高效自动驾驶控制",
+      "llm_evidence": "将自回归VLA蒸馏为扩散策略以实现高效自动驾驶控制",
+      "canonical_evidence": "将自回归VLA蒸馏为扩散策略以实现高效自动驾驶控制",
+      "llm_tldr_en": "WAM-Diff2 hierarchically distills pre-trained autoregressive VLAs into parallel diffusion policies, reducing latency and exposure bias for autonomous driving while preserving multi-task reasoning.",
+      "llm_tldr_cn": "自回归VLA模型部署于自动驾驶时存在计算延迟高和曝光偏差问题，而扩散策略支持低延迟并行执行，但难以从头获得多任务推理能力。WAM-Diff2提出分层自回归到扩散蒸馏方法，将预训练自回归通用模型转化为并行扩散策略，从而结合多任务认知与执行效率。实验表明该方法显著降低推理延迟并保持了VLA的规划质量。",
+      "llm_tldr": "自回归VLA模型部署于自动驾驶时存在计算延迟高和曝光偏差问题，而扩散策略支持低延迟并行执行，但难以从头获得多任务推理能力。WAM-Diff2提出分层自回归到扩散蒸馏方法，将预训练自回归通用模型转化为并行扩散策略，从而结合多任务认知与执行效率。实验表明该方法显著降低推理延迟并保持了VLA的规划质量。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.03159v1",
+      "source": "arxiv",
+      "title": "Accelerating Human-Aware Robot Trajectory Generation via Diffusion and Consistency Distillation",
+      "abstract": "This research proposes a constrained motion planning framework for robot manipulators in human-robot interaction (HRI). For a non-redundant manipulator with a fully specified end-effector pose, additional requirements such as collision avoidance and self-collision avoidance are difficult to handle as simple null-space secondary tasks. This limitation makes it challenging to generate feasible joint-space trajectories in HRI environments where safety and kinematic constraints must be considered simultaneously. To address this limitation, collision- and self-collision-aware trajectories are generated using Rapidly-exploring Random Tree (RRT) and RRT* algorithms, and the resulting dataset is used to train a diffusion model that generates constraint-satisfying trajectories through guided sampling. To reduce the inference time required for iterative diffusion sampling, consistency distillation is applied, and a joint-weighted jerk regularization term is incorporated into the loss function to promote smoother trajectories by penalizing abrupt changes in joint acceleration. Simulation results show that the consistency model generates 150 trajectory candidates in less than 100 ms, maintains a high episode success rate, and substantially reduces joint and end-effector jerk when jerk regularization is applied.",
+      "authors": [
+        "Byeong-Il Ham",
+        "Hyun-Bin Kim",
+        "Kyung-Soo Kim"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-04T05:47:25+00:00",
+      "link": "https://arxiv.org/pdf/2608.03159v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uses a diffusion model trained on RRT-generated collision-aware trajectories to generate feasible joint-space trajectories for HRI, a diffusion-based robot control method.",
+      "llm_evidence_cn": "利用扩散模型在RRT生成的避碰轨迹上训练，在共融环境中生成可行关节轨迹，是扩散模型用于机器人控制的方法。",
+      "llm_evidence": "利用扩散模型在RRT生成的避碰轨迹上训练，在共融环境中生成可行关节轨迹，是扩散模型用于机器人控制的方法。",
+      "canonical_evidence": "利用扩散模型在RRT生成的避碰轨迹上训练，在共融环境中生成可行关节轨迹，是扩散模型用于机器人控制的方法。",
+      "llm_tldr_en": "Proposes a diffusion-based trajectory generation approach for human-aware manipulator motion planning, trained on RRT/RRT* data, with consistency distillation to accelerate generation while satisfying collision and kinematic constraints.",
+      "llm_tldr_cn": "针对人机共融环境中机械臂需同时满足避碰与运动学约束的难题，收集RRT/RRT*生成的碰撞感知轨迹，训练扩散模型来生成可行关节轨迹，并引入一致性蒸馏加速推理。实验表明该方法能够快速生成满足安全约束的轨迹，为扩散模型在机器人轨迹规划中的应用提供了高效方案。",
+      "llm_tldr": "针对人机共融环境中机械臂需同时满足避碰与运动学约束的难题，收集RRT/RRT*生成的碰撞感知轨迹，训练扩散模型来生成可行关节轨迹，并引入一致性蒸馏加速推理。实验表明该方法能够快速生成满足安全约束的轨迹，为扩散模型在机器人轨迹规划中的应用提供了高效方案。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.02332v1",
+      "source": "arxiv",
+      "title": "Diffusion Policy with Behavioral Advantage Correction for Offline Reinforcement Learning",
+      "abstract": "In offline reinforcement learning (RL), the distribution shift between behavioral data and the learned policy can lead to erroneous \\emph{Q}-value estimation, thereby misguiding the direction of policy optimization. To address this issue, we develop a behavioral advantage corrected policy evaluation (BAC-PE) approach, which utilizes the \\emph{Q}-function of the behavior policy to correct the learned policy's \\emph{Q}-function, thus mitigating pessimistic conservatism and overestimation bias. Furthermore, the convergence of BAC-PE is analyzed theoretically, and an upper bound on the difference between the learned \\emph{Q}-function and the true \\emph{Q}-function is derived. To alleviate distribution shift, this work employs diffusion models to represent both the behavior policy and the learned policy, performing distribution matching for accurate policy regularization. Additionally, \\emph{Q}-value guidance is incorporated into the training process to achieve effective policy improvement. By combining BAC-PE with diffusion policy modeling, we propose the diffusion policy with behavioral advantage correction (DPBAC) algorithm. Compared to existing offline methods, DPBAC demonstrates stronger policy representation capabilities and effectively mitigates the bias in \\emph{Q}-value estimation. Experimental results on multiple domains of D4RL tasks show that DPBAC achieves superior performance, with notable advantages over state-of-the-art (SOTA) algorithms.",
+      "authors": [
+        "Botao Dong",
+        "Longyang Huang",
+        "Ning Pang",
+        "Hongtian Chen"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "eess.SY"
+      ],
+      "published": "2026-08-03T14:52:46+00:00",
+      "link": "https://arxiv.org/pdf/2608.02332v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "diffusion model used as policy in offline RL",
+      "llm_evidence_cn": "扩散模型作为离线强化学习中的策略",
+      "llm_evidence": "扩散模型作为离线强化学习中的策略",
+      "canonical_evidence": "扩散模型作为离线强化学习中的策略",
+      "llm_tldr_en": "This paper combines diffusion models with a behavioral advantage correction mechanism for offline RL, mitigating Q-value overestimation and pessimism to improve policy learning from fixed datasets.",
+      "llm_tldr_cn": "该论文针对离线强化学习中数据分布偏移导致Q值估计错误的问题，提出行为优势校正策略评估方法，利用行为策略的Q函数修正学习策略的Q函数，并用扩散模型作为策略表示以缓解分布偏移。理论分析了收敛性并给出Q函数差异上界。实验表明该方法能平衡保守主义与过度估计，提升离线策略优化效果。将扩散策略与优势校正结合为离线强化学习提供了稳健的新途径。",
+      "llm_tldr": "该论文针对离线强化学习中数据分布偏移导致Q值估计错误的问题，提出行为优势校正策略评估方法，利用行为策略的Q函数修正学习策略的Q函数，并用扩散模型作为策略表示以缓解分布偏移。理论分析了收敛性并给出Q函数差异上界。实验表明该方法能平衡保守主义与过度估计，提升离线策略优化效果。将扩散策略与优势校正结合为离线强化学习提供了稳健的新途径。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.02990v1",
+      "source": "arxiv",
+      "title": "EmbodiedVAE: Disentangled Video VAE for Efficient and Controllable Embodied Manipulation",
+      "abstract": "Latent diffusion models (LDMs) have recently significantly advanced embodied learning in constructing powerful embodied manipulation world models. However, despite the remarkable performance, existing LDMs predominantly rely on Variational Autoencoders (VAEs) optimized for natural scenes while failing to account for the unique characteristics of embodied manipulation scenarios, yielding latent representations that are neither compact nor controllable, thereby hindering efficient training of LDMs and precise robotic control. To solve this problem, we present EmbodiedVAE, a novel video VAE that provides compact yet controllable latent representations tailored for the robotic manipulation world models. Specifically, EmbodiedVAE adopts a dual-encoder, single-decoder architecture with an asymmetric spatio-temporal compression module, which automatically disentangles the robot arm's motion from background environment, resulting in overall compactness while providing explicit embodied latent to support fine-grained action control. To further preserve the temporal consistency of learned robotic motion latent, we introduce an optimal-transport-based consistency module that explicitly enforces motion fidelity and inter-frame coherence. Extensive experiments demonstrate that our proposed EmbodiedVAE achieves superior reconstruction quality with high compression rate, while enabling more precise action control in robotic manipulation scenarios with an average of 2dB PSNR improvement over state-of-the-art video VAEs.",
+      "authors": [
+        "Jiayi Luo",
+        "Hanxin Zhu",
+        "Chen Gao",
+        "Jiankun Wang",
+        "Cong Wang",
+        "Tianyu He",
+        "Jianxin Li",
+        "Zhibo Chen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-04T01:01:18+00:00",
+      "link": "https://arxiv.org/pdf/2608.02990v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "EmbodiedVAE provides compact controllable latents for latent diffusion world models in robot manipulation",
+      "llm_evidence_cn": "EmbodiedVAE为机器人操作中的潜在扩散世界模型提供紧凑可控的潜在表示",
+      "llm_evidence": "EmbodiedVAE为机器人操作中的潜在扩散世界模型提供紧凑可控的潜在表示",
+      "canonical_evidence": "EmbodiedVAE为机器人操作中的潜在扩散世界模型提供紧凑可控的潜在表示",
+      "llm_tldr_en": "EmbodiedVAE designs a disentangled video VAE tailored to robotic manipulation, providing compact controllable latents for latent diffusion world models, improving training efficiency and precise control.",
+      "llm_tldr_cn": "现有潜在扩散世界模型依赖为自然场景设计的VAE，其潜在表示不可控且不够紧凑，阻碍了具身操作学习的效率与精确控制。EmbodiedVAE提出一种面向机器人操作的解耦视频VAE，为世界模型提供紧凑且可控制的潜在表示。实验显示该设计能加快潜在扩散模型的训练并提升机器人操控精度，为以扩散世界模型为核心的具身学习方法提供了更合适的表示基础。",
+      "llm_tldr": "现有潜在扩散世界模型依赖为自然场景设计的VAE，其潜在表示不可控且不够紧凑，阻碍了具身操作学习的效率与精确控制。EmbodiedVAE提出一种面向机器人操作的解耦视频VAE，为世界模型提供紧凑且可控制的潜在表示。实验显示该设计能加快潜在扩散模型的训练并提升机器人操控精度，为以扩散世界模型为核心的具身学习方法提供了更合适的表示基础。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
