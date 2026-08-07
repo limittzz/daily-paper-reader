@@ -1,0 +1,343 @@
+Title: Asleep at the Wheel: JEPA's Limitations in Evaluating Novel Driving Data
+
+URL Source: https://arxiv.org/pdf/2608.01336v1
+
+Published Time: Tue, 04 Aug 2026 01:27:02 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# Asleep at the Wheel: JEPA’s Limitations in Evaluating Novel Driving Data 
+
+Advait Pavuluri ♠♦♣, Shamik Karkhanis ♠♦♣, Uzma Mushtaque ♣
+
+Rensselaer Polytechnic Institute, Troy, NY, USA 
+
+Abstract. Modern autonomous-driving fleets record far more video than human reviewers can inspect. This motivates the need for an automatic clip triage mechanism, to surface rare and review-worthy clips, so that driving models can be fine-tuned to better handle unideal circumstances. We test a label-free approach that scores clips by the prediction-error “novelty” of a self-supervised joint-embedding predictive architecture (JEPA); a frozen V-JEPA video encoder is paired with a lightweight predictor head to reconstruct masked clip embeddings, and clips whose embeddings are hard to predict are flagged as interesting. Evaluated under a realistic protocol that trains on one dataset and tests against footage from others, this approach appears highly effective. We show that this apparent success is actually a domain-shift consequence: on a fair benchmark drawn from a single dataset, this mechanism collapses to chance and is on par with simple no-training baselines. A lightly su-pervised probe on the same frozen embeddings results in almost double the average precision, indicating that the bottleneck is indeed the self-supervised objective, rather than the representation. We present this as a study for evaluating the effectiveness of self-supervised learning, where cross-dataset protocols can silently reward domain separation over nov-elty. 
+
+Keywords: self-supervised learning, joint-embedding predictive archi-tecture, autonomous driving, clip triage, novelty scoring, domain shift 
+
+## 1 Introduction 
+
+As autonomous-driving fleets, such as Tesla and Waymo vehicles, have risen in popularity, many have become increasingly concerned about the data used to train their underlying machine learning models. Though these vehicles have gotten better at navigating in ideal conditions, they (similar to humans) struggle when unexpected circumstances arise, such as when encountering jaywalking or construction sites. As a result, experts have become interested in fine-tuning these driving models by using footage that contains such events. 
+
+♠ Equal contribution. Listing order is completely random and both authors share first authorship. 
+
+♦ Work done through the Undergraduate Research Program at Rensselaer Polytech-nic Institute. 
+
+♣ Corresponding: {pavula, mushtu }@rpi.edu , shamikkark@gmail.com arXiv:2608.01336v1 [cs.CV] 2 Aug 2026 2 Advait Pavuluri, Shamik Karkhanis, Uzma Mushtaque 
+
+However, modern autonomous-driving programs record orders of magnitude more video than any team can inspect. A single fleet vehicle can produce dozens of hours of camera footage per week, the overwhelming majority of which depicts routine, uneventful driving. The clips that actually warrant human attention (reckless driving, unexpected maneuvers, breaking the rules of the road, etc.) are buried in this stream. Therefore, clip triage , the process of sorting through hours of this footage and ranking unlabeled clips so that only the review-worthy ones rise to the top, is the problem we are trying to solve without human in-tervention. Doing so autonomously greatly reduces the human effort needed to curate training and evaluation data. A natural way to attack triage without labels is to treat it as a self-supervised 
+
+novelty estimation problem. Joint-embedding predictive architectures (JEPAs) learn to predict the representation of a masked part of an input from the visible part, and the resulting prediction error is an intuitive proxy for “interestingness.” In other words, content the model has not internalized should theoretically be harder to predict. Building on Meta’s frozen V-JEPA 2 video encoder [2], we attach a lightweight predictor head and train it with a masking objective, then score each clip by the error between the predicted and the true embedding of the masked region. We call the resulting quantity a review-value score , the hypothesis being that high prediction error flags clips a reviewer should see. Evaluated in the way such systems are most commonly demonstrated, this approach looks excellent. When the positive (review-worthy) clips are drawn from one set of driving datasets and the negatives from another, the trained predictor separates them with Average Precision (AP) near 0 .89 against a chance level of 0 .50 [6, 13, 17]. Taken at face value, this would be a strong unsupervised triage result. It is not. The positives and negatives in this setup differ not only in whether they are review-worthy, but also in which dataset they came from . We show that the trained predictor’s novelty score is, to a very good approximation, a dataset classifier: it separates Waymo/BDD100K clips from nuScenes clips with an area under the ROC curve (AUC) of 0 .965, almost as well as a logistic classifier trained directly on the frozen embeddings to predict provenance (AUC 1 .00). The high cross-dataset AP measures domain shift, not review value. When we remove the confound and re-evaluate the same checkpoint on a fair benchmark whose positives and negatives are both drawn from nuScenes, the apparent advantage collapses: Average Precision falls to 0 .29 against a chance floor of 0 .24. Larger pretext-training corpora, denser temporal sampling, and several no-training baselines (a masked-gap score, a kNN-density score, and an untrained predictor) all behave the same way—none meaningfully beats the positive rate. The unsupervised masking objective, as instantiated here, does not surface the triage signal. Crucially, a supervised logistic probe trained on the same embeddings reaches AP 0 .50 on the fair benchmark, roughly double the chance floor. Therefore, the frozen encoder does encode information relevant to review value; the masking-Asleep at the Wheel 3
+
+based novelty objective simply fails to extract it, and instead latches onto what-ever varies most across the data—here, dataset provenance. We therefore present this work as a diagnostic study rather than as a new method that would work in a real-world scenario. While self-supervised learning seems promising at first glance, in this scenario it lacks nuance that fully-supervised learning is able to capture. Our evidence comes from one concrete configuration—a frozen V-JEPA 2 encoder with a lightweight masked-embedding predictor, a single mask-ing strategy, and a single evaluation protocol—so we read the result as a property of this setup and its evaluation rather than a blanket verdict on masking-based self-supervision, and we return in Section 7 to how far it might generalize. 
+
+Contributions. – We document a concrete and easily reproduced evaluation confound : a frozen V-JEPA 2 predictor scores AP 0 .89 on a cross-dataset triage benchmark but AP 0 .29 (near chance) on a fair within-nuScenes benchmark, using the identical trained checkpoint. 
+
+– We show that the trained-predictor novelty score functions as a domain detector , separating Waymo/BDD from nuScenes at AUC 0 .965 versus AUC 1.00 for a direct embedding-based domain classifier, explaining the inflated cross-dataset number. 
+
+– We provide a supervised diagnostic showing the triage signal is nonetheless present in the frozen embeddings (AP 0 .50 vs. a 0 .24 floor), localizing the failure to the masking objective rather than to the representation. 
+
+– We provide an open-source framework to run these experiments, fully stream-lining clip ingestion and allowing a user to run any number of end-to-end JEPA-style experiments. The remainder of the paper is organized as follows. Section 2 situates the work within masked autoencoding, joint-embedding predictive architectures, and video anomaly detection, and states the gap we address. Section 3 formalizes the triage problem and describes the frozen encoder, the masked-embedding predictor, the novelty score, and the supervised and no-training baselines. Section 4 details the datasets, benchmarks, labeling, metrics, and compute. Section 5 presents the cross-dataset versus fair-benchmark contrast, the domain-detector analysis, and the configuration sweep. Sections 6 and 7 discuss why the objective fails, the broader implications for evaluating self-supervised triage, and the limitations that scope our conclusions, before Section 8 concludes. 
+
+## 2 Related Work 
+
+Having framed clip triage as label-free novelty estimation, we now place our ap-proach among the lines of work it draws on. Our method inherits the masking objective of masked autoencoders, moves the prediction target into represen-tation space as joint-embedding predictive architectures do, and, at inference, produces what is effectively a video anomaly score. We review these three threads in turn. 4 Advait Pavuluri, Shamik Karkhanis, Uzma Mushtaque  
+
+> Fig. 1. Masked autoencoding on a driving frame. A large fraction of patches (here 75%, red) is hidden (left: original; right: masked view) and the model predicts what was removed. MAE [8] and VideoMAE [14] reconstruct pixels; the JEPA we build on predicts in latent space.
+
+2.1 Masked Autoencoders 
+
+Masked Autoencoders Are Scalable Vision Learners [8] is a 2021 landmark paper in computer vision, later published at CVPR 2022. The paper introduced a simple self-supervised learning approach: mask a large random fraction of the patches in an image and train the model to reconstruct the missing pixels from the few that remain (Figure 1). Two design choices make this scale. The first is an asymmetric encoder–decoder. The encoder is a Vision Transformer that processes only the visible patches, while a lightweight decoder rebuilds the full image from the encoded patches together with learned mask tokens. Because the encoder never sees mask tokens, it runs on a small fraction of the input, which lowers pretraining cost by roughly 3 × and makes very large models practical. The second is an aggressive masking ratio: hiding about 75% of the patches removes enough redundancy that reconstruction stops being local interpolation and starts to require a more holistic understanding of the image. Pretrained this way on ImageNet-1K, a plain ViT-Huge reaches 87 .8% top-1 accuracy after fine-tuning and transfers better than supervised pretraining to detection and segmentation. VideoMAE [14] carries the recipe to clips with even higher space–time masking ratios, and multimodal variants such as M3AE [7] apply the same reconstruct-the-missing objective across images and text. These methods rebuild the raw input in pixel space; MaskFeat [15] takes a step away from pixels by predicting feature descriptors of the masked spatiotemporal regions instead, moving the prediction target from pixels toward representations. 
+
+2.2 Joint-Embedding Predictive Architectures 
+
+Joint-embedding predictive architectures (JEPAs) keep the masking objective, but move the prediction target out of pixel space and into representation space. Instead of reconstructing the missing pixels, a JEPA predicts the latent repre-sentation that an encoder would assign to the masked region. I-JEPA [1], the image instantiation, makes this concrete with three parts: a context encoder fθ
+
+that embeds the visible block into representations sx; a target encoder f¯θ that Asleep at the Wheel 5
+
+embeds the full image into patch-level targets sy = {sy1 , . . . , syN }; and a pre-dictor gϕ that, given sx and a mask token mj for each masked patch, outputs a prediction ˆ sy (i) for target block i. Training minimizes the average L2 distance between predicted and target representations, 1
+
+M
+
+> M
+
+X
+
+> i=1
+
+D(ˆ sy (i), sy (i)) = 1
+
+M
+
+> M
+
+X
+
+> i=1
+
+X
+
+> j∈Bi
+
+ˆsyj − syj
+
+> 22
+
+, (1) over the M target blocks, with Bi the set of patches in block i. The targets come from a stop-gradient branch: f¯θ is an exponential moving average of fθ , its momentum rising from 0 .996 toward 1, which keeps the latent objective from col-lapsing to a constant. Predicting in representation space lets the model discard unpredictable pixel detail and concentrate on more abstract, semantic structure, an aim contrastive methods [11] pursue from a different direction. Extending these ideas to video also means modeling temporal structure; TimeSformer [4] showed that transformer self-attention can be applied jointly across space and time for video understanding. V-JEPA [3] brought the joint-embedding predic-tive objective to video, predicting masked spatiotemporal regions in a learned representation space, and V-JEPA 2 [2] scaled it up to support video understand-ing, prediction, and planning. We build on the frozen V-JEPA 2 encoder, and the prediction residual it produces is precisely the quantity we test as a review-value score in the rest of the paper. Where prior JEPA work evaluates the learned representation through downstream recognition, anticipation, or planning bench-marks, we instead ask whether the prediction residual itself ranks driving clips for human review. 
+
+2.3 Video Anomaly Detection 
+
+Our novelty score is essentially an anomaly score: it flags the clips the model predicts worst. This places our work squarely within video anomaly detection (VAD), where a model fit to normal footage flags what it cannot explain; the survey of Bogdoll et al. [5] catalogues this large body of work for autonomous driving across sensing modalities and supervision regimes. The supervision avail-able varies widely: Sultani et al. [12] learn from videos labeled only as normal or anomalous, driving-specific datasets such as DoTA [16] provide spatial, tem-poral, and categorical anomaly annotations, and recent pipelines push toward fine-grained, object-level detection [9]. Self-supervised formulations close to ours also exist—Orlova et al. [10], for instance, build traffic anomaly detectors on frozen video foundation models with a masked-video-modeling objective—so we do not claim the absence of labels as a distinguishing feature. Our clip-level scores are themselves a JEPA-residual instance of the familiar “model the nor-mal, flag the unexplained” recipe, and our evaluation still draws on labeled driving datasets. Where most of this work targets specific anomalous objects or events, our aim is to rank whole clips for review. What has gone unexamined, though, is a failure mode of the evaluation itself: across these threads a score is typically judged on data whose “normal” and “anomalous” partitions come 6 Advait Pavuluri, Shamik Karkhanis, Uzma Mushtaque Driving clip Frozen V-JEPA 2 encoder Predictor head Cosine distance Review-value score, rank Supervised probe (diagnostic)   
+
+> masked predicted
+> target embedding
+> Fig. 2. Method overview. A frozen V-JEPA 2 encoder embeds each clip; a trained predictor reconstructs masked embeddings, and the cosine distance to the target em-bedding is the unsupervised review-value score. A supervised probe on the same frozen embeddings (dashed) serves as a labeled diagnostic. Only the orange components are trained.
+
+from the same source, or gains are reported without isolating what the score actually keys on. A prediction-error novelty score evaluated under the intuitive train-on-one-dataset, test-against-others protocol can instead score well by de-tecting provenance rather than review value, and to our knowledge no prior study separates that confound from a same-source measurement. Rather than proposing a new detector, our contribution is to expose this confound and to show that the underlying triage signal is nonetheless recoverable from the frozen representation. 
+
+## 3 Method 
+
+The prior work above motivates a concrete pipeline: take a strong frozen video representation, learn to predict masked embeddings on in-domain footage, and use the prediction residual as a triage score. Figure 2 gives an overview; this sec-tion formalizes the triage problem and then details each component—the frozen encoder, the masked-embedding predictor, the novelty score, and the supervised and no-training baselines we compare against. 
+
+3.1 Problem Formulation 
+
+Let C = {c1, . . . , c N } be a pool of driving clips. No labels are available for rank-ing; each clip nonetheless has a hidden ground-truth binary review-worthiness label y(c) ∈ { 0, 1}, used only to evaluate the ranking, and a provenance attribute 
+
+d(c) ∈ D denoting the dataset it originates from. A triage method is a scoring function s : C → R; ranking clips by decreasing s should place review-worthy clips first. We measure ranking quality by Average Precision, AP( s) = 1
+
+P
+
+> N
+
+X
+
+> k=1
+
+Precision@ k · 1 y(c(k)) = 1  , (2) Asleep at the Wheel 7
+
+where c(k) is the clip ranked k-th by s, P = P 
+
+> c
+
+y(c) is the number of positives, and Precision@ k is the precision among the top-k clips. The chance level of AP is approximately the positive rate P/N (exactly so in expectation as N → ∞ ;for finite N the expected AP of a random ranking sits slightly above it). A frozen encoder f maps a clip to an embedding z = f (c) ∈ R1024 . Every method we study derives its score s from f and differs only in what is placed be-tween the embedding and the score: a trained predictor, an untrained predictor, a density estimate, or a supervised classifier. 
+
+3.2 Data Split 
+
+In practice, a triage system is most valuable on data unlike what a fleet has already curated. A model is trained on a limited, fixed corpus, whereas the footage that later streams in may originate from different vehicles, cameras, cities, or weather conditions—often with different sensors and color grading. A natural way to test whether a score surfaces such material is therefore to source clearly review-worthy clips from driving datasets other than the training source—here Waymo and BDD100K—and to treat the abundant routine footage of the training dataset (nuScenes) as the negatives. This protocol is intuitive, mirrors deployment, and is easy to assemble, so we adopt it as our primary evaluation. Concretely, we draw clips from three driving datasets. Let C1 denote our in-domain dataset, nuScenes, and C2 the external datasets, Waymo and BDD100K. The predictor head is pre-trained on unlabeled clips from C1 only; the external set C2 is held out from training entirely and is used purely to supply review-worthy clips at evaluation time. We fix nuScenes as the sole in-domain source 
+
+C1 because our within-dataset review-worthiness labels exist only for it; letting each of the three datasets play the role of C1 in turn would require comparable labels in Waymo and BDD100K, which we do not have. For the cross-dataset benchmark, the ranked pool C comprises routine clips from C1 and review-worthy clips drawn predominantly from C2; for the within-nuScenes benchmark, C is drawn from C1 alone. In short, C1 and C2 name the data sources , while the predictor’s (unlabeled) training set and each evaluation pool C are subsets drawn from them. A useful score should, however, reflect genuine review value rather than mere differences in appearance between data sources. This is a distinction we will return to when analyzing the results. 
+
+3.3 Frozen Encoder and Mean-Pooled Clip Embeddings 
+
+We use a frozen V-JEPA 2 video encoder [2] ( facebook/vjepa2-vitl-fpc64-256 )as a fixed feature extractor; its weights are never updated. For a clip, the en-coder produces a sequence of 1024-dimensional token embeddings over two-frame tubelets. We mean-pool these tubelet embeddings into a single 1024-dimensional clip vector, which serves both as the prediction target for the masking objective and as the input feature for the supervised probe. Freezing the encoder isolates 8 Advait Pavuluri, Shamik Karkhanis, Uzma Mushtaque 
+
+the question we seek to answer: given a fixed, strong video representation, can a self-supervised masking objective extract a triage signal? 
+
+3.4 Predictor Head and Masking Transform 
+
+On top of the frozen encoder we attach a small trainable predictor head. Each clip is processed as a sequence of two-frame tubelets. During training, a masking transform zeroes a fraction (mask ratio 0 .5) of the 16 × 16 spatial patches within each tubelet. The frozen encoder embeds both the masked tubelet and the un-masked (clean) tubelet into 1024-d pooled vectors, and the predictor maps the masked embedding (together with the scalar masked fraction) to an estimate of the clean embedding. Only the predictor head is trained; the encoder remains frozen throughout. 
+
+3.5 JEPA Embedding-Prediction Objective 
+
+The predictor is trained with an L1 joint-embedding prediction loss in the en-coder’s representation space. For a tubelet, let z denote the frozen-encoder em-bedding of the clean tubelet (the target) and ˆ z = g(˜ z) the predictor g applied to the embedding ˜ z of the masked tubelet. The objective is the L1 distance between the two embeddings, 
+
+L = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+ˆzi − zi 1, (3) averaged over the N tubelets in a batch. Both z and ˜ z are produced by the frozen encoder, so the loss is a pure embedding-prediction (JEPA-style) objective with no pixel reconstruction, in contrast to masked autoencoders that reconstruct in input space [7]. 
+
+3.6 Review-Value Novelty Score 
+
+At inference, we convert prediction error into a per-clip novelty score. For a clip we form the predicted and target embeddings and define the review-value score 
+
+as the cosine distance between them, review-value score = 1 − cos  predicted , target , (4) so that clips whose masked content is poorly predicted (high cosine distance) receive high scores. The per-tubelet cosine distances are averaged over a clip, and ranking clips by this score gives the unsupervised triage ordering we evaluate. 
+
+3.7 Supervised Probe 
+
+As a diagnostic for whether the triage signal exists in the representation at all, we train a logistic-regression classifier on the frozen mean-pooled clip embeddings to predict the review-worthy label. The probe uses the same frozen 1024-d features as the novelty score; only its supervision differs. It is not a proposed deploy-ment method—it requires labels—but it measures how much review-worthiness information is linearly accessible in the frozen representation. Asleep at the Wheel 9
+
+3.8 No-Training Baselines 
+
+To check whether predictor training contributes anything beyond the frozen encoder, we compare against three simple baselines that require no learned pre-dictor: 
+
+– Masked-gap. Score a clip by 1 −cos  encoder(masked) , encoder(clean) , i.e. how much masking perturbs the embedding, with no predictor head. 
+
+– kNN-density. A leave-one-out cosine k-nearest-neighbor novelty score: clips far (in cosine distance) from their neighbors in embedding space are scored as more novel. 
+
+– Untrained-predictor. The same predictor head architecture as above but with random initialization (no training), used to produce a novelty score in the same way as the trained predictor. 
+
+## 4 Experimental Setup 
+
+With the scoring pipeline and baselines defined, we now specify how they are trained and evaluated: the driving datasets, the two benchmarks that opera-tionalize the confounded and fair protocols, the labeling procedure for the su-pervised probe, the metric suite, and the compute budget. 
+
+4.1 Data 
+
+Our primary data source is the nuScenes dataset [6], using the front camera (CAM FRONT ) over the trainval01 –trainval04 splits. We additionally use clips from the Waymo Open Dataset [13] and BDD100K [17] to construct the cross-dataset benchmark described below. All three are large-scale driving datasets of egocentric, forward-facing video—nuScenes (1 ,000 scenes of 20 s, collected in Boston and Singapore), the Waymo Open Dataset ( ∼1,150 segments of 20 s across several U.S. cities), and BDD100K (100 ,000 clips of 40 s spanning diverse cities, weather, and times of day)—but they differ in sensor, resolution, and color grading. That appearance gap is precisely what the cross-dataset protocol risks rewarding. 
+
+4.2 Training Sources: Samples vs. Sweeps 
+
+nuScenes provides two frame streams per scene: samples , the annotated keyframes at roughly 2 Hz, and sweeps , the dense intermediate frames at roughly 12 Hz. To test whether the source or the temporal extent of the pretext data affects triage, we train the predictor under a 2 × 2 design crossing source ( samples vs. 
+
+sweeps ) with clip length (16 vs. 32 frames), each over 5 seeds. We additionally train a sweeps-all condition that pools sweeps from trainval01 –trainval04 
+
+(roughly 5 × the data of a single split) to probe whether more unlabeled pretext data helps. Results for this configuration sweep appear in Table 3. 10 Advait Pavuluri, Shamik Karkhanis, Uzma Mushtaque 
+
+4.3 Benchmarks 
+
+The two benchmarks introduced earlier are realized concretely as follows. The 
+
+cross-dataset benchmark contains 64 clips: 32 review-worthy positives (13 from Waymo, 9 from BDD100K, 10 from nuScenes) and 32 routine nuScenes negatives, giving a chance AP of 0 .50. The within-nuScenes benchmark is a held-out set of 83 nuScenes clips with 20 positives, giving a chance AP of 0 .24. 
+
+4.4 Human Labeling 
+
+For the supervised probe we additionally label a training pool of 437 nuScenes clips (381 newly annotated, plus 56 pre-existing labels) spanning 38 scenes, 21% of them positive. Two annotators labeled the clips for review-worthiness. Scenes are held disjoint between this pool and the 83-clip within-nuScenes benchmark, so no scene appears in both and so that there is no scene-level leakage. 
+
+4.5 Metrics 
+
+We report a suite of ranking and detection metrics. Average Precision (AP) is the precision averaged over the ranks at which review-worthy clips appear, and PR-AUC is the area under the precision–recall curve; both summarize how well the ranking concentrates review-worthy clips near the top. ROC-AUC is the area under the receiver-operating-characteristic curve, where 0 .5 denotes chance. NDCG (normalized discounted cumulative gain) rewards placing review-worthy clips early in the ranking and discounts those buried deeper. Precision@10 and Recall@10 are the precision and recall within the top ten ranked clips, the regime that matters to a reviewer who inspects only a short prefix of the queue. Because AP and its chance level depend on the positive rate, we report the chance AP floor (the positive rate) for each benchmark alongside the measured values: a triage method is only interesting if it exceeds this floor. 
+
+4.6 Hyperparameter Selection 
+
+Predictor hyperparameters were fixed by a preliminary full-factorial sweep over mask ratio ∈ { 0.5, 0.75 }, predictor hidden width ∈ { 512 , 1024 }, and learning rate ∈ { 10 −4, 3 × 10 −4}, with three random seeds per cell (2 ×2×2×3 = 24 runs). We select the configuration with the highest Average Precision (mask ratio 0 .5, hidden width 512, learning rate 10 −4), adopt it unchanged, and do not 
+
+re-tune on the fair benchmark. Because every configuration we examine sits near the chance floor (Table 3), this choice does not affect our conclusions. 
+
+4.7 Training Details 
+
+The V-JEPA 2 encoder is frozen for all experiments. The predictor head is trained for 25 epochs with the L1 embedding-prediction loss, repeated over 5 random seeds. For the supervised probe we use scene-disjoint cross-validation with 10 repeats, reporting mean ±std. All splits respect scene boundaries so that train and benchmark scenes never overlap. Asleep at the Wheel 11 
+
+Table 1. Compute cost on a single NVIDIA V100 (32 GB). Training time covers 25 epochs of the predictor (the encoder is frozen); throughput and energy are measured over a fixed 663-clip timing pass, with energy estimated at 75 W                      
+
+> Configuration Train (min) Peak GPU (MB) Throughput (clips/s) Score energy (kJ)
+> samples 16 31 1898 4.4 11.2
+> samples 32 59 1900 4.7 10.5
+> sweeps 16 146 2057 4.5 11.2
+> sweeps 32 250 2027 5.3 9.4 0.0 0.2 0.4 0.6 0.8 1.0
+
+0.89 0.50 
+
+Cross-dataset 
+
+0.29 0.24 
+
+Within-nuScenes Average Precision trained predictor (AP) chance (positive rate) 
+
+Fig. 3. Same model, two evaluations. One trained checkpoint scores AP 0 .89 on the cross-dataset benchmark (chance 0 .50) but AP 0 .29 on the fair within-nuScenes bench-mark (chance 0 .24). 
+
+4.8 Compute Cost 
+
+All runs use a single NVIDIA V100 (32 GB). Table 1 reports the training time, peak GPU memory, scoring throughput, and estimated scoring energy for each configuration. Because the encoder is frozen and only the small predictor head is trained, the cost is modest: peak memory stays near 2 GB and training a configuration takes between half an hour and roughly four hours, scaling with the size of the pretext set. 
+
+## 5 Results 
+
+We first contrast the two benchmarks on a single checkpoint, then trace the inflated cross-dataset number to the novelty score behaving as a domain detector, and finally sweep the self-supervised configurations to confirm that none of them escapes the chance floor within nuScenes. 12 Advait Pavuluri, Shamik Karkhanis, Uzma Mushtaque 0.0 0.2 0.4 0.6 0.8 1.0  
+
+> 1.00 Embedding domain classifier
+> 0.965 Trained-predictor novelty
+> 0.45 Untrained masked-gap chance Domain-separation AUC (Waymo/BDD vs. nuScenes)
+> Fig. 4. Novelty is a domain detector. On the frozen embeddings, a logistic provenance classifier (AUC 1 .00) and the trained-predictor novelty score (AUC 0 .965) both separate Waymo/BDD from nuScenes, while the untrained masked-gap score is near chance (AUC 0 .45; dashed line, AUC= 0 .5).
+
+5.1 Provenance Affects Results 
+
+A single trained predictor checkpoint scores AP 0 .89 on the cross-dataset bench-mark, well above its 0 .50 chance level (Figure 3). On its own this would read as a strong unsupervised triage result. The same checkpoint scores AP 0 .29 on the fair within-nuScenes benchmark, against a chance floor of 0 .24, which is no better than ranking the clips at random. The decisive difference between the two evaluations is whether dataset provenance is confounded with the label. 
+
+5.2 Novelty Is a Domain Detector 
+
+The reason is that the novelty score has learned to recognize the dataset (Fig-ure 4). A logistic classifier on the frozen embeddings separates Waymo/BDD from nuScenes with AUC 1 .00 (5-fold cross-validation), and the trained-predictor novelty score tracks that same split almost as well (AUC 0 .965). The untrained masked-gap score does not: its domain AUC is 0 .45, near chance. The per-clip averages say the same thing, with mean trained-predictor novelty of 0 .027 on nuScenes against 0 .103 on Waymo/BDD. Training the predictor on nuScenes teaches it to assign higher novelty to out-of-domain footage, which is exactly the cue the cross-dataset benchmark rewards. This explains the cross-dataset result. Its positives come mostly from the ex-ternal datasets and its negatives entirely from nuScenes, so the review-worthiness label is largely a function of provenance. In the idealized case where every posi-tive is external, 
+
+y(c) = 1[ d(c) ∈ { Waymo , BDD } ] , (5) any score that separates the domains, meaning one with high AUC for predicting 
+
+d, also achieves high AP( s) for y, whether or not it captures within-domain Asleep at the Wheel 13 0.0 0.1 0.2 0.3 0.4 0.5 0.6         
+
+> 0.24
+> Chance
+> 0.29
+> JEPA novelty
+> 0.30
+> kNN-density
+> 0.50
+> Supervised head chance Average Precision (held-out)
+> Fig. 5. Fair-benchmark triage (held-out 83-clip set). Unsupervised JEPA novelty (AP 0 .29) and kNN-density (AP 0 .30) barely exceed the chance floor (AP 0 .24, dashed line); a supervised probe on the same embeddings reaches AP 0 .50.
+
+review value. That is what we see. The cross-dataset AP of 0 .89 measures domain shift rather than review value, and it falls short of a perfect 1 .0 only because 10 of the 32 positives are themselves nuScenes clips, which a pure domain detector cannot place above the nuScenes negatives. 
+
+5.3 Fair-Benchmark Triage 
+
+On the held-out 83-clip benchmark (chance AP 0 .24), unsupervised JEPA nov-elty reaches AP 0 .29 and kNN-density AP 0 .30, both barely above the floor (Figure 5). A supervised logistic probe on the same frozen embeddings reaches AP 0 .50, roughly twice chance. The signal a reviewer cares about is present in the representation; the unsupervised masking objective simply does not surface it. 
+
+5.4 Main Results Table 
+
+Table 2 reports the full ranking-metric suite for both the training pool (scene-disjoint cross-validation) and the held-out benchmark. Across every metric the unsupervised novelty and kNN-density scores stay close to chance, while the supervised head is the only method that moves substantially off the floor, so the gap is not an artifact of any single measure. 
+
+5.5 Self-Supervised Configuration Sweep 
+
+Table 3 varies the self-supervised configuration on the fair benchmark (chance AP 0 .24). Changing the sampling scheme ( samples vs. sweeps ) and the clip length (16 vs. 32 frames) leaves the AP flat and clustered just above chance, 14 Advait Pavuluri, Shamik Karkhanis, Uzma Mushtaque 
+
+Table 2. Triage results across the full ranking-metric suite, for the training pool (scene-disjoint cross-validation, 10 repeats) and the held-out 83-clip benchmark. Chance AP is the positive rate (0 .21 pool, 0 .24 held-out); the best value in each column and panel is in bold. Pool supervised-head values are the mean over 10 scene-disjoint CV repeats (AP 0 .411 ±0.028, ROC-AUC 0 .662 ±0.026); the unsupervised novelty and kNN-density scores are deterministic. The supervised head is a labeled diagnostic, not a deployable unsupervised method Method AP PR-AUC ROC-AUC NDCG Precision@10 Recall@10                                                 
+
+> (a) Training pool (scene-disjoint cross-validation)
+> Chance (positive rate) 0.213 –0.500 –0.213 0.023 Unsupervised JEPA novelty 0.315 0.310 0.624 0.751 0.200 0.022 kNN-density 0.327 0.322 0.636 0.755 0.200 0.022 Supervised head 0.411 0.406 0.662 0.819 0.700 0.075
+> (b) Held-out 83-clip benchmark
+> Chance (positive rate) 0.241 –0.500 –0.241 0.120 Unsupervised JEPA novelty 0.288 0.261 0.533 0.643 0.300 0.150 kNN-density 0.302 0.285 0.629 0.604 0.200 0.100 Supervised head 0.499 0.489 0.663 0.831 0.600 0.300
+
+Table 3. Self-supervised configuration sweep on the fair benchmark. Chance AP = 0.24. Trained-predictor variants (top) and no-training baselines (bottom) all remain near chance, and no configuration consistently outperforms the no-training baselines Configuration AP 
+
+Self-supervised (trained predictor) 
+
+samples 16 0.273 ± 0.006 
+
+samples 32 0.269 ± 0.003 
+
+sweeps 16 0.263 ± 0.007 
+
+sweeps 32 0.256 ± 0.008 
+
+sweeps-all (5 × data) 0.280 
+
+No-training baselines 
+
+Masked-gap 0.277 Untrained-predictor 0.301 kNN-density 0.304 
+
+and training on 5 × more data ( sweeps-all ) reaches only AP 0 .28. The no-training baselines, with AP of 0 .277 (masked-gap), 0 .301 (untrained predictor), and 0 .304 (kNN-density), do no worse than any trained variant. Training the predictor therefore adds essentially nothing to within-domain triage. 
+
+## 6 Discussion 
+
+The usual levers for improving a weak pretext model, namely a better-tuned masking loss, denser temporal sampling, and more pretext data, did not help within-domain triage; every configuration stayed near the chance floor. Under-training is not the explanation either: over the course of training the validation loss falls and then plateaus while the held-out AP never leaves the chance floor (Figure 6). The trained predictor is better described as a domain detector, and Asleep at the Wheel 15 0.004 0.005 0.006 0.007 0.008 0.009 0.010 0.20 0.24 0.28 0.32 2 4 6 8 10 12 14 16 18 
+
+> Validation loss Average Precision
+> Training epoch Validation loss Average Precision Chance (AP = 0.24)
+
+Fig. 6. Training does not help triage. For one representative run, the masking-objective validation loss falls and plateaus (blue, left axis) while held-out AP stays near the chance floor (red, right axis; dashed at AP= 0 .24), which makes undertraining an unlikely explanation. Reported models train for 25 epochs; the 18 epochs shown already reach the loss plateau. 
+
+the reason is visible in the embeddings themselves. We hypothesize that prove-nance is a highly linearly separable axis of variation in the frozen feature space—a linear classifier separates the source datasets almost perfectly (AUC 1 .00, Fig-ure 4)—and a masking objective that minimizes average embedding-prediction error is drawn toward exactly this kind of high-variance, globally consistent structure. Predicting the dataset-characteristic component of an embedding low-ers the loss far more reliably than predicting the rare, spatially or temporally localized cues that make an individual clip worth reviewing, so the prediction residual ends up measuring how far a clip sits from the in-domain manifold rather than how unusual its content is within that manifold. Training then suc-ceeds only when review-worthiness happens to be confounded with provenance. The failure is therefore one of extraction rather than information. A super-vised linear probe on the same frozen embeddings roughly doubles the chance AP, so the signal a reviewer wants is present in the representation; the mask-ing objective simply does not learn to predict it. Because the encoder is frozen throughout, this is a statement about the objective acting on a fixed representa-tion: freezing is what lets us attribute the gap to the predictor rather than to a shifting backbone, but it also leaves open whether end-to-end fine-tuning would reshape the feature space enough to decouple novelty from provenance in the first place. The consequence extends beyond this particular encoder. Whenever positives and negatives are drawn from different datasets, a score with even mild sensitiv-ity to provenance can post strong headline numbers while carrying no within-domain triage value, and the gap stays invisible unless a same-source benchmark 16 Advait Pavuluri, Shamik Karkhanis, Uzma Mushtaque 
+
+is run alongside. The remedy is cheap: decorrelate review value from provenance by sampling both positives and negatives from every source, and report a su-pervised probe on the frozen features as a ceiling that distinguishes a genuinely absent signal from one the objective merely fails to surface. As self-supervised video foundation models are increasingly reused off the shelf for autonomous-driving data curation, we expect this confound to recur, and a same-source control to remain the cheapest way to catch it. 
+
+## 7 Limitations and Future Work 
+
+Our fair benchmark is small, an 83-clip held-out set with 20 positives, so the within-domain estimates carry meaningful variance. The labels come from two annotators, which still leaves room for label noise and subjective bias. A better evaluation would use a balanced multi-dataset benchmark with both positive and negative clips drawn from each dataset, so that review value and provenance are decorrelated by construction; assembling one requires per-dataset review-worthiness labels we do not yet have. A further limitation is on the representation side: we mean-pool the tubelet embeddings into a single clip vector, which dilutes exactly the spatially and temporally localized cues that often make an event review-worthy, so a pooled score may wash out short or small-region anomalies. The most important limitation is one of scope . Our evidence comes from a single self-supervised configuration—a frozen V-JEPA 2 encoder, one predictor head, one masking strategy, and one evaluation protocol—so our conclusions apply to this instantiation rather than to masking-based or self-supervised rep-resentation learning as a whole. Three axes of generalization are, in our view, the priority for future work. First, other encoders : the same diagnostic should be run on widely used self-supervised video and image–text representations— VideoMAE, DINOv2, VICReg, MoCo-v3, SimCLR, BYOL, and CLIP-based video embeddings—to establish whether the provenance confound is specific to JEPA-style prediction error or a broader property of frozen self-supervised fea-tures. Second, adaptation : because the encoder is frozen throughout, we cannot separate the failure of the objective from the decision to fix the representa-tion; fine-tuning the encoder end-to-end, and replacing spatial masking with a temporal or future-frame prediction objective, are the natural counterfactu-als. Third, other downstream tasks : review-worthiness ranking is one instance of novelty-driven curation, and validating the observation on anomaly detection, accident anticipation, rare-event retrieval, safety-critical event identification, and corner-case mining would test how far the diagnostic generalizes. On the anal-ysis side, feature-space visualizations (t-SNE/UMAP), embedding-distribution and attention-map inspection, and qualitative case studies of the highest- and lowest-scored clips would further explain why the objective learns dataset-specific structure. Retaining localized (un-pooled) structure in the score, rather than the mean-pooled clip vector noted above, is a complementary direction on the rep-resentation side. Asleep at the Wheel 17 
+
+## 8 Conclusion 
+
+Self-supervised video foundation models are increasingly put forward as a label-free way to curate the enormous volume of footage that autonomous-driving fleets collect, and prediction-error “novelty” is one of the most natural signals to build such triage on. We set out to do exactly this with an unsupervised JEPA-novelty score on a frozen V-JEPA 2 encoder. Across datasets it looked strong, but the same checkpoint fell to chance on a fair within-nuScenes bench-mark, because the score had learned to detect the dataset rather than the review value; a supervised probe on the identical frozen embeddings recovered a clear signal, so the information was there all along. The failure we document is there-fore one of extraction, not of representation, and—for this instantiation—one of evaluation as much as of method: a cross-dataset protocol can badly overstate unsupervised triage, and a strong representation does not guarantee that a given self-supervised objective will surface the property one actually cares about. We deliberately frame this as a diagnostic rather than a negative verdict on self-supervised curation. As the field moves toward ever-larger frozen video en-coders and reuses their features off the shelf, the cheap controls this study argues for—drawing positives and negatives from every source so that provenance and review value are decorrelated, and reporting a supervised probe as an extraction ceiling—become correspondingly more valuable. Whether the same confound holds for other encoders, for fine-tuned backbones, and for downstream tasks beyond review-worthiness ranking is the open question our findings raise, and the one we hope to answer next. 
+
+## Declarations 
+
+Use of generative AI. A large language model was used to help edit and refine wording and to assist in generating the figures and tables. The authors designed the study, ran all experiments, and take full responsibility for the content of this paper. 
+
+Code availability. The code for the experiments, figures, and tables is available at https://github.com/shamikkarkhanis/AV-SSL-Optimization-JEPA. 
+
+## References 
+
+> 1. Assran, M., Duval, Q., Misra, I., Bojanowski, P., Vincent, P., Rabbat, M., et al.: Self-supervised learning from images with a joint-embedding predictive architec-ture. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pat-tern Recognition (CVPR). pp. 15619–15629 (2023) 2. Assran, M., et al.: V-JEPA 2: Self-supervised video models enable understanding, prediction and planning. arXiv preprint arXiv:2506.09985 (2025) 3. Bardes, A., Garrido, Q., Ponce, J., Chen, X., Rabbat, M., LeCun, Y., et al.: Re-visiting feature prediction for learning visual representations from video. arXiv preprint arXiv:2404.08471 (2024)
+
+18 Advait Pavuluri, Shamik Karkhanis, Uzma Mushtaque 4. Bertasius, G., Wang, H., Torresani, L.: Is space-time attention all you need for video understanding? In: Proceedings of the International Conference on Machine Learning (ICML) (2021) 5. Bogdoll, D., Nitsche, M., Z¨ ollner, J.M.: Anomaly detection in autonomous driving: A survey. arXiv preprint arXiv:2204.07974 (2022) 6. Caesar, H., Bankiti, V., Lang, A.H., Vora, S., Liong, V.E., Xu, Q., et al.: nuScenes: A multimodal dataset for autonomous driving. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 11621– 11631 (2020) 7. Geng, X., Liu, H., Lee, L., Schuurmans, D., Levine, S., Abbeel, P.: Multi-modal masked autoencoders learn transferable representations. arXiv preprint arXiv:2205.14204 (2022) 8. He, K., Chen, X., Xie, S., Li, Y., Doll´ ar, P., Girshick, R.: Masked autoencoders are scalable vision learners. In: Proceedings of the IEEE/CVF Conference on Com-puter Vision and Pattern Recognition (CVPR). pp. 16000–16009 (2022) 9. Huang, Y., Li, C., Zhang, H., Lin, Z., Lin, Y., Liu, H., et al.: Track any anoma-lous object: A granular video anomaly detection pipeline. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 8689–8699 (2025) 10. Orlova, S., Kerssies, T., Englert, B.B., Dubbelman, G.: Simplifying traffic anomaly detection with video foundation models. arXiv preprint arXiv:2507.09338 (2025) 11. Qian, R., Meng, T., Gong, B., Yang, M.H., Wang, H., Belongie, S., et al.: Spatiotemporal contrastive video representation learning. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 6964–6974 (2021) 12. Sultani, W., Chen, C., Shah, M.: Real-world anomaly detection in surveillance videos. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 6479–6488 (2018) 13. Sun, P., Kretzschmar, H., Dotiwalla, X., Chouard, A., Patnaik, V., Tsui, P., et al.: Scalability in perception for autonomous driving: Waymo open dataset. In: Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recogni-tion (CVPR). pp. 2446–2454 (2020), arXiv:1912.04838 14. Tong, Z., Song, Y., Wang, J., Wang, L.: VideoMAE: Masked autoencoders are data-efficient learners for self-supervised video pre-training. In: Advances in Neural Information Processing Systems (NeurIPS). vol. 35, pp. 10078–10093 (2022) 15. Wei, C., Fan, H., Xie, S., Wu, C.Y., Yuille, A., Feichtenhofer, C.: Masked feature prediction for self-supervised visual pre-training. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 14668– 14678 (2022) 16. Yao, Y., Wang, X., Xu, M., Pu, Z., Atkins, E., Crandall, D.: When, where, and what? a new dataset for anomaly detection in driving videos. In: Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) (2021), arXiv:2004.03044 17. Yu, F., Chen, H., Wang, X., Xian, W., Chen, Y., Liu, F., et al.: BDD100K: A diverse driving dataset for heterogeneous multitask learning. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 2636–2645 (2020)

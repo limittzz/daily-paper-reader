@@ -1,0 +1,725 @@
+Title: VIDP: Variable Impedance Diffusion Policy for Compliant Robot Manipulation from Diverse Demonstrations
+
+URL Source: https://arxiv.org/pdf/2608.06210v1
+
+Published Time: Fri, 07 Aug 2026 01:11:09 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# VIDP: Variable Impedance Diffusion Policy for Compliant Robot Manipulation from Diverse Demonstrations 
+
+Hisham Khalil 1, Neil Fernandes 2, Thomas M. Kwok 1, Hsiu-Chin Lin 3, Yue Hu 1
+
+Abstract — Contact-rich manipulation requires precise track-ing and mechanical compliance, where variable impedance control can improve robustness in task success, whereas static compliance cannot adapt to varying contact constraints. Variable impedance skills can be learned from demonstrations, avoiding complex modeling, but compliance is a hidden variable in force-agnostic kinematic data. While existing methods infer compliance from trajectory variations, these variations may reflect geometric adaptation and not intentional compliance when subject to changing spatial layouts. Therefore, this letter introduces Variable Impedance Diffusion Policy (VIDP), an imitation learning-based variable impedance control framework leveraging a Task-Parameterized Directionality-Aware Mixture Model (TP-DAMM) to extract physically consistent trajectory distributions from diverse demonstrations. By mapping distributions to stiffness profiles, VIDP jointly predicts pose actions and task compliance without force sensors. Real-world experiments show that VIDP significantly outperforms fixed-impedance baselines in task success rate while reducing interaction forces with respect to high stiffness controllers and tracking errors with respect to low stiffness baselines. 
+
+I. I NTRODUCTION 
+
+Collaborative robots performing contact-rich manipula-tion tasks must balance precise tracking with mechanical compliance to ensure safety [ 1], energy efficiency [ 2], and task success [ 3]. However, maintaining static compliance is often insufficient in unstructured environments. For instance, tight-tolerance assembly tasks, such as peg-in-hole insertions, require dynamic stiffness modulation to prevent jamming and accommodate low relative tolerances [ 4]. Similarly, manipu-lating deformable objects, such as cables or ropes, requires a robot to yield to elastic resistance while applying specific directional forces [ 5 ]. Therefore, these tasks benefit from variable impedance control, where the level of mechanical compliance varies dynamically over the task horizon.                    
+
+> This work has been submitted to the IEEE for possible publication. Copyright may be transferred without notice, after which this version may no longer be accessible. We acknowledge the support of the Natural Sciences and Engineering Research Council of Canada (NSERC) CREATE ADVENTOR program, funding reference number 584985, and the National Research Council of Canada (NRC), Canada-Japan 3+2 collaborative funding reference number AiP-302-1.
+> 1H. Khalil, T. M. Kwok, and Y. Hu are with the Department of Mechanical and Mechatronics Engineering, University of Water-loo, Waterloo, ON, Canada
+
+{hisham.khalil, thomasm.kwok, yue.hu}@uwaterloo.ca                 
+
+> 2N. Fernandes is with the Department of Electrical and Com-puter Engineering, University of Waterloo, Waterloo, ON, Canada
+
+neil.fernandes@uwaterloo.ca  
+
+> 3H.-C. Lin is with the School of Computer Science and the Department of Electrical and Computer Engineering, McGill University, Montreal, QC, Canada
+
+hsiu-chin.lin@mcgill.ca 
+
+Learning from demonstrations has emerged as a promising paradigm to transfer variable impedance skills to robots [ 4], as programming dynamic compliance profiles requires complex analytical modeling of the environment. The fundamental challenge in learning variable impedance control stems from the desired compliance profile, represented as stiffness, being a hidden variable in kinematic demonstrations [ 6]. This limita-tion becomes a critical issue when attempting to train variable impedance policies that can generalize across changing envi-ronments. While providing diverse demonstrations (varying in spatial layouts and object poses) is crucial for task execution generalization, it significantly complicates the estimation of the underlying task compliance. For instance, when a human demonstrates a task across different configurations, the varying trajectories create ambiguity. This creates a challenge for a robot to distinguish between intentional compliance (e.g., yielding to a surface) and spatial deviations (e.g., adapting to a new layout), leading to potentially unpredictable or unsafe physical interactions [7]. Existing imitation learning frameworks attempt to resolve this ambiguity through multi-modal sensing [ 8], [ 9], which introduces hardware dependencies and synchronization chal-lenges, or by extracting compliance from strictly aligned kine-matic data [ 10 ], which severely limits spatial generalization. Conversely, standard visuomotor policy learning algorithms like Diffusion Policy [ 11 ] scale well spatially but frame contact-rich manipulation purely as a geometric problem, failing to capture the demonstrator’s underlying physical compliance. Consequently, extracting variable impedance skills from diverse, force-agnostic data remains a critical open challenge. To address this problem, this letter proposes Variable 
+
+Impedance Diffusion Policy (VIDP), a framework that pre-dicts compliance profiles from position-only demonstrations by leveraging a Task-Parameterized Directionality-Aware Mixture Model (TP-DAMM). In our approach, TP-DAMM captures the spatial variability of the demonstrations by extracting their task-parameterized covariance profiles. As established in the literature [ 12 ], [ 4 ], these statistical variations directly map to the stiffness parameters of an underlying impedance controller to retrieve task compliance. The main contributions of this letter are: 1) A Task-Parameterized Directionality-Aware Mixture Model (TP-DAMM) that resolves the ambiguity be-tween intentional compliance and geometric adaptation. By extracting physically consistent trajectory distribu-tions from spatially diverse demonstrations, TP-DAMM extracts task variability using solely kinematic data. arXiv:2608.06210v1 [cs.RO] 6 Aug 2026 2) A Variable Impedance Diffusion Policy (VIDP) that maps these extracted variabilities into executable target stiffness profiles. This enables a policy to jointly predict precise pose actions and dynamic task compliance from visual and state observations, completely bypassing the need for dedicated force sensors. We experimentally validate these contributions through quan-titative clustering and three real-world contact-rich manipula-tion tasks. Our results demonstrate that TP-DAMM extracts more physically and directionally consistent motion primitives than standard baselines, while VIDP significantly outperforms fixed-impedance controllers in task success rates, enhancing safety and energy efficiency by minimizing interaction forces, tracking errors, and mechanical work. II. R ELATED WORK 
+
+Classical frameworks for contact-rich manipulation, such as hybrid force/position or operational space impedance control, rely on manual tuning and task-specific modeling, severely limiting scalability across unstructured environments. While reinforcement learning (RL) can adapt stiffness to improve generalization [ 13 ], [ 14 ], real-world training remains challenging due to sample inefficiency and exploration safety risks. Consequently, recent work explores learning compliant policies directly from demonstrations. For instance, approaches integrate real-time force feedback with object representations [ 15 ], fuse high-frequency force sensing with vision [ 16 ], or leverage task-parameterized representations be-sides force signals to optimize stiffness across various spatial layouts [ 17 ]. While these methods improve task adaptability, they depend on accurate, well-synchronized force/torque measurements, which most commercial collaborative robots lack. Furthermore, these sensors are costly, noisy, and require complex synchronization with low-frequency vision. Rather than explicitly modeling continuous contact forces, other approaches shift the complexity to the data collection phase. Some constrain teaching by toggling predefined stiffness modes during teleoperation [ 18 ] or utilizing inter-active human corrections [ 19 ], demanding extensive manual supervision. Furthermore, while all imitation learning requires structured data collection, existing methods based on diffusion policies for contact-rich manipulation often necessitate highly specialized interactive hardware that limits scalability. For instance, [ 20 ] extracts compliance labels via a dedicated kinesthetic teaching setup. Similarly, [ 21 ] achieves high precision using a visual-tactile policy that fundamentally relies on fine-grained tactile sensors and complex augmented reality teleoperation rather than standard visual observations. As an alternative to specialized hardware and manual super-vision, stiffness can be estimated directly from demonstrations using force covariance [ 22 ] or inverse position covariance [ 12 ]. However, these traditional statistical methods assume consistency within a fixed reference frame, struggling with the unaligned spatial variations necessary to train generalizable policies [ 23 ]. Consequently, a critical gap remains: few approaches integrate compliance directly into visuomotor policy learning without relying on manually tuned gains, multi-modal sensing, or restrictive fixed-frame assumptions. VIDP addresses these limitations by using TP-DAMM to extract physically consistent stiffness profiles from diverse, force-agnostic demonstrations, enabling a visuomotor policy to jointly predict precise pose and compliance. III. B ACKGROUND 
+
+A. Classical Variable Impedance Control 
+
+The robot’s rigid body dynamics are modeled using an inverse dynamics formulation to compensate for gravity and Coriolis forces [ 24 ]. The commanded joint torque τ cmd 
+
+follows a hybrid joint impedance control law: 
+
+τ cmd = ˆC(q, ˙q) ˙ q + ˆ g(q)+ KP (q)( qd − q) + KD (q)( ˙ qd − ˙q), (1) where qd and ˙qd are the desired joint positions and velocities of a robot with n joints. In variable impedance control, the operational space gains Kd, Dd ∈ R6×6 are dynamically modulated to adapt to task requirements. These gains, along with constant null-space gains Kq , Dq ∈ Rn×n, are projected through the robot’s Jacobian J(q):
+
+KP (q) = J(q)⊤KdJ(q) + Kq ,
+
+KD (q) = J(q)⊤DdJ(q) + Dq . (2) Furthermore, to ensure stable physical interaction, such controllers are frequently maintained at a desired damping ratio ζ by coupling the operational space damping to the stiffness via Dd = 2 ζ√Kd [25]. 
+
+B. Task-Parameterized Probabilistic Representations 
+
+In task-parameterized frameworks, demonstrations are explicitly modeled from the perspective of P candidate reference frames, or task parameters [ 26 ]. Let ξt ∈ RD
+
+denote the global robot state at time t. Each frame j is defined by a translation bt,j and rotation At,j . The global state is projected simultaneously into all P local frames, generating a dataset of local trajectories X(j) 
+
+> t
+
+:
+
+X(j) 
+
+> t
+
+= A−1 
+
+> t,j
+
+(ξt − bt,j ). (3) This isolates the statistical structure of the task relative to specific landmarks, e.g., target objects or robot end-effector. A unified probabilistic model, typically a Task-Parameterized Gaussian Mixture Model (TP-GMM) [ 27 ], is learned with parameters Θ = {πm, {μ(j) 
+
+> m
+
+, Σ(j) 
+
+> m
+
+}Pj=1 }Mm=1 , sharing mixing coefficients wm across frames while maintaining separate spatial parameters (μ(j) 
+
+> m
+
+, Σ(j) 
+
+> m
+
+) for each frame j.To represent the learned distribution in a new task frame 
+
+{ ˆAt,j , ˆbt,j }Pj=1 , the local densities are projected back into the global frame and fused via a Product of Gaussians (PoG). The fused distribution is given by 
+
+ˆΣt,m =
+
+
+
+> P
+
+X
+
+> j=1
+
+ˆΛ(j)
+
+> t,m
+
+
+
+> −1
+
+, ˆμt,m = ˆΣt,m PX
+
+> j=1
+
+ˆΛ(j) 
+
+> t,m
+
+ˆμ(j)
+
+> t,m
+
+,
+
+(4) Fig. 1. Overview of VIDP. (Left) Diverse kinematic demonstrations are collected across varying spatial layouts. (Top Right) TP-DAMM extracts spatially and directionally consistent trajectory distributions. (Bottom Right) Their variances are mapped to stiffness profiles, enabling a Diffusion Policy to jointly predict pose actions and task compliance from real-time visual and state observations for deployment on a variable impedance controller. 
+
+where ˆμ(j) 
+
+> t,m
+
+and ˆΣ(j) 
+
+> t,m
+
+are the parameters projected into the global frame. This ensures the trajectory satisfies constraints from all task parameters simultaneously. While TP-GMMs align spatial distributions across these multiple reference frames, they cannot reliably separate nearby motions with opposing directions. Conversely, Directionality-Aware Mixture Models (DAMM) [ 28 ] resolve this directional ambiguity, yet remain confined to a single frame and highly sensitive to global spatial perturbations. IV. M ETHODOLOGY 
+
+VIDP bridges kinematic demonstrations and compliant policy execution through three stages, as shown in Fig. 1. First, TP-DAMM extracts spatially and directionally consistent trajectory distributions from diverse demonstrations. Their variance is then mapped to target Cartesian stiffness profiles, which supervise a Diffusion Policy to jointly predict pose actions and compliance from visual and state observations. 
+
+A. Trajectory Distribution Estimation via TP-DAMM 
+
+The first stage of our pipeline requires extracting atrajectory distribution that generalizes to diverse environ-ment configurations while preserving the intrinsic dynamical structure of the task. To overcome the spatial limitations of standard DAMM and the directional ambiguity of TP-GMMs discussed in Section III-B, we propose the TP-DAMM framework. 
+
+1) Frame-Specific Directional Augmentation: Here, ξt ∈
+
+RD is instantiated as the end-effector position, with ˙ξt its velocity. We model the task using P candidate task frames, where at time t, each frame j is defined by a translation bt,j 
+
+and a rotation At,j .To capture the directional features missing in standard TP-GMMs, TP-DAMM augments the state with a directional deviation term derived from Riemannian statistics on the unit sphere Sd−1. While positions transform via the full affine definition in Eqn. (3), the directionality term must be transformed purely via rotation to preserve the unit-norm geometry. For frame j, the local position x(j) 
+
+> t
+
+and local unit velocity direction u(j) 
+
+> t
+
+are computed as: 
+
+x(j) 
+
+> t
+
+= A−1 
+
+> t,j
+
+(ξt − bt,j ), u(j) 
+
+> t
+
+= A⊤ 
+
+> t,j
+
+˙ξt
+
+A⊤ 
+
+> t,j
+
+˙ξt
+
+. (5) Per mixture component m, the local directional mean 
+
+μ(j) 
+
+> dir,m
+
+∈ S d−1 is computed as the Fréchet mean of the unit velocity directions assigned to that component. The local directional variance d(j) 
+
+> t,m
+
+is then computed via the Riemannian logarithmic map: 
+
+d(j) 
+
+> t,m
+
+= log μ(j)
+
+> dir,m
+
+(u(j) 
+
+> t
+
+) . (6) Intuitively, d(j) 
+
+> t,m
+
+measures the angular deviation of a demon-strated velocity direction from its cluster’s characteristic direction, allowing TP-DAMM to distinguish co-located motions that move in opposite directions. The resulting augmented state vector for frame j and component m is given as: 
+
+ˆx(j) 
+
+> t,m
+
+=
+
+h
+
+x(j)⊤ 
+
+> t
+
+, d (j)
+
+> t,m
+
+i⊤
+
+∈ Rd+1 . (7) Consequently, the subsequent probabilistic clustering operates directly on this augmented state, combining the spatial posi-tions and velocity directionality into a unified representation. 
+
+2) Probabilistic Formulation: We model the demonstra-tions as a mixture of M components, where each component 
+
+m is represented by a set of Gaussians {N (μ(j) 
+
+> m
+
+, Σ(j) 
+
+> m
+
+)}Pj=1 .Referring to DAMM structure, the covariance matrix Σ(j) 
+
+> m
+
+is block-diagonal to enforce independence between the spatial distribution and the directional variance (σ2)(j)
+
+> dir,m
+
+:
+
+Σ(j) 
+
+> m
+
+=
+
+"
+
+Σ(j) 
+
+> pos,m
+
+00 (σ2)(j)
+
+> dir,m
+
+#
+
+, μ(j) 
+
+> m
+
+=
+
+μ(j)
+
+> pos,m
+
+0
+
+
+
+. (8) Let zt ∈ { 1, . . . , M } denote the latent assignment variable indicating that the observation at time t belongs to mixture component m. The probability of observing a data-point 
+
+ξt given this assignment is determined by the Product of Algorithm 1 TP-DAMM Inference 
+
+Require: Trajectories {ξt, ˙ξt}Tt=1 , Frames {bt,j , At,j }Pj=1  
+
+> 1:
+
+Compute local x(j) 
+
+> t
+
+, u(j) 
+
+> t
+
+(Eqn. (5)) and initialize zt 
+
+> 2:
+
+for iteration = 1 to Niter do  
+
+> 3:
+
+// 1. Parameter Sampling  
+
+> 4:
+
+for each m, j do  
+
+> 5:
+
+Sample {μpos , Σpos }(j) 
+
+> m
+
+∼ NIW, (σ2)(j) 
+
+> dir,m
+
+∼ IG  
+
+> 6:
+
+μ(j) 
+
+> dir,m
+
+← FréchetMean ({u(j) 
+
+> t
+
+: zt = m}) 
+
+> 7:
+
+Construct augmented μ(j) 
+
+> m
+
+, Σ(j) 
+
+> m
+
+(Eqn. (8))  
+
+> 8:
+
+end for  
+
+> 9:
+
+// 2. Gibbs Assignment  
+
+> 10:
+
+for each t do  
+
+> 11:
+
+Construct augmented state ˆx(j) 
+
+> t,m
+
+(Eqns. (6) and (7))  
+
+> 12:
+
+Sample zt using PoG likelihood (Eqn. 9)  
+
+> 13:
+
+end for  
+
+> 14:
+
+// 3. Split/Merge Proposals  
+
+> 15:
+
+Build augmented space Xm, center data to ¯Xm 
+
+> 16:
+
+SVD projection to deff : Zm = ¯XmVeff ( ¯Xm = USV ⊤) 
+
+> 17:
+
+Propose Θnew (split/merge); Compute acceptance ratio a 
+
+> 18:
+
+if log( Uniform (0 , 1)) < log a then  
+
+> 19:
+
+Accept Θnew , update zt 
+
+> 20:
+
+end if  
+
+> 21:
+
+end for Ensure: Θ = {wm, {μ(j) 
+
+> m
+
+, Σ(j) 
+
+> m
+
+}Pj=1 }Mm=1 
+
+Gaussians (PoG) across all frames: 
+
+P(ξt|zt = m) ∝ πmPY
+
+> j=1
+
+N
+
+
+
+ˆx(j) 
+
+> t,m
+
+μ(j) 
+
+> m
+
+, Σ(j)
+
+> m
+
+
+
+. (9) 
+
+3) Parallel Inference with Split/Merge Proposals: We use a parallel split-merge Gibbs sampler for Bayesian inference. Unlike standard DAMM’s single global representation, TP-DAMM independently samples local position covariances 
+
+Σ(j) 
+
+> pos,m
+
+and directional variances (σ2)(j) 
+
+> dir,m
+
+per component 
+
+m and frame j ∈ { 1, . . . , P } via Normal-Inverse-Wishart (NIW) and Inverse-Gamma (IG) priors, respectively. To account for multi-frame likelihoods, the inference process alternates between parameter sampling, Gibbs assignment, and split/merge proposals, as shown in Algorithm 1. Furthermore, while DAMM evaluates split proposals us-ing single-frame position data, TP-DAMM utilizes a task-parameterized augmented space. This space concatenates local positions and directional scalars from all P frames, yielding Xm ∈ RNm×Daug (Daug = P (N + 1) ). To prevent degenerate covariance estimation when Nm < D aug , we apply Principal Component Analysis. By defining the effective dimensionality deff = min( Daug , max(2 , N m − 1)) and computing the Singular Value Decomposition of the centered data ¯Xm = USV ⊤, we project the observations onto the first 
+
+deff principal components Veff . This allows safe estimation of split parameters in the reduced space as Zm = ¯XmVeff .
+
+B. Mapping Distributions to Target Stiffness 
+
+To regulate the robot’s compliance, we adopt the learning-based control strategy proposed in [ 12 ], which exploits the task redundancy observed across multiple demonstrations. As motivated in Section I, the core principle is that the variability of the demonstrations encapsulates the task constraints, in which parts of the motion with high variability indicate low precision requirements (lower stiffness), while parts with low variability require precise tracking (higher stiffness). Given the fused spatial covariance matrix ˆΣk derived from the TP-DAMM for the m-th component, we estimate the translational stiffness matrix Ktrans ∈ R3×3 by analyzing the inverse covariance matrix [ 12 ]. We first perform an eigen decomposition of the inverse covariance: 
+
+( ˆΣm)−1 = V mΛmV ⊤
+
+> m
+
+, (10) where V m is the matrix of eigenvectors acting as the principal axes of stiffness, and Λm = diag (λm, 1, . . . , λ m,d ) are the eigenvalues representing the magnitude along those axes. To map these values to executable stiffness gains, we define a diagonal matrix of stiffness eigenvalues Dm. Following the strategy in [ 12 ], we rescale the statistical eigenvalues λm,i to lie within the robot’s admissible stiffness range [κmin , κ max ]:
+
+D(i,i ) 
+
+> m
+
+= κmin + ( κmax − κmin ) λm,i − λmin 
+
+λmax − λmin 
+
+, (11) where λmin and λmax are the minimum and maximum eigenvalues observed across the entire task, i.e., across all 
+
+M components. This ensures that the components with the highest precision requirements are assigned the maximum available stiffness κmax , while the most variable components are assigned κmin . The stiffness matrix Kmtrans for component 
+
+m is then reconstructed as Kmtrans = V mDmV ⊤
+
+> m
+
+. To prevent discontinuous control inputs during cluster transitions, which can cause instability in the variable impedance controller [29 ], we apply a temporal moving average filter to smoothly interpolate the final reference variable stiffness Ktrans,t =diag( Kx, K y , K z ) along the trajectory. 
+
+C. Policy Learning and Real-Time Execution 1) Policy Architecture and Dataset Formulation: We formu-late VIDP as a Conditional Denoising Diffusion Probabilistic Model (DDPM) [ 11 ]. Because kinematic demonstrations lack force data, we first infer variable stiffness profiles Ktrans,t by processing the demonstration trajectory data with TP-DAMM (Section IV-B). This yields a training dataset D = {(Ot, At)},where Ot contains visual and proprioceptive observations, and At includes target poses and stiffness parameters. The policy πθ takes an observation of horizon Tobs as input and predicts an action chunk Apred of horizon Tpred . Note that VIDP predicts only translational stiffness, sufficient for our translation-dominated evaluation tasks. 
+
+Observation Space. The policy condition Ot consists of vi-sual and proprioceptive observations. For visual observations, we utilize raw RGB images from the wrist-mounted camera. We then employ a CLIP-pretrained Vision Transformer (ViT) backbone to extract semantic features. To adapt to our specific domain, we fine-tune the encoder end-to-end while training our policy and use attention pooling to aggregate the patch embeddings into a compact feature vector. For proprioception, the robot’s end-effector pose history is represented by its 3D position and a continuous 6D rotation representation used to avoid representation singularities during training [ 30 ]. The history is flattened and projected to a feature embedding using a Multi-Layer Perceptron. 
+
+Action Space. We augment the kinematic action space to explicitly control compliance. The predicted action chunk 
+
+Ainit ∈ RTpred ×15 consists of a sequence of steps at =[p⊤ 
+
+> t
+
+, r⊤ 
+
+> t
+
+, c⊤ 
+
+> t
+
+]⊤ for t = 1 . . . T pred , where pt ∈ R3 is the target position and rt ∈ R6 is the continuous rotation representation. For the stiffness parameters, simply predicting a full stiffness matrix from the policy does not guarantee symmetric positive definite properties. To address this, we adopt the Cholesky decomposition representation [ 22 ]. We predict the vector ct ∈ R6, which corresponds to the flattened non-zero elements of the upper triangular Cholesky factor Ut.The full stiffness matrix is reconstructed during execution as 
+
+Ktrans,t = U⊤ 
+
+> t
+
+Ut.
+
+Training Objective. We use a 1D Temporal U-Net as the noise prediction network ϵθ . The network is trained using the AdamW optimizer with a cosine learning rate scheduler. During training, the model minimizes the Mean Squared Error (MSE) between the sampled noise ϵ and the predicted noise: 
+
+L = Ek, A0,ϵ
+
+∥ϵ − ϵθ (Ak, k, Ot)∥2 . (12) 
+
+2) Real-Time Policy Optimization: To accelerate real-time inference, we use the Denoising Diffusion Implicit Model (DDIM) scheduler [ 11 ]. However, synchronous Diffusion Pol-icy execution still introduces latency-induced pauses between action chunks, causing dangerous force spikes and jerky transitions in contact-rich manipulation. We therefore employ Real-Time Chunking (RTC) [ 31 ], which asynchronously decouples inference from execution to maintain reactive control. To adapt our trained diffusion model to RTC’s flow-based guidance, we reinterpret it as an Optimal Transport conditional flow during inference [ 32 ]. This enables gradient-based trajectory editing to enforce temporal consistency between consecutive action chunks: 
+
+ˆv = vθ + γ(τ )∇zτ ∥W ⊙ (Aprev − ˆA0(zτ )) ∥2, (13) where τ ∈ [0 , 1] denotes the continuous flow time during inference, while γ(τ ) and W are time-dependent guidance weights and soft-masking vectors, respectively. This mecha-nism ensures strict consistency for immediate actions while allowing the policy to relax constraints for future steps, enabling smooth reactions to new observations Ot.V. E XPERIMENTAL EVALUATION 
+
+We aim to answer the following research questions:  
+
+> •
+
+RQ1: Does TP-DAMM extract more directionally consis-tent and representative task trajectory distributions from spatially diverse demonstrations compared to standard clustering methods?  
+
+> •
+
+RQ2: Does VIDP outperform fixed-impedance baselines in success rate across tasks characterized by varying contact constraints and diverse spatial layouts?  
+
+> •
+
+RQ3: How does the inferred variable impedance profile optimize the physical interaction metrics, specifically interaction forces, tracking errors, and energy efficiency, during critical execution phases? 
+
+A. Experimental Setup 1) Hardware: We collect demonstrations using the Uni-versal Manipulation Interface (UMI) [ 33 ], with egocentric GoPro Hero 11 vision and Vicon pose tracking. Deployment uses a Franka Robotics Panda manipulator in a 65 × 75 cm workspace with custom 3D-printed fingers (see Fig. 3). Models are trained on an NVIDIA RTX 4090 workstation and run in real time on a laptop with an AMD Ryzen 7 6800H CPU and NVIDIA RTX 3070 Ti GPU. 
+
+2) Evaluation Tasks and Datasets: We evaluate VIDP on three contact-rich manipulation tasks (see Fig. 3). To perform thorough task success evaluation, we divide executions into semantic phases defined by transitions in physical interaction states or key spatial waypoints. The tasks include: Peg-in-Hole Insertion (333 demonstrations) for rigid contact (Reach, Align, and Insert phases); Pulley Assembly (319 demonstrations) for hybrid interaction (Stretch, Route, and Secure phases); and Cable Routing (307 demonstrations) for deformable manipulation (three sequential Hook phases). Dataset sizes vary due to the post-processing removal of human execution errors or Vicon data noise. To capture spatial variability in TP-DAMM with task frames, Peg-in-Hole Insertion uses the start pose, representing the end-effector holding the peg, and the hole location. Pulley Assembly uses the start pose, end pose, and pulley location, while Cable Routing uses the three routing hooks’ locations. 
+
+3) Baselines: We compare VIDP with two baselines sharing the same Diffusion Policy [ 11 ] but using fixed-impedance control: Stiff-DP and Compliant-DP, with Carte-sian stiffness set uniformly across all axes to 1200 N/m for rigid interactions and 400 N/m for softer contact, respectively. For all deployments, our variable impedance controller is maintained at near-critical damping ( ζ = 0 .707 ), while the rotational and null-space stiffness parameters are held fixed at conservative nominal values. 
+
+B. TP-DAMM Evaluation 
+
+To answer RQ1 , we compare the clustering performance of TP-DAMM against baseline methods: standard GMM, DAMM [28], and TP-GMM [27]. 
+
+1) Qualitative Evaluation on 2D PC-GMM Dataset: Fig. 2 illustrates the challenge of clustering trajectories with shifting reference frames and opposing motions using the 2D PC-GMM benchmark dataset [ 34 ]. Since this dataset originally uses a single global frame, we inject candidate reference frames and apply spatial perturbations to observe how effectively the models adapt to varying spatial layouts. The baselines exhibit several limitations. GMM merges opposing motions, DAMM is sensitive to global spatial shifts, and TP-GMM cannot distinguish locally overlapping but opposing motions. Conversely, TP-DAMM successfully preserves both the spatial structure and local directionality. 
+
+2) Quantitative Evaluation on Contact-Rich Task Datasets: 
+
+To quantitatively evaluate TP-DAMM’s clustering directional consistency and spatial preservation on diverse 3D motions, Table I summarizes three core metrics across the contact-rich task datasets: directional variance (velocity deviation from the TABLE I QUANTITATIVE EVALUATION OF CLUSTERING PERFORMANCE ON THREE CONTACT -RICH TASK 3D MOTION DATASETS . ↑ INDICATES HIGHER IS BETTER AND ↓ INDICATES LOWER IS BETTER . B EST RESULTS ARE BOLDED .                                                                                            
+
+> Method Peg-in-Hole Insertion Pulley Assembly Cable Routing Loc. Dir. Var. ↓Glob. Dir. Var. ↓Cos. ↑Cover. ↑Loc. Dir. Var. ↓Glob. Dir. Var. ↓Cos. ↑Cover. ↑Loc. Dir. Var. ↓Glob. Dir. Var. ↓Cos. ↑Cover. ↑
+> GMM 0.980 0.976 0.607 0.523 1.199 1.199 0.562 0.464 1.924 1.925 0.289 0.822 DAMM 0.971 0.958 0.617 0.917 0.676 0.663 0.722 0.727 0.999 0.999 0.598 0.975 TP-GMM 0.952 0.947 0.623 0.781 0.726 0.722 0.732 1.000 1.028 1.028 0.601 0.999 TP-DAMM (Ours) 0.943 0.935 0.628 0.933 0.581 0.574 0.781 1.000 0.845 0.846 0.662 1.000
+> Loc. Dir. Var. and Glob. Dir. Var. denote Local and Global Directional Variance, respectively; Cos. denotes Cosine Similarity; Cover. denotes Cluster Coverage. −1.0 −0.5 0.0 0.5 1.0
+> ξ1
+> −0.4
+> −0.2
+> 0.0
+> 0.2
+> 0.4
+> ξ2
+> Original Dataset
+> −101
+> ξ1
+> −0.5
+> 0.0
+> 0.5
+> 1.0
+> ξ2
+> GMM
+> 12345678910
+> −101
+> ξ1
+> −0.5
+> 0.0
+> 0.5
+> 1.0
+> ξ2
+> TP-GMM
+> 12345678910
+> −101
+> ξ1
+> −0.5
+> 0.0
+> 0.5
+> 1.0
+> ξ2
+> Perturbed Dataset
+> −101
+> ξ1
+> −0.5
+> 0.0
+> 0.5
+> 1.0
+> ξ2
+> DAMM
+> 1
+> −101
+> ξ1
+> −0.5
+> 0.0
+> 0.5
+> 1.0
+> ξ2
+> TP-DAMM (Ours)
+> 12345678910 11 12
+
+Fig. 2. Visual comparison of clustering methods on a spatially perturbed 2D PC-GMM dataset. Standard GMM merges opposing motions, while DAMM fails to adapt to global spatial shifts. TP-GMM aligns frames but cannot separate overlapping opposing directions. Conversely, TP-DAMM successfully preserves both the task-frame spatial structure and local motion directionality, closely estimating the original unperturbed task distribution. 
+
+cluster mean, evaluated both in the global frame and locally averaged across task frames), cosine similarity (alignment with the principal direction), and cluster coverage (proportion of demonstrations containing a specific cluster). TP-DAMM consistently achieves the lowest local and global directional variance. This improvement is particularly evident in Cable Routing and Pulley Assembly , where TP-DAMM significantly minimizes local variance while simultaneously maintaining the highest cosine similarity and full cluster coverage. These results confirm that combining task-frame alignment with direction-aware clustering extracts more physically consistent motion primitives from diverse demonstrations than the baseline methods. 
+
+C. VIDP Performance in Contact-Rich Manipulation 
+
+To answer RQ2 , we evaluate overall and phase-wise success rates across 20 rollouts per method (Table II) with varying spatial workspace layouts. These results motivate a phase-wise analysis of fixed-impedance failures, in which rigid tracking generates excessive forces during constrained contact, while compliant tracking lacks precision in free space. 
+
+1) Peg-in-Hole Insertion: VIDP matches Stiff-DP with an 80% success rate and substantially outperforms Compliant-DP at 15% (Table II), indicating that alignment and insertion require precise pose tracking achieved by high stiffness and degraded by lower stiffness. However, Stiff-DP can still fail through rotational misalignment and jamming due to excessive forces, as shown in Fig. 3a. VIDP achieves the same overall success while attaining a slightly higher Reach phase success rate (90% vs. 85%). As shown in Fig. 3a, VIDP maintains high Kx and Ky for accurate tracking while reducing Kz
+
+during insertion to regulate contact forces and avoid the jamming observed with Stiff-DP. 
+
+2) Pulley Assembly: VIDP achieves 70% success, nearly doubling Compliant-DP (40%) and Stiff-DP (35%). While all methods succeed during the initial Stretch phase, Compliant-DP falls behind during Route (40%), and both fixed-impedance baselines struggle to Secure the band: Stiff-DP causes slipping, while Compliant-DP suffers from jamming or insufficient fitting authority. As shown in Fig. 3b, Stiff-DP generates excessive forces during constrained routing, destabilizing the band and causing it to slip during the Secure 
+
+phase. In contrast, VIDP applies higher Kz during stretching for vertical alignment, then moderately increases Ky and Kz
+
+during Secure to fit the band around the pulley. 
+
+3) Cable Routing: Unlike the previous tasks, Cable Routing primarily requires precise manipulation of a de-formable object. VIDP achieves 75% success, outperforming Compliant-DP (60%) and Stiff-DP (0%). Stiff-DP fails entirely at the highly constrained 3rd hook due to excessive pulling forces that displace the base or cause the hook to be missed. Compliant-DP better tolerates cable deformation, achieving 90% success on the first two hooks, but lacks the precision to secure the 3rd hook caused by large tracking errors (see Fig. 3c). Therefore, Compliant-DP led to frequent collisions with the base. On the other hand, VIDP initializes the controller with high vertical stiffness ( Kz ) to fit the 1st hook, then lowers Ky to yield to resistance during lateral motion. It increases Kx for lateral precision in the 2nd Hook 
+
+phase and raises Kz in the 3rd Hook phase to maintain the height constraint. Ultimately, VIDP incurred only one collision failure. 
+
+TABLE II OVERALL AND PHASE -WISE TASK SUCCESS RATES ACROSS 20 ROLLOUTS PER METHOD (↑ IS BETTER ). B EST RESULTS ARE BOLDED .                                                     
+
+> Method Peg-in-Hole Insertion Pulley Assembly Cable Routing Ovr. ↑Phases ↑Ovr. ↑Phases ↑Ovr. ↑Phases ↑
+> Reach Align Insert Stretch Route Secure 1st 2nd 3rd Compliant-DP 15% 75% 15% 15% 40% 90% 40% 40% 60% 90% 90% 60% Stiff-DP 80% 85% 85% 80% 35% 100% 90% 35% 0% 75% 65% 0% VIDP (Ours) 80% 90% 80% 80% 70% 100% 70% 70% 75% 95% 90% 75%
+> Ovr. denotes the overall task success rate. 1st, 2nd, and 3rd denote the 1st Hook, 2nd Hook, and 3rd Hook phases of the Cable Routing task.
+
+D. Interaction Dynamics with VIDP 
+
+To address RQ3 , we evaluate physical interaction metrics, specifically interaction forces, tracking errors, and energy (a) Peg-in-Hole Insertion (b) Pulley Assembly (c) Cable Routing 
+
+Fig. 3. Phase-wise analysis of one representative successful and failed trial per task. (Top) Snapshots of execution phases completed by VIDP and corresponding failed task phases by Stiff-DP for (a) and (b) and Compliant-DP for (c). (Middle) Cartesian stiffness profiles inferred by VIDP, dynamically modulated to accommodate task constraints. (Bottom) Interaction forces and tracking errors over time. Fixed-impedance baselines experience severe force spikes, causing jamming in (a) Peg-in-Hole Insertion and slipping in (b) Pulley Assembly , or large tracking errors causing workspace collisions in Cable Routing . In contrast, VIDP adapts its compliance to safely and precisely complete all task phases. Experiment trials can be found in the attached video. Peak Force Mean Force 
+
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> 35
+> Interaction Force (N)
+> Compliant-DP
+> Stiff-DP
+> VIDP (Ours)
+
+(a) Peg-in-Hole Insertion Peak Force Mean Force  
+
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> 35
+> 40
+> Interaction Force (N)
+> Compliant-DP
+> Stiff-DP
+> VIDP (Ours)
+
+(b) Pulley Assembly 
+
+Fig. 4. Peak and mean interaction forces during successful trials of (a) Peg-in-Hole Insertion and (b) Pulley Assembly . While Stiff-DP provides the necessary tracking precision for these tasks, it generates high and unpredictable force spikes during rigid contact. By modulating stiffness based on the task’s physical constraints, VIDP keeps interaction forces within a significantly lower and narrower range, ensuring safer manipulation. TABLE III MEAN ± STD TRACKING ERROR (MM ) FOR SUCCESSFUL CABLE 
+
+ROUTING TRIALS (↓ IS BETTER ). B EST RESULTS ARE BOLDED .
+
+Method Total Error ↓ x-axis ↓ y-axis ↓ z-axis ↓
+
+Compliant-DP 10 .4 ± 2.3 4.3 ± 1.1 8.0 ± 2.4 2.3 ± 0.6
+
+VIDP (Ours) 8.7 ± 1.7 3.6 ± 0.6 6.9 ± 1.8 1.6 ± 0.2
+
+efficiency, during successful task executions. By isolating successful trials, we can analyze the inherent physical trade-offs and control behaviors required by each method to complete the tasks. 
+
+1) Interaction Forces: Although Stiff-DP provides the rigid tracking needed for rigid contact-based tasks such as Peg-in-Hole Insertion and Pulley Assembly , it compromises safety and predictability. As shown in Fig. 4, it produces substantially higher peak interaction forces than VIDP for both tasks, even Compliant-DP 
+
+> Stiff-DP
+> VIDP (Ours)
+> 6
+> 8
+> 10
+> 12
+> 14
+> 16
+> Wabs  (J)
+
+(a) Peg-in-Hole Insertion Compliant-DP Stiff-DP  
+
+> VIDP (Ours)
+> 7.5
+> 10.0
+> 12.5
+> 15.0
+> 17.5
+> 20.0
+> Wabs  (J)
+
+(b) Pulley Assembly Compliant-DP  
+
+> VIDP (Ours)
+> 6
+> 7
+> 8
+> 9
+> Wabs  (J)
+
+(c) Cable Routing 
+
+Fig. 5. Energy efficiency across successful trials measured by absolute mechanical joint work ( Wabs ) in Joules. Stiff-DP consumes high energy by persistently resisting rigid contact constraints. Compliant-DP wastes energy through repeated corrective motions to compensate for its tracking errors. VIDP minimizes mechanical work by balancing these physical trade-offs. 
+
+during successful rollouts. In Pulley Assembly , the median of the mean force is slightly lower, but its large variance and extreme upper values indicate unpredictable force spikes during contact (Fig. 4b). In contrast, VIDP modulates its stiffness to the task’s physical constraints, therefore keeping both peak and mean forces within a narrower and more predictable range that better protects the robot and workpiece in contact-rich manipulation. 
+
+2) Tracking Errors: In the Cable Routing task, maintaining precise tracking is critical even when yielding to cable tension. Table III demonstrates that among successful trials, Compliant-DP results in higher tracking error in all Cartesian directions due to its constant low stiffness. Conversely, VIDP adapts its stiffness over the task phases to maintain tighter precision, ensuring it stays within the reasonable spatial tolerances required for routing the cable around the hooks while retaining enough compliance to smoothly manipulate the cable. 
+
+3) Energy Efficiency: VIDP also improves energy effi-ciency across successful trials, measured by absolute mechan-ical joint work [ 35 ]. As shown in Fig. 5, Stiff-DP requires greater work because it persistently resists rigid contact constraints. In contrast, Compliant-DP consumes the most energy in Pulley Assembly and Cable Routing (Figs. 5b and 5c, respectively), where low stiffness yields excessively to elastic resistance and requires repeated corrective motions to compensate for tracking errors. VIDP avoids both the high-force effort of Stiff-DP and the inefficient corrections of Compliant-DP, achieving successful executions with con-sistently lower energy across all tasks. VI. C ONCLUSION 
+
+This letter proposes Variable Impedance Diffusion Pol-icy (VIDP), a force-agnostic variable impedance control framework based on imitation learning for compliant robot manipulation. By leveraging a novel Task-Parameterized Directionality-Aware Mixture Model (TP-DAMM), VIDP extracts physically consistent trajectory distributions from spatially diverse kinematic demonstrations to predict task stiffness profiles without force sensors. Evaluations across three complex contact-rich tasks validate that VIDP out-performs fixed-impedance baselines in task success rates by balancing safety and precision, ultimately minimizing interaction forces, mechanical work, and tracking errors. Limitations include TP-DAMM’s reliance on predefined task reference frames and vulnerabilities to self-intersecting state spaces, alongside VIDP’s struggle to handle visually occluded contacts. Therefore, future work will explore methods to estimate variability from more complex task trajectories and to enhance policy reactivity under partial observability. REFERENCES [1] H. Zhang, G. Solak, G. J. Lahr, and A. Ajoudani, “SRL-VIC: A Variable Stiffness-Based Safe Reinforcement Learning for Contact-Rich Robotic Tasks,” IEEE Robot. Autom. Lett. , vol. 9, no. 6, pp. 5631–5638, 2024. [2] Z. Wu, W. Lian, V. Unhelkar, M. Tomizuka, and S. Schaal, “Learning dense rewards for contact-rich manipulation tasks,” in IEEE Int. Conf. on Robot. and Autom. , 2021, pp. 6214–6221. [3] J. A. Barreiros et al. , “Learning contact-rich whole-body manipulation with example-guided reinforcement learning,” Sci. Robot. , vol. 10, no. 105, p. eads6790, 2025. [4] F. J. Abu-Dakka and M. Saveriano, “Variable Impedance Control and Learning—A Review,” Front. Robot. AI , vol. 7, p. 590681, 2020. [5] A. X. Lee, H. Lu, A. Gupta, S. Levine, and P. Abbeel, “Learning Force-Based Manipulation of Deformable Objects from Multiple Demonstrations,” in IEEE Int. Conf. Robot. Automat. , 2015, pp. 177– 184. [6] M. Kim, S. Niekum, and A. D. Deshpande, “SCAPE: Learning Stiffness Control from Augmented Position Control Experiences,” in Proc. Conf. Robot Learn. , 2021, pp. 1512–1521. [7] R. Römer, A. Kobras, L. Worbis, and A. P. Schoellig, “Failure Prediction at Runtime for Generative Robot Policies,” in Proc. Adv. Neural Inf. Process. Syst. , 2025. [8] T. Li, Y. Li, Z. Zhang, and N. Figueroa, “Flow with the Force Field: Learning 3D Compliant Flow Matching Policies from Force and Demonstration-Guided Simulation Data,” in Proc. IEEE Int. Conf. Robot. Automat. , 2026, pp. 14 632–14 639. [9] H. Xue et al. , “Force Policy: Learning Hybrid Force-Position Control Policy under Interaction Frame for Contact-Rich Manipulation,” in 
+
+Proc. Robot.: Sci. Syst. , 2026. [10] A. Billard, S. Mirrazavi, and N. Figueroa, Learning for Adaptive and Reactive Robot Control: A Dynamical Systems Approach . MIT Press, 2022. [11] C. Chi et al. , “Diffusion Policy: Visuomotor Policy Learning via Action Diffusion,” Int. J. Robot. Res. , vol. 44, no. 10-11, pp. 1684–1704, 2025. [12] S. Calinon, I. Sardellitti, and D. G. Caldwell, “Learning-based control strategy for safe human-robot interaction exploiting task and robot redundancies,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. , 2010, pp. 249–254. [13] Q. Yang, A. Dürr, E. A. Topp, J. A. Stork, and T. Stoyanov, “Variable Impedance Skill Learning for Contact-Rich Manipulation,” IEEE Robot. Autom. Lett. , vol. 7, no. 3, pp. 8391–8398, 2022. [14] M. F. Karim et al. , “DA-VIL: Adaptive Dual-Arm Manipulation with Reinforcement Learning and Variable Impedance Control,” in Proc. IEEE Int. Conf. Robot. Automat. , 2025, pp. 11 896–11 903. [15] C. Tsuji, E. Coronado, P. Osorio, and G. Venture, “Adaptive Contact-Rich Manipulation Through Few-Shot Imitation Learning With Force-Torque Feedback and Pre-Trained Object Representations,” IEEE Robot. Autom. Lett. , 2024. [16] Z. He, H. Fang, J. Chen, H.-S. Fang, and C. Lu, “FoAR: Force-Aware Reactive Policy for Contact-Rich Robotic Manipulation,” IEEE Robot. Autom. Lett. , vol. 10, no. 6, pp. 5625–5632, 2025. [17] A. T. Le et al. , “Learning Forceful Manipulation Skills from Multi-modal Human Demonstrations,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. , 2021, pp. 7770–7777. [18] T. Kamijo, C. C. Beltran-Hernandez, and M. Hamaya, “Learning Variable Compliance Control From a Few Demonstrations for Bimanual Robot with Haptic Feedback Teleoperation System,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. , 2024, pp. 12 663–12 670. [19] X. Xu, Y. Hou, Z. Liu, and S. Song, “Compliant Residual DAgger: Improving Real-World Contact-Rich Manipulation with Human Cor-rections,” in Proc. Adv. Neural Inf. Process. Syst. , 2025. [20] Y. Hou et al. , “Adaptive Compliance Policy: Learning Approximate Compliance for Diffusion Guided Control,” in Proc. IEEE Int. Conf. Robot. Automat. , 2025, pp. 4829–4836. [21] H. Xue et al. , “Reactive Diffusion Policy: Slow-Fast Visual-Tactile Policy Learning for Contact-Rich Manipulation,” in Proc. Robot.: Sci. Syst. , 2025. [22] F. J. Abu-Dakka, L. Rozo, and D. G. Caldwell, “Force-Based Learning of Variable Impedance Skills for Robotic Manipulation,” in Proc. IEEE-RAS Int. Conf. Humanoid Robots , 2018, pp. 1–9. [23] M. Knauer, A. Albu-Schäffer, F. Stulp, and J. Silvério, “Interactive Incremental Learning of Generalizable Skills With Local Trajectory Modulation,” IEEE Robot. Autom. Lett. , vol. 10, no. 4, pp. 3398–3405, 2025. [24] K. M. Lynch and F. C. Park, Modern Robotics: Mechanics, Planning, and Control . Cambridge University Press, 2017. [25] H. Huang, H. F. Cappel, G. C. Thomas, B. He, and L. Sentis, “Adaptive Compliance Shaping with Human Impedance Estimation,” in Proc. Amer. Control Conf. , 2020, pp. 5131–5138. [26] S. Calinon, T. Alizadeh, and D. G. Caldwell, “On Improving the Extrapolation Capability of Task-Parameterized Movement Models,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. , 2013, pp. 610–616. [27] S. Calinon, “A tutorial on task-parameterized movement learning and retrieval,” Intell. Serv. Robot. , vol. 9, no. 1, pp. 1–29, 2016. [28] S. Sun, H. Gao, T. Li, and N. Figueroa, “Directionality-Aware Mixture Model Parallel Sampling for Efficient Linear Parameter Varying Dynamical System Learning,” IEEE Robot. Autom. Lett. , vol. 9, no. 7, pp. 6248–6255, 2024. [29] K. Kronander and A. Billard, “Stability Considerations for Variable Impedance Control,” IEEE Trans. Robot. , vol. 32, no. 5, pp. 1298–1305, 2016. [30] Y. Zhou, C. Barnes, J. Lu, J. Yang, and H. Li, “On the Continuity of Rotation Representations in Neural Networks,” in Proc. IEEE/CVF Conf. Comp. Vis. Patt. Rec. , 2019, pp. 5745–5753. [31] K. Black, M. Y. Galliker, and S. Levine, “Real-Time Execution of Action Chunking Flow Policies,” in Proc. Adv. Neural Inf. Process. Syst. , 2025. [32] A. Tong et al. , “Improving and Generalizing Flow-Based Generative Models with Minibatch Optimal Transport,” Trans. Mach. Learn. Res. ,2024. [33] C. Chi et al. , “Universal Manipulation Interface: In-The-Wild Robot Teaching Without In-The-Wild Robots,” in Proc. Robot.: Sci. Syst. ,2024. [34] N. Figueroa and A. Billard, “A Physically-Consistent Bayesian Non-Parametric Mixture Model for Dynamical System Learning,” in Proc. Conf. Robot Learn. , vol. 87, 2018, pp. 927–946. [35] W. Thibault, F. J. A. Chavez, and K. Mombaur, “A Standardized Benchmark for Humanoid Whole-Body Manipulation,” in Proc. IEEE-RAS Int. Conf. Humanoid Robots , 2022, pp. 608–615.
