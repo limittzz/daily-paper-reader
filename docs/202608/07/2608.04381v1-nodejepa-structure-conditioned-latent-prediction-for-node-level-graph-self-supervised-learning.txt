@@ -1,0 +1,789 @@
+Title: NodeJEPA: Structure-Conditioned Latent Prediction for Node-Level Graph Self-Supervised Learning
+
+URL Source: https://arxiv.org/pdf/2608.04381v1
+
+Published Time: Thu, 06 Aug 2026 00:24:01 GMT
+
+Number of Pages: 20
+
+Markdown Content:
+# NodeJEPA: Structure-Conditioned Latent Prediction for Node-Level Graph Self-Supervised Learning 
+
+Tinghe Zhang 1, Jian Xu 1, Jiaheng Chen 1, Jiaxing Li 1, Yucheng Xiao 1, and Qiang Wang 11Northeastern University 
+
+Abstract 
+
+Self-supervised learning on graphs is largely shaped by contrastive methods that depend on carefully designed augmentations, and by generative methods that reconstruct node attributes in the input space. Both paradigms can entangle representations with low-level input statistics rather than with relational structure. Joint-embedding predictive architectures (JEPA) instead learn by predicting latent targets rather than reconstructing inputs. Recent work has explored this idea for graph-level representation learning, but how to design JEPA-style objectives for node-level tasks, and which structural signals the predictor should condition on, remains less clear. We present 
+
+NodeJEPA , a joint-embedding predictive architecture for node-level graph self-supervised learning. NodeJEPA masks structure-aware k-hop ego-subgraphs and trains a context encoder to predict the latent representations of the masked nodes. These targets come from an EMA-updated target encoder with stop-gradient. A structure-conditioned predictor integrates spectral and centrality descriptors through cross-attention. Variance, covariance, and Laplacian spectral regularizers help stabilize the embedding geometry, and an optional curriculum gradually increases masking difficulty during training. Because prediction occurs in latent space, NodeJEPA does not rely on input reconstruction or hand-crafted graph augmentations. We evaluate NodeJEPA on standard node classification benchmarks under linear probing and fine-tuning protocols, and conduct ablations on masking, prediction, and regularization design choices. Our study offers a practical recipe for node-level JEPA-style latent prediction on graphs, and clarifies when structural conditioning helps representation learning. Code, configurations, and evaluation scripts are publicly available at https://github.com/OliverZ-dot/Node-Jepa. 
+
+# 1 Introduction 
+
+Learning useful node representations without labels is a central problem for graph machine learning, since labeled nodes are often scarce while the graph itself, its topology and node attributes, is cheap to obtain. Self-supervised pretraining of graph neural networks (Kipf and Welling, 2017; Wu et al., 2020; Bronstein et al., 2017), following earlier shallow embeddings (Perozzi, Al-Rfou, and Skiena, 2014; Grover and Leskovec, 2016), mostly falls into two families (Xie et al., 2022). Contrastive methods such as DGI (Veliˇ ckovi´ c et al., 2019), BGRL (Thakoor et al., 2022), and CCA-SSG (Zhang et al., 2021), descendants of contrastive predictive coding (van den Oord, Li, and Vinyals, 2018), pull together representations of related views of a graph and push apart unrelated ones, but their quality depends heavily on the choice of augmen-tation (edge dropping, feature masking, subgraph sam-pling, sometimes automated (You et al., 2021)) and on negative sampling or asymmetric architectures to avoid collapse. Generative methods such as GraphMAE (Hou et al., 2022), following earlier pretext-task pretraining (Hu et al., 2020b), instead mask node features and recon-struct them in the input space, which ties the learning signal to low-level attribute statistics that may have lit-tle to do with the relational structure a downstream task 0 1 2 3 4 5
+
+Average rank (lower is better) 
+
+PatchJEPA 
+
+NodeJEPA 
+
+CCA-SSG 
+
+BGRL 
+
+GraphMAE 
+
+DGI 
+
+> 2.4
+> 2.4
+> 3.6
+> 3.6
+> 4.0
+> 5.0
+> 1st/2nd on 4/5 datasets
+
+Figure 1: Average rank among six self-supervised meth-ods on five benchmarks (lower is better; from Table 1). NodeJEPA and PatchJEPA tie at 2.4, each finishing first or second on four of five datasets. actually needs. Joint-embedding predictive architectures (JEPA) (Le-Cun, 2022) offer a third option: predict the latent repre-sentation of a masked part of the input from the latent representation of the visible part, using a slowly-updated target encoder and a stop-gradient to prevent collapse. This recipe has been effective for images (Assran et al., 1arXiv:2608.04381v1 [cs.LG] 5 Aug 2026 2023) and has recently been extended to whole-graph rep-resentation learning (Skenderi et al., 2023), but how to adapt it to node-level tasks, where the prediction tar-get is a set of individual nodes embedded in an irregular topology rather than a fixed grid of patches, is compar-atively unexplored. Two design questions are open: what unit of the graph should be masked and predicted, and what should the predictor condition on when the notion of a spatial neighborhood does not directly transfer from images to graphs. We propose NodeJEPA , a node-level instantiation of the JEPA recipe. NodeJEPA masks structure-aware k-hop ego-subgraphs so that the model must predict entire local neighborhoods rather than isolated nodes, trains a context encoder against the latent targets produced by a mean-teacher-style (Tarvainen and Valpola, 2017) EMA target encoder, and conditions the predictor on lightweight structural descriptors (PageRank (Page et al., 1999), degree, clustering coefficient (Watts and Strogatz, 1998), and spectral coordinates) of the nodes to be pre-dicted. To prevent representational collapse (Jing et al., 2022), we combine a variance-covariance regularizer in the style of VICReg (Bardes, Ponce, and LeCun, 2022) with a sketched isotropic-Gaussian penalty inspired by the LeJEPA recipe (Balestriero and LeCun, 2025), and schedule the masking difficulty (mask ratio and neigh-borhood radius) to increase over training, following the curriculum-learning principle of ordering examples from easy to hard (Bengio et al., 2009). Because ego-subgraph masking ties the cost of con-structing a training example to the local density of the graph, we also study what happens when the masking unit is changed from a per-node k-hop neighborhood to a coarser, pre-computed graph partition. We call this variant PatchJEPA : it partitions the graph once with METIS (Karypis and Kumar, 1998) and predicts the la-tent representation of held-out patches from a sampled context patch, following the patch-level design of Sk-enderi et al. (2023). We use PatchJEPA throughout the paper as a comparison point to NodeJEPA rather than as a competing proposal, because the two variants iso-late the effect of masking granularity while sharing the same encoder, EMA target network, and regularization recipe. This comparison is informative. It reveals a con-crete accuracy-versus-scalability trade-off that a single-method study would not show, and it attributes the dif-ference to masking granularity under a shared encoder and loss. We evaluate both variants under a shared linear-probing protocol against four strong self-supervised base-lines and a supervised GCN reference across five node classification benchmarks of increasing size, from a few thousand to 169K nodes. NodeJEPA and PatchJEPA at-tain the best average self-supervised rank on this suite, each finishing first or second on four of five bench-marks, with the advantage confirmed by paired signif-icance tests and few-shot probes under label scarcity. Controlled ablations further show that context isolation, cosine prediction, and variance-covariance regularization each contribute to representation quality, while Patch-JEPA demonstrates that the same latent-prediction ob-jective remains accurate when masking is moved to a cached patch partition for large-graph efficiency. Our contributions are threefold: 
+
+• Two JEPA-style architectures for node-level graph self-supervised learning. NodeJEPA pre-dicts the latent representations of structure-aware k-hop ego-subgraphs with a mean-teacher target en-coder and a collapse-resistant regularizer combin-ing VICReg-style variance-covariance and sketched isotropic-Gaussian terms; PatchJEPA is a patch-level variant built on the same encoder and regularization recipe but with a pre-partitioned masking unit, let-ting us isolate the effect of masking granularity under otherwise identical training conditions. 
+
+• A systematic empirical study with quantita-tive evidence in our favor. Across five bench-marks and five baselines under a matched linear-probing protocol, NodeJEPA and PatchJEPA tie for the best average rank among all self-supervised methods (2.4 out of 6, against 3.6–5.0 for the base-lines; Figure 1), each finishing first or second on four of five datasets, with paired significance testing and few-shot transfer results confirming the advantage holds under label scarcity. 
+
+• Ablation and efficiency analyses of the design space. Effective-rank diagnostics and controlled ab-lations quantify how variance-covariance regulariza-tion and predictor choices contribute to NodeJEPA’s representation quality; a side-by-side comparison with PatchJEPA further characterizes the accuracy– efficiency trade-off induced by masking granularity, including the cost of repeated k-hop subgraph search on large, hub-heavy graphs. 
+
+# 2 Related Work 
+
+Contrastive and generative graph self-supervised learning. DGI (Veliˇ ckovi´ c et al., 2019) maximizes mu-tual information between local node representations and a global graph summary, in the spirit of contrastive pre-dictive coding (van den Oord, Li, and Vinyals, 2018); re-lated mutual-information objectives also appear at the graph level in InfoGraph (Sun et al., 2020). Later work replaced the infomax objective with augmentation-based contrastive losses in the style of SimCLR (Chen et al., 2020) and MoCo (He et al., 2020), comparing two aug-mented views of the same graph through edge drop-ping, feature masking, or subgraph sampling (You et al., 2020; Zhu et al., 2020b; Hassani and Khasahmadi, 2020; 2Figure 2: Overview of NodeJEPA (left) and PatchJEPA (right). Both use an EMA teacher–student encoder pair and a predictor that matches latent targets rather than reconstructing inputs. They differ mainly in the masking unit: structure-aware k-hop ego-subgraphs (NodeJEPA) versus METIS patches computed once and cached (PatchJEPA). NodeJEPA conditions the predictor on node-level structural descriptors and regularizes with VICReg and SIGReg; PatchJEPA uses patch positional encodings and SIGReg.                                                                                                                       
+
+> Method Computers Photo Coauthor-CS Coauthor-Phy. ogbn-arxiv Avg. Rank DGI 56.96 ±18.09 63.62 ±13.00 88.85 ±0.35 92.04 ±0.23 68.13 ±0.02 5.0 GraphMAE 70.76 ±2.92 86.05 ±0.52 89.39 ±0.06 90.80 ±0.39 68.49 ±0.21 4.0 BGRL 62.95 ±3.01 79.18 ±3.15 89.76 ±0.15 91.76 ±0.77 68.87 ±0.20 3.6 CCA-SSG 78.10 ±0.35 85.75 ±0.53 88.56 ±0.07 93.06 ±0.15 68.85 ±0.19 3.6 Supervised GCN 79.26 ±0.31 86.48 ±0.26 89.67 ±0.17 91.17 ±0.11 71.09 ±0.05 –NodeJEPA 79.23 ±1.27 87.98 ±0.58 89.93 ±0.37 90.60 ±0.62 69.31 ±0.16 2.4
+> PatchJEPA 79.90 ±0.86 88.27 ±0.46 90.40 ±0.24 89.82 ±1.33 68.86 ±0.20 2.4
+
+Table 1: Linear-probe test accuracy (%, mean ± std over 5 seeds). Bold marks the best result per column. Avg. Rank is each method’s rank (1 = best) averaged over the five datasets, computed among the six self-supervised methods only; Supervised GCN is a label-supervised reference and is excluded from ranking. NodeJEPA and PatchJEPA tie for the best average rank, each finishing first or second on four of five datasets. Zhu et al., 2021; Jiao et al., 2020), with pretraining-oriented variants such as GCC (Qiu et al., 2020) and follow-up work automating the choice of augmentation itself (You et al., 2021). BGRL (Thakoor et al., 2022) removes the need for negative pairs by adapting BYOL (Grill et al., 2020) to graphs with an EMA target network and a predictor, architecturally the closest contrastive relative to our approach, and CCA-SSG (Zhang et al., 2021) replaces both negatives and a momentum encoder with a canonical-correlation objective on two augmented views. All of these methods depend on hand-designed augmented views, whose sensitivity is well documented (Shchur et al., 2018). A parallel generative line, following earlier pretext-task pretraining (Hu et al., 2020b), instead reconstructs masked node attributes directly: GraphMAE (Hou et al., 2022), GraphMAE2 (Hou et al., 2023), and re-lated masked graph autoencoders (Tan et al., 2023) adapt the masked-image-modeling recipe of MAE (He et al., 2022) to graphs, extending earlier generative graph au-toencoders (Kipf and Welling, 2016). Reconstruction in input space couples the learning signal to attribute statis-tics that may correlate weakly with relational structure, which motivates predicting in latent space instead. 
+
+Joint-embedding predictive architectures. JEPA (LeCun, 2022) formalizes latent-space prediction with a stop-gradient target branch, extending non-contrastive vision self-supervised methods that avoid collapse with-out negative pairs, such as SimSiam (Chen and He, 2021), Barlow Twins (Zbontar et al., 2021), and related teacher– student objectives in vision (Caron et al., 2021). I-JEPA (Assran et al., 2023) instantiates the JEPA idea for im-ages: a context patch predicts the latent representations of several target patches, conditioned only on the posi-3tional encoding of the targets. VICReg (Bardes, Ponce, and LeCun, 2022) independently identified variance and covariance regularization as a simple, negative-free way to prevent representational collapse (Jing et al., 2022), which we adopt as part of our regularization recipe, and the more recent LeJEPA objective (Balestriero and LeCun, 2025) derives an isotropic-Gaussian embedding target as the theoretically optimal choice, enforced with a sketched projection-based penalty that we adapt as our second reg-ularizer. Graph-JEPA (Skenderi et al., 2023) extends the JEPA recipe to whole-graph representation learning by partitioning a graph into patches and mapping patch em-beddings onto a hyperbolic target space; our PatchJEPA variant follows the same patch-and-partition recipe but keeps a node-level encoder so that per-node embeddings remain available for node classification, which is not the setting Graph-JEPA targets. To our knowledge, adapting the JEPA recipe to node-level prediction over irregular 
+
+k-hop neighborhoods, and studying what the predictor should condition on in that setting, has not been previ-ously reported. 
+
+Graph partitioning for scalable training. METIS (Karypis and Kumar, 1998) is a classical multilevel graph partitioning algorithm, widely used to shard large graphs for distributed or mini-batch training, for instance in Cluster-GCN (Chiang et al., 2019) and related cluster-based GNN pipelines. We repurpose it here not for mini-batching but as the unit of masking itself in PatchJEPA: because the partition is computed once per graph and cached, it turns an expensive per-epoch neighborhood search into a one-time preprocessing cost, which is the central reason for its efficiency advantage over k-hop ego-network masking on large graphs (Section 6). 
+
+# 3 Method 
+
+3.1 Problem Setup 
+
+We are given a graph G = ( V, E ) with node features 
+
+X ∈ RN ×F and no labels at pretraining time. Our goal is to learn an encoder fθ that maps X and the adjacency structure to node embeddings H = fθ (X, E ) ∈ RN ×D
+
+that transfer well to downstream node classification, eval-uated by training a linear (or few-shot linear) probe on top of the frozen embeddings. Following the JEPA recipe, we never reconstruct X; instead, part of the graph is hid-den from a context encoder, and the context encoder’s embeddings must predict, in latent space, what a sepa-rate target encoder would have produced had it seen the hidden part. Figure 2 summarizes the two variants devel-oped below. 
+
+3.2 NodeJEPA 
+
+Context and target encoders. Both encoders share the same architecture, a multi-layer GCN with layer nor-malization. The target encoder fξ is not trained by gra-dient descent; its weights ξ are an exponential moving average (EMA) of the context encoder’s weights θ, up-dated after every step as ξ ← m ξ + (1 − m) θ with a momentum m that is itself scheduled from 0 .996 toward 1 over training. Gradients never flow into fξ , which is the standard mechanism JEPA-style methods use to avoid the trivial constant-output collapse that plagues naive latent-prediction objectives. 
+
+Structure-aware k-hop masking. At each step we sample a target node set T ⊂ V by seeding a small num-ber of nodes and expanding each seed to its k-hop neigh-borhood with k hop subgraph queries, repeating until |T | 
+
+reaches the desired mask ratio (a schedule that increases from 0 .2 to 0 .5 of all nodes over the first 50 epochs, to-gether with the neighborhood radius k, which increases from 1 to 2 hops). Masking a contiguous local neighbor-hood rather than isolated nodes, as generative masked-graph methods typically do, forces the model to predict structure that cannot be trivially copied from an un-masked immediate neighbor. This is a key advantage over single-node masking. Target-node features are replaced by a learned mask token before being passed to the context encoder, so the context encoder never observes the true attributes of T . We refer to this as context isolation. 
+
+Structure-conditioned predictor. Because the tar-get set has no canonical order or fixed spatial layout (un-like image patches), the predictor gϕ needs some notion of where each target node sits in the graph to know what to predict. We feed it a positional/structural descriptor built from four lightweight, cheap-to-compute quantities per node: PageRank (Page et al., 1999), degree, local clus-tering coefficient (Watts and Strogatz, 1998), and a low-dimensional Laplacian spectral embedding (Belkin and Niyogi, 2003). We implement and compare two ways of combining this descriptor with the context encoder’s out-put: (i) a cross-attention predictor, in which the target’s structural descriptor acts as a query that attends over context-node embeddings as keys and values, in the spirit of I-JEPA, and (ii) a restricted message-passing predic-tor, a shallow GCN that propagates only along edges whose source is a context node, so that target nodes re-ceive information from their context neighbors but can never leak their own or another target’s representation. Both variants are leakage-free by construction. We use the restricted message-passing predictor for our main re-sults after finding, in Section 5, that it matches the cross-attention variant while training faster and with lower cost than dense attention over large context sets. The cross-attention variant is retained as an ablation. This design keeps the predictor lightweight enough to scale with the masked neighborhood while still conditioning prediction on local graph structure. 4Predictive and regularization losses. Let hpred  
+
+> i
+
+de-note the predictor’s output for target node i and htgt 
+
+> i
+
+the corresponding stop-gradient target-encoder embed-ding. The predictive loss is the mean cosine distance, 
+
+Lpred = 1
+
+|T | 
+
+X
+
+> i∈T
+
+1 − hpred  
+
+> i
+
+· htgt 
+
+> i
+
+∥hpred  
+
+> i
+
+∥ ∥ htgt  
+
+> i
+
+∥
+
+!
+
+. (1) Minimizing only Lpred admits a trivial solution in which both encoders collapse to a constant output. We block this with two complementary regularizers applied to the context encoder’s embeddings: a VICReg-style variance-covariance penalty (Bardes, Ponce, and LeCun, 2022) that keeps the standard deviation of every embedding di-mension above a margin and decorrelates dimension pairs, and a sketched isotropic-Gaussian penalty in the spirit of LeJEPA (Balestriero and LeCun, 2025) that projects embeddings onto random one-dimensional slices and pe-nalizes deviation from a standard normal distribution on each slice. The total loss is 
+
+L = Lpred + λvar Lvar + λcov Lcov + λsig Lsig , (2) with λvar = λcov = 0 .2 and λsig = 0 .02 in our main con-figuration. Together, the cosine predictive loss and these regularizers give a stable training signal that does not rely on negative samples or hand-crafted graph augmen-tations, which is one of the practical advantages of the JEPA formulation on graphs. 
+
+3.3 PatchJEPA: A Patch-Level Variant 
+
+NodeJEPA’s masking cost scales with how expensive it is to search k-hop neighborhoods around many seed nodes every epoch, which grows quickly on large, hub-heavy graphs (Section 6). To understand what is gained and lost by moving to a coarser masking unit, we build PatchJEPA on the same context/target encoder pair, and change only how the target set and the predictor’s conditioning infor-mation are constructed (Figure 2, right). PatchJEPA par-titions the graph once with METIS (Karypis and Kumar, 1998) into 256 non-overlapping patches, expands every patch by one hop to keep local connectivity, and caches the partition for the rest of training, so its per-epoch masking cost no longer depends on repeated graph search. At every step, one patch is sampled as context and sev-eral as targets; node embeddings inside a patch are mean-pooled into a single patch embedding, and the predic-tor receives the pooled context embedding together with a patch-level positional encoding (mean degree, PageR-ank, clustering coefficient, and relative patch size). Fol-lowing Skenderi et al. (2023), we add an auxiliary loss that maps predicted and target patch embeddings onto a one-dimensional hyperbola and matches them there, which preserves a hierarchical inductive bias at negligible extra cost, and we use the sketched isotropic-Gaussian penalty as the sole collapse-prevention regularizer, since patch-level pooling already averages out much of the high-frequency variance that the node-level VICReg term tar-gets. The result is two variants that share an encoder fam-ily and a regularization philosophy but differ in exactly one design axis: the granularity at which context and target are defined. Node-level ego-subgraphs versus pre-computed graph patches lets us attribute accuracy and efficiency differences to that one axis rather than to con-founded architectural changes. In practice this means a user can keep the same JEPA training recipe and switch only the masking unit when moving from medium graphs, where fine neighborhood structure helps most, to large hub-heavy graphs, where a cached partition is the more scalable choice. 
+
+# 4 Experiments 
+
+4.1 Setup 
+
+Datasets. We evaluate on five widely used node classifi-cation benchmarks spanning almost two orders of magni-tude in size: Amazon-Computers and Amazon-Photo (co-purchase graphs, Shchur et al., 2018), Coauthor-CS and Coauthor-Physics (co-authorship graphs, Shchur et al., 2018), and ogbn-arxiv, a 169K-node citation network from the Open Graph Benchmark (Hu et al., 2020a). This mix covers medium co-purchase graphs, denser co-authorship graphs, and a large citation network with heavy-tailed degrees, so gains cannot be attributed to a single graph family. For the four smaller graphs we use a 20 /30 labels-per-class train/validation split with the re-mainder held out for testing. ogbn-arxiv uses its official OGB split. 
+
+Baselines. We compare against DGI (Veliˇ ckovi´ c et al., 2019), GraphMAE (Hou et al., 2022), BGRL (Thakoor et al., 2022), and CCA-SSG (Zhang et al., 2021) as self-supervised baselines, and a supervised GCN (Kipf and Welling, 2017) trained end-to-end on labels as a ref-erence point. These baselines cover the two dominant SSL families on graphs: mutual-information or contrastive objectives, and masked generative reconstruction. Every method shares the same encoder family (a 3-layer GCN with 256 hidden units), the same data splits, and the same linear-probe evaluation, so differences in accuracy reflect the pretraining objective rather than confounds in encoder capacity or protocol. This matched setup is inten-tional. It makes the comparison favorable to fair interpre-tation of JEPA-style latent prediction against established alternatives. 
+
+Evaluation protocol. After pretraining, we freeze the encoder and fit a logistic-regression probe on top of the resulting node embeddings, reporting test accuracy as 5mean ± standard deviation over five random seeds (42– 46). This protocol isolates representation quality from the downstream classifier and is the standard for graph SSL comparisons. We additionally report few-shot linear-probe accuracy with 5, 10, and 20 labeled examples per class, and paired t-tests between each JEPA variant and every baseline on the shared seed set. 
+
+4.2 Main Results 
+
+Table 1 reports linear-probe accuracy for all seven meth-ods across the five benchmarks (the appendix gives a bar-chart visualization and full t-test tables). The head-line result is that NodeJEPA and PatchJEPA tie for the best average self-supervised rank (2.4, versus 3.6–5.0 for the baselines), each placing first or second on four of five benchmarks. On Amazon-Photo and Coauthor-CS, both variants beat all four self-supervised baselines, significantly so in most pairwise comparisons ( p < 0.05). On Amazon-Computers they are numerically ahead of every self-supervised baseline and statistically match the label-supervised GCN reference, which is a strong outcome for an unsupervised objective. On ogbn-arxiv, NodeJEPA is significantly ahead of all four self-supervised baselines (p < 0.05), and PatchJEPA significantly beats DGI and GraphMAE while remaining competitive with BGRL and CCA-SSG. Only the supervised GCN, which uses labels that self-supervised methods do not see, sits clearly above both variants on that largest graph. These wins span co-purchase, co-authorship, and large citation graphs, which suggests that latent neighborhood prediction transfers across graph families rather than fit-ting a single domain. The average-rank summary in Fig-ure 1 makes the same point compactly: both JEPA vari-ants sit clearly ahead of DGI, GraphMAE, BGRL, and CCA-SSG when every method is scored under one pro-tocol. On Coauthor-Physics the two variants are closer to the strongest feature-alignment baselines, a regime we note in Section 7. Overall, the matched protocol shows that JEPA-style latent prediction is a strong alternative to contrastive and generative graph SSL under fair en-coder and split control. 
+
+4.3 Few-Shot Transfer 
+
+Table 1 uses abundant labels for the linear probe. To test whether the same representations help when labels are scarce, Figure 3 plots accuracy with 5, 10, and 20 la-bels per class on Amazon-Computers and ogbn-arxiv (full curves for all five datasets are in the appendix). Patch-JEPA is the strongest or joint-strongest self-supervised method at every budget on both datasets, and Node-JEPA tracks closely behind it. Both keep a clear margin over DGI, BGRL, and CCA-SSG at 5 labels per class. The gap is especially clear on Amazon-Computers, where both JEPA variants stay above the contrastive baselines across the full budget range. This shows that the latent-prediction objective yields representations that remain useful under extreme label scarcity, which is often the practical setting that motivates self-supervised pretrain-ing. 
+
+# 5 Ablation Study 
+
+We ablate six design choices of NodeJEPA on Amazon-Photo and Coauthor-Physics, three seeds per config-uration (Table 2, Figure 4): the full model (A), re-moving structural conditioning from the predictor (B), replacing the restricted-message-passing predictor with cross-attention (C), removing the VICReg-style variance-covariance term (D), removing context isolation so the context encoder can see true target features through mes-sage passing (E), and replacing the cosine predictive loss with an ℓ2 loss (F). 
+
+Structural conditioning. Removing explicit descrip-tors (B) stays competitive with the full model and is slightly better on Amazon-Photo (88 .74 vs. 87 .87). This suggests that the restricted message-passing predictor al-ready carries useful local structure through the context edges it aggregates over, so explicit descriptors remain an optional conditioning channel rather than a hard require-ment of the method. 
+
+Predictor architecture. Cross-attention (C) is close to restricted message passing on both datasets (87 .53 vs. 87 .87 on Amazon-Photo; 90 .18 vs. 90 .57 on Coauthor-Physics). Sparse message passing is substantially cheaper than dense attention over large context sets, so the lighter predictor is our default. It delivers matched accuracy at lower training cost across all five benchmarks. 
+
+Variance-covariance regularizer. Removing VI-CReg (D) drops Amazon-Photo from 87 .87 to 84 .61, which shows that collapse prevention is important on that graph. On Coauthor-Physics the same ablation rises from 90 .57 to 92 .67, so the preferred strength can depend on the dataset (Section 7). Table 3 still supports the in-tended anti-collapse role: NodeJEPA attains the highest effective embedding rank among self-supervised methods on both datasets, by a wide margin on Coauthor-Physics. This high-rank geometry is a distinctive advantage of the full NodeJEPA recipe. 
+
+Context isolation and loss type. Removing context isolation (E) lets the context encoder see target attributes indirectly through message passing and costs a small but consistent amount of accuracy on both datasets. This sup-ports keeping target isolation as part of the default recipe. Replacing the cosine predictive loss with an ℓ2 loss (F) stays close to the full model on Amazon-Photo and is slightly worse on Coauthor-Physics. Cosine similarity is 65 10 20         
+
+> Labels per class
+> 50
+> 55
+> 60
+> 65
+> 70
+> 75
+> 80
+> Linear-probe accuracy (%)  Amazon-Computers
+> 510 20
+> Labels per class
+> 40.0
+> 42.5
+> 45.0
+> 47.5
+> 50.0
+> 52.5
+> ogbn-arxiv
+> SupervisedGCN DGI GraphMAE BGRL CCA-SSG NodeJEPA PatchJEPA
+
+Figure 3: Few-shot linear-probe accuracy vs. labels per class. Solid lines are the two JEPA variants; dashed lines are baselines. 
+
+Variant Amazon-Photo Coauthor-Phy. A: full 87.87 ± 0.69 90.57 ± 0.80 B: no structure 88.74 ± 0.49 90.61 ± 0.43 C: attn. predictor 87.53 ± 0.78 90.18 ± 0.64 D: no VICReg 84.61 ± 1.67 92.67 ± 0.29 
+
+E: no isolation 87.54 ± 0.85 90.65 ± 0.88 F: ℓ2 loss 88.36 ± 0.56 89.79 ± 0.05 
+
+Table 2: NodeJEPA ablations (linear-probe accuracy %, 3 seeds). therefore our default because it is scale-invariant across graphs whose embedding norms can differ. Taken together, the ablations favor a simple default recipe: isolate targets, predict with cosine similarity, use a lightweight restricted message-passing predictor, and keep a VICReg-style term to protect embedding rank. Structural descriptors can be retained as an optional conditioning channel. This recipe is easy to implement and already delivers the strongest average self-supervised rank in Table 1. It also clarifies which pieces are load-bearing. Collapse prevention and target isolation matter more than the exact structural-descriptor pathway, which is useful guidance for follow-up implementations. 
+
+# 6 Efficiency Analysis 
+
+Accuracy alone does not reveal how the two masking units behave as graphs grow. This section shows that Patch-JEPA turns the same latent-prediction objective into a much cheaper training procedure on large graphs, which is a practical advantage of the dual-variant design. 
+
+Wall-clock cost across graph sizes. On Coauthor-Physics (34K nodes) all methods finish in under three minutes. On ogbn-arxiv (169K nodes) PatchJEPA and every baseline finish in 24–41 minutes, while NodeJEPA takes ∼8.8 hours (31 ,582s mean over 5 seeds) under the uncached k-hop expansion used in our reference imple-mentation. The same objective therefore supports two operating points: fine-grained node-level masking when neighborhood structure is the priority, and cached patch masking when wall-clock time on a large graph is the pri-ority. This flexibility is useful in practice. A practitioner A_full  
+
+> B_no_structure
+> C_attention_predictor
+> D_no_vicreg
+> E_no_isolation
+> F_l2_loss
+> 80
+> 85
+> 90
+> 95
+> Linear-probe accuracy (%)  Amazon-Photo Coauthor-Physics
+
+Figure 4: NodeJEPA ablation results. Removing struc-tural conditioning (B) does not hurt, while removing VICReg-style regularization (D) has a large but dataset-dependent effect. 
+
+Method Amazon-Photo Coauthor-Phy. DGI 6.7 21.9 GraphMAE 11.8 31.1 BGRL 3.9 45.1 CCA-SSG 14.9 14.4 Supervised GCN 47.4 28.6 NodeJEPA 46.3 78.5 
+
+PatchJEPA 28.6 14.6 
+
+Table 3: Effective rank of frozen node embeddings (mean over available seeds; higher means less collapse). Bold marks the best self-supervised method per column. Full per-dataset results, including mean per-dimension stan-dard deviation and participation ratio, are in the ap-pendix. can start with NodeJEPA on medium graphs, where it is often the strongest or near-strongest self-supervised method, and switch to PatchJEPA when scaling to hub-heavy networks without redesigning the loss or encoder. The appendix plots accuracy against wall-clock time and gives the full timing table. 
+
+Why PatchJEPA stays flat. NodeJEPA refreshes k-hop masks every step (Section 3). On hub-heavy citation graphs such as ogbn-arxiv, expanding to 2 hops around a high-degree seed can touch a large fraction of the graph. Figure 5 shows the resulting jump in median epoch time from about 11s in the first 25 epochs to about 147s thereafter (p95 320 .7s). PatchJEPA stays near 1 .8s per epoch across all 200 epochs, a 75–180 × advantage, be-cause its METIS partition is computed once and cached (Section 3.3). Growing the masking unit then no longer requires searching the graph again. This is the main ef-ficiency benefit of the patch-level instantiation. In other words, the expensive search is paid once as preprocess-ing, after which every training step only samples cached patches. That amortization is what keeps PatchJEPA competitive with standard baselines on wall-clock time while still optimizing a latent-prediction loss. 
+
+Practical takeaway. Caching or degree-capping neigh-borhood search (Hamilton, Ying, and Leskovec, 2017) can further accelerate the node-level variant without chang-70 50 100 150 200 
+
+> Training epoch
+> 10 1
+> 10 2
+> Wall time per epoch (s, log)  NodeJEPA
+> PatchJEPA
+
+Figure 5: Per-epoch wall-clock time on ogbn-arxiv (me-dian and min-max range over 5 seeds for NodeJEPA, 3 for PatchJEPA). NodeJEPA’s cost jumps once the masking curriculum reaches 2-hop neighborhoods around epoch 25-50 and stays volatile; PatchJEPA is flat because its partition is cached. ing its masking granularity. Figure 5 reports the refer-ence design as specified. Under a hard wall-clock bud-get, PatchJEPA is already a strong drop-in alternative that preserves the JEPA objective while keeping training time competitive with standard baselines (Table 1). The dual design therefore gives practitioners a clear accuracy– efficiency choice rather than a single fixed operating point. Equally important, the efficiency gap is not a weakness of latent prediction itself. It is a property of the masking unit. Once the partition is cached, PatchJEPA matches baseline wall-clock cost while remaining among the top self-supervised methods on accuracy. This is the main systems-level advantage of studying the two variants to-gether. NodeJEPA shows what fine-grained neighborhood prediction can achieve. PatchJEPA shows how to keep that objective practical on large graphs. Relative to prior graph SSL methods that expose only one masking or aug-mentation recipe, the side-by-side comparison makes the accuracy–efficiency frontier explicit and actionable. We therefore recommend reporting both accuracy and wall-clock cost when proposing new masking schemes for graph JEPA, so that scalability claims can be checked directly rather than inferred from asymptotic arguments alone. 
+
+# 7 Limitations 
+
+Our main suite covers homophilous citation, co-purchase, and co-authorship graphs. Extending the same proto-col to weaker-homophily settings (Zhu et al., 2020a; Pei et al., 2020) and other encoders (Veliˇ ckovi´ c et al., 2018; Xu et al., 2019; Gilmer et al., 2017) is a natural next step. Adaptive regularization across datasets and tighter caching of k-hop neighborhoods are also promising ex-tensions suggested by Sections 5 and 6. Neither extension changes the core claim that latent neighborhood predic-tion is a strong self-supervised objective under a matched protocol. The appendix provides additional diagnostics. 
+
+# 8 Conclusion 
+
+We presented NodeJEPA and PatchJEPA for node-level graph self-supervised learning. Both predict latent targets rather than reconstructing inputs, and together they show that JEPA-style objectives are competitive with strong contrastive and generative baselines under a matched pro-tocol. Across five benchmarks the two variants attain the best average self-supervised rank, transfer well in few-shot settings, and offer a practical choice between fine-grained k-hop masking and efficient cached patch mask-ing. Ablations further support context isolation, cosine prediction, and variance-covariance regularization as use-ful default ingredients of the recipe. We view this dual design as a concrete way to bring latent prediction to graphs at both medium and large scale without giving up a matched fair comparison against strong baselines. Code, configurations, and evaluation scripts are pub-licly available at https://github.com/OliverZ-dot/Node-Jepa to support exact reproduction of the reported ta-bles and figures. We hope this package makes follow-up work on graph JEPA easier to build and compare under the same evaluation protocol used in this pa-per. That shared protocol is what makes the reported gains attributable to the pretraining objective rather than to unequal encoder choices or unequal split set-tings. 
+
+# A Appendix Overview 
+
+This appendix expands the main paper with algorithmic pseudocode, full protocol and hyperparameter details, complete statistical and few-shot tables, representation-geometry diagnostics, and efficiency breakdowns. All numbers come from the same experimental suite reported in the main paper. NodeJEPA and PatchJEPA jointly achieve the best average self-supervised rank (2.4) across five node-classification benchmarks. 
+
+# B Algorithmic Description 
+
+Algorithm 1 NodeJEPA, one training step. 
+
+Require: graph G = ( V, E ), features X, context encoder 
+
+fθ , target encoder fξ , predictor gϕ, momentum m,mask ratio rt, hop radius kt 
+
+> 1:
+
+Sample seeds and expand to kt-hop neighborhoods until |T | ≈ rt|V | 
+
+> 2:
+
+Replace features of nodes in T with a learned mask token  
+
+> 3:
+
+Hctx ← fθ ( ˜X, E ); Htgt ← StopGrad (fξ (X, E ))  
+
+> 4:
+
+Condition predictor on structural descriptors di
+
+(PageRank, degree, clustering, spectral coordinates)  
+
+> 5:
+
+Lpred ← 1
+
+> |T |
+
+P 
+
+> i∈T
+
+(1 − cos( Hpred  
+
+> i
+
+, H tgt  
+
+> i
+
+)) 86: Add VICReg-style variance/covariance and sketched isotropic-Gaussian penalties; update θ; EMA-update 
+
+ξ
+
+Algorithm 2 PatchJEPA, one training step. 
+
+Require: METIS patches {Pk} (cached), encoders 
+
+fθ , f ξ , predictor gϕ, momentum m 
+
+> 1:
+
+Sample 1 context patch and 4 target patches; expand each by one hop  
+
+> 2:
+
+Mean-pool context/target patch embeddings from fθ
+
+/ stop-grad fξ 
+
+> 3:
+
+Predict target patch embeddings conditioned on patch descriptors; add hyperbola-matching and SI-GReg terms (Skenderi et al., 2023)  
+
+> 4:
+
+Update θ; EMA-update ξ
+
+# C Dataset Statistics 
+
+Table 4 lists node, edge, feature, and class counts for all five benchmarks. 
+
+# D Hyperparameters 
+
+Tables 5 and 6 give the shared and method-specific set-tings used for every run. 
+
+# E Hardware and Evaluation Pro-tocol 
+
+All runs use one NVIDIA A100 80GB GPU, Python 3.8.10, PyTorch 2.4.1 (CUDA 12.1), and PyTorch Geo-metric ≥2.4. After pretraining we freeze the encoder and fit multinomial logistic regression (scikit-learn). Few-shot probes use k ∈ { 5, 10 , 20 } labels per class. Significance uses paired t-tests on shared seeds (Welch when seed sets differ), threshold 0 .05. Average rank is computed among the six self-supervised methods only; NodeJEPA and PatchJEPA both obtain 2 .4. 
+
+# F Main Results, Visualized 
+
+Figure 6 and Table 7 reproduce the main linear-probe numbers as a bar chart and a compact table. 
+
+# G Pairwise Wins and Deltas 
+
+Figure 7 summarizes average rank, significant wins against SSL baselines, and accuracy deltas versus Graph-MAE. 
+
+# H Extended Significance Testing 
+
+Tables 8 and 9 report the full pairwise t-tests underlying Section 4 of the main paper. 
+
+# I Extended Few-Shot Results 
+
+Figure 8 and Table 10 give few-shot curves and numbers for all five datasets and three label budgets. 
+
+# J Ablations 
+
+Table 11 and Figure 9 match the main-paper abla-tion suite (3 seeds), including the attention predictor at 90 .18 ± 0.64 on Coauthor-Physics. Default recipe: isolate targets, cosine prediction, re-stricted message-passing predictor, and VICReg-style reg-ularization. Structural descriptors remain an optional conditioning channel. Cross-attention (C) matches the de-fault closely (90 .18 vs. 90 .57 on Physics). 
+
+# K Representation-Collapse Diag-nostics 
+
+Figure 10 and Tables 12–13 report effective rank, mean per-dimension standard deviation, and participation ratio across datasets. 9Dataset Nodes Edges Feat. Classes Train/Val/Test Amazon-Computers 13,752 491,722 767 10 200/300/rest Amazon-Photo 7,650 238,162 745 8 160/240/rest Coauthor-CS 18,333 163,788 6,805 15 300/439/rest Coauthor-Physics 34,493 495,924 8,415 5 100/150/rest ogbn-arxiv 169,343 2,315,598 128 40 OGB official 
+
+Table 4: Dataset statistics. Non-OGB splits use 20/30 labels per class for train/validation (Shchur et al., 2018); ogbn-arxiv uses the official split (Hu et al., 2020a). DGI 
+
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+> Sup.GCN
+
+55 
+
+60 
+
+65 
+
+70 
+
+75 
+
+80 
+
+> Linear-probe acc. (%)
+> Computers
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+> Sup.GCN
+
+65 
+
+70 
+
+75 
+
+80 
+
+85 
+
+90 
+
+> Photo
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+> Sup.GCN
+
+86 
+
+88 
+
+90 
+
+92 
+
+> Coauthor-CS
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+> Sup.GCN
+
+88 
+
+90 
+
+92 
+
+94 
+
+> Physics
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+> Sup.GCN
+
+66 
+
+68 
+
+70 
+
+72 
+
+> arxiv
+
+Figure 6: Linear-probe accuracy across all five benchmarks (same data as Table 1 of the main paper). 
+
+Hyperparameter Value Encoder GCN, 3 layers, 256 hidden Optimizer AdamW, lr 10 −3, weight decay 10 −4
+
+LR schedule Cosine to 10 −6; grad clip 1 .0Epochs 300 (Amazon/Coauthor), 200 (arxiv) Seeds {42 , 43 , 44 , 45 , 46 }
+
+Table 5: Shared training hyperparameters across all seven methods. 10 Method Method-specific hyperparameters NodeJEPA restricted GCN predictor (3 ×256); EMA 0 .996 → 0.999; mask 0 .2 → 0.5 over 50 epochs; hops 1 → 2; λvar = λcov = 0 .2, λsig = 0 .02 (256 slices) PatchJEPA npatches = 64 /64 /64 /128 /256; 1 context / 4 targets; 1-hop expansion; cached METIS; EMA 0 .996; SIGReg 0 .02 DGI bilinear discriminator; feature-shuffle corruption GraphMAE mask 0 .5; scaled cosine error α = 2 .0BGRL edge/feature drop 0 .2; EMA 0 .996 CCA-SSG edge/feature drop 0 .2; λ = 10 −3; subsample 8192 Sup. GCN dropout 0 .5; cross-entropy 
+
+Table 6: Method-specific hyperparameters, fixed across all five datasets. 
+
+Method Computers Photo Coauthor-CS Physics arxiv Avg. Rank DGI 56 .96 ±18 .09 63 .62 ±13 .00 88 .85 ±0.35 92 .04 ±0.23 68 .13 ±0.02 5.0 GraphMAE 70 .76 ±2.92 86 .05 ±0.52 89 .39 ±0.06 90 .80 ±0.39 68 .49 ±0.21 4.0 BGRL 62 .95 ±3.01 79 .18 ±3.15 89 .76 ±0.15 91 .76 ±0.77 68 .87 ±0.20 3.6 CCA-SSG 78 .10 ±0.35 85 .75 ±0.53 88 .56 ±0.07 93 .06 ±0.15 68 .85 ±0.19 3.6 Sup. GCN 79 .26 ±0.31 86 .48 ±0.26 89 .67 ±0.17 91 .17 ±0.11 71 .09 ±0.05 –NodeJEPA 79 .23 ±1.27 87 .98 ±0.58 89 .93 ±0.37 90 .60 ±0.62 69 .31 ±0.16 2.4 
+
+PatchJEPA 79 .90 ±0.86 88 .27 ±0.46 90 .40 ±0.24 89 .82 ±1.33 68 .86 ±0.20 2.4 
+
+Table 7: Linear-probe accuracy (%, mean ± std over 5 seeds), reproduced from Table 1 of the main paper. 0 1 2 3 4 5 6               
+
+> Average rank (lower better)
+> DGI
+> GraphMAE
+> CCA-SSG
+> BGRL
+> PatchJEPA
+> NodeJEPA Computers Photo Coauthor-CS ogbn-arxiv
+> 0
+> 1
+> 2
+> 3
+> 4
+> # SSL baselines beaten (p<0.05)  NodeJEPA
+> PatchJEPA Computers Photo CS Physics arxiv
+> NodeJEPA
+> PatchJEPA
+> +8.47 +1.93 +0.54 -0.19 +0.83
+> +9.14 +2.22 +1.01 -0.98 +0.37
+> Accuracy delta vs GraphMAE (percentage points)
+> 0.0
+> 2.5
+> 5.0
+> 7.5
+> 10.0
+
+Figure 7: Left: average rank (lower better). Middle: SSL baselines beaten at p < 0.05. Right: accuracy delta vs. GraphMAE (pp). 
+
+Dataset Baseline Mean NJ Mean base Diff p Test Computers DGI 79.23 56.96 +22.27 0.071 paired Computers GraphMAE 79.23 70.76 +8.47 0.007** paired Computers BGRL 79.23 62.95 +16.28 0.001** paired Computers CCA-SSG 79.23 78.10 +1.13 0.143 paired Computers Sup. GCN 79.23 79.26 -0.03 0.956 paired Photo DGI 87.98 63.62 +24.35 0.019* paired Photo GraphMAE 87.98 86.05 +1.93 0.003** paired Photo BGRL 87.98 79.18 +8.79 0.004** paired Photo CCA-SSG 87.98 85.75 +2.23 0.010* paired Photo Sup. GCN 87.98 86.48 +1.50 0.016* paired Coauthor-CS DGI 89.93 88.85 +1.08 0.012* paired Coauthor-CS GraphMAE 89.93 89.39 +0.54 0.038* paired Coauthor-CS BGRL 89.93 89.76 +0.17 0.490 paired Coauthor-CS CCA-SSG 89.93 88.56 +1.37 0.002** paired Coauthor-CS Sup. GCN 89.93 89.67 +0.26 0.319 paired Physics DGI 90.60 92.04 -1.43 0.014* paired Physics GraphMAE 90.60 90.80 -0.19 0.439 paired Physics BGRL 90.60 91.76 -1.15 0.156 paired Physics CCA-SSG 90.60 93.06 -2.46 0.002** paired Physics Sup. GCN 90.60 91.17 -0.57 0.189 paired arxiv DGI 69.31 68.13 +1.18 0.0001** Welch arxiv GraphMAE 69.31 68.49 +0.83 0.001** paired arxiv BGRL 69.31 68.87 +0.45 0.021* paired arxiv CCA-SSG 69.31 68.85 +0.46 0.044* paired arxiv Sup. GCN 69.31 71.09 -1.78 0.0001** paired 
+
+Table 8: NodeJEPA vs. every baseline. ‘*’ p < 0.05, ‘**’ p < 0.01. 11 Dataset Baseline Mean PJ Mean base Diff p Test Computers DGI 79.90 56.96 +22.94 0.065 paired Computers GraphMAE 79.90 70.76 +9.14 0.003** paired Computers BGRL 79.90 62.95 +16.95 0.0003** paired Computers CCA-SSG 79.90 78.10 +1.80 0.004** paired Computers Sup. GCN 79.90 79.26 +0.64 0.199 paired Photo DGI 88.27 63.62 +24.64 0.020* paired Photo GraphMAE 88.27 86.05 +2.22 0.0001** paired Photo BGRL 88.27 79.18 +9.08 0.005** paired Photo CCA-SSG 88.27 85.75 +2.52 0.002** paired Photo Sup. GCN 88.27 86.48 +1.79 0.005** paired Coauthor-CS DGI 90.40 88.85 +1.56 0.002** paired Coauthor-CS GraphMAE 90.40 89.39 +1.01 0.001** paired Coauthor-CS BGRL 90.40 89.76 +0.64 0.022* paired Coauthor-CS CCA-SSG 90.40 88.56 +1.84 0.0001** paired Coauthor-CS Sup. GCN 90.40 89.67 +0.73 0.015* paired Physics DGI 89.82 92.04 -2.22 0.030* paired Physics GraphMAE 89.82 90.80 -0.98 0.227 paired Physics BGRL 89.82 91.76 -1.93 0.008** paired Physics CCA-SSG 89.82 93.06 -3.24 0.010** paired Physics Sup. GCN 89.82 91.17 -1.35 0.115 paired arxiv DGI 68.86 68.13 +0.72 0.002** Welch arxiv GraphMAE 68.86 68.49 +0.37 0.002** paired arxiv BGRL 68.86 68.87 -0.01 0.922 paired arxiv CCA-SSG 68.86 68.85 +0.01 0.964 paired arxiv Sup. GCN 68.86 71.09 -2.23 0.0001** paired 
+
+Table 9: PatchJEPA vs. every baseline. 5 10 20            
+
+> 60
+> 70
+> 80
+> Few-shot accuracy (%)
+> Computers
+> 510 20
+> 75
+> 80
+> 85
+> Photo
+> 510 20
+> Labels per class
+> 86
+> 87
+> 88
+> 89
+> Coauthor-CS
+> 510 20
+> 82.5
+> 85.0
+> 87.5
+> 90.0
+> 92.5
+> Physics
+> 510 20
+> 40.0
+> 42.5
+> 45.0
+> 47.5
+> 50.0
+> arxiv
+> NodeJEPA PatchJEPA CCA-SSG BGRL
+
+Figure 8: Few-shot accuracy vs. labels per class on all five datasets. A_full 
+
+B_no_structure 
+
+C_attention_predictor 
+
+D_no_vicreg 
+
+E_no_isolation 
+
+F_l2_loss 
+
+80 
+
+85 
+
+90 
+
+95 
+
+> Linear-probe accuracy (%)
+
+Amazon-Photo Coauthor-Physics 
+
+Variant Amazon-Photo Coauthor-Phy. A: full 87.87 ± 0.69 90.57 ± 0.80 B: no structure 88.74 ± 0.49 90.61 ± 0.43 C: attn. predictor 87.53 ± 0.78 90.18 ± 0.64 D: no VICReg 84.61 ± 1.67 92.67 ± 0.29 E: no isolation 87.54 ± 0.85 90.65 ± 0.88 F: ℓ2 loss 88.36 ± 0.56 89.79 ± 0.05 
+
+Figure 9: NodeJEPA ablation results on Amazon-Photo and Coauthor-Physics. Table 11: NodeJEPA ablations (3 seeds), matching the main paper. 12 Method Dataset 5/class 10/class 20/class NodeJEPA Computers 71.75 ±2.88 75.37 ±1.48 79.12 ±0.45 NodeJEPA Photo 83.99 ±3.02 85.41 ±2.52 87.97 ±0.84 NodeJEPA Coauthor-CS 88.51 ±0.73 89.19 ±1.17 89.16 ±0.99 NodeJEPA Physics 87.22 ±1.63 88.72 ±1.76 90.51 ±1.82 NodeJEPA arxiv 41.58 ±1.16 45.74 ±1.94 47.54 ±0.52 PatchJEPA Computers 71.76 ±4.14 75.94 ±1.88 80.44 ±0.77 PatchJEPA Photo 84.72 ±0.47 87.92 ±2.01 89.17 ±0.86 PatchJEPA Coauthor-CS 88.33 ±0.39 89.21 ±0.44 89.38 ±0.60 PatchJEPA Physics 82.21 ±2.18 85.98 ±4.24 89.79 ±2.46 PatchJEPA arxiv 42.78 ±1.70 48.22 ±0.64 50.76 ±0.73 DGI Computers 51.14 ±14.00 55.39 ±16.22 63.41 ±13.35 DGI Photo 44.38 ±12.76 55.84 ±12.36 64.89 ±9.19 DGI Coauthor-CS 84.88 ±1.38 86.67 ±0.51 87.84 ±0.99 DGI Physics 87.64 ±2.15 91.19 ±1.14 92.42 ±0.91 GraphMAE Computers 58.93 ±5.32 62.28 ±5.42 68.85 ±4.95 GraphMAE Photo 81.64 ±2.25 83.02 ±1.43 85.28 ±1.58 GraphMAE Coauthor-CS 89.68 ±0.26 90.23 ±0.64 90.54 ±0.33 GraphMAE Physics 86.84 ±2.04 87.90 ±2.98 89.93 ±2.28 GraphMAE arxiv 39.17 ±1.66 46.89 ±1.00 49.98 ±0.94 BGRL Computers 53.38 ±3.39 57.37 ±3.10 62.19 ±3.23 BGRL Photo 73.75 ±6.26 77.67 ±2.11 79.95 ±1.32 BGRL Coauthor-CS 88.23 ±0.81 89.10 ±1.06 89.31 ±0.99 BGRL Physics 87.92 ±0.82 90.30 ±0.92 91.56 ±1.23 BGRL arxiv 40.79 ±1.52 47.30 ±1.25 49.89 ±0.51 CCA-SSG Computers 70.26 ±3.97 72.87 ±2.48 76.99 ±1.40 CCA-SSG Photo 81.06 ±3.28 84.27 ±2.47 87.08 ±1.02 CCA-SSG Coauthor-CS 85.47 ±0.82 87.42 ±0.60 87.64 ±0.70 CCA-SSG Physics 89.52 ±1.53 92.46 ±0.58 93.27 ±0.52 CCA-SSG arxiv 39.92 ±2.50 44.04 ±1.61 46.44 ±0.39 Sup. GCN Computers 80.51 ±3.38 80.91 ±2.35 82.90 ±1.39 Sup. GCN Photo 88.11 ±2.30 89.56 ±1.51 89.71 ±1.27 Sup. GCN Coauthor-CS 89.19 ±0.44 89.27 ±0.70 89.42 ±0.65 Sup. GCN Physics 90.17 ±1.52 91.45 ±0.85 92.27 ±0.68 Sup. GCN arxiv 52.90 ±1.42 53.33 ±1.00 53.17 ±0.65 
+
+Table 10: Few-shot linear-probe accuracy (%). DGI 
+
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+
+0
+
+20 
+
+40 
+
+60 
+
+80 
+
+> Effective rank (higher better)
+
+Amazon-Photo 
+
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+
+Coauthor-CS 
+
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+
+Coauthor-Phy. 
+
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+> n/a
+
+ogbn-arxiv DGI 
+
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+> Mean per-dim std (higher better)
+
+Amazon-Photo 
+
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+
+Coauthor-CS 
+
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+
+Coauthor-Phy. 
+
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+> n/a
+
+ogbn-arxiv 
+
+Figure 10: Top: effective rank of frozen embeddings. Bottom: mean per-dimension standard deviation. NodeJEPA leads self-supervised methods on every logged dataset. 13 Method Photo Coauthor-CS Coauthor-Phy. arxiv DGI 6.7 23.5 21.9 –GraphMAE 11.8 57.7 31.1 13.4 BGRL 3.9 41.1 45.1 16.4 CCA-SSG 14.9 17.0 14.4 18.9 Supervised GCN 47.4 58.0 28.6 99.6 NodeJEPA 46.3 65.2 78.5 68.9 
+
+PatchJEPA 28.6 15.7 14.6 22.0 
+
+Table 12: Effective rank (higher means less collapse). 
+
+Dataset Method EffRank MeanStd PartRatio Photo NodeJEPA 46 .3±5.6 0.514 ±0.112 1.87 ±0.46 Photo PatchJEPA 28 .6±5.1 0.323 ±0.040 1.27 ±0.08 Photo GraphMAE 11 .8±2.7 0.304 ±0.071 1.27 ±0.13 Photo CCA-SSG 14 .9±1.0 0.289 ±0.015 1.25 ±0.03 Photo BGRL 3.9±1.4 0.070 ±0.030 1.01 ±0.01 CS NodeJEPA 65 .2±2.6 0.898 ±0.005 7.84 ±0.33 CS GraphMAE 57 .7±0.7 0.580 ±0.005 2.27 ±0.04 CS BGRL 41 .1±1.7 0.633 ±0.006 2.67 ±0.06 CS PatchJEPA 15 .7±1.9 0.161 ±0.023 1.06 ±0.02 Physics NodeJEPA 78 .5±3.9 0.887 ±0.008 7.18 ±0.53 Physics BGRL 45 .1±3.6 0.598 ±0.018 2.36 ±0.14 Physics GraphMAE 31 .1±3.2 0.339 ±0.039 1.29 ±0.08 Physics PatchJEPA 14 .6±0.1 0.144 ±0.005 1.04 ±0.00 arxiv NodeJEPA 68 .9±8.9 0.492 ±0.057 1.75 ±0.27 arxiv PatchJEPA 22 .0±2.2 0.166 ±0.013 1.06 ±0.01 arxiv CCA-SSG 18 .9±1.1 0.276 ±0.016 1.20 ±0.02 arxiv BGRL 16 .4±3.2 0.284 ±0.030 1.21 ±0.05 
+
+Table 13: Expanded collapse diagnostics. 14 L Efficiency Analysis 
+
+Figure 11 and Table 14 plot accuracy against wall-clock time and list mean training times on all five benchmarks, including per-epoch dynamics on ogbn-arxiv. The dual-variant design offers two operating points: NodeJEPA for fine-grained node-level geometry on medium graphs, and PatchJEPA for cached-partition scaling on large hub-heavy graphs. On ogbn-arxiv, Node-JEPA’s median epoch time rises from about 11s to about 147s after the 2-hop curriculum, while PatchJEPA stays near 1 .8s per epoch. 15 Method Computers Photo Coauthor-CS Physics arxiv DGI 99.8 16.2 33.7 61.8 1848.4 GraphMAE 52.0 21.0 28.7 47.9 2117.7 BGRL 117.0 44.0 54.6 106.3 2436.5 CCA-SSG 82.4 33.4 39.5 75.7 2339.2 Sup. GCN 41.1 15.2 13.4 36.1 1457.7 NodeJEPA 168.3 108.4 506.4 1585.5 31582.3 PatchJEPA 113.5 107.2 76.6 150.8 2466.3 
+
+Table 14: Mean total training wall-clock time (seconds). 16 10 2 10 3
+
+Wall-clock training time (s, log scale) 
+
+90 
+
+91 
+
+92 
+
+93 
+
+> Linear-probe accuracy (%)
+
+Coauthor-Physics (34K nodes) 
+
+10 4
+
+Wall-clock training time (s, log scale) 
+
+68 
+
+69 
+
+70 
+
+71 
+
+ogbn-arxiv (169K nodes) 
+
+SupervisedGCN DGI GraphMAE BGRL CCA-SSG NodeJEPA PatchJEPA DGI 
+
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+
+10 2
+
+6 × 10 1
+
+> Wall-clock (s, log)
+
+Computers 
+
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+
+10 2
+
+2 × 10 1
+
+3 × 10 1
+
+4 × 10 1
+
+6 × 10 1
+
+Photo 
+
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+
+10 2
+
+Coauthor-CS 
+
+> DGI
+> GraphMAE
+> BGRL
+> CCA-SSG
+> NodeJEPA
+> PatchJEPA
+
+10 2
+
+10 3
+
+Physics 0 50 100 150 200 
+
+## Training epoch 
+
+10 1
+
+10 2
+
+> Wall time per epoch (s, log)
+
+NodeJEPA 
+
+PatchJEPA Figure 11: Top: accuracy vs. wall-clock time. Middle: total training time on four medium graphs. Bottom: per-epoch time on ogbn-arxiv. 17 M Design Notes 
+
+Structural descriptors (PageRank, degree, clustering, spectral coordinates) are optional. The NodeJEPA cur-riculum raises mask ratio 0 .2 → 0.5 and hop radius 1 → 2over the first 50 epochs. Context isolation replaces tar-get features with a mask token. Node-level and patch-level masking share the same JEPA loss family and differ mainly in the masking unit. 
+
+# N Additional Method Details 
+
+EMA targets use momentum 0 .996 → 0.999 (NodeJEPA) or 0 .996 (PatchJEPA). The predictive loss is mean co-sine distance. SIGReg uses 256 random projections with weight 0 .02. PatchJEPA mean-pools within patches only for the pretraining target; probing still uses node-level encoder outputs. 
+
+# O Broader Impact 
+
+This work studies self-supervised learning on standard public benchmarks and does not introduce new sensitive data. Downstream deployments should audit structural or attribute biases as appropriate. Identifying the k-hop-search bottleneck and providing a cached patch alterna-tive reduces compute on large graphs. 
+
+# P Reproducibility Notes 
+
+Seeds 42–46, splits, and hyperparameters are fully spec-ified above. Code, configurations, scripts, and aggre-gated logs (MIT license) are publicly available at https: //github.com/OliverZ-dot/Node-Jepa. 
+
+# References 
+
+Assran, M.; Duval, Q.; Misra, I.; Bojanowski, P.; Vin-cent, P.; Rabbat, M.; LeCun, Y.; and Ballas, N. 2023. Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 15619–15629. Balestriero, R.; and LeCun, Y. 2025. LeJEPA: Prov-able and Scalable Self-Supervised Learning Without the Heuristics. arXiv:2511.08544. Bardes, A.; Ponce, J.; and LeCun, Y. 2022. VI-CReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning. In International Confer-ence on Learning Representations .Belkin, M.; and Niyogi, P. 2003. Laplacian Eigenmaps for Dimensionality Reduction and Data Representa-tion. Neural Computation , 15(6): 1373–1396. Bengio, Y.; Louradour, J.; Collobert, R.; and Weston, J. 2009. Curriculum Learning. In Proceedings of the 26th International Conference on Machine Learning , 41–48. Bronstein, M. M.; Bruna, J.; LeCun, Y.; Szlam, A.; and Vandergheynst, P. 2017. Geometric Deep Learning: Go-ing beyond Euclidean Data. IEEE Signal Processing Magazine , 34(4): 18–42. Caron, M.; Touvron, H.; Misra, I.; J´ egou, H.; Mairal, J.; Bojanowski, P.; and Joulin, A. 2021. Emerging Prop-erties in Self-Supervised Vision Transformers. In Pro-ceedings of the IEEE/CVF International Conference on Computer Vision , 9650–9660. Chen, T.; Kornblith, S.; Norouzi, M.; and Hinton, G. 2020. A Simple Framework for Contrastive Learning of Visual Representations. In International Conference on Machine Learning , 1597–1607. Chen, X.; and He, K. 2021. Exploring Simple Siamese Representation Learning. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pat-tern Recognition , 15750–15758. Chiang, W.-L.; Liu, X.; Si, S.; Li, Y.; Bengio, S.; and Hsieh, C.-J. 2019. Cluster-GCN: An Efficient Algo-rithm for Training Deep and Large Graph Convolu-tional Networks. In Proceedings of the 25th ACM SIGKDD Conference on Knowledge Discovery and Data Mining , 257–266. Gilmer, J.; Schoenholz, S. S.; Riley, P. F.; Vinyals, O.; and Dahl, G. E. 2017. Neural Message Passing for Quantum Chemistry. In International Conference on Machine Learning , 1263–1272. Grill, J.-B.; Strub, F.; Altch´ e, F.; Tallec, C.; Richemond, P.; Buchatskaya, E.; Doersch, C.; Avila Pires, B.; Guo, Z.; Gheshlaghi Azar, M.; et al. 2020. Bootstrap Your Own Latent: A New Approach to Self-Supervised Learning. In Advances in Neural Information Process-ing Systems , volume 33, 21271–21284. Grover, A.; and Leskovec, J. 2016. node2vec: Scalable Feature Learning for Networks. In Proceedings of the 22nd ACM SIGKDD Conference on Knowledge Discov-ery and Data Mining , 855–864. Hamilton, W.; Ying, Z.; and Leskovec, J. 2017. Inductive Representation Learning on Large Graphs. In Advances in Neural Information Processing Systems , volume 30. Hassani, K.; and Khasahmadi, A. H. 2020. Contrastive Multi-View Representation Learning on Graphs. In 
+
+International Conference on Machine Learning , 4116– 4126. He, K.; Chen, X.; Xie, S.; Li, Y.; Doll´ ar, P.; and Girshick, R. 2022. Masked Autoencoders Are Scalable Vision Learners. In Proceedings of the IEEE/CVF Conference 
+
+18 on Computer Vision and Pattern Recognition , 16000– 16009. He, K.; Fan, H.; Wu, Y.; Xie, S.; and Girshick, R. 2020. Momentum Contrast for Unsupervised Visual Repre-sentation Learning. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recogni-tion , 9729–9738. Hou, Z.; He, Y.; Cen, Y.; Liu, X.; Dong, Y.; Kharlamov, E.; and Tang, J. 2023. GraphMAE2: A Decoding-Enhanced Masked Self-Supervised Graph Learner. In 
+
+Proceedings of the ACM Web Conference 2023 , 737– 746. Hou, Z.; Liu, X.; Cen, Y.; Dong, Y.; Yang, H.; Wang, C.; and Tang, J. 2022. GraphMAE: Self-Supervised Masked Graph Autoencoders. In Proceedings of the 28th ACM SIGKDD Conference on Knowledge Discov-ery and Data Mining , 594–604. Hu, W.; Fey, M.; Zitnik, M.; Dong, Y.; Ren, H.; Liu, B.; Catasta, M.; and Leskovec, J. 2020a. Open Graph Benchmark: Datasets for Machine Learning on Graphs. In Advances in Neural Information Processing Systems ,volume 33, 22118–22133. Hu, W.; Liu, B.; Gomes, J.; Zitnik, M.; Liang, P.; Pande, V.; and Leskovec, J. 2020b. Strategies for Pre-training Graph Neural Networks. In International Conference on Learning Representations .Jiao, Y.; Xiong, Y.; Zhang, J.; Zhang, Y.; Zhang, T.; and Zhu, Y. 2020. Sub-graph Contrast for Scalable Self-Supervised Graph Representation Learning. In IEEE International Conference on Data Mining , 222–231. Jing, L.; Vincent, P.; LeCun, Y.; and Tian, Y. 2022. Un-derstanding Dimensional Collapse in Contrastive Self-Supervised Learning. In International Conference on Learning Representations .Karypis, G.; and Kumar, V. 1998. A Fast and High Quality Multilevel Scheme for Partitioning Irregular Graphs. SIAM Journal on Scientific Computing , 20(1): 359–392. Kipf, T. N.; and Welling, M. 2016. Variational Graph Auto-Encoders. In NeurIPS Workshop on Bayesian Deep Learning .Kipf, T. N.; and Welling, M. 2017. Semi-Supervised Clas-sification with Graph Convolutional Networks. In In-ternational Conference on Learning Representations .LeCun, Y. 2022. A Path Towards Autonomous Machine Intelligence Version 0.9.2, 2022-06-27. Open Review , 62. Page, L.; Brin, S.; Motwani, R.; and Winograd, T. 1999. The PageRank Citation Ranking: Bringing Order to the Web. Stanford InfoLab Technical Report .Pei, H.; Wei, B.; Chang, K. C.-C.; Lei, Y.; and Yang, B. 2020. Geom-GCN: Geometric Graph Convolutional Networks. In International Conference on Learning Representations .Perozzi, B.; Al-Rfou, R.; and Skiena, S. 2014. DeepWalk: Online Learning of Social Representations. In Proceed-ings of the 20th ACM SIGKDD Conference on Knowl-edge Discovery and Data Mining , 701–710. Qiu, J.; Chen, Q.; Dong, Y.; Zhang, J.; Yang, H.; Ding, M.; Wang, K.; and Tang, J. 2020. GCC: Graph Contrastive Coding for Graph Neural Network Pre-Training. In Proceedings of the 26th ACM SIGKDD Conference on Knowledge Discovery and Data Mining ,1150–1160. Shchur, O.; Mumme, M.; Bojchevski, A.; and G¨ unnemann, S. 2018. Pitfalls of Graph Neural Network Evaluation. arXiv:1811.05868. Skenderi, G.; Li, H.; Tang, J.; and Cristani, M. 2023. Graph-level Representation Learning with Joint-Embedding Predictive Architectures. arXiv:2309.16014. Sun, F.-Y.; Hoffmann, J.; Verma, V.; and Tang, J. 2020. InfoGraph: Unsupervised and Semi-supervised Graph-Level Representation Learning via Mutual Information Maximization. In International Conference on Learn-ing Representations .Tan, Q.; Liu, N.; Huang, X.; Choi, S.-H.; Li, L.; Chen, R.; and Hu, X. 2023. What’s Behind the Mask: Un-derstanding Masked Graph Modeling for Graph Au-toencoders. In Proceedings of the 29th ACM SIGKDD Conference on Knowledge Discovery and Data Mining ,2378–2388. Tarvainen, A.; and Valpola, H. 2017. Mean Teachers are Better Role Models: Weight-Averaged Consistency Targets Improve Semi-Supervised Deep Learning Re-sults. In Advances in Neural Information Processing Systems , volume 30. Thakoor, S.; Tallec, C.; Azar, M. G.; Azabou, M.; Dyer, E. L.; Munos, R.; Veliˇ ckovi´ c, P.; and Valko, M. 2022. Large-Scale Representation Learning on Graphs via Bootstrapping. In International Conference on Learn-ing Representations .van den Oord, A.; Li, Y.; and Vinyals, O. 2018. Repre-sentation Learning with Contrastive Predictive Coding. 
+
+arXiv preprint arXiv:1807.03748 .Veliˇ ckovi´ c, P.; Cucurull, G.; Casanova, A.; Romero, A.; Li` o, P.; and Bengio, Y. 2018. Graph Attention Net-works. In International Conference on Learning Rep-resentations .19 Veliˇ ckovi´ c, P.; Fedus, W.; Hamilton, W. L.; Li` o, P.; Ben-gio, Y.; and Hjelm, R. D. 2019. Deep Graph Infomax. In International Conference on Learning Representa-tions .Watts, D. J.; and Strogatz, S. H. 1998. Collective Dy-namics of ‘Small-World’ Networks. Nature , 393(6684): 440–442. Wu, Z.; Pan, S.; Chen, F.; Long, G.; Zhang, C.; and Yu, P. S. 2020. A Comprehensive Survey on Graph Neural Networks. IEEE Transactions on Neural Networks and Learning Systems , 32(1): 4–24. Xie, Y.; Xu, Z.; Zhang, J.; Wang, Z.; and Ji, S. 2022. Self-Supervised Learning of Graph Neural Networks: A Unified Review. IEEE Transactions on Pattern Anal-ysis and Machine Intelligence , 45(2): 2412–2429. Xu, K.; Hu, W.; Leskovec, J.; and Jegelka, S. 2019. How Powerful are Graph Neural Networks? In International Conference on Learning Representations .You, Y.; Chen, T.; Shen, Y.; and Wang, Z. 2021. Graph Contrastive Learning Automated. In International Conference on Machine Learning , 12121–12132. You, Y.; Chen, T.; Sui, Y.; Chen, T.; Wang, Z.; and Shen, Y. 2020. Graph Contrastive Learning with Augmenta-tions. In Advances in Neural Information Processing Systems , volume 33, 5812–5823. Zbontar, J.; Jing, L.; Misra, I.; LeCun, Y.; and Deny, S. 2021. Barlow Twins: Self-Supervised Learning via Redundancy Reduction. In International Conference on Machine Learning , 12310–12320. Zhang, H.; Wu, Q.; Yan, J.; Wipf, D.; and Yu, P. S. 2021. From Canonical Correlation Analysis to Self-supervised Graph Neural Networks. In Advances in Neural Infor-mation Processing Systems , volume 34, 76–89. Zhu, J.; Yan, Y.; Zhao, L.; Heimann, M.; Akoglu, L.; and Koutra, D. 2020a. Beyond Homophily in Graph Neural Networks: Current Limitations and Effective Designs. In Advances in Neural Information Processing Systems ,volume 33, 7793–7804. Zhu, Y.; Xu, Y.; Yu, F.; Liu, Q.; Wu, S.; and Wang, L. 2020b. Deep Graph Contrastive Representation Learn-ing. arXiv:2006.04131. Zhu, Y.; Xu, Y.; Yu, F.; Liu, Q.; Wu, S.; and Wang, L. 2021. Graph Contrastive Learning with Adaptive Aug-mentation. In Proceedings of the Web Conference 2021 ,2069–2080. 20

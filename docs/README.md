@@ -6,40 +6,44 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-08-05
-- 运行时间：2026-08-05 21:57:46 UTC
+- 最新运行日期：2026-08-07
+- 运行时间：2026-08-07 01:56:06 UTC
 - 运行状态：成功
-- 本次总论文数：6
-- 精读区：2
-- 速读区：4
+- 本次总论文数：8
+- 精读区：5
+- 速读区：3
 
 ### 今日简报（AI）
-今日共读 6 篇，聚焦机器人操作与自动驾驶，其中 2 篇精读、4 篇速读。  
-最值得关注：层级模仿学习处理时变力任务（9.0 分），以及基于生成视频的全身操作技能蒸馏（8.0 分）。  
-建议优先精读这两篇高分工作，并延伸关注扩散策略与离线强化学习的结合方向。
-- 详情：[/202608/05/README](/202608/05/README)
+今日精选8篇论文，聚焦连续控制、灵巧操作与机器人学习，其中5篇精读、3篇速读；最值得关注的是动态扩散策略《Learning When to Stop》（9.0分）与跨具身灵巧操作《SiMDex》（8.0分），分别解决控制停止时机与视频迁移问题；建议优先精读这两篇，其余可快速浏览以把握强化学习与视觉-语言-动作模型的新思路。
+- 详情：[/202608/07/README](/202608/07/README)
 
 ### 精读区论文标签
-1. [A Hierarchical Approach to Imitation Learning for Manipulation Tasks Requiring Time Varying Forces](/202608/05/2608.03103v1-a-hierarchical-approach-to-imitation-learning-for-manipulation-tasks-requiring-time-varying-forces)  
+1. [Learning When to Stop: Prefix-Optimal Dynamic Diffusion Policies for Continuous Control](/202608/07/2608.05084v1-learning-when-to-stop-prefix-optimal-dynamic-diffusion-policies-for-continuous-control)  
    标签：评分：9.0/10、query:imitation
-   evidence：基于扩散策略的分层模仿学习用于接触丰富的操控任务
-2. [RoboReact: Agentic Skill Distillation from Generated Egocentric Videos for Generalizable Whole-Body Manipulation](/202608/05/2608.03387v1-roboreact-agentic-skill-distillation-from-generated-egocentric-videos-for-generalizable-whole-body-manipulation)  
+   evidence：直接研究连续控制中的扩散策略动态去噪停止问题，契合扩散策略需求。
+2. [SiMDex: Mining Similar Egocentric Videos for Cross-Embodiment Dexterous Manipulation](/202608/07/2608.04196v1-simdex-mining-similar-egocentric-videos-for-cross-embodiment-dexterous-manipulation)  
    标签：评分：8.0/10、query:imitation
-   evidence：从生成的自我中心视频合成全身人形操控技能，是模仿式操控学习的最新进展。
+   evidence：为灵巧操作的VLA后训练挖掘任务相关的第一人称人类视频子集
+3. [NodeJEPA: Structure-Conditioned Latent Prediction for Node-Level Graph Self-Supervised Learning](/202608/07/2608.04381v1-nodejepa-structure-conditioned-latent-prediction-for-node-level-graph-self-supervised-learning)  
+   标签：评分：8.0/10、query:imitation
+   evidence：面向节点级图自监督学习的JEPA架构，与JEPA需求相关。
+4. [MobileWAM: Bridging World Action Models to Mobile Manipulation with Chain-of-Foresight](/202608/07/2608.04657v1-mobilewam-bridging-world-action-models-to-mobile-manipulation-with-chain-of-foresight)  
+   标签：评分：8.0/10、query:imitation
+   evidence：融合预训练视频扩散变换器与动作专家用于移动操作策略
+5. [PRIMAL3: Pathfinding via Reinforcement and Imitation Multi-Agent Learning - Leveraging LaCAM3](/202608/07/2608.04905v1-primal3-pathfinding-via-reinforcement-and-imitation-multi-agent-learning---leveraging-lacam3)  
+   标签：评分：8.0/10、query:imitation
+   evidence：结合强化学习与模仿学习进行多智能体路径规划，与机器人模仿学习方法强匹配
 
 ### 速读区论文标签
-1. [WAM-Diff2: Hierarchical AR-to-Diffusion Distillation for Highly Efficient Autonomous Driving VLA](/202608/05/2608.01035v1-wam-diff2-hierarchical-ar-to-diffusion-distillation-for-highly-efficient-autonomous-driving-vla)  
+1. [EvoHIL: Self-Evolving Reward and Flow-Matched Policy Optimization for Robust Human-in-the-Loop Reinforcement Learning](/202608/07/2608.03872v1-evohil-self-evolving-reward-and-flow-matched-policy-optimization-for-robust-human-in-the-loop-reinforcement-learning)  
    标签：评分：7.0/10、query:imitation
-   evidence：将自回归VLA蒸馏为扩散策略以实现高效自动驾驶控制
-2. [Diffusion Policy with Behavioral Advantage Correction for Offline Reinforcement Learning](/202608/05/2608.02332v1-diffusion-policy-with-behavioral-advantage-correction-for-offline-reinforcement-learning)  
-   标签：评分：7.0/10、query:imitation
-   evidence：扩散模型作为离线强化学习中的策略
-3. [EmbodiedVAE: Disentangled Video VAE for Efficient and Controllable Embodied Manipulation](/202608/05/2608.02990v1-embodiedvae-disentangled-video-vae-for-efficient-and-controllable-embodied-manipulation)  
-   标签：评分：7.0/10、query:imitation
-   evidence：EmbodiedVAE为机器人操作中的潜在扩散世界模型提供紧凑可控的潜在表示
-4. [Accelerating Human-Aware Robot Trajectory Generation via Diffusion and Consistency Distillation](/202608/05/2608.03159v1-accelerating-human-aware-robot-trajectory-generation-via-diffusion-and-consistency-distillation)  
+   evidence：面向接触丰富操作的流匹配策略优化，与机器人控制中的扩散策略相关。
+2. [Look Where It Matters: Adaptive Visual Refinement for Vision-Language-Action Models](/202608/07/2608.02197v1-look-where-it-matters-adaptive-visual-refinement-for-vision-language-action-models)  
    标签：评分：6.0/10、query:imitation
-   evidence：利用扩散模型在RRT生成的避碰轨迹上训练，在共融环境中生成可行关节轨迹，是扩散模型用于机器人控制的方法。
+   evidence：改进视觉-语言-动作模型的视觉表征以提升空间精准操作，与模仿学习得到的策略相关
+3. [Learning Context-Aware Motion Priors for Humanoid Control](/202608/07/2608.03234v1-learning-context-aware-motion-priors-for-humanoid-control)  
+   标签：评分：6.0/10、query:imitation
+   evidence：基于演示的目标与运动先验指导人形策略学习；与机器人的模仿学习相关
 
 
 <div class="dpr-home-promo-card">

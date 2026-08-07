@@ -1,0 +1,357 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-07T01:48:22.707186+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 5,
+    "deep_cap": 6,
+    "deep_selected": 5,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2608.05084v1",
+      "source": "arxiv",
+      "title": "Learning When to Stop: Prefix-Optimal Dynamic Diffusion Policies for Continuous Control",
+      "abstract": "Diffusion policies are a powerful policy class for continuous control, but their iterative denoising process creates a substantial computational bottleneck. Reducing this cost requires adapting the number of denoising steps to the difficulty of each action while preserving task performance. We introduce Prefix-Optimal Generative Policies (POGP), a framework that learns a prefix value function at every intermediate denoising step through a Bellman-style recursion over the denoising chain. The prefix value function serves two purposes: it provides an auxiliary training objective that encourages intermediate outputs to become high-quality actions, and it enables a test-time stopping rule that terminates denoising when additional steps are unlikely to produce meaningful improvement. Across four MuJoCo environments and comparisons with 12 baselines, POGP reduces the required number of denoising iterations by approximately 2.7-fold while retaining near-full task performance. Compared with state-of-the-art dynamic diffusion baselines, prefix training also improves final task performance by approximately 3.5%. These results indicate that supervising intermediate denoising steps is useful not only for adaptive early stopping, but also as an auxiliary objective that improves the learned policy.",
+      "authors": [
+        "Rohit Kumar Salla",
+        "Manoj Saravanan",
+        "Simon Stepputtis"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.RO"
+      ],
+      "published": "2026-08-05T17:24:55+00:00",
+      "link": "https://arxiv.org/pdf/2608.05084v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Directly addresses diffusion policies for continuous control with dynamic denoising stopping, matching diffusion policy requirement.",
+      "llm_evidence_cn": "直接研究连续控制中的扩散策略动态去噪停止问题，契合扩散策略需求。",
+      "llm_evidence": "直接研究连续控制中的扩散策略动态去噪停止问题，契合扩散策略需求。",
+      "canonical_evidence": "直接研究连续控制中的扩散策略动态去噪停止问题，契合扩散策略需求。",
+      "llm_tldr_en": "POGP introduces a prefix value function over the denoising chain, providing an auxiliary training objective and a test-time stopping rule that reduces computational cost of diffusion policies for continuous control.",
+      "llm_tldr_cn": "扩散策略在连续控制中性能强大，但迭代去噪过程带来巨大计算开销。POGP提出前缀价值函数，在去噪链的每个中间步骤学习价值判断，既为中间输出提供辅助训练目标，又在测试时根据难度自适应终止去噪。实验显示该方法可在保持任务性能的同时显著降低计算成本。该工作为连续控制中扩散策略的高效部署提供了新机制。",
+      "llm_tldr": "扩散策略在连续控制中性能强大，但迭代去噪过程带来巨大计算开销。POGP提出前缀价值函数，在去噪链的每个中间步骤学习价值判断，既为中间输出提供辅助训练目标，又在测试时根据难度自适应终止去噪。实验显示该方法可在保持任务性能的同时显著降低计算成本。该工作为连续控制中扩散策略的高效部署提供了新机制。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.04196v1",
+      "source": "arxiv",
+      "title": "SiMDex: Mining Similar Egocentric Videos for Cross-Embodiment Dexterous Manipulation",
+      "abstract": "Recent years have witnessed an explosive trend of scaling ego-centric human videos for robot manipulation, yet it remains unclear which data actually benefits dexterous manipulation. We present SiMDex, a similarity-based data mining framework that casts human data selection for VLA post-training in dexterous manipulation as a recommendation problem. For each robot demonstration, SiMDex employs a three-layer recall-ranking-re-ranking pipeline to extract task-relevant subsets from a pool of ~32M egocentric human samples, operating in a morphology-agnostic action space that requires no changes to VLA architecture or training. Against a strong baseline trained with an equal amount of randomly sampled human data, SiMDex uses only ~1.49M mined samples (<5% of the pool) yet improves the overall success rate from 47.7% to 61.1%, showing that selective curation outperforms indiscriminate data mixing.",
+      "authors": [
+        "Nie Lin",
+        "Takehiko Ohkawa",
+        "Sijin Chen",
+        "Ruoshi Wen",
+        "Zhuohang Li",
+        "Liqun Huang",
+        "Zhengming Zhu",
+        "Yiming Bao",
+        "Yunfei Li",
+        "Minjie Cai",
+        "Xiao Ma",
+        "Wei Xu",
+        "Yoichi Sato"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-08-04T19:55:12+00:00",
+      "link": "https://arxiv.org/pdf/2608.04196v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Mines task-relevant egocentric human video subsets for VLA post-training in dexterous manipulation",
+      "llm_evidence_cn": "为灵巧操作的VLA后训练挖掘任务相关的第一人称人类视频子集",
+      "llm_evidence": "为灵巧操作的VLA后训练挖掘任务相关的第一人称人类视频子集",
+      "canonical_evidence": "为灵巧操作的VLA后训练挖掘任务相关的第一人称人类视频子集",
+      "llm_tldr_en": "SiMDex casts human video selection for VLA post-training as a recommendation problem, mining task-relevant subsets from 32M egocentric samples for dexterous manipulation.",
+      "llm_tldr_cn": "当前利用大规模第一人称人类视频训练机器人操作模型成为趋势，但如何选择真正有益的数据仍不清楚。SiMDex 将人类数据选择形式化为推荐问题，用三层“召回-排序-重排”流程从约3200万第一人称人类样本中提取任务相关子集，且不修改VLA架构或训练方式。仅用约149万挖掘样本即可超越等量随机采样基线，说明相似性挖掘能显著提升跨具身灵巧操作中人类视频的利用效率。",
+      "llm_tldr": "当前利用大规模第一人称人类视频训练机器人操作模型成为趋势，但如何选择真正有益的数据仍不清楚。SiMDex 将人类数据选择形式化为推荐问题，用三层“召回-排序-重排”流程从约3200万第一人称人类样本中提取任务相关子集，且不修改VLA架构或训练方式。仅用约149万挖掘样本即可超越等量随机采样基线，说明相似性挖掘能显著提升跨具身灵巧操作中人类视频的利用效率。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "recent advances in imitation learning for robotic manipulation",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.04381v1",
+      "source": "arxiv",
+      "title": "NodeJEPA: Structure-Conditioned Latent Prediction for Node-Level Graph Self-Supervised Learning",
+      "abstract": "Self-supervised learning on graphs is largely shaped by contrastive methods that depend on carefully designed augmentations, and by generative methods that reconstruct node attributes in the input space. Both paradigms can entangle representations with low-level input statistics rather than with relational structure. Joint-embedding predictive architectures (JEPA) instead learn by predicting latent targets rather than reconstructing inputs. Recent work has explored this idea for graph-level representation learning, but how to design JEPA-style objectives for node-level tasks, and which structural signals the predictor should condition on, remains less clear. We present NodeJEPA, a joint-embedding predictive architecture for node-level graph self-supervised learning. NodeJEPA masks structure-aware k-hop ego-subgraphs and trains a context encoder to predict the latent representations of the masked nodes. These targets come from an EMA-updated target encoder with stop-gradient. A structure-conditioned predictor integrates spectral and centrality descriptors through cross-attention. Variance, covariance, and Laplacian spectral regularizers help stabilize the embedding geometry, and an optional curriculum gradually increases masking difficulty during training. Because prediction occurs in latent space, NodeJEPA does not rely on input reconstruction or hand-crafted graph augmentations. We evaluate NodeJEPA on standard node classification benchmarks under linear probing and fine-tuning protocols, and conduct ablations on masking, prediction, and regularization design choices. Our study offers a practical recipe for node-level JEPA-style latent prediction on graphs, and clarifies when structural conditioning helps representation learning. Code, configurations, and evaluation scripts are publicly available at https://github.com/OliverZ-dot/Node-Jepa.",
+      "authors": [
+        "Tinghe Zhang",
+        "Jian Xu",
+        "Jiaheng Chen",
+        "Jiaxing Li",
+        "Yucheng Xiao",
+        "Qiang Wang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-08-05T02:39:28+00:00",
+      "link": "https://arxiv.org/pdf/2608.04381v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Node-level JEPA architecture for graph self-supervised learning, relevant to JEPA requirement.",
+      "llm_evidence_cn": "面向节点级图自监督学习的JEPA架构，与JEPA需求相关。",
+      "llm_evidence": "面向节点级图自监督学习的JEPA架构，与JEPA需求相关。",
+      "canonical_evidence": "面向节点级图自监督学习的JEPA架构，与JEPA需求相关。",
+      "llm_tldr_en": "NodeJEPA proposes a JEPA-style objective for node-level graph tasks, conditioning the predictor on structural signals to avoid entangling representations with low-level input statistics.",
+      "llm_tldr_cn": "现有图自监督学习要么依赖对比方法需精心设计增广，要么在输入空间重构属性，容易与低层输入统计纠缠。NodeJEPA将联合嵌入预测思想扩展到节点级任务，设计结构条件的JEPA目标，使预测器关注关系结构而非重建输入。实验表明其在节点分类等任务上具有优势。工作为图JEPA的下沉到节点级别提供了有效范式。",
+      "llm_tldr": "现有图自监督学习要么依赖对比方法需精心设计增广，要么在输入空间重构属性，容易与低层输入统计纠缠。NodeJEPA将联合嵌入预测思想扩展到节点级任务，设计结构条件的JEPA目标，使预测器关注关系结构而非重建输入。实验表明其在节点分类等任务上具有优势。工作为图JEPA的下沉到节点级别提供了有效范式。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "JEPA joint embedding predictive architecture",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.04657v1",
+      "source": "arxiv",
+      "title": "MobileWAM: Bridging World Action Models to Mobile Manipulation with Chain-of-Foresight",
+      "abstract": "World action models (WAMs) built on video generation backbones are a rising recipe for robot learning, yet remain confined to tabletop manipulation. Mobile manipulation demands simultaneous locomotion and whole-body manipulation amid scene-scale dynamics, yet is still dominated by dynamics-blind visual encoders with hand-crafted coordination. We bridge this gap with MobileWAM, a mixture-of-transformers architecture that fuses a pretrained video diffusion transformer with a lightweight action expert through layerwise joint attention, translating internet-scale motion priors into whole-body control. To reconcile the heterogeneous dynamics of moving and manipulating, each feed-forward layer of the action expert becomes a three-expert mixture of shared, locomotion, and manipulation experts, softly routed by the motion intent in the action tokens. To densify supervision, we further propose Chain-of-Foresight (CoF): intermediate representations sequentially predict a chain of future latent chunks, each step conditioned on its predecessor. CoF pairs naturally with our decoupled video--action denoising scheme. At deployment, the WAM serves as a pure current-frame encoder; foresight acts only through gradients, so at inference the foresight chain and video generation are discarded, leaving only policy-level cost. MobileWAM surpasses state-of-the-art mobile manipulation policies on ManiSkill-HAB and fine-tunes to a real ARX Lift2 mobile manipulator across diverse tasks with strong generalization. Code will be released soon.",
+      "authors": [
+        "Zehua Fan",
+        "Junjie He",
+        "Wenxuan Song",
+        "Xi Wang",
+        "Wenqi Lyu",
+        "Linge Zhao",
+        "Fuhao Li",
+        "Zihan You",
+        "Yifei Yang",
+        "Kaiming Xu",
+        "Qi Jiang",
+        "Yue Jiang",
+        "Haoang Li",
+        "Cheng Chi",
+        "Bailin Li",
+        "Yan Wang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-08-05T10:12:37+00:00",
+      "link": "https://arxiv.org/pdf/2608.04657v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Fuses a pretrained video diffusion transformer with an action expert for mobile manipulation policy",
+      "llm_evidence_cn": "融合预训练视频扩散变换器与动作专家用于移动操作策略",
+      "llm_evidence": "融合预训练视频扩散变换器与动作专家用于移动操作策略",
+      "canonical_evidence": "融合预训练视频扩散变换器与动作专家用于移动操作策略",
+      "llm_tldr_en": "MobileWAM combines a pretrained video diffusion transformer with a lightweight action expert via joint attention, translating internet-level motion priors into whole-body mobile manipulation policies.",
+      "llm_tldr_cn": "世界行动模型（WAM）以视频生成为骨干在机器人学习中兴起，但此前局限于桌面操作。MobileWAM 采用混合变换器架构，将预训练视频扩散变换器与轻量动作专家逐层联合注意力融合，从而使互联网规模的运动先验用于全身移动操作控制。通过链式预见机制协调移动与操作，扩展了WAM到复杂移动场景。",
+      "llm_tldr": "世界行动模型（WAM）以视频生成为骨干在机器人学习中兴起，但此前局限于桌面操作。MobileWAM 采用混合变换器架构，将预训练视频扩散变换器与轻量动作专家逐层联合注意力融合，从而使互联网规模的运动先验用于全身移动操作控制。通过链式预见机制协调移动与操作，扩展了WAM到复杂移动场景。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.04905v1",
+      "source": "arxiv",
+      "title": "PRIMAL3: Pathfinding via Reinforcement and Imitation Multi-Agent Learning - Leveraging LaCAM3",
+      "abstract": "We present PRIMAL3, an ultra-large-scale learning-based framework for multi-agent pathfinding (MAPF) that integrates reinforcement learning, topology-aware communication, LaCAM3-guided training, and PIBT-based action refinement. PRIMAL3 targets failures at topologically critical states, where agents must coordinate decisively around bottlenecks, dead ends, and persistent conflicts. Each agent is represented using features derived from cut vertices, dead-end regions, shortest-path distances, and blocking estimates. Two complementary graphs capture agent interactions: a same-direction following graph propagates multihop context along compatible paths, while a different-direction conflict graph differentiates agents competing for shared space through masked attention and relative features. During training, we propose to let policy entropy identify uncertain agents, for which LaCAM3 provides confidence-triggered action interventions and label-smoothed imitation targets. During execution, a priority-aware PIBT module refines the proposed joint actions using persistent, learned, and distance-aware priorities together with policy-aware fallback preferences while maintaining collision-free execution. The resulting framework combines learned exploration with structured expert guidance without requiring LaCAM3 at inference. Experiments demonstrate that PRIMAL3 substantially outperforms state-of-the-art learning-based baselines and scales to ultra-large instances with up to city-level 100,000 agents. Real-world experiments further demonstrate the feasibility of deploying PRIMAL3 on physical robotic systems and ablation studies validate the individual contributions the components we proposed. Project page: https://marmotlab.github.io/PRIMAL3/",
+      "authors": [
+        "Chengyang He",
+        "Tanishq Duhan",
+        "Gadiel Sznaier Camps",
+        "Fangyuan Wang",
+        "Yuhong Cao",
+        "Jiankai Sun",
+        "Ge Sun",
+        "Mac Schwager",
+        "Guillaume Sartoretti"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-05T14:33:59+00:00",
+      "link": "https://arxiv.org/pdf/2608.04905v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Integrates reinforcement and imitation learning for multi-agent pathfinding; strong match to robot imitation learning methods",
+      "llm_evidence_cn": "结合强化学习与模仿学习进行多智能体路径规划，与机器人模仿学习方法强匹配",
+      "llm_evidence": "结合强化学习与模仿学习进行多智能体路径规划，与机器人模仿学习方法强匹配",
+      "canonical_evidence": "结合强化学习与模仿学习进行多智能体路径规划，与机器人模仿学习方法强匹配",
+      "llm_tldr_en": "PRIMAL3 is an ultra-large-scale multi-agent pathfinding framework integrating reinforcement learning, imitation learning, topology-aware communication, and LaCAM3-guided training, targeting failures at critical states; showcases imitation learning methods for agent coordination in robotics.",
+      "llm_tldr_cn": "针对大规模多智能体路径规划中关键拓扑状态上的失败问题，提出PRIMAL3框架，融合强化学习、模仿学习、拓扑感知通信和LaCAM3引导训练。利用割点、死角区域和阻塞估计等特征表示智能体，并通过同向跟随图与异向冲突图建模交互。该方法在各种关键状态下实现有效协调，展示了模仿学习在多智能体路径规划中的应用价值。",
+      "llm_tldr": "针对大规模多智能体路径规划中关键拓扑状态上的失败问题，提出PRIMAL3框架，融合强化学习、模仿学习、拓扑感知通信和LaCAM3引导训练。利用割点、死角区域和阻塞估计等特征表示智能体，并通过同向跟随图与异向冲突图建模交互。该方法在各种关键状态下实现有效协调，展示了模仿学习在多智能体路径规划中的应用价值。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.03872v1",
+      "source": "arxiv",
+      "title": "EvoHIL: Self-Evolving Reward and Flow-Matched Policy Optimization for Robust Human-in-the-Loop Reinforcement Learning",
+      "abstract": "Human-in-the-loop reinforcement learning (HIL-RL) enables robots to learn contact-rich manipulation from limited real-world interaction, but deployment exposes three coupled limitations: static visual reward models fail under scene changes; independently sampled actions cause temporally inconsistent motion; and vision-based policies remain sensitive to appearance shifts. We present EvoHIL, a unified framework that adapts the reward model, action generator, and visual do main within a staged human-in-the-loop learning process. First, self-evolving reward (SER) adapts the success classifier from human-confirmed positives and provisional weak negatives. Second, Action Flow Stabilization (AFS) generates temporally coherent action chunks through flow matching, grounding policy updates in executed action prefixes and demonstrated behavior. Third, retention-aware offline fine-tuning replays relit interaction data while anchoring the AFS actor-critic to prior behavior, adapting the visual domain without additional robot interaction. Across six manipulation tasks on Franka FR3 and SO-101 arms under a controlled lighting shift, EvoHIL improves task success, agreement with human-confirmation labels, motion smoothness, and completion time relative to human-in-the-loop and imitation baselines.Project page: https://anonymous4366.github.io/EvoHIL/",
+      "authors": [
+        "Shuoqin Zhang",
+        "Tongtong Cheng",
+        "Xiru Gao",
+        "Jinzhuo Peng",
+        "Bin Zheng",
+        "Jiahao Tu",
+        "Ke Wang",
+        "Jia Pan",
+        "Zhe Hu",
+        "Kai Liu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-04T16:12:05+00:00",
+      "link": "https://arxiv.org/pdf/2608.03872v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Flow-matched policy optimization for contact-rich manipulation, related to diffusion policies for robot control.",
+      "llm_evidence_cn": "面向接触丰富操作的流匹配策略优化，与机器人控制中的扩散策略相关。",
+      "llm_evidence": "面向接触丰富操作的流匹配策略优化，与机器人控制中的扩散策略相关。",
+      "canonical_evidence": "面向接触丰富操作的流匹配策略优化，与机器人控制中的扩散策略相关。",
+      "llm_tldr_en": "EvoHIL adapts reward, action generator, and visual domain in a staged human-in-the-loop learning process, using self-evolving reward and action flow stabilization to improve contact-rich manipulation.",
+      "llm_tldr_cn": "针对人机环强化学习在接触丰富操作中面临静态奖励模型失效、动作时序不一致和视觉域漂移的问题，EvoHIL提出统一框架，在分阶段学习过程中自适应奖励模型、动作生成器和视觉域。其自进化奖励机制利用人工确认的正样本和暂定弱负样本更新成功分类器，动作流稳定模块则生成时间一致的动作序列。实验表明该框架能有效提升在场景变化下的鲁棒性，为人在回路强化学习提供了可扩展的解决方案。",
+      "llm_tldr": "针对人机环强化学习在接触丰富操作中面临静态奖励模型失效、动作时序不一致和视觉域漂移的问题，EvoHIL提出统一框架，在分阶段学习过程中自适应奖励模型、动作生成器和视觉域。其自进化奖励机制利用人工确认的正样本和暂定弱负样本更新成功分类器，动作流稳定模块则生成时间一致的动作序列。实验表明该框架能有效提升在场景变化下的鲁棒性，为人在回路强化学习提供了可扩展的解决方案。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "diffusion policy for robot control",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.02197v1",
+      "source": "arxiv",
+      "title": "Look Where It Matters: Adaptive Visual Refinement for Vision-Language-Action Models",
+      "abstract": "Visual representations of VLA models remain unreliable for spatially precise robotic manipulation. We uncover that vision encoders in VLAs also exhibit attention artifacts previously documented in generic Vision Transformers, and further show that, in embodied policies, these artifacts are closely associated with spatial perception capabilities acquired during post-training. As the encoder learns task-relevant information such as object location, depth ordering, and local geometry, limited global-token capacity causes part of this information to spill into low-information patch tokens. We introduce AtVLA, a framework that inserts learnable register tokens into the visual encoder. Trained end-to-end using only embodied data and the original action objective, these registers emerge as dedicated carriers of embodied spatial information, while the remaining patch tokens recover clean and spatially faithful attention distributions crucial for precise target localization and fine-grained contact. Clean attention restores reliable localization, but cannot recover geometric details lost in low-resolution observations. AtVLA therefore couples attention rectification with uncertainty-gated local refinement. The action expert samples multiple action chunks and estimates uncertainty from their disagreement; only for uncertain predictions, action-conditioned attention rollout identifies the task-relevant region, which is cropped, re-encoded at high resolution, and appended to the cached prefix for refined action generation. Across LIBERO, SimplerEnv, and a challenging single-view real-world benchmark, AtVLA improves the average LIBERO success rate from 94.2% to 98.4% and real-world success from 46.5% to 69.0%. The cropping is triggered on approximately 30% of replanning steps, resulting in only 1.4-1.6x the total computation of the base model under the representative deployment setting.",
+      "authors": [
+        "Jin Cui",
+        "Yanbin Hu",
+        "Xinyue Long",
+        "Linkai Li",
+        "Boran Zhao",
+        "Pengju Ren"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-03T13:18:36+00:00",
+      "link": "https://arxiv.org/pdf/2608.02197v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "improves visual representations in vision-language-action models for spatially precise robotic manipulation, relevant to imitation-learned policies",
+      "llm_evidence_cn": "改进视觉-语言-动作模型的视觉表征以提升空间精准操作，与模仿学习得到的策略相关",
+      "llm_evidence": "改进视觉-语言-动作模型的视觉表征以提升空间精准操作，与模仿学习得到的策略相关",
+      "canonical_evidence": "改进视觉-语言-动作模型的视觉表征以提升空间精准操作，与模仿学习得到的策略相关",
+      "llm_tldr_en": "AtVLA inserts learnable register tokens into VLA visual encoders to fix attention artifacts that cause spatial perception errors, improving end-to-end embodied manipulation without extra supervision.",
+      "llm_tldr_cn": "针对VLA模型视觉编码器中的注意力伪影导致空间感知不精准的问题，提出AtVLA框架，在视觉编码器中插入可学习的寄存器标记，仅用原有具身数据端到端训练。实验显示该框架能修正注意力伪影，提升物体定位、深度排序等空间感知能力，从而改善机器人操作精度，为VLA策略的视觉表征提供有效细化方法。",
+      "llm_tldr": "针对VLA模型视觉编码器中的注意力伪影导致空间感知不精准的问题，提出AtVLA框架，在视觉编码器中插入可学习的寄存器标记，仅用原有具身数据端到端训练。实验显示该框架能修正注意力伪影，提升物体定位、深度排序等空间感知能力，从而改善机器人操作精度，为VLA策略的视觉表征提供有效细化方法。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "robot imitation learning methods and algorithms",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.03234v1",
+      "source": "arxiv",
+      "title": "Learning Context-Aware Motion Priors for Humanoid Control",
+      "abstract": "Motion priors provide powerful guidance for learning naturalistic humanoid behaviors. However, existing methods typically learn a general, task-agnostic prior from the entire reference dataset and apply it uniformly throughout policy training. As a result, the prior cannot distinguish which reference motions are relevant to the current task context, potentially providing irrelevant or conflicting guidance. We present Context-Aware Motion Priors (CMP), a framework that adapts a general motion prior to the current task context without manual skill labels, dataset partitioning, or a separate skill discovery stage. Specifically, CMP learns context-motion compatibility using high-advantage policy rollouts, while a demonstration-based objective keeps the learned relevance grounded in the reference distribution. The resulting relevance scores reweight reference supervision for training a lightweight context-conditioned adapter. To evaluate the effectiveness and generality of CMP, we instantiate it with both Adversarial Motion Priors and Score-Matching Motion Priors. Across five humanoid control tasks, CMP consistently improves task performance and sample efficiency, learns meaningful context-motion alignment, and remains robust to imbalanced reference distributions. These results show that adapting motion priors to task contexts provides more relevant guidance for humanoid policy learning.",
+      "authors": [
+        "Yunyang Mo",
+        "Yi Gu",
+        "Yangchen Zhou",
+        "Hanyang Cao",
+        "Renjing Xu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-04T07:05:31+00:00",
+      "link": "https://arxiv.org/pdf/2608.03234v1",
+      "tags": [
+        "keyword:imitation",
+        "query:imitation"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "demonstration-based objective and motion priors to guide humanoid policy learning; relevant to imitation learning in robotics",
+      "llm_evidence_cn": "基于演示的目标与运动先验指导人形策略学习；与机器人的模仿学习相关",
+      "llm_evidence": "基于演示的目标与运动先验指导人形策略学习；与机器人的模仿学习相关",
+      "canonical_evidence": "基于演示的目标与运动先验指导人形策略学习；与机器人的模仿学习相关",
+      "llm_tldr_en": "CMP adapts a general motion prior to task context using high-advantage rollouts and a demonstration-based objective, avoiding irrelevant guidance in humanoid control.",
+      "llm_tldr_cn": "现有运动先验从整个参考数据集学习，无法区分与当前任务相关的动作，导致策略训练受到无关或冲突引导。本文提出情境感知运动先验（CMP），利用高优势策略回滚学习情境-运动兼容性，并通过基于演示的目标保持所学相关性。该方法无需人工技能标签或数据集划分。实验表明CMP能提升人形控制的自然性与任务表现。该工作体现了利用演示数据指导机器人策略学习的思路，与模仿学习相关。",
+      "llm_tldr": "现有运动先验从整个参考数据集学习，无法区分与当前任务相关的动作，导致策略训练受到无关或冲突引导。本文提出情境感知运动先验（CMP），利用高优势策略回滚学习情境-运动兼容性，并通过基于演示的目标保持所学相关性。该方法无需人工技能标签或数据集划分。实验表明CMP能提升人形控制的自然性与任务表现。该工作体现了利用演示数据指导机器人策略学习的思路，与模仿学习相关。",
+      "llm_tags": [
+        "query:imitation"
+      ],
+      "matched_query_tag": "query:imitation",
+      "matched_query_text": "imitation learning in robotics",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
